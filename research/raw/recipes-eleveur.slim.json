@@ -1,0 +1,4737 @@
+[
+{
+"resultId": 32521,
+"resultTypeId": 99,
+"resultLevel": 1,
+"ingredientIds": [
+303,
+312
+],
+"quantities": [
+10,
+10
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Filet de capture universel",
+"en": "Universal Capturing Net"
+}
+},
+{
+"resultId": 32522,
+"resultTypeId": 99,
+"resultLevel": 150,
+"ingredientIds": [
+16385,
+13488,
+10970,
+7925,
+2599,
+2586
+],
+"quantities": [
+5,
+5,
+1,
+5,
+5,
+5
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Filet à Dragodinde renforcé",
+"en": "Strengthened Dragoturkey Net"
+}
+},
+{
+"resultId": 32523,
+"resultTypeId": 99,
+"resultLevel": 150,
+"ingredientIds": [
+7925,
+17150,
+33526,
+33527,
+33528,
+33529,
+33530
+],
+"quantities": [
+5,
+5,
+5,
+5,
+5,
+5,
+2
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Filet à Volkorne renforcé",
+"en": "Strengthened Rhineetle Net"
+}
+},
+{
+"resultId": 32524,
+"resultTypeId": 99,
+"resultLevel": 150,
+"ingredientIds": [
+602,
+7925,
+33520,
+33521,
+33522,
+33523,
+33524,
+33525
+],
+"quantities": [
+5,
+5,
+5,
+5,
+5,
+5,
+5,
+2
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Filet à Muldo renforcé",
+"en": "Strengthened Seemyool Net"
+}
+},
+{
+"resultId": 32525,
+"resultTypeId": 99,
+"resultLevel": 100,
+"ingredientIds": [
+461,
+532,
+2586,
+2599,
+10970,
+13488
+],
+"quantities": [
+5,
+5,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Filet multiplicateur de Dragodinde",
+"en": "Dragoturkey Multiplier Net"
+}
+},
+{
+"resultId": 32526,
+"resultTypeId": 99,
+"resultLevel": 100,
+"ingredientIds": [
+33530,
+33529,
+33528,
+33527,
+33526,
+17140,
+461
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1,
+5,
+5
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Filet multiplicateur de Volkorne",
+"en": "Rhineetle Multiplier Net"
+}
+},
+{
+"resultId": 32527,
+"resultTypeId": 99,
+"resultLevel": 100,
+"ingredientIds": [
+33525,
+33524,
+33523,
+33522,
+33521,
+33520,
+16461,
+461
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1,
+1,
+5,
+5
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Filet multiplicateur de Muldo",
+"en": "Seemyool Multiplier Net"
+}
+},
+{
+"resultId": 32528,
+"resultTypeId": 99,
+"resultLevel": 200,
+"ingredientIds": [
+11107,
+17993,
+11109,
+2588,
+10970,
+13488,
+2586,
+2599
+],
+"quantities": [
+1,
+2,
+1,
+3,
+2,
+10,
+10,
+10
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Filet multiplicateur de Dragodinde renforcé",
+"en": "Strengthened Dragoturkey Multiplier Net"
+}
+},
+{
+"resultId": 32529,
+"resultTypeId": 99,
+"resultLevel": 200,
+"ingredientIds": [
+11107,
+17160,
+23825,
+33529,
+33528,
+33527,
+33530,
+33526
+],
+"quantities": [
+1,
+10,
+1,
+10,
+10,
+10,
+3,
+10
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Filet multiplicateur de Volkorne renforcé",
+"en": "Strengthened Rhineetle Multiplier Net"
+}
+},
+{
+"resultId": 32530,
+"resultTypeId": 99,
+"resultLevel": 200,
+"ingredientIds": [
+17991,
+17994,
+33524,
+33523,
+33521,
+33520,
+33522,
+33525
+],
+"quantities": [
+2,
+2,
+10,
+10,
+10,
+10,
+10,
+3
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Filet multiplicateur de Muldo renforcé",
+"en": "Strengthened Seemyool Multiplier Net"
+}
+},
+{
+"resultId": 33309,
+"resultTypeId": 326,
+"resultLevel": 5,
+"ingredientIds": [
+303,
+2661
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Extrait de Baffeur",
+"en": "Tiny Slapper Extract"
+}
+},
+{
+"resultId": 33310,
+"resultTypeId": 326,
+"resultLevel": 5,
+"ingredientIds": [
+289,
+2663
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Extrait de Caresseur",
+"en": "Tiny Patter Extract"
+}
+},
+{
+"resultId": 33311,
+"resultTypeId": 326,
+"resultLevel": 5,
+"ingredientIds": [
+16663,
+2665
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Extrait de Dragofesse",
+"en": "Tiny Dragobutt Extract"
+}
+},
+{
+"resultId": 33312,
+"resultTypeId": 326,
+"resultLevel": 5,
+"ingredientIds": [
+312,
+378
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Extrait de Foudroyeur",
+"en": "Tiny Lightning Thrower Extract"
+}
+},
+{
+"resultId": 33313,
+"resultTypeId": 326,
+"resultLevel": 5,
+"ingredientIds": [
+421,
+16487
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Extrait d'Abreuvoir",
+"en": "Tiny Drinking Trough Extract"
+}
+},
+{
+"resultId": 33314,
+"resultTypeId": 326,
+"resultLevel": 5,
+"ingredientIds": [
+1782,
+1673
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Extrait de Mangeoire",
+"en": "Tiny Manger Extract"
+}
+},
+{
+"resultId": 33315,
+"resultTypeId": 326,
+"resultLevel": 15,
+"ingredientIds": [
+303,
+430
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Extrait de Baffeur",
+"en": "Small Slapper Extract"
+}
+},
+{
+"resultId": 33316,
+"resultTypeId": 326,
+"resultLevel": 15,
+"ingredientIds": [
+289,
+2318
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Extrait de Caresseur",
+"en": "Small Patter Extract"
+}
+},
+{
+"resultId": 33317,
+"resultTypeId": 326,
+"resultLevel": 15,
+"ingredientIds": [
+16663,
+2574
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Extrait de Dragofesse",
+"en": "Small Dragobutt Extract"
+}
+},
+{
+"resultId": 33318,
+"resultTypeId": 326,
+"resultLevel": 15,
+"ingredientIds": [
+312,
+652
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Extrait de Foudroyeur",
+"en": "Small Lightning Thrower Extract"
+}
+},
+{
+"resultId": 33319,
+"resultTypeId": 326,
+"resultLevel": 15,
+"ingredientIds": [
+421,
+2274
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Extrait d'Abreuvoir",
+"en": "Small Drinking Trough Extract"
+}
+},
+{
+"resultId": 33320,
+"resultTypeId": 326,
+"resultLevel": 15,
+"ingredientIds": [
+1782,
+450
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Extrait de Mangeoire",
+"en": "Small Manger Extract"
+}
+},
+{
+"resultId": 33321,
+"resultTypeId": 323,
+"resultLevel": 17,
+"ingredientIds": [
+16525,
+14635,
+2599
+],
+"quantities": [
+1,
+10,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Dragodinde de Génération 2",
+"en": "Generation-2 Dragoturkey Kromakina"
+}
+},
+{
+"resultId": 33322,
+"resultTypeId": 323,
+"resultLevel": 19,
+"ingredientIds": [
+8157,
+14635,
+33528,
+33527
+],
+"quantities": [
+1,
+10,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Volkorne de Génération 2",
+"en": "Generation-2 Rhineetle Kromakina"
+}
+},
+{
+"resultId": 33323,
+"resultTypeId": 323,
+"resultLevel": 21,
+"ingredientIds": [
+8682,
+14635,
+33523,
+33520,
+33522
+],
+"quantities": [
+1,
+10,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Muldo de Génération 2",
+"en": "Generation-2 Seemyool Kromakina"
+}
+},
+{
+"resultId": 33324,
+"resultTypeId": 323,
+"resultLevel": 23,
+"ingredientIds": [
+886,
+14635,
+2598
+],
+"quantities": [
+1,
+10,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Dragodinde de Génération 2",
+"en": "Generation-2 Dragoturkey Animakina"
+}
+},
+{
+"resultId": 33325,
+"resultTypeId": 323,
+"resultLevel": 25,
+"ingredientIds": [
+16002,
+14635,
+33529
+],
+"quantities": [
+1,
+10,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Volkorne de Génération 2",
+"en": "Generation-2 Rhineetle Animakina"
+}
+},
+{
+"resultId": 33326,
+"resultTypeId": 326,
+"resultLevel": 25,
+"ingredientIds": [
+473,
+2451
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Extrait de Baffeur",
+"en": "Slapper Extract"
+}
+},
+{
+"resultId": 33327,
+"resultTypeId": 326,
+"resultLevel": 25,
+"ingredientIds": [
+400,
+2453
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Extrait de Caresseur",
+"en": "Patter Extract"
+}
+},
+{
+"resultId": 33328,
+"resultTypeId": 326,
+"resultLevel": 25,
+"ingredientIds": [
+17124,
+2467
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Extrait de Dragofesse",
+"en": "Dragobutt Extract"
+}
+},
+{
+"resultId": 33329,
+"resultTypeId": 326,
+"resultLevel": 25,
+"ingredientIds": [
+441,
+2576
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Extrait de Foudroyeur",
+"en": "Lightning Thrower Extract"
+}
+},
+{
+"resultId": 33330,
+"resultTypeId": 326,
+"resultLevel": 25,
+"ingredientIds": [
+428,
+2675
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Extrait d'Abreuvoir",
+"en": "Drinking Trough Extract"
+}
+},
+{
+"resultId": 33331,
+"resultTypeId": 326,
+"resultLevel": 25,
+"ingredientIds": [
+1844,
+6841
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Extrait de Mangeoire",
+"en": "Manger Extract"
+}
+},
+{
+"resultId": 33332,
+"resultTypeId": 323,
+"resultLevel": 27,
+"ingredientIds": [
+8161,
+14635,
+33521
+],
+"quantities": [
+1,
+10,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Muldo de Génération 2",
+"en": "Generation-2 Seemyool Animakina"
+}
+},
+{
+"resultId": 33333,
+"resultTypeId": 323,
+"resultLevel": 29,
+"ingredientIds": [
+13096,
+14635,
+10970,
+14280
+],
+"quantities": [
+1,
+10,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Dragodinde de Génération 2",
+"en": "Generation-2 Dragoturkey Optimakina"
+}
+},
+{
+"resultId": 33334,
+"resultTypeId": 323,
+"resultLevel": 31,
+"ingredientIds": [
+8557,
+14635,
+33530,
+33526
+],
+"quantities": [
+1,
+10,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Volkorne de Génération 2",
+"en": "Generation-2 Rhineetle Optimakina"
+}
+},
+{
+"resultId": 33335,
+"resultTypeId": 323,
+"resultLevel": 33,
+"ingredientIds": [
+838,
+14635,
+33525,
+33524
+],
+"quantities": [
+1,
+10,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Muldo de Génération 2",
+"en": "Generation-2 Seemyool Optimakina"
+}
+},
+{
+"resultId": 33336,
+"resultTypeId": 326,
+"resultLevel": 35,
+"ingredientIds": [
+473,
+2323
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Extrait de Baffeur",
+"en": "Big Slapper Extract"
+}
+},
+{
+"resultId": 33337,
+"resultTypeId": 326,
+"resultLevel": 35,
+"ingredientIds": [
+400,
+1674
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Extrait de Caresseur",
+"en": "Big Patter Extract"
+}
+},
+{
+"resultId": 33338,
+"resultTypeId": 326,
+"resultLevel": 35,
+"ingredientIds": [
+17124,
+2669
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Extrait de Dragofesse",
+"en": "Big Dragobutt Extract"
+}
+},
+{
+"resultId": 33339,
+"resultTypeId": 326,
+"resultLevel": 35,
+"ingredientIds": [
+441,
+2336
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Extrait de Foudroyeur",
+"en": "Big Lightning Thrower Extract"
+}
+},
+{
+"resultId": 33340,
+"resultTypeId": 326,
+"resultLevel": 35,
+"ingredientIds": [
+428,
+2454
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Extrait d'Abreuvoir",
+"en": "Big Drinking Trough Extract"
+}
+},
+{
+"resultId": 33341,
+"resultTypeId": 326,
+"resultLevel": 35,
+"ingredientIds": [
+1844,
+2463
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Extrait de Mangeoire",
+"en": "Big Manger Extract"
+}
+},
+{
+"resultId": 33342,
+"resultTypeId": 323,
+"resultLevel": 37,
+"ingredientIds": [
+11815,
+14635,
+2599
+],
+"quantities": [
+1,
+10,
+2
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Dragodinde de Génération 3",
+"en": "Generation-3 Dragoturkey Kromakina"
+}
+},
+{
+"resultId": 33343,
+"resultTypeId": 323,
+"resultLevel": 39,
+"ingredientIds": [
+8388,
+14635,
+33528,
+33527
+],
+"quantities": [
+1,
+10,
+2,
+2
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Volkorne de Génération 3",
+"en": "Generation-3 Rhineetle Kromakina"
+}
+},
+{
+"resultId": 33344,
+"resultTypeId": 323,
+"resultLevel": 41,
+"ingredientIds": [
+13140,
+14635,
+33523,
+33520,
+33522
+],
+"quantities": [
+1,
+10,
+2,
+2,
+2
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Muldo de Génération 3",
+"en": "Generation-3 Seemyool Kromakina"
+}
+},
+{
+"resultId": 33345,
+"resultTypeId": 323,
+"resultLevel": 43,
+"ingredientIds": [
+8738,
+14635,
+2598
+],
+"quantities": [
+1,
+10,
+2
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Dragodinde de Génération 3",
+"en": "Generation-3 Dragoturkey Animakina"
+}
+},
+{
+"resultId": 33346,
+"resultTypeId": 323,
+"resultLevel": 45,
+"ingredientIds": [
+8385,
+14635,
+33529
+],
+"quantities": [
+1,
+10,
+2
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Volkorne de Génération 3",
+"en": "Generation-3 Rhineetle Animakina"
+}
+},
+{
+"resultId": 33347,
+"resultTypeId": 326,
+"resultLevel": 45,
+"ingredientIds": [
+476,
+8732
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Extrait de Baffeur",
+"en": "Gigantic Slapper Extract"
+}
+},
+{
+"resultId": 33348,
+"resultTypeId": 326,
+"resultLevel": 45,
+"ingredientIds": [
+533,
+8733
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Extrait de Caresseur",
+"en": "Gigantic Patter Extract"
+}
+},
+{
+"resultId": 33349,
+"resultTypeId": 326,
+"resultLevel": 45,
+"ingredientIds": [
+17128,
+8734
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Extrait de Dragofesse",
+"en": "Gigantic Dragobutt Extract"
+}
+},
+{
+"resultId": 33350,
+"resultTypeId": 326,
+"resultLevel": 45,
+"ingredientIds": [
+442,
+8735
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Extrait de Foudroyeur",
+"en": "Gigantic Lightning Thrower Extract"
+}
+},
+{
+"resultId": 33351,
+"resultTypeId": 326,
+"resultLevel": 45,
+"ingredientIds": [
+395,
+2266
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Extrait d'Abreuvoir",
+"en": "Gigantic Drinking Trough Extract"
+}
+},
+{
+"resultId": 33352,
+"resultTypeId": 326,
+"resultLevel": 45,
+"ingredientIds": [
+603,
+2268
+],
+"quantities": [
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Extrait de Mangeoire",
+"en": "Gigantic Manger Extract"
+}
+},
+{
+"resultId": 33353,
+"resultTypeId": 323,
+"resultLevel": 47,
+"ingredientIds": [
+12016,
+14635,
+33521
+],
+"quantities": [
+1,
+10,
+2
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Muldo de Génération 3",
+"en": "Generation-3 Seemyool Animakina"
+}
+},
+{
+"resultId": 33354,
+"resultTypeId": 323,
+"resultLevel": 49,
+"ingredientIds": [
+27368,
+14635,
+10970,
+14280
+],
+"quantities": [
+1,
+10,
+1,
+2
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Dragodinde de Génération 3",
+"en": "Generation-3 Dragoturkey Optimakina"
+}
+},
+{
+"resultId": 33355,
+"resultTypeId": 323,
+"resultLevel": 51,
+"ingredientIds": [
+8397,
+14635,
+33530,
+33526
+],
+"quantities": [
+1,
+10,
+1,
+2
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Volkorne de Génération 3",
+"en": "Generation-3 Rhineetle Optimakina"
+}
+},
+{
+"resultId": 33356,
+"resultTypeId": 323,
+"resultLevel": 53,
+"ingredientIds": [
+9388,
+14635,
+33525,
+33524
+],
+"quantities": [
+1,
+10,
+1,
+2
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Muldo de Génération 3",
+"en": "Generation-3 Seemyool Optimakina"
+}
+},
+{
+"resultId": 33357,
+"resultTypeId": 326,
+"resultLevel": 55,
+"ingredientIds": [
+476,
+14463,
+650
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Philtre de Baffeur",
+"en": "Tiny Slapper Philtre"
+}
+},
+{
+"resultId": 33358,
+"resultTypeId": 326,
+"resultLevel": 55,
+"ingredientIds": [
+533,
+14466,
+1771
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Philtre de Caresseur",
+"en": "Tiny Patter Philtre"
+}
+},
+{
+"resultId": 33359,
+"resultTypeId": 326,
+"resultLevel": 55,
+"ingredientIds": [
+17128,
+14467,
+2479
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Philtre de Dragofesse",
+"en": "Tiny Dragobutt Philtre"
+}
+},
+{
+"resultId": 33360,
+"resultTypeId": 326,
+"resultLevel": 55,
+"ingredientIds": [
+442,
+406,
+2483
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Philtre de Foudroyeur",
+"en": "Tiny Lightning Thrower Philtre"
+}
+},
+{
+"resultId": 33361,
+"resultTypeId": 326,
+"resultLevel": 55,
+"ingredientIds": [
+395,
+419,
+2507
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Philtre d'Abreuvoir",
+"en": "Tiny Drinking Trough Philtre"
+}
+},
+{
+"resultId": 33362,
+"resultTypeId": 326,
+"resultLevel": 55,
+"ingredientIds": [
+603,
+480,
+649
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Philtre de Mangeoire",
+"en": "Tiny Manger Philtre"
+}
+},
+{
+"resultId": 33363,
+"resultTypeId": 323,
+"resultLevel": 57,
+"ingredientIds": [
+370,
+14635,
+2599
+],
+"quantities": [
+1,
+10,
+3
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Dragodinde de Génération 4",
+"en": "Generation-4 Dragoturkey Kromakina"
+}
+},
+{
+"resultId": 33364,
+"resultTypeId": 323,
+"resultLevel": 59,
+"ingredientIds": [
+2241,
+14635,
+33528,
+33527
+],
+"quantities": [
+1,
+10,
+3,
+3
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Volkorne de Génération 4",
+"en": "Generation-4 Rhineetle Kromakina"
+}
+},
+{
+"resultId": 33365,
+"resultTypeId": 323,
+"resultLevel": 61,
+"ingredientIds": [
+2242,
+14635,
+33523,
+33520,
+33522
+],
+"quantities": [
+1,
+10,
+3,
+3,
+3
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Muldo de Génération 4",
+"en": "Generation-4 Seemyool Kromakina"
+}
+},
+{
+"resultId": 33366,
+"resultTypeId": 323,
+"resultLevel": 63,
+"ingredientIds": [
+2437,
+14635,
+2598
+],
+"quantities": [
+1,
+10,
+3
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Dragodinde de Génération 4",
+"en": "Generation-4 Dragoturkey Animakina"
+}
+},
+{
+"resultId": 33367,
+"resultTypeId": 323,
+"resultLevel": 65,
+"ingredientIds": [
+11695,
+14635,
+33529
+],
+"quantities": [
+1,
+10,
+3
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Volkorne de Génération 4",
+"en": "Generation-4 Rhineetle Animakina"
+}
+},
+{
+"resultId": 33368,
+"resultTypeId": 326,
+"resultLevel": 65,
+"ingredientIds": [
+460,
+2252,
+2056
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Philtre de Baffeur",
+"en": "Small Slapper Philtre"
+}
+},
+{
+"resultId": 33369,
+"resultTypeId": 326,
+"resultLevel": 65,
+"ingredientIds": [
+401,
+2306,
+2295
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Philtre de Caresseur",
+"en": "Small Patter Philtre"
+}
+},
+{
+"resultId": 33370,
+"resultTypeId": 326,
+"resultLevel": 65,
+"ingredientIds": [
+17132,
+1679,
+2500
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Philtre de Dragofesse",
+"en": "Small Dragobutt Philtre"
+}
+},
+{
+"resultId": 33371,
+"resultTypeId": 326,
+"resultLevel": 65,
+"ingredientIds": [
+443,
+8739,
+2504
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Philtre de Foudroyeur",
+"en": "Small Lightning Thrower Philtre"
+}
+},
+{
+"resultId": 33372,
+"resultTypeId": 326,
+"resultLevel": 65,
+"ingredientIds": [
+380,
+2505,
+2549
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Philtre d'Abreuvoir",
+"en": "Small Drinking Trough Philtre"
+}
+},
+{
+"resultId": 33373,
+"resultTypeId": 326,
+"resultLevel": 65,
+"ingredientIds": [
+1794,
+8050,
+2550
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Philtre de Mangeoire",
+"en": "Small Manger Philtre"
+}
+},
+{
+"resultId": 33374,
+"resultTypeId": 323,
+"resultLevel": 67,
+"ingredientIds": [
+8758,
+14635,
+33521
+],
+"quantities": [
+1,
+10,
+3
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Muldo de Génération 4",
+"en": "Generation-4 Seemyool Animakina"
+}
+},
+{
+"resultId": 33375,
+"resultTypeId": 323,
+"resultLevel": 69,
+"ingredientIds": [
+8102,
+14635,
+10970,
+14280
+],
+"quantities": [
+1,
+10,
+1,
+3
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Dragodinde de Génération 4",
+"en": "Generation-4 Dragoturkey Optimakina"
+}
+},
+{
+"resultId": 33376,
+"resultTypeId": 323,
+"resultLevel": 71,
+"ingredientIds": [
+12076,
+14635,
+33530,
+33526
+],
+"quantities": [
+1,
+10,
+1,
+3
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Volkorne de Génération 4",
+"en": "Generation-4 Rhineetle Optimakina"
+}
+},
+{
+"resultId": 33377,
+"resultTypeId": 323,
+"resultLevel": 73,
+"ingredientIds": [
+21264,
+14635,
+33525,
+33524
+],
+"quantities": [
+1,
+10,
+1,
+3
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Muldo de Génération 4",
+"en": "Generation-4 Seemyool Optimakina"
+}
+},
+{
+"resultId": 33378,
+"resultTypeId": 326,
+"resultLevel": 75,
+"ingredientIds": [
+460,
+308,
+1660
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Philtre de Baffeur",
+"en": "Slapper Philtre"
+}
+},
+{
+"resultId": 33379,
+"resultTypeId": 326,
+"resultLevel": 75,
+"ingredientIds": [
+401,
+842,
+1682
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Philtre de Caresseur",
+"en": "Patter Philtre"
+}
+},
+{
+"resultId": 33380,
+"resultTypeId": 326,
+"resultLevel": 75,
+"ingredientIds": [
+17132,
+843,
+8077
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Philtre de Dragofesse",
+"en": "Dragobutt Philtre"
+}
+},
+{
+"resultId": 33381,
+"resultTypeId": 326,
+"resultLevel": 75,
+"ingredientIds": [
+443,
+1129,
+1612
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Philtre de Foudroyeur",
+"en": "Lightning Thrower Philtre"
+}
+},
+{
+"resultId": 33382,
+"resultTypeId": 326,
+"resultLevel": 75,
+"ingredientIds": [
+380,
+846,
+8075
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Philtre d'Abreuvoir",
+"en": "Drinking Trough Philtre"
+}
+},
+{
+"resultId": 33383,
+"resultTypeId": 326,
+"resultLevel": 75,
+"ingredientIds": [
+1794,
+847,
+2552
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Philtre de Mangeoire",
+"en": "Manger Philtre"
+}
+},
+{
+"resultId": 33384,
+"resultTypeId": 323,
+"resultLevel": 77,
+"ingredientIds": [
+14468,
+14635,
+2599
+],
+"quantities": [
+1,
+10,
+4
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Dragodinde de Génération 5",
+"en": "Generation-5 Dragoturkey Kromakina"
+}
+},
+{
+"resultId": 33385,
+"resultTypeId": 323,
+"resultLevel": 79,
+"ingredientIds": [
+18371,
+14635,
+33528,
+33527
+],
+"quantities": [
+1,
+10,
+4,
+4
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Volkorne de Génération 5",
+"en": "Generation-5 Rhineetle Kromakina"
+}
+},
+{
+"resultId": 33386,
+"resultTypeId": 323,
+"resultLevel": 81,
+"ingredientIds": [
+2621,
+14635,
+33523,
+33520,
+33522
+],
+"quantities": [
+1,
+10,
+4,
+4,
+4
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Muldo de Génération 5",
+"en": "Generation-5 Seemyool Kromakina"
+}
+},
+{
+"resultId": 33387,
+"resultTypeId": 323,
+"resultLevel": 83,
+"ingredientIds": [
+16180,
+14635,
+2598
+],
+"quantities": [
+1,
+10,
+4
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Dragodinde de Génération 5",
+"en": "Generation-5 Dragoturkey Animakina"
+}
+},
+{
+"resultId": 33388,
+"resultTypeId": 323,
+"resultLevel": 85,
+"ingredientIds": [
+8496,
+14635,
+33529
+],
+"quantities": [
+1,
+10,
+4
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Volkorne de Génération 5",
+"en": "Generation-5 Rhineetle Animakina"
+}
+},
+{
+"resultId": 33389,
+"resultTypeId": 326,
+"resultLevel": 85,
+"ingredientIds": [
+471,
+8059,
+16216
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Philtre de Baffeur",
+"en": "Big Slapper Philtre"
+}
+},
+{
+"resultId": 33390,
+"resultTypeId": 326,
+"resultLevel": 85,
+"ingredientIds": [
+423,
+8060,
+16217
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Philtre de Caresseur",
+"en": "Big Patter Philtre"
+}
+},
+{
+"resultId": 33391,
+"resultTypeId": 326,
+"resultLevel": 85,
+"ingredientIds": [
+17136,
+8061,
+16218
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Philtre de Dragofesse",
+"en": "Big Dragobutt Philtre"
+}
+},
+{
+"resultId": 33392,
+"resultTypeId": 326,
+"resultLevel": 85,
+"ingredientIds": [
+445,
+8062,
+16219
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Philtre de Foudroyeur",
+"en": "Big Lightning Thrower Philtre"
+}
+},
+{
+"resultId": 33393,
+"resultTypeId": 326,
+"resultLevel": 85,
+"ingredientIds": [
+593,
+8083,
+16220
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Philtre d'Abreuvoir",
+"en": "Big Drinking Trough Philtre"
+}
+},
+{
+"resultId": 33394,
+"resultTypeId": 326,
+"resultLevel": 85,
+"ingredientIds": [
+1847,
+8084,
+6740
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Philtre de Mangeoire",
+"en": "Big Manger Philtre"
+}
+},
+{
+"resultId": 33395,
+"resultTypeId": 323,
+"resultLevel": 87,
+"ingredientIds": [
+1691,
+14635,
+33521
+],
+"quantities": [
+1,
+10,
+4
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Muldo de Génération 5",
+"en": "Generation-5 Seemyool Animakina"
+}
+},
+{
+"resultId": 33396,
+"resultTypeId": 323,
+"resultLevel": 89,
+"ingredientIds": [
+2645,
+14635,
+10970,
+14280
+],
+"quantities": [
+1,
+10,
+1,
+4
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Dragodinde de Génération 5",
+"en": "Generation-5 Dragoturkey Optimakina"
+}
+},
+{
+"resultId": 33397,
+"resultTypeId": 323,
+"resultLevel": 91,
+"ingredientIds": [
+2577,
+14635,
+33530,
+33526
+],
+"quantities": [
+1,
+10,
+1,
+4
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Volkorne de Génération 5",
+"en": "Generation-5 Rhineetle Optimakina"
+}
+},
+{
+"resultId": 33398,
+"resultTypeId": 323,
+"resultLevel": 93,
+"ingredientIds": [
+8403,
+14635,
+33525,
+33524
+],
+"quantities": [
+1,
+10,
+1,
+4
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Muldo de Génération 5",
+"en": "Generation-5 Seemyool Optimakina"
+}
+},
+{
+"resultId": 33399,
+"resultTypeId": 326,
+"resultLevel": 95,
+"ingredientIds": [
+471,
+8807,
+291
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Philtre de Baffeur",
+"en": "Gigantic Slapper Philtre"
+}
+},
+{
+"resultId": 33400,
+"resultTypeId": 326,
+"resultLevel": 95,
+"ingredientIds": [
+423,
+14509,
+292
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Philtre de Caresseur",
+"en": "Gigantic Patter Philtre"
+}
+},
+{
+"resultId": 33401,
+"resultTypeId": 326,
+"resultLevel": 95,
+"ingredientIds": [
+17136,
+14510,
+438
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Philtre de Dragofesse",
+"en": "Gigantic Dragobutt Philtre"
+}
+},
+{
+"resultId": 33402,
+"resultTypeId": 326,
+"resultLevel": 95,
+"ingredientIds": [
+445,
+8054,
+439
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Philtre de Foudroyeur",
+"en": "Gigantic Lightning Thrower Philtre"
+}
+},
+{
+"resultId": 33403,
+"resultTypeId": 326,
+"resultLevel": 95,
+"ingredientIds": [
+593,
+8055,
+14512
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Philtre d'Abreuvoir",
+"en": "Gigantic Drinking Trough Philtre"
+}
+},
+{
+"resultId": 33404,
+"resultTypeId": 326,
+"resultLevel": 95,
+"ingredientIds": [
+1847,
+8390,
+14513
+],
+"quantities": [
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Philtre de Mangeoire",
+"en": "Gigantic Manger Philtre"
+}
+},
+{
+"resultId": 33405,
+"resultTypeId": 323,
+"resultLevel": 97,
+"ingredientIds": [
+8383,
+14635,
+2599
+],
+"quantities": [
+1,
+10,
+5
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Dragodinde de Génération 6",
+"en": "Generation-6 Dragoturkey Kromakina"
+}
+},
+{
+"resultId": 33406,
+"resultTypeId": 323,
+"resultLevel": 99,
+"ingredientIds": [
+15164,
+14635,
+33528,
+33527
+],
+"quantities": [
+1,
+10,
+5,
+5
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Volkorne de Génération 6",
+"en": "Generation-6 Rhineetle Kromakina"
+}
+},
+{
+"resultId": 33407,
+"resultTypeId": 323,
+"resultLevel": 101,
+"ingredientIds": [
+14518,
+14635,
+33523,
+33520,
+33522
+],
+"quantities": [
+1,
+10,
+5,
+5,
+5
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Muldo de Génération 6",
+"en": "Generation-6 Seemyool Kromakina"
+}
+},
+{
+"resultId": 33408,
+"resultTypeId": 323,
+"resultLevel": 103,
+"ingredientIds": [
+13167,
+14635,
+2598
+],
+"quantities": [
+1,
+10,
+5
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Dragodinde de Génération 6",
+"en": "Generation-6 Dragoturkey Animakina"
+}
+},
+{
+"resultId": 33409,
+"resultTypeId": 323,
+"resultLevel": 105,
+"ingredientIds": [
+21268,
+14635,
+33529
+],
+"quantities": [
+1,
+10,
+5
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Volkorne de Génération 6",
+"en": "Generation-6 Rhineetle Animakina"
+}
+},
+{
+"resultId": 33410,
+"resultTypeId": 326,
+"resultLevel": 105,
+"ingredientIds": [
+27375,
+2254,
+15165,
+8736
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Potion de Baffeur",
+"en": "Tiny Slapper Potion"
+}
+},
+{
+"resultId": 33411,
+"resultTypeId": 326,
+"resultLevel": 105,
+"ingredientIds": [
+532,
+2253,
+15166,
+8762
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Potion de Caresseur",
+"en": "Tiny Patter Potion"
+}
+},
+{
+"resultId": 33412,
+"resultTypeId": 326,
+"resultLevel": 105,
+"ingredientIds": [
+17140,
+2605,
+15167,
+8769
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Potion de Dragofesse",
+"en": "Tiny Dragobutt Potion"
+}
+},
+{
+"resultId": 33413,
+"resultTypeId": 326,
+"resultLevel": 105,
+"ingredientIds": [
+444,
+2607,
+15168,
+8312
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Potion de Foudroyeur",
+"en": "Tiny Lightning Thrower Potion"
+}
+},
+{
+"resultId": 33414,
+"resultTypeId": 326,
+"resultLevel": 105,
+"ingredientIds": [
+594,
+2632,
+8741,
+8315
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Potion d'Abreuvoir",
+"en": "Tiny Drinking Trough Potion"
+}
+},
+{
+"resultId": 33415,
+"resultTypeId": 326,
+"resultLevel": 105,
+"ingredientIds": [
+16461,
+6736,
+8811,
+8765
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Potion de Mangeoire",
+"en": "Tiny Manger Potion"
+}
+},
+{
+"resultId": 33416,
+"resultTypeId": 323,
+"resultLevel": 107,
+"ingredientIds": [
+17614,
+14635,
+33521
+],
+"quantities": [
+1,
+10,
+5
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Muldo de Génération 6",
+"en": "Generation-6 Seemyool Animakina"
+}
+},
+{
+"resultId": 33417,
+"resultTypeId": 323,
+"resultLevel": 109,
+"ingredientIds": [
+16211,
+14635,
+10970,
+14280
+],
+"quantities": [
+1,
+10,
+1,
+5
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Dragodinde de Génération 6",
+"en": "Generation-6 Dragoturkey Optimakina"
+}
+},
+{
+"resultId": 33418,
+"resultTypeId": 323,
+"resultLevel": 111,
+"ingredientIds": [
+8485,
+14635,
+33530,
+33526
+],
+"quantities": [
+1,
+10,
+1,
+5
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Volkorne de Génération 6",
+"en": "Generation-6 Rhineetle Optimakina"
+}
+},
+{
+"resultId": 33419,
+"resultTypeId": 323,
+"resultLevel": 113,
+"ingredientIds": [
+8486,
+14635,
+33525,
+33524
+],
+"quantities": [
+1,
+10,
+1,
+5
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Muldo de Génération 6",
+"en": "Generation-6 Seemyool Optimakina"
+}
+},
+{
+"resultId": 33420,
+"resultTypeId": 326,
+"resultLevel": 115,
+"ingredientIds": [
+27375,
+11117,
+8058,
+8314
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petite Potion de Baffeur",
+"en": "Small Slapper Potion"
+}
+},
+{
+"resultId": 33421,
+"resultTypeId": 326,
+"resultLevel": 115,
+"ingredientIds": [
+532,
+11118,
+8066,
+13338
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petite Potion de Caresseur",
+"en": "Small Patter Potion"
+}
+},
+{
+"resultId": 33422,
+"resultTypeId": 326,
+"resultLevel": 115,
+"ingredientIds": [
+17140,
+11119,
+13700,
+1694
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petite Potion de Dragofesse",
+"en": "Small Dragobutt Potion"
+}
+},
+{
+"resultId": 33423,
+"resultTypeId": 326,
+"resultLevel": 115,
+"ingredientIds": [
+444,
+11120,
+8052,
+2560
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petite Potion de Foudroyeur",
+"en": "Small Lightning Thrower Potion"
+}
+},
+{
+"resultId": 33424,
+"resultTypeId": 326,
+"resultLevel": 115,
+"ingredientIds": [
+594,
+11121,
+8076,
+2561
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petite Potion d'Abreuvoir",
+"en": "Small Drinking Trough Potion"
+}
+},
+{
+"resultId": 33425,
+"resultTypeId": 326,
+"resultLevel": 115,
+"ingredientIds": [
+16461,
+11122,
+8082,
+2562
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petite Potion de Mangeoire",
+"en": "Small Manger Potion"
+}
+},
+{
+"resultId": 33426,
+"resultTypeId": 323,
+"resultLevel": 117,
+"ingredientIds": [
+9389,
+14635,
+2599
+],
+"quantities": [
+1,
+10,
+6
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Dragodinde de Génération 7",
+"en": "Generation-7 Dragoturkey Kromakina"
+}
+},
+{
+"resultId": 33427,
+"resultTypeId": 323,
+"resultLevel": 119,
+"ingredientIds": [
+15727,
+14635,
+33528,
+33527
+],
+"quantities": [
+1,
+10,
+6,
+6
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Volkorne de Génération 7",
+"en": "Generation-7 Rhineetle Kromakina"
+}
+},
+{
+"resultId": 33428,
+"resultTypeId": 323,
+"resultLevel": 121,
+"ingredientIds": [
+840,
+14635,
+33523,
+33520,
+33522
+],
+"quantities": [
+1,
+10,
+6,
+6,
+6
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Muldo de Génération 7",
+"en": "Generation-7 Seemyool Kromakina"
+}
+},
+{
+"resultId": 33429,
+"resultTypeId": 323,
+"resultLevel": 123,
+"ingredientIds": [
+8405,
+14635,
+2598
+],
+"quantities": [
+1,
+10,
+6
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Dragodinde de Génération 7",
+"en": "Generation-7 Dragoturkey Animakina"
+}
+},
+{
+"resultId": 33430,
+"resultTypeId": 323,
+"resultLevel": 125,
+"ingredientIds": [
+8367,
+14635,
+33529
+],
+"quantities": [
+1,
+10,
+6
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Volkorne de Génération 7",
+"en": "Generation-7 Rhineetle Animakina"
+}
+},
+{
+"resultId": 33431,
+"resultTypeId": 326,
+"resultLevel": 125,
+"ingredientIds": [
+474,
+8356,
+8803,
+14474
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Potion de Baffeur",
+"en": "Slapper Potion"
+}
+},
+{
+"resultId": 33432,
+"resultTypeId": 326,
+"resultLevel": 125,
+"ingredientIds": [
+405,
+8359,
+8804,
+14475
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Potion de Caresseur",
+"en": "Patter Potion"
+}
+},
+{
+"resultId": 33433,
+"resultTypeId": 326,
+"resultLevel": 125,
+"ingredientIds": [
+17144,
+8360,
+8805,
+14476
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Potion de Dragofesse",
+"en": "Dragobutt Potion"
+}
+},
+{
+"resultId": 33434,
+"resultTypeId": 326,
+"resultLevel": 125,
+"ingredientIds": [
+350,
+8361,
+8806,
+14477
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Potion de Foudroyeur",
+"en": "Lightning Thrower Potion"
+}
+},
+{
+"resultId": 33435,
+"resultTypeId": 326,
+"resultLevel": 125,
+"ingredientIds": [
+7059,
+8362,
+15071,
+14478
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Potion d'Abreuvoir",
+"en": "Drinking Trough Potion"
+}
+},
+{
+"resultId": 33436,
+"resultTypeId": 326,
+"resultLevel": 125,
+"ingredientIds": [
+1801,
+8802,
+15072,
+14479
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Potion de Mangeoire",
+"en": "Manger Potion"
+}
+},
+{
+"resultId": 33437,
+"resultTypeId": 323,
+"resultLevel": 127,
+"ingredientIds": [
+2247,
+14635,
+33521
+],
+"quantities": [
+1,
+10,
+6
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Muldo de Génération 7",
+"en": "Generation-7 Seemyool Animakina"
+}
+},
+{
+"resultId": 33438,
+"resultTypeId": 323,
+"resultLevel": 129,
+"ingredientIds": [
+11221,
+14635,
+10970,
+14280
+],
+"quantities": [
+1,
+10,
+1,
+6
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Dragodinde de Génération 7",
+"en": "Generation-7 Dragoturkey Optimakina"
+}
+},
+{
+"resultId": 33439,
+"resultTypeId": 323,
+"resultLevel": 131,
+"ingredientIds": [
+15065,
+14635,
+33530,
+33526
+],
+"quantities": [
+1,
+10,
+1,
+6
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Volkorne de Génération 7",
+"en": "Generation-7 Rhineetle Optimakina"
+}
+},
+{
+"resultId": 33440,
+"resultTypeId": 323,
+"resultLevel": 133,
+"ingredientIds": [
+15457,
+14635,
+33525,
+33524
+],
+"quantities": [
+1,
+10,
+1,
+6
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Muldo de Génération 7",
+"en": "Generation-7 Seemyool Optimakina"
+}
+},
+{
+"resultId": 33441,
+"resultTypeId": 326,
+"resultLevel": 135,
+"ingredientIds": [
+474,
+11222,
+8775,
+15458
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grande Potion de Baffeur",
+"en": "Big Slapper Potion"
+}
+},
+{
+"resultId": 33442,
+"resultTypeId": 326,
+"resultLevel": 135,
+"ingredientIds": [
+405,
+11223,
+8773,
+15459
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grande Potion de Caresseur",
+"en": "Big Patter Potion"
+}
+},
+{
+"resultId": 33443,
+"resultTypeId": 326,
+"resultLevel": 135,
+"ingredientIds": [
+17144,
+11224,
+8772,
+15460
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grande Potion de Dragofesse",
+"en": "Big Dragobutt Potion"
+}
+},
+{
+"resultId": 33444,
+"resultTypeId": 326,
+"resultLevel": 135,
+"ingredientIds": [
+350,
+11225,
+8774,
+18362
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grande Potion de Foudroyeur",
+"en": "Big Lightning Thrower Potion"
+}
+},
+{
+"resultId": 33445,
+"resultTypeId": 326,
+"resultLevel": 135,
+"ingredientIds": [
+7059,
+11226,
+8776,
+18359
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grande Potion d'Abreuvoir",
+"en": "Big Drinking Trough Potion"
+}
+},
+{
+"resultId": 33446,
+"resultTypeId": 326,
+"resultLevel": 135,
+"ingredientIds": [
+1801,
+11227,
+8783,
+18361
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grande Potion de Mangeoire",
+"en": "Big Manger Potion"
+}
+},
+{
+"resultId": 33447,
+"resultTypeId": 323,
+"resultLevel": 137,
+"ingredientIds": [
+7386,
+14635,
+2599
+],
+"quantities": [
+1,
+10,
+7
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Dragodinde de Génération 8",
+"en": "Generation-8 Dragoturkey Kromakina"
+}
+},
+{
+"resultId": 33448,
+"resultTypeId": 323,
+"resultLevel": 139,
+"ingredientIds": [
+18383,
+14635,
+33528,
+33527
+],
+"quantities": [
+1,
+10,
+7,
+7
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Volkorne de Génération 8",
+"en": "Generation-8 Rhineetle Kromakina"
+}
+},
+{
+"resultId": 33449,
+"resultTypeId": 323,
+"resultLevel": 141,
+"ingredientIds": [
+8399,
+14635,
+33523,
+33520,
+33522
+],
+"quantities": [
+1,
+10,
+7,
+7,
+7
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Muldo de Génération 8",
+"en": "Generation-8 Seemyool Kromakina"
+}
+},
+{
+"resultId": 33450,
+"resultTypeId": 323,
+"resultLevel": 143,
+"ingredientIds": [
+6488,
+14635,
+2598
+],
+"quantities": [
+1,
+10,
+7
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Dragodinde de Génération 8",
+"en": "Generation-8 Dragoturkey Animakina"
+}
+},
+{
+"resultId": 33451,
+"resultTypeId": 323,
+"resultLevel": 145,
+"ingredientIds": [
+11232,
+14635,
+33529
+],
+"quantities": [
+1,
+10,
+7
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Volkorne de Génération 8",
+"en": "Generation-8 Rhineetle Animakina"
+}
+},
+{
+"resultId": 33452,
+"resultTypeId": 326,
+"resultLevel": 145,
+"ingredientIds": [
+449,
+1894,
+7292,
+11309
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Potion de Baffeur",
+"en": "Gigantic Slapper Potion"
+}
+},
+{
+"resultId": 33453,
+"resultTypeId": 326,
+"resultLevel": 145,
+"ingredientIds": [
+425,
+2510,
+7294,
+11312
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Potion de Caresseur",
+"en": "Gigantic Patter Potion"
+}
+},
+{
+"resultId": 33454,
+"resultTypeId": 326,
+"resultLevel": 145,
+"ingredientIds": [
+17148,
+2511,
+7298,
+11314
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Potion de Dragofesse",
+"en": "Gigantic Dragobutt Potion"
+}
+},
+{
+"resultId": 33455,
+"resultTypeId": 326,
+"resultLevel": 145,
+"ingredientIds": [
+446,
+2513,
+7300,
+11315
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Potion de Foudroyeur",
+"en": "Gigantic Lightning Thrower Potion"
+}
+},
+{
+"resultId": 33456,
+"resultTypeId": 326,
+"resultLevel": 145,
+"ingredientIds": [
+16385,
+2514,
+7301,
+11318
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Potion d'Abreuvoir",
+"en": "Gigantic Drinking Trough Potion"
+}
+},
+{
+"resultId": 33457,
+"resultTypeId": 326,
+"resultLevel": 145,
+"ingredientIds": [
+16465,
+2516,
+7343,
+11319
+],
+"quantities": [
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Potion de Mangeoire",
+"en": "Gigantic Manger Potion"
+}
+},
+{
+"resultId": 33458,
+"resultTypeId": 323,
+"resultLevel": 147,
+"ingredientIds": [
+8381,
+14635,
+33521
+],
+"quantities": [
+1,
+10,
+7
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Muldo de Génération 8",
+"en": "Generation-8 Seemyool Animakina"
+}
+},
+{
+"resultId": 33459,
+"resultTypeId": 323,
+"resultLevel": 149,
+"ingredientIds": [
+8777,
+14635,
+10970,
+14280
+],
+"quantities": [
+1,
+10,
+1,
+7
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Dragodinde de Génération 8",
+"en": "Generation-8 Dragoturkey Optimakina"
+}
+},
+{
+"resultId": 33460,
+"resultTypeId": 323,
+"resultLevel": 151,
+"ingredientIds": [
+8490,
+14635,
+33530,
+33526
+],
+"quantities": [
+1,
+10,
+1,
+7
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Volkorne de Génération 8",
+"en": "Generation-8 Rhineetle Optimakina"
+}
+},
+{
+"resultId": 33461,
+"resultTypeId": 323,
+"resultLevel": 153,
+"ingredientIds": [
+11321,
+14635,
+33525,
+33524
+],
+"quantities": [
+1,
+10,
+1,
+7
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Muldo de Génération 8",
+"en": "Generation-8 Seemyool Optimakina"
+}
+},
+{
+"resultId": 33462,
+"resultTypeId": 326,
+"resultLevel": 155,
+"ingredientIds": [
+449,
+11323,
+8786,
+26316,
+15045
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Élixir de Baffeur",
+"en": "Tiny Slapper Elixir"
+}
+},
+{
+"resultId": 33463,
+"resultTypeId": 326,
+"resultLevel": 155,
+"ingredientIds": [
+425,
+11324,
+8787,
+26317,
+15046
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Élixir de Caresseur",
+"en": "Tiny Patter Elixir"
+}
+},
+{
+"resultId": 33464,
+"resultTypeId": 326,
+"resultLevel": 155,
+"ingredientIds": [
+17148,
+11325,
+15171,
+26318,
+15047
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Élixir de Dragofesse",
+"en": "Tiny Dragobutt Elixir"
+}
+},
+{
+"resultId": 33465,
+"resultTypeId": 326,
+"resultLevel": 155,
+"ingredientIds": [
+446,
+11326,
+15172,
+26319,
+15048
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Élixir de Foudroyeur",
+"en": "Tiny Lightning Thrower Elixir"
+}
+},
+{
+"resultId": 33466,
+"resultTypeId": 326,
+"resultLevel": 155,
+"ingredientIds": [
+16385,
+11327,
+15173,
+26320,
+15050
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Élixir d'Abreuvoir",
+"en": "Tiny Drinking Trough Eixir"
+}
+},
+{
+"resultId": 33467,
+"resultTypeId": 326,
+"resultLevel": 155,
+"ingredientIds": [
+16465,
+11328,
+15174,
+8832,
+15051
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Minuscule Élixir de Mangeoire",
+"en": "Tiny Manger Elixir"
+}
+},
+{
+"resultId": 33468,
+"resultTypeId": 323,
+"resultLevel": 155,
+"ingredientIds": [
+15170,
+14635,
+2599
+],
+"quantities": [
+1,
+10,
+8
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Dragodinde de Génération 9",
+"en": "Generation-9 Dragoturkey Kromakina"
+}
+},
+{
+"resultId": 33469,
+"resultTypeId": 323,
+"resultLevel": 157,
+"ingredientIds": [
+11333,
+14635,
+33528,
+33527
+],
+"quantities": [
+1,
+10,
+8,
+8
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Volkorne de Génération 9",
+"en": "Generation-9 Rhineetle Kromakina"
+}
+},
+{
+"resultId": 33470,
+"resultTypeId": 323,
+"resultLevel": 161,
+"ingredientIds": [
+15039,
+14635,
+2598
+],
+"quantities": [
+1,
+10,
+8
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Dragodinde de Génération 9",
+"en": "Generation-9 Dragoturkey Animakina"
+}
+},
+{
+"resultId": 33471,
+"resultTypeId": 326,
+"resultLevel": 165,
+"ingredientIds": [
+472,
+7379,
+11335,
+17615,
+7381
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Élixir de Baffeur",
+"en": "Small Slapper Elixir"
+}
+},
+{
+"resultId": 33472,
+"resultTypeId": 326,
+"resultLevel": 165,
+"ingredientIds": [
+16454,
+7384,
+11336,
+17616,
+7383
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Élixir de Caresseur",
+"en": "Small Patter Elixir"
+}
+},
+{
+"resultId": 33473,
+"resultTypeId": 326,
+"resultLevel": 165,
+"ingredientIds": [
+17152,
+7404,
+11337,
+15722,
+7403
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Élixir de Dragofesse",
+"en": "Small Dragobutt Elixir"
+}
+},
+{
+"resultId": 33474,
+"resultTypeId": 326,
+"resultLevel": 165,
+"ingredientIds": [
+313,
+7405,
+11338,
+15723,
+7408
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Élixir de Foudroyeur",
+"en": "Small Lightning Thrower Elixir"
+}
+},
+{
+"resultId": 33475,
+"resultTypeId": 326,
+"resultLevel": 165,
+"ingredientIds": [
+16387,
+7407,
+11340,
+15724,
+17617
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Élixir d'Abreuvoir",
+"en": "Small Drinking Trough Elixir"
+}
+},
+{
+"resultId": 33476,
+"resultTypeId": 326,
+"resultLevel": 165,
+"ingredientIds": [
+1779,
+17618,
+11882,
+15725,
+7410
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Petit Élixir de Mangeoire",
+"en": "Small Manger Elixir"
+}
+},
+{
+"resultId": 33477,
+"resultTypeId": 323,
+"resultLevel": 163,
+"ingredientIds": [
+13168,
+14635,
+33529
+],
+"quantities": [
+1,
+10,
+8
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Volkorne de Génération 9",
+"en": "Generation-9 Rhineetle Animakina"
+}
+},
+{
+"resultId": 33478,
+"resultTypeId": 323,
+"resultLevel": 167,
+"ingredientIds": [
+7385,
+14635,
+10970,
+14280
+],
+"quantities": [
+1,
+10,
+2,
+8
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Dragodinde de Génération 9",
+"en": "Generation-9 Dragoturkey Optimakina"
+}
+},
+{
+"resultId": 33479,
+"resultTypeId": 323,
+"resultLevel": 169,
+"ingredientIds": [
+11341,
+14635,
+33530,
+33526
+],
+"quantities": [
+1,
+10,
+2,
+8
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Volkorne de Génération 9",
+"en": "Generation-9 Rhineetle Optimakina"
+}
+},
+{
+"resultId": 33480,
+"resultTypeId": 326,
+"resultLevel": 175,
+"ingredientIds": [
+472,
+11885,
+18562,
+9269,
+13736
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Élixir de Baffeur",
+"en": "Slapper Elixir"
+}
+},
+{
+"resultId": 33481,
+"resultTypeId": 326,
+"resultLevel": 175,
+"ingredientIds": [
+16454,
+11886,
+18563,
+9277,
+13737
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Élixir de Caresseur",
+"en": "Patter Elixir"
+}
+},
+{
+"resultId": 33482,
+"resultTypeId": 326,
+"resultLevel": 175,
+"ingredientIds": [
+17152,
+11887,
+18564,
+9278,
+13739
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Élixir de Dragofesse",
+"en": "Dragobutt Elixir"
+}
+},
+{
+"resultId": 33483,
+"resultTypeId": 326,
+"resultLevel": 175,
+"ingredientIds": [
+313,
+11888,
+18565,
+9279,
+13741
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Élixir de Foudroyeur",
+"en": "Lightning Thrower Elixir"
+}
+},
+{
+"resultId": 33484,
+"resultTypeId": 326,
+"resultLevel": 175,
+"ingredientIds": [
+16387,
+11889,
+18567,
+11891,
+13743
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Élixir d'Abreuvoir",
+"en": "Drinking Trough Elixir"
+}
+},
+{
+"resultId": 33485,
+"resultTypeId": 326,
+"resultLevel": 175,
+"ingredientIds": [
+1779,
+11890,
+9263,
+11892,
+13745
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Élixir de Mangeoire",
+"en": "Manger Elixir"
+}
+},
+{
+"resultId": 33486,
+"resultTypeId": 323,
+"resultLevel": 173,
+"ingredientIds": [
+15721,
+14635,
+2599
+],
+"quantities": [
+1,
+10,
+10
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Dragodinde de Génération 10",
+"en": "Generation-10 Dragoturkey Kromakina"
+}
+},
+{
+"resultId": 33487,
+"resultTypeId": 323,
+"resultLevel": 175,
+"ingredientIds": [
+9280,
+14635,
+33528,
+33527
+],
+"quantities": [
+1,
+10,
+10,
+10
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Volkorne de Génération 10",
+"en": "Generation-10 Rhineetle Kromakina"
+}
+},
+{
+"resultId": 33488,
+"resultTypeId": 323,
+"resultLevel": 179,
+"ingredientIds": [
+11895,
+14635,
+2598
+],
+"quantities": [
+1,
+10,
+10
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Dragodinde de Génération 10",
+"en": "Generation-10 Dragoturkey Animakina"
+}
+},
+{
+"resultId": 33489,
+"resultTypeId": 326,
+"resultLevel": 185,
+"ingredientIds": [
+470,
+11519,
+11934,
+11521,
+11946
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Élixir de Baffeur",
+"en": "Big Slapper Elixir"
+}
+},
+{
+"resultId": 33490,
+"resultTypeId": 326,
+"resultLevel": 185,
+"ingredientIds": [
+16456,
+11919,
+15452,
+11527,
+11920
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Élixir de Caresseur",
+"en": "Big Patter Elixir"
+}
+},
+{
+"resultId": 33491,
+"resultTypeId": 326,
+"resultLevel": 185,
+"ingredientIds": [
+17156,
+11922,
+15453,
+11525,
+11921
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Élixir de Dragofesse",
+"en": "Big Dragobutt Elixir"
+}
+},
+{
+"resultId": 33492,
+"resultTypeId": 326,
+"resultLevel": 185,
+"ingredientIds": [
+27621,
+11924,
+15454,
+11935,
+11923
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Élixir de Foudroyeur",
+"en": "Big Lightning Thrower Elixir"
+}
+},
+{
+"resultId": 33493,
+"resultTypeId": 326,
+"resultLevel": 185,
+"ingredientIds": [
+16389,
+11925,
+15455,
+11937,
+11926
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Élixir d'Abreuvoir",
+"en": "Big Drinking Trough Elixir"
+}
+},
+{
+"resultId": 33494,
+"resultTypeId": 326,
+"resultLevel": 185,
+"ingredientIds": [
+16469,
+11928,
+11933,
+11941,
+11927
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Grand Élixir de Mangeoire",
+"en": "Big Manger Elixir"
+}
+},
+{
+"resultId": 33495,
+"resultTypeId": 323,
+"resultLevel": 181,
+"ingredientIds": [
+13157,
+14635,
+33529
+],
+"quantities": [
+1,
+10,
+10
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Volkorne de Génération 10",
+"en": "Generation-10 Rhineetle Animakina"
+}
+},
+{
+"resultId": 33496,
+"resultTypeId": 323,
+"resultLevel": 185,
+"ingredientIds": [
+11943,
+14635,
+10970,
+14280
+],
+"quantities": [
+1,
+10,
+3,
+10
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Dragodinde de Génération 10",
+"en": "Generation-10 Dragoturkey Optimakina"
+}
+},
+{
+"resultId": 33497,
+"resultTypeId": 323,
+"resultLevel": 187,
+"ingredientIds": [
+14928,
+14635,
+33530,
+33526
+],
+"quantities": [
+1,
+10,
+3,
+10
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Volkorne de Génération 10",
+"en": "Generation-10 Rhineetle Optimakina"
+}
+},
+{
+"resultId": 33498,
+"resultTypeId": 326,
+"resultLevel": 195,
+"ingredientIds": [
+470,
+13914,
+13989,
+14861,
+13938
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Élixir de Baffeur",
+"en": "Gigantic Slapper Elixir"
+}
+},
+{
+"resultId": 33499,
+"resultTypeId": 326,
+"resultLevel": 195,
+"ingredientIds": [
+16456,
+13916,
+13926,
+13991,
+13940
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Élixir de Caresseur",
+"en": "Gigantic Patter Elixir"
+}
+},
+{
+"resultId": 33500,
+"resultTypeId": 326,
+"resultLevel": 195,
+"ingredientIds": [
+17156,
+13920,
+14823,
+13950,
+13942
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Élixir de Dragofesse",
+"en": "Gigantic Dragobutt Elixir"
+}
+},
+{
+"resultId": 33501,
+"resultTypeId": 326,
+"resultLevel": 195,
+"ingredientIds": [
+27621,
+13922,
+13928,
+13974,
+13946
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Élixir de Foudroyeur",
+"en": "Gigantic Lightning Thrower Elixir"
+}
+},
+{
+"resultId": 33502,
+"resultTypeId": 326,
+"resultLevel": 195,
+"ingredientIds": [
+16389,
+13985,
+13930,
+13976,
+14863
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Élixir d'Abreuvoir",
+"en": "Gigantic Drinking Trough Elixir"
+}
+},
+{
+"resultId": 33503,
+"resultTypeId": 326,
+"resultLevel": 195,
+"ingredientIds": [
+16469,
+14817,
+13932,
+13978,
+13993
+],
+"quantities": [
+1,
+1,
+1,
+1,
+1
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Gigantesque Élixir de Mangeoire",
+"en": "Gigantic Manger Elixir"
+}
+},
+{
+"resultId": 33536,
+"resultTypeId": 323,
+"resultLevel": 159,
+"ingredientIds": [
+13164,
+14635,
+33523,
+33520,
+33522
+],
+"quantities": [
+1,
+10,
+8,
+8,
+8
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Muldo de Génération 9",
+"en": "Generation-9 Seemyool Kromakina"
+}
+},
+{
+"resultId": 33537,
+"resultTypeId": 323,
+"resultLevel": 165,
+"ingredientIds": [
+17620,
+14635,
+33521
+],
+"quantities": [
+1,
+10,
+8
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Muldo de Génération 9",
+"en": "Generation-9 Seemyool Animakina"
+}
+},
+{
+"resultId": 33538,
+"resultTypeId": 323,
+"resultLevel": 171,
+"ingredientIds": [
+18568,
+14635,
+33525,
+33524
+],
+"quantities": [
+1,
+10,
+2,
+8
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Muldo de Génération 9",
+"en": "Generation-9 Seemyool Optimakina"
+}
+},
+{
+"resultId": 33539,
+"resultTypeId": 323,
+"resultLevel": 177,
+"ingredientIds": [
+15451,
+14635,
+33523,
+33520,
+33522
+],
+"quantities": [
+1,
+10,
+10,
+10,
+10
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Kromakina Muldo de Génération 10",
+"en": "Generation-10 Seemyool Kromakina"
+}
+},
+{
+"resultId": 33540,
+"resultTypeId": 323,
+"resultLevel": 183,
+"ingredientIds": [
+11931,
+14635,
+33521
+],
+"quantities": [
+1,
+10,
+10
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Animakina Muldo de Génération 10",
+"en": "Generation-10 Seemyool Animakina"
+}
+},
+{
+"resultId": 33541,
+"resultTypeId": 323,
+"resultLevel": 189,
+"ingredientIds": [
+27439,
+14635,
+33525,
+33524
+],
+"quantities": [
+1,
+10,
+3,
+10
+],
+"jobId": 79,
+"skillId": 422,
+"resultName": {
+"fr": "Optimakina Muldo de Génération 10",
+"en": "Generation-10 Seemyool Optimakina"
+}
+}
+]

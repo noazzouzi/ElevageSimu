@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Dump DofusDB complet (volumineux) : seule la version allégée est versionnée
+research/raw/recipes-eleveur.json
+# Copie locale du guide DPLN (droits réservés) : usage de recherche uniquement, non versionnée
+research/raw/guide-eleveur-dpln.txt

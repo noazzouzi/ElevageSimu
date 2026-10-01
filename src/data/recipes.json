@@ -1,0 +1,9610 @@
+{
+ "generatedFrom": "DofusDB (api.dofusdb.fr), métier Éleveur (jobId 79)",
+ "fuels": [
+  {
+   "id": 33313,
+   "name": "Minuscule Extrait d'Abreuvoir",
+   "level": 5,
+   "ingredients": [
+    {
+     "id": 421,
+     "qty": 1
+    },
+    {
+     "id": 16487,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 1,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33319,
+   "name": "Petit Extrait d'Abreuvoir",
+   "level": 15,
+   "ingredients": [
+    {
+     "id": 421,
+     "qty": 1
+    },
+    {
+     "id": 2274,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 1,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33330,
+   "name": "Extrait d'Abreuvoir",
+   "level": 25,
+   "ingredients": [
+    {
+     "id": 428,
+     "qty": 1
+    },
+    {
+     "id": 2675,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 1,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33340,
+   "name": "Grand Extrait d'Abreuvoir",
+   "level": 35,
+   "ingredients": [
+    {
+     "id": 428,
+     "qty": 1
+    },
+    {
+     "id": 2454,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 1,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33351,
+   "name": "Gigantesque Extrait d'Abreuvoir",
+   "level": 45,
+   "ingredients": [
+    {
+     "id": 395,
+     "qty": 1
+    },
+    {
+     "id": 2266,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 1,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33361,
+   "name": "Minuscule Philtre d'Abreuvoir",
+   "level": 55,
+   "ingredients": [
+    {
+     "id": 395,
+     "qty": 1
+    },
+    {
+     "id": 419,
+     "qty": 1
+    },
+    {
+     "id": 2507,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 2,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33372,
+   "name": "Petit Philtre d'Abreuvoir",
+   "level": 65,
+   "ingredients": [
+    {
+     "id": 380,
+     "qty": 1
+    },
+    {
+     "id": 2505,
+     "qty": 1
+    },
+    {
+     "id": 2549,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 2,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33382,
+   "name": "Philtre d'Abreuvoir",
+   "level": 75,
+   "ingredients": [
+    {
+     "id": 380,
+     "qty": 1
+    },
+    {
+     "id": 846,
+     "qty": 1
+    },
+    {
+     "id": 8075,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 2,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33393,
+   "name": "Grand Philtre d'Abreuvoir",
+   "level": 85,
+   "ingredients": [
+    {
+     "id": 593,
+     "qty": 1
+    },
+    {
+     "id": 8083,
+     "qty": 1
+    },
+    {
+     "id": 16220,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 2,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33403,
+   "name": "Gigantesque Philtre d'Abreuvoir",
+   "level": 95,
+   "ingredients": [
+    {
+     "id": 593,
+     "qty": 1
+    },
+    {
+     "id": 8055,
+     "qty": 1
+    },
+    {
+     "id": 14512,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 2,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33414,
+   "name": "Minuscule Potion d'Abreuvoir",
+   "level": 105,
+   "ingredients": [
+    {
+     "id": 594,
+     "qty": 1
+    },
+    {
+     "id": 2632,
+     "qty": 1
+    },
+    {
+     "id": 8741,
+     "qty": 1
+    },
+    {
+     "id": 8315,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 3,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33424,
+   "name": "Petite Potion d'Abreuvoir",
+   "level": 115,
+   "ingredients": [
+    {
+     "id": 594,
+     "qty": 1
+    },
+    {
+     "id": 11121,
+     "qty": 1
+    },
+    {
+     "id": 8076,
+     "qty": 1
+    },
+    {
+     "id": 2561,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 3,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33435,
+   "name": "Potion d'Abreuvoir",
+   "level": 125,
+   "ingredients": [
+    {
+     "id": 7059,
+     "qty": 1
+    },
+    {
+     "id": 8362,
+     "qty": 1
+    },
+    {
+     "id": 15071,
+     "qty": 1
+    },
+    {
+     "id": 14478,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 3,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33445,
+   "name": "Grande Potion d'Abreuvoir",
+   "level": 135,
+   "ingredients": [
+    {
+     "id": 7059,
+     "qty": 1
+    },
+    {
+     "id": 11226,
+     "qty": 1
+    },
+    {
+     "id": 8776,
+     "qty": 1
+    },
+    {
+     "id": 18359,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 3,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33456,
+   "name": "Gigantesque Potion d'Abreuvoir",
+   "level": 145,
+   "ingredients": [
+    {
+     "id": 16385,
+     "qty": 1
+    },
+    {
+     "id": 2514,
+     "qty": 1
+    },
+    {
+     "id": 7301,
+     "qty": 1
+    },
+    {
+     "id": 11318,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 3,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33466,
+   "name": "Minuscule Élixir d'Abreuvoir",
+   "level": 155,
+   "ingredients": [
+    {
+     "id": 16385,
+     "qty": 1
+    },
+    {
+     "id": 11327,
+     "qty": 1
+    },
+    {
+     "id": 15173,
+     "qty": 1
+    },
+    {
+     "id": 26320,
+     "qty": 1
+    },
+    {
+     "id": 15050,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 4,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33475,
+   "name": "Petit Élixir d'Abreuvoir",
+   "level": 165,
+   "ingredients": [
+    {
+     "id": 16387,
+     "qty": 1
+    },
+    {
+     "id": 7407,
+     "qty": 1
+    },
+    {
+     "id": 11340,
+     "qty": 1
+    },
+    {
+     "id": 15724,
+     "qty": 1
+    },
+    {
+     "id": 17617,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 4,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33484,
+   "name": "Élixir d'Abreuvoir",
+   "level": 175,
+   "ingredients": [
+    {
+     "id": 16387,
+     "qty": 1
+    },
+    {
+     "id": 11889,
+     "qty": 1
+    },
+    {
+     "id": 18567,
+     "qty": 1
+    },
+    {
+     "id": 11891,
+     "qty": 1
+    },
+    {
+     "id": 13743,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 4,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33493,
+   "name": "Grand Élixir d'Abreuvoir",
+   "level": 185,
+   "ingredients": [
+    {
+     "id": 16389,
+     "qty": 1
+    },
+    {
+     "id": 11925,
+     "qty": 1
+    },
+    {
+     "id": 15455,
+     "qty": 1
+    },
+    {
+     "id": 11937,
+     "qty": 1
+    },
+    {
+     "id": 11926,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 4,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33502,
+   "name": "Gigantesque Élixir d'Abreuvoir",
+   "level": 195,
+   "ingredients": [
+    {
+     "id": 16389,
+     "qty": 1
+    },
+    {
+     "id": 13985,
+     "qty": 1
+    },
+    {
+     "id": 13930,
+     "qty": 1
+    },
+    {
+     "id": 13976,
+     "qty": 1
+    },
+    {
+     "id": 14863,
+     "qty": 1
+    }
+   ],
+   "gauge": "abreuvoir",
+   "tier": 4,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33309,
+   "name": "Minuscule Extrait de Baffeur",
+   "level": 5,
+   "ingredients": [
+    {
+     "id": 303,
+     "qty": 1
+    },
+    {
+     "id": 2661,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 1,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33315,
+   "name": "Petit Extrait de Baffeur",
+   "level": 15,
+   "ingredients": [
+    {
+     "id": 303,
+     "qty": 1
+    },
+    {
+     "id": 430,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 1,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33326,
+   "name": "Extrait de Baffeur",
+   "level": 25,
+   "ingredients": [
+    {
+     "id": 473,
+     "qty": 1
+    },
+    {
+     "id": 2451,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 1,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33336,
+   "name": "Grand Extrait de Baffeur",
+   "level": 35,
+   "ingredients": [
+    {
+     "id": 473,
+     "qty": 1
+    },
+    {
+     "id": 2323,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 1,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33347,
+   "name": "Gigantesque Extrait de Baffeur",
+   "level": 45,
+   "ingredients": [
+    {
+     "id": 476,
+     "qty": 1
+    },
+    {
+     "id": 8732,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 1,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33357,
+   "name": "Minuscule Philtre de Baffeur",
+   "level": 55,
+   "ingredients": [
+    {
+     "id": 476,
+     "qty": 1
+    },
+    {
+     "id": 14463,
+     "qty": 1
+    },
+    {
+     "id": 650,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 2,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33368,
+   "name": "Petit Philtre de Baffeur",
+   "level": 65,
+   "ingredients": [
+    {
+     "id": 460,
+     "qty": 1
+    },
+    {
+     "id": 2252,
+     "qty": 1
+    },
+    {
+     "id": 2056,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 2,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33378,
+   "name": "Philtre de Baffeur",
+   "level": 75,
+   "ingredients": [
+    {
+     "id": 460,
+     "qty": 1
+    },
+    {
+     "id": 308,
+     "qty": 1
+    },
+    {
+     "id": 1660,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 2,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33389,
+   "name": "Grand Philtre de Baffeur",
+   "level": 85,
+   "ingredients": [
+    {
+     "id": 471,
+     "qty": 1
+    },
+    {
+     "id": 8059,
+     "qty": 1
+    },
+    {
+     "id": 16216,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 2,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33399,
+   "name": "Gigantesque Philtre de Baffeur",
+   "level": 95,
+   "ingredients": [
+    {
+     "id": 471,
+     "qty": 1
+    },
+    {
+     "id": 8807,
+     "qty": 1
+    },
+    {
+     "id": 291,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 2,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33410,
+   "name": "Minuscule Potion de Baffeur",
+   "level": 105,
+   "ingredients": [
+    {
+     "id": 27375,
+     "qty": 1
+    },
+    {
+     "id": 2254,
+     "qty": 1
+    },
+    {
+     "id": 15165,
+     "qty": 1
+    },
+    {
+     "id": 8736,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 3,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33420,
+   "name": "Petite Potion de Baffeur",
+   "level": 115,
+   "ingredients": [
+    {
+     "id": 27375,
+     "qty": 1
+    },
+    {
+     "id": 11117,
+     "qty": 1
+    },
+    {
+     "id": 8058,
+     "qty": 1
+    },
+    {
+     "id": 8314,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 3,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33431,
+   "name": "Potion de Baffeur",
+   "level": 125,
+   "ingredients": [
+    {
+     "id": 474,
+     "qty": 1
+    },
+    {
+     "id": 8356,
+     "qty": 1
+    },
+    {
+     "id": 8803,
+     "qty": 1
+    },
+    {
+     "id": 14474,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 3,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33441,
+   "name": "Grande Potion de Baffeur",
+   "level": 135,
+   "ingredients": [
+    {
+     "id": 474,
+     "qty": 1
+    },
+    {
+     "id": 11222,
+     "qty": 1
+    },
+    {
+     "id": 8775,
+     "qty": 1
+    },
+    {
+     "id": 15458,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 3,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33452,
+   "name": "Gigantesque Potion de Baffeur",
+   "level": 145,
+   "ingredients": [
+    {
+     "id": 449,
+     "qty": 1
+    },
+    {
+     "id": 1894,
+     "qty": 1
+    },
+    {
+     "id": 7292,
+     "qty": 1
+    },
+    {
+     "id": 11309,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 3,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33462,
+   "name": "Minuscule Élixir de Baffeur",
+   "level": 155,
+   "ingredients": [
+    {
+     "id": 449,
+     "qty": 1
+    },
+    {
+     "id": 11323,
+     "qty": 1
+    },
+    {
+     "id": 8786,
+     "qty": 1
+    },
+    {
+     "id": 26316,
+     "qty": 1
+    },
+    {
+     "id": 15045,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 4,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33471,
+   "name": "Petit Élixir de Baffeur",
+   "level": 165,
+   "ingredients": [
+    {
+     "id": 472,
+     "qty": 1
+    },
+    {
+     "id": 7379,
+     "qty": 1
+    },
+    {
+     "id": 11335,
+     "qty": 1
+    },
+    {
+     "id": 17615,
+     "qty": 1
+    },
+    {
+     "id": 7381,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 4,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33480,
+   "name": "Élixir de Baffeur",
+   "level": 175,
+   "ingredients": [
+    {
+     "id": 472,
+     "qty": 1
+    },
+    {
+     "id": 11885,
+     "qty": 1
+    },
+    {
+     "id": 18562,
+     "qty": 1
+    },
+    {
+     "id": 9269,
+     "qty": 1
+    },
+    {
+     "id": 13736,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 4,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33489,
+   "name": "Grand Élixir de Baffeur",
+   "level": 185,
+   "ingredients": [
+    {
+     "id": 470,
+     "qty": 1
+    },
+    {
+     "id": 11519,
+     "qty": 1
+    },
+    {
+     "id": 11934,
+     "qty": 1
+    },
+    {
+     "id": 11521,
+     "qty": 1
+    },
+    {
+     "id": 11946,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 4,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33498,
+   "name": "Gigantesque Élixir de Baffeur",
+   "level": 195,
+   "ingredients": [
+    {
+     "id": 470,
+     "qty": 1
+    },
+    {
+     "id": 13914,
+     "qty": 1
+    },
+    {
+     "id": 13989,
+     "qty": 1
+    },
+    {
+     "id": 14861,
+     "qty": 1
+    },
+    {
+     "id": 13938,
+     "qty": 1
+    }
+   ],
+   "gauge": "baffeur",
+   "tier": 4,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33310,
+   "name": "Minuscule Extrait de Caresseur",
+   "level": 5,
+   "ingredients": [
+    {
+     "id": 289,
+     "qty": 1
+    },
+    {
+     "id": 2663,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 1,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33316,
+   "name": "Petit Extrait de Caresseur",
+   "level": 15,
+   "ingredients": [
+    {
+     "id": 289,
+     "qty": 1
+    },
+    {
+     "id": 2318,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 1,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33327,
+   "name": "Extrait de Caresseur",
+   "level": 25,
+   "ingredients": [
+    {
+     "id": 400,
+     "qty": 1
+    },
+    {
+     "id": 2453,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 1,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33337,
+   "name": "Grand Extrait de Caresseur",
+   "level": 35,
+   "ingredients": [
+    {
+     "id": 400,
+     "qty": 1
+    },
+    {
+     "id": 1674,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 1,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33348,
+   "name": "Gigantesque Extrait de Caresseur",
+   "level": 45,
+   "ingredients": [
+    {
+     "id": 533,
+     "qty": 1
+    },
+    {
+     "id": 8733,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 1,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33358,
+   "name": "Minuscule Philtre de Caresseur",
+   "level": 55,
+   "ingredients": [
+    {
+     "id": 533,
+     "qty": 1
+    },
+    {
+     "id": 14466,
+     "qty": 1
+    },
+    {
+     "id": 1771,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 2,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33369,
+   "name": "Petit Philtre de Caresseur",
+   "level": 65,
+   "ingredients": [
+    {
+     "id": 401,
+     "qty": 1
+    },
+    {
+     "id": 2306,
+     "qty": 1
+    },
+    {
+     "id": 2295,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 2,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33379,
+   "name": "Philtre de Caresseur",
+   "level": 75,
+   "ingredients": [
+    {
+     "id": 401,
+     "qty": 1
+    },
+    {
+     "id": 842,
+     "qty": 1
+    },
+    {
+     "id": 1682,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 2,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33390,
+   "name": "Grand Philtre de Caresseur",
+   "level": 85,
+   "ingredients": [
+    {
+     "id": 423,
+     "qty": 1
+    },
+    {
+     "id": 8060,
+     "qty": 1
+    },
+    {
+     "id": 16217,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 2,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33400,
+   "name": "Gigantesque Philtre de Caresseur",
+   "level": 95,
+   "ingredients": [
+    {
+     "id": 423,
+     "qty": 1
+    },
+    {
+     "id": 14509,
+     "qty": 1
+    },
+    {
+     "id": 292,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 2,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33411,
+   "name": "Minuscule Potion de Caresseur",
+   "level": 105,
+   "ingredients": [
+    {
+     "id": 532,
+     "qty": 1
+    },
+    {
+     "id": 2253,
+     "qty": 1
+    },
+    {
+     "id": 15166,
+     "qty": 1
+    },
+    {
+     "id": 8762,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 3,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33421,
+   "name": "Petite Potion de Caresseur",
+   "level": 115,
+   "ingredients": [
+    {
+     "id": 532,
+     "qty": 1
+    },
+    {
+     "id": 11118,
+     "qty": 1
+    },
+    {
+     "id": 8066,
+     "qty": 1
+    },
+    {
+     "id": 13338,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 3,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33432,
+   "name": "Potion de Caresseur",
+   "level": 125,
+   "ingredients": [
+    {
+     "id": 405,
+     "qty": 1
+    },
+    {
+     "id": 8359,
+     "qty": 1
+    },
+    {
+     "id": 8804,
+     "qty": 1
+    },
+    {
+     "id": 14475,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 3,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33442,
+   "name": "Grande Potion de Caresseur",
+   "level": 135,
+   "ingredients": [
+    {
+     "id": 405,
+     "qty": 1
+    },
+    {
+     "id": 11223,
+     "qty": 1
+    },
+    {
+     "id": 8773,
+     "qty": 1
+    },
+    {
+     "id": 15459,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 3,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33453,
+   "name": "Gigantesque Potion de Caresseur",
+   "level": 145,
+   "ingredients": [
+    {
+     "id": 425,
+     "qty": 1
+    },
+    {
+     "id": 2510,
+     "qty": 1
+    },
+    {
+     "id": 7294,
+     "qty": 1
+    },
+    {
+     "id": 11312,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 3,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33463,
+   "name": "Minuscule Élixir de Caresseur",
+   "level": 155,
+   "ingredients": [
+    {
+     "id": 425,
+     "qty": 1
+    },
+    {
+     "id": 11324,
+     "qty": 1
+    },
+    {
+     "id": 8787,
+     "qty": 1
+    },
+    {
+     "id": 26317,
+     "qty": 1
+    },
+    {
+     "id": 15046,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 4,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33472,
+   "name": "Petit Élixir de Caresseur",
+   "level": 165,
+   "ingredients": [
+    {
+     "id": 16454,
+     "qty": 1
+    },
+    {
+     "id": 7384,
+     "qty": 1
+    },
+    {
+     "id": 11336,
+     "qty": 1
+    },
+    {
+     "id": 17616,
+     "qty": 1
+    },
+    {
+     "id": 7383,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 4,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33481,
+   "name": "Élixir de Caresseur",
+   "level": 175,
+   "ingredients": [
+    {
+     "id": 16454,
+     "qty": 1
+    },
+    {
+     "id": 11886,
+     "qty": 1
+    },
+    {
+     "id": 18563,
+     "qty": 1
+    },
+    {
+     "id": 9277,
+     "qty": 1
+    },
+    {
+     "id": 13737,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 4,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33490,
+   "name": "Grand Élixir de Caresseur",
+   "level": 185,
+   "ingredients": [
+    {
+     "id": 16456,
+     "qty": 1
+    },
+    {
+     "id": 11919,
+     "qty": 1
+    },
+    {
+     "id": 15452,
+     "qty": 1
+    },
+    {
+     "id": 11527,
+     "qty": 1
+    },
+    {
+     "id": 11920,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 4,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33499,
+   "name": "Gigantesque Élixir de Caresseur",
+   "level": 195,
+   "ingredients": [
+    {
+     "id": 16456,
+     "qty": 1
+    },
+    {
+     "id": 13916,
+     "qty": 1
+    },
+    {
+     "id": 13926,
+     "qty": 1
+    },
+    {
+     "id": 13991,
+     "qty": 1
+    },
+    {
+     "id": 13940,
+     "qty": 1
+    }
+   ],
+   "gauge": "caresseur",
+   "tier": 4,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33311,
+   "name": "Minuscule Extrait de Dragofesse",
+   "level": 5,
+   "ingredients": [
+    {
+     "id": 16663,
+     "qty": 1
+    },
+    {
+     "id": 2665,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 1,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33317,
+   "name": "Petit Extrait de Dragofesse",
+   "level": 15,
+   "ingredients": [
+    {
+     "id": 16663,
+     "qty": 1
+    },
+    {
+     "id": 2574,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 1,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33328,
+   "name": "Extrait de Dragofesse",
+   "level": 25,
+   "ingredients": [
+    {
+     "id": 17124,
+     "qty": 1
+    },
+    {
+     "id": 2467,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 1,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33338,
+   "name": "Grand Extrait de Dragofesse",
+   "level": 35,
+   "ingredients": [
+    {
+     "id": 17124,
+     "qty": 1
+    },
+    {
+     "id": 2669,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 1,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33349,
+   "name": "Gigantesque Extrait de Dragofesse",
+   "level": 45,
+   "ingredients": [
+    {
+     "id": 17128,
+     "qty": 1
+    },
+    {
+     "id": 8734,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 1,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33359,
+   "name": "Minuscule Philtre de Dragofesse",
+   "level": 55,
+   "ingredients": [
+    {
+     "id": 17128,
+     "qty": 1
+    },
+    {
+     "id": 14467,
+     "qty": 1
+    },
+    {
+     "id": 2479,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 2,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33370,
+   "name": "Petit Philtre de Dragofesse",
+   "level": 65,
+   "ingredients": [
+    {
+     "id": 17132,
+     "qty": 1
+    },
+    {
+     "id": 1679,
+     "qty": 1
+    },
+    {
+     "id": 2500,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 2,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33380,
+   "name": "Philtre de Dragofesse",
+   "level": 75,
+   "ingredients": [
+    {
+     "id": 17132,
+     "qty": 1
+    },
+    {
+     "id": 843,
+     "qty": 1
+    },
+    {
+     "id": 8077,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 2,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33391,
+   "name": "Grand Philtre de Dragofesse",
+   "level": 85,
+   "ingredients": [
+    {
+     "id": 17136,
+     "qty": 1
+    },
+    {
+     "id": 8061,
+     "qty": 1
+    },
+    {
+     "id": 16218,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 2,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33401,
+   "name": "Gigantesque Philtre de Dragofesse",
+   "level": 95,
+   "ingredients": [
+    {
+     "id": 17136,
+     "qty": 1
+    },
+    {
+     "id": 14510,
+     "qty": 1
+    },
+    {
+     "id": 438,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 2,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33412,
+   "name": "Minuscule Potion de Dragofesse",
+   "level": 105,
+   "ingredients": [
+    {
+     "id": 17140,
+     "qty": 1
+    },
+    {
+     "id": 2605,
+     "qty": 1
+    },
+    {
+     "id": 15167,
+     "qty": 1
+    },
+    {
+     "id": 8769,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 3,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33422,
+   "name": "Petite Potion de Dragofesse",
+   "level": 115,
+   "ingredients": [
+    {
+     "id": 17140,
+     "qty": 1
+    },
+    {
+     "id": 11119,
+     "qty": 1
+    },
+    {
+     "id": 13700,
+     "qty": 1
+    },
+    {
+     "id": 1694,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 3,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33433,
+   "name": "Potion de Dragofesse",
+   "level": 125,
+   "ingredients": [
+    {
+     "id": 17144,
+     "qty": 1
+    },
+    {
+     "id": 8360,
+     "qty": 1
+    },
+    {
+     "id": 8805,
+     "qty": 1
+    },
+    {
+     "id": 14476,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 3,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33443,
+   "name": "Grande Potion de Dragofesse",
+   "level": 135,
+   "ingredients": [
+    {
+     "id": 17144,
+     "qty": 1
+    },
+    {
+     "id": 11224,
+     "qty": 1
+    },
+    {
+     "id": 8772,
+     "qty": 1
+    },
+    {
+     "id": 15460,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 3,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33454,
+   "name": "Gigantesque Potion de Dragofesse",
+   "level": 145,
+   "ingredients": [
+    {
+     "id": 17148,
+     "qty": 1
+    },
+    {
+     "id": 2511,
+     "qty": 1
+    },
+    {
+     "id": 7298,
+     "qty": 1
+    },
+    {
+     "id": 11314,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 3,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33464,
+   "name": "Minuscule Élixir de Dragofesse",
+   "level": 155,
+   "ingredients": [
+    {
+     "id": 17148,
+     "qty": 1
+    },
+    {
+     "id": 11325,
+     "qty": 1
+    },
+    {
+     "id": 15171,
+     "qty": 1
+    },
+    {
+     "id": 26318,
+     "qty": 1
+    },
+    {
+     "id": 15047,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 4,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33473,
+   "name": "Petit Élixir de Dragofesse",
+   "level": 165,
+   "ingredients": [
+    {
+     "id": 17152,
+     "qty": 1
+    },
+    {
+     "id": 7404,
+     "qty": 1
+    },
+    {
+     "id": 11337,
+     "qty": 1
+    },
+    {
+     "id": 15722,
+     "qty": 1
+    },
+    {
+     "id": 7403,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 4,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33482,
+   "name": "Élixir de Dragofesse",
+   "level": 175,
+   "ingredients": [
+    {
+     "id": 17152,
+     "qty": 1
+    },
+    {
+     "id": 11887,
+     "qty": 1
+    },
+    {
+     "id": 18564,
+     "qty": 1
+    },
+    {
+     "id": 9278,
+     "qty": 1
+    },
+    {
+     "id": 13739,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 4,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33491,
+   "name": "Grand Élixir de Dragofesse",
+   "level": 185,
+   "ingredients": [
+    {
+     "id": 17156,
+     "qty": 1
+    },
+    {
+     "id": 11922,
+     "qty": 1
+    },
+    {
+     "id": 15453,
+     "qty": 1
+    },
+    {
+     "id": 11525,
+     "qty": 1
+    },
+    {
+     "id": 11921,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 4,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33500,
+   "name": "Gigantesque Élixir de Dragofesse",
+   "level": 195,
+   "ingredients": [
+    {
+     "id": 17156,
+     "qty": 1
+    },
+    {
+     "id": 13920,
+     "qty": 1
+    },
+    {
+     "id": 14823,
+     "qty": 1
+    },
+    {
+     "id": 13950,
+     "qty": 1
+    },
+    {
+     "id": 13942,
+     "qty": 1
+    }
+   ],
+   "gauge": "dragofesse",
+   "tier": 4,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33312,
+   "name": "Minuscule Extrait de Foudroyeur",
+   "level": 5,
+   "ingredients": [
+    {
+     "id": 312,
+     "qty": 1
+    },
+    {
+     "id": 378,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 1,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33318,
+   "name": "Petit Extrait de Foudroyeur",
+   "level": 15,
+   "ingredients": [
+    {
+     "id": 312,
+     "qty": 1
+    },
+    {
+     "id": 652,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 1,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33329,
+   "name": "Extrait de Foudroyeur",
+   "level": 25,
+   "ingredients": [
+    {
+     "id": 441,
+     "qty": 1
+    },
+    {
+     "id": 2576,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 1,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33339,
+   "name": "Grand Extrait de Foudroyeur",
+   "level": 35,
+   "ingredients": [
+    {
+     "id": 441,
+     "qty": 1
+    },
+    {
+     "id": 2336,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 1,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33350,
+   "name": "Gigantesque Extrait de Foudroyeur",
+   "level": 45,
+   "ingredients": [
+    {
+     "id": 442,
+     "qty": 1
+    },
+    {
+     "id": 8735,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 1,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33360,
+   "name": "Minuscule Philtre de Foudroyeur",
+   "level": 55,
+   "ingredients": [
+    {
+     "id": 442,
+     "qty": 1
+    },
+    {
+     "id": 406,
+     "qty": 1
+    },
+    {
+     "id": 2483,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 2,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33371,
+   "name": "Petit Philtre de Foudroyeur",
+   "level": 65,
+   "ingredients": [
+    {
+     "id": 443,
+     "qty": 1
+    },
+    {
+     "id": 8739,
+     "qty": 1
+    },
+    {
+     "id": 2504,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 2,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33381,
+   "name": "Philtre de Foudroyeur",
+   "level": 75,
+   "ingredients": [
+    {
+     "id": 443,
+     "qty": 1
+    },
+    {
+     "id": 1129,
+     "qty": 1
+    },
+    {
+     "id": 1612,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 2,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33392,
+   "name": "Grand Philtre de Foudroyeur",
+   "level": 85,
+   "ingredients": [
+    {
+     "id": 445,
+     "qty": 1
+    },
+    {
+     "id": 8062,
+     "qty": 1
+    },
+    {
+     "id": 16219,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 2,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33402,
+   "name": "Gigantesque Philtre de Foudroyeur",
+   "level": 95,
+   "ingredients": [
+    {
+     "id": 445,
+     "qty": 1
+    },
+    {
+     "id": 8054,
+     "qty": 1
+    },
+    {
+     "id": 439,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 2,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33413,
+   "name": "Minuscule Potion de Foudroyeur",
+   "level": 105,
+   "ingredients": [
+    {
+     "id": 444,
+     "qty": 1
+    },
+    {
+     "id": 2607,
+     "qty": 1
+    },
+    {
+     "id": 15168,
+     "qty": 1
+    },
+    {
+     "id": 8312,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 3,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33423,
+   "name": "Petite Potion de Foudroyeur",
+   "level": 115,
+   "ingredients": [
+    {
+     "id": 444,
+     "qty": 1
+    },
+    {
+     "id": 11120,
+     "qty": 1
+    },
+    {
+     "id": 8052,
+     "qty": 1
+    },
+    {
+     "id": 2560,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 3,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33434,
+   "name": "Potion de Foudroyeur",
+   "level": 125,
+   "ingredients": [
+    {
+     "id": 350,
+     "qty": 1
+    },
+    {
+     "id": 8361,
+     "qty": 1
+    },
+    {
+     "id": 8806,
+     "qty": 1
+    },
+    {
+     "id": 14477,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 3,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33444,
+   "name": "Grande Potion de Foudroyeur",
+   "level": 135,
+   "ingredients": [
+    {
+     "id": 350,
+     "qty": 1
+    },
+    {
+     "id": 11225,
+     "qty": 1
+    },
+    {
+     "id": 8774,
+     "qty": 1
+    },
+    {
+     "id": 18362,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 3,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33455,
+   "name": "Gigantesque Potion de Foudroyeur",
+   "level": 145,
+   "ingredients": [
+    {
+     "id": 446,
+     "qty": 1
+    },
+    {
+     "id": 2513,
+     "qty": 1
+    },
+    {
+     "id": 7300,
+     "qty": 1
+    },
+    {
+     "id": 11315,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 3,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33465,
+   "name": "Minuscule Élixir de Foudroyeur",
+   "level": 155,
+   "ingredients": [
+    {
+     "id": 446,
+     "qty": 1
+    },
+    {
+     "id": 11326,
+     "qty": 1
+    },
+    {
+     "id": 15172,
+     "qty": 1
+    },
+    {
+     "id": 26319,
+     "qty": 1
+    },
+    {
+     "id": 15048,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 4,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33474,
+   "name": "Petit Élixir de Foudroyeur",
+   "level": 165,
+   "ingredients": [
+    {
+     "id": 313,
+     "qty": 1
+    },
+    {
+     "id": 7405,
+     "qty": 1
+    },
+    {
+     "id": 11338,
+     "qty": 1
+    },
+    {
+     "id": 15723,
+     "qty": 1
+    },
+    {
+     "id": 7408,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 4,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33483,
+   "name": "Élixir de Foudroyeur",
+   "level": 175,
+   "ingredients": [
+    {
+     "id": 313,
+     "qty": 1
+    },
+    {
+     "id": 11888,
+     "qty": 1
+    },
+    {
+     "id": 18565,
+     "qty": 1
+    },
+    {
+     "id": 9279,
+     "qty": 1
+    },
+    {
+     "id": 13741,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 4,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33492,
+   "name": "Grand Élixir de Foudroyeur",
+   "level": 185,
+   "ingredients": [
+    {
+     "id": 27621,
+     "qty": 1
+    },
+    {
+     "id": 11924,
+     "qty": 1
+    },
+    {
+     "id": 15454,
+     "qty": 1
+    },
+    {
+     "id": 11935,
+     "qty": 1
+    },
+    {
+     "id": 11923,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 4,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33501,
+   "name": "Gigantesque Élixir de Foudroyeur",
+   "level": 195,
+   "ingredients": [
+    {
+     "id": 27621,
+     "qty": 1
+    },
+    {
+     "id": 13922,
+     "qty": 1
+    },
+    {
+     "id": 13928,
+     "qty": 1
+    },
+    {
+     "id": 13974,
+     "qty": 1
+    },
+    {
+     "id": 13946,
+     "qty": 1
+    }
+   ],
+   "gauge": "foudroyeur",
+   "tier": 4,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33314,
+   "name": "Minuscule Extrait de Mangeoire",
+   "level": 5,
+   "ingredients": [
+    {
+     "id": 1782,
+     "qty": 1
+    },
+    {
+     "id": 1673,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 1,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33320,
+   "name": "Petit Extrait de Mangeoire",
+   "level": 15,
+   "ingredients": [
+    {
+     "id": 1782,
+     "qty": 1
+    },
+    {
+     "id": 450,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 1,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33331,
+   "name": "Extrait de Mangeoire",
+   "level": 25,
+   "ingredients": [
+    {
+     "id": 1844,
+     "qty": 1
+    },
+    {
+     "id": 6841,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 1,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33341,
+   "name": "Grand Extrait de Mangeoire",
+   "level": 35,
+   "ingredients": [
+    {
+     "id": 1844,
+     "qty": 1
+    },
+    {
+     "id": 2463,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 1,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33352,
+   "name": "Gigantesque Extrait de Mangeoire",
+   "level": 45,
+   "ingredients": [
+    {
+     "id": 603,
+     "qty": 1
+    },
+    {
+     "id": 2268,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 1,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33362,
+   "name": "Minuscule Philtre de Mangeoire",
+   "level": 55,
+   "ingredients": [
+    {
+     "id": 603,
+     "qty": 1
+    },
+    {
+     "id": 480,
+     "qty": 1
+    },
+    {
+     "id": 649,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 2,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33373,
+   "name": "Petit Philtre de Mangeoire",
+   "level": 65,
+   "ingredients": [
+    {
+     "id": 1794,
+     "qty": 1
+    },
+    {
+     "id": 8050,
+     "qty": 1
+    },
+    {
+     "id": 2550,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 2,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33383,
+   "name": "Philtre de Mangeoire",
+   "level": 75,
+   "ingredients": [
+    {
+     "id": 1794,
+     "qty": 1
+    },
+    {
+     "id": 847,
+     "qty": 1
+    },
+    {
+     "id": 2552,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 2,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33394,
+   "name": "Grand Philtre de Mangeoire",
+   "level": 85,
+   "ingredients": [
+    {
+     "id": 1847,
+     "qty": 1
+    },
+    {
+     "id": 8084,
+     "qty": 1
+    },
+    {
+     "id": 6740,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 2,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33404,
+   "name": "Gigantesque Philtre de Mangeoire",
+   "level": 95,
+   "ingredients": [
+    {
+     "id": 1847,
+     "qty": 1
+    },
+    {
+     "id": 8390,
+     "qty": 1
+    },
+    {
+     "id": 14513,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 2,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33415,
+   "name": "Minuscule Potion de Mangeoire",
+   "level": 105,
+   "ingredients": [
+    {
+     "id": 16461,
+     "qty": 1
+    },
+    {
+     "id": 6736,
+     "qty": 1
+    },
+    {
+     "id": 8811,
+     "qty": 1
+    },
+    {
+     "id": 8765,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 3,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33425,
+   "name": "Petite Potion de Mangeoire",
+   "level": 115,
+   "ingredients": [
+    {
+     "id": 16461,
+     "qty": 1
+    },
+    {
+     "id": 11122,
+     "qty": 1
+    },
+    {
+     "id": 8082,
+     "qty": 1
+    },
+    {
+     "id": 2562,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 3,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33436,
+   "name": "Potion de Mangeoire",
+   "level": 125,
+   "ingredients": [
+    {
+     "id": 1801,
+     "qty": 1
+    },
+    {
+     "id": 8802,
+     "qty": 1
+    },
+    {
+     "id": 15072,
+     "qty": 1
+    },
+    {
+     "id": 14479,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 3,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33446,
+   "name": "Grande Potion de Mangeoire",
+   "level": 135,
+   "ingredients": [
+    {
+     "id": 1801,
+     "qty": 1
+    },
+    {
+     "id": 11227,
+     "qty": 1
+    },
+    {
+     "id": 8783,
+     "qty": 1
+    },
+    {
+     "id": 18361,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 3,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33457,
+   "name": "Gigantesque Potion de Mangeoire",
+   "level": 145,
+   "ingredients": [
+    {
+     "id": 16465,
+     "qty": 1
+    },
+    {
+     "id": 2516,
+     "qty": 1
+    },
+    {
+     "id": 7343,
+     "qty": 1
+    },
+    {
+     "id": 11319,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 3,
+   "size": "gigantesque",
+   "durability": 5000
+  },
+  {
+   "id": 33467,
+   "name": "Minuscule Élixir de Mangeoire",
+   "level": 155,
+   "ingredients": [
+    {
+     "id": 16465,
+     "qty": 1
+    },
+    {
+     "id": 11328,
+     "qty": 1
+    },
+    {
+     "id": 15174,
+     "qty": 1
+    },
+    {
+     "id": 8832,
+     "qty": 1
+    },
+    {
+     "id": 15051,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 4,
+   "size": "minuscule",
+   "durability": 1000
+  },
+  {
+   "id": 33476,
+   "name": "Petit Élixir de Mangeoire",
+   "level": 165,
+   "ingredients": [
+    {
+     "id": 1779,
+     "qty": 1
+    },
+    {
+     "id": 17618,
+     "qty": 1
+    },
+    {
+     "id": 11882,
+     "qty": 1
+    },
+    {
+     "id": 15725,
+     "qty": 1
+    },
+    {
+     "id": 7410,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 4,
+   "size": "petit",
+   "durability": 2000
+  },
+  {
+   "id": 33485,
+   "name": "Élixir de Mangeoire",
+   "level": 175,
+   "ingredients": [
+    {
+     "id": 1779,
+     "qty": 1
+    },
+    {
+     "id": 11890,
+     "qty": 1
+    },
+    {
+     "id": 9263,
+     "qty": 1
+    },
+    {
+     "id": 11892,
+     "qty": 1
+    },
+    {
+     "id": 13745,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 4,
+   "size": "normal",
+   "durability": 3000
+  },
+  {
+   "id": 33494,
+   "name": "Grand Élixir de Mangeoire",
+   "level": 185,
+   "ingredients": [
+    {
+     "id": 16469,
+     "qty": 1
+    },
+    {
+     "id": 11928,
+     "qty": 1
+    },
+    {
+     "id": 11933,
+     "qty": 1
+    },
+    {
+     "id": 11941,
+     "qty": 1
+    },
+    {
+     "id": 11927,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 4,
+   "size": "grand",
+   "durability": 4000
+  },
+  {
+   "id": 33503,
+   "name": "Gigantesque Élixir de Mangeoire",
+   "level": 195,
+   "ingredients": [
+    {
+     "id": 16469,
+     "qty": 1
+    },
+    {
+     "id": 14817,
+     "qty": 1
+    },
+    {
+     "id": 13932,
+     "qty": 1
+    },
+    {
+     "id": 13978,
+     "qty": 1
+    },
+    {
+     "id": 13993,
+     "qty": 1
+    }
+   ],
+   "gauge": "mangeoire",
+   "tier": 4,
+   "size": "gigantesque",
+   "durability": 5000
+  }
+ ],
+ "makinas": [
+  {
+   "id": 33324,
+   "name": "Animakina Dragodinde de Génération 2",
+   "level": 23,
+   "ingredients": [
+    {
+     "id": 886,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2598,
+     "qty": 1
+    }
+   ],
+   "kind": "animakina",
+   "family": "dragodinde",
+   "generation": 2
+  },
+  {
+   "id": 33345,
+   "name": "Animakina Dragodinde de Génération 3",
+   "level": 43,
+   "ingredients": [
+    {
+     "id": 8738,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2598,
+     "qty": 2
+    }
+   ],
+   "kind": "animakina",
+   "family": "dragodinde",
+   "generation": 3
+  },
+  {
+   "id": 33366,
+   "name": "Animakina Dragodinde de Génération 4",
+   "level": 63,
+   "ingredients": [
+    {
+     "id": 2437,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2598,
+     "qty": 3
+    }
+   ],
+   "kind": "animakina",
+   "family": "dragodinde",
+   "generation": 4
+  },
+  {
+   "id": 33387,
+   "name": "Animakina Dragodinde de Génération 5",
+   "level": 83,
+   "ingredients": [
+    {
+     "id": 16180,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2598,
+     "qty": 4
+    }
+   ],
+   "kind": "animakina",
+   "family": "dragodinde",
+   "generation": 5
+  },
+  {
+   "id": 33408,
+   "name": "Animakina Dragodinde de Génération 6",
+   "level": 103,
+   "ingredients": [
+    {
+     "id": 13167,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2598,
+     "qty": 5
+    }
+   ],
+   "kind": "animakina",
+   "family": "dragodinde",
+   "generation": 6
+  },
+  {
+   "id": 33429,
+   "name": "Animakina Dragodinde de Génération 7",
+   "level": 123,
+   "ingredients": [
+    {
+     "id": 8405,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2598,
+     "qty": 6
+    }
+   ],
+   "kind": "animakina",
+   "family": "dragodinde",
+   "generation": 7
+  },
+  {
+   "id": 33450,
+   "name": "Animakina Dragodinde de Génération 8",
+   "level": 143,
+   "ingredients": [
+    {
+     "id": 6488,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2598,
+     "qty": 7
+    }
+   ],
+   "kind": "animakina",
+   "family": "dragodinde",
+   "generation": 8
+  },
+  {
+   "id": 33470,
+   "name": "Animakina Dragodinde de Génération 9",
+   "level": 161,
+   "ingredients": [
+    {
+     "id": 15039,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2598,
+     "qty": 8
+    }
+   ],
+   "kind": "animakina",
+   "family": "dragodinde",
+   "generation": 9
+  },
+  {
+   "id": 33488,
+   "name": "Animakina Dragodinde de Génération 10",
+   "level": 179,
+   "ingredients": [
+    {
+     "id": 11895,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2598,
+     "qty": 10
+    }
+   ],
+   "kind": "animakina",
+   "family": "dragodinde",
+   "generation": 10
+  },
+  {
+   "id": 33321,
+   "name": "Kromakina Dragodinde de Génération 2",
+   "level": 17,
+   "ingredients": [
+    {
+     "id": 16525,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2599,
+     "qty": 1
+    }
+   ],
+   "kind": "kromakina",
+   "family": "dragodinde",
+   "generation": 2
+  },
+  {
+   "id": 33342,
+   "name": "Kromakina Dragodinde de Génération 3",
+   "level": 37,
+   "ingredients": [
+    {
+     "id": 11815,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2599,
+     "qty": 2
+    }
+   ],
+   "kind": "kromakina",
+   "family": "dragodinde",
+   "generation": 3
+  },
+  {
+   "id": 33363,
+   "name": "Kromakina Dragodinde de Génération 4",
+   "level": 57,
+   "ingredients": [
+    {
+     "id": 370,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2599,
+     "qty": 3
+    }
+   ],
+   "kind": "kromakina",
+   "family": "dragodinde",
+   "generation": 4
+  },
+  {
+   "id": 33384,
+   "name": "Kromakina Dragodinde de Génération 5",
+   "level": 77,
+   "ingredients": [
+    {
+     "id": 14468,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2599,
+     "qty": 4
+    }
+   ],
+   "kind": "kromakina",
+   "family": "dragodinde",
+   "generation": 5
+  },
+  {
+   "id": 33405,
+   "name": "Kromakina Dragodinde de Génération 6",
+   "level": 97,
+   "ingredients": [
+    {
+     "id": 8383,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2599,
+     "qty": 5
+    }
+   ],
+   "kind": "kromakina",
+   "family": "dragodinde",
+   "generation": 6
+  },
+  {
+   "id": 33426,
+   "name": "Kromakina Dragodinde de Génération 7",
+   "level": 117,
+   "ingredients": [
+    {
+     "id": 9389,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2599,
+     "qty": 6
+    }
+   ],
+   "kind": "kromakina",
+   "family": "dragodinde",
+   "generation": 7
+  },
+  {
+   "id": 33447,
+   "name": "Kromakina Dragodinde de Génération 8",
+   "level": 137,
+   "ingredients": [
+    {
+     "id": 7386,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2599,
+     "qty": 7
+    }
+   ],
+   "kind": "kromakina",
+   "family": "dragodinde",
+   "generation": 8
+  },
+  {
+   "id": 33468,
+   "name": "Kromakina Dragodinde de Génération 9",
+   "level": 155,
+   "ingredients": [
+    {
+     "id": 15170,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2599,
+     "qty": 8
+    }
+   ],
+   "kind": "kromakina",
+   "family": "dragodinde",
+   "generation": 9
+  },
+  {
+   "id": 33486,
+   "name": "Kromakina Dragodinde de Génération 10",
+   "level": 173,
+   "ingredients": [
+    {
+     "id": 15721,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 2599,
+     "qty": 10
+    }
+   ],
+   "kind": "kromakina",
+   "family": "dragodinde",
+   "generation": 10
+  },
+  {
+   "id": 33333,
+   "name": "Optimakina Dragodinde de Génération 2",
+   "level": 29,
+   "ingredients": [
+    {
+     "id": 13096,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 10970,
+     "qty": 1
+    },
+    {
+     "id": 14280,
+     "qty": 1
+    }
+   ],
+   "kind": "optimakina",
+   "family": "dragodinde",
+   "generation": 2
+  },
+  {
+   "id": 33354,
+   "name": "Optimakina Dragodinde de Génération 3",
+   "level": 49,
+   "ingredients": [
+    {
+     "id": 27368,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 10970,
+     "qty": 1
+    },
+    {
+     "id": 14280,
+     "qty": 2
+    }
+   ],
+   "kind": "optimakina",
+   "family": "dragodinde",
+   "generation": 3
+  },
+  {
+   "id": 33375,
+   "name": "Optimakina Dragodinde de Génération 4",
+   "level": 69,
+   "ingredients": [
+    {
+     "id": 8102,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 10970,
+     "qty": 1
+    },
+    {
+     "id": 14280,
+     "qty": 3
+    }
+   ],
+   "kind": "optimakina",
+   "family": "dragodinde",
+   "generation": 4
+  },
+  {
+   "id": 33396,
+   "name": "Optimakina Dragodinde de Génération 5",
+   "level": 89,
+   "ingredients": [
+    {
+     "id": 2645,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 10970,
+     "qty": 1
+    },
+    {
+     "id": 14280,
+     "qty": 4
+    }
+   ],
+   "kind": "optimakina",
+   "family": "dragodinde",
+   "generation": 5
+  },
+  {
+   "id": 33417,
+   "name": "Optimakina Dragodinde de Génération 6",
+   "level": 109,
+   "ingredients": [
+    {
+     "id": 16211,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 10970,
+     "qty": 1
+    },
+    {
+     "id": 14280,
+     "qty": 5
+    }
+   ],
+   "kind": "optimakina",
+   "family": "dragodinde",
+   "generation": 6
+  },
+  {
+   "id": 33438,
+   "name": "Optimakina Dragodinde de Génération 7",
+   "level": 129,
+   "ingredients": [
+    {
+     "id": 11221,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 10970,
+     "qty": 1
+    },
+    {
+     "id": 14280,
+     "qty": 6
+    }
+   ],
+   "kind": "optimakina",
+   "family": "dragodinde",
+   "generation": 7
+  },
+  {
+   "id": 33459,
+   "name": "Optimakina Dragodinde de Génération 8",
+   "level": 149,
+   "ingredients": [
+    {
+     "id": 8777,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 10970,
+     "qty": 1
+    },
+    {
+     "id": 14280,
+     "qty": 7
+    }
+   ],
+   "kind": "optimakina",
+   "family": "dragodinde",
+   "generation": 8
+  },
+  {
+   "id": 33478,
+   "name": "Optimakina Dragodinde de Génération 9",
+   "level": 167,
+   "ingredients": [
+    {
+     "id": 7385,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 10970,
+     "qty": 2
+    },
+    {
+     "id": 14280,
+     "qty": 8
+    }
+   ],
+   "kind": "optimakina",
+   "family": "dragodinde",
+   "generation": 9
+  },
+  {
+   "id": 33496,
+   "name": "Optimakina Dragodinde de Génération 10",
+   "level": 185,
+   "ingredients": [
+    {
+     "id": 11943,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 10970,
+     "qty": 3
+    },
+    {
+     "id": 14280,
+     "qty": 10
+    }
+   ],
+   "kind": "optimakina",
+   "family": "dragodinde",
+   "generation": 10
+  },
+  {
+   "id": 33332,
+   "name": "Animakina Muldo de Génération 2",
+   "level": 27,
+   "ingredients": [
+    {
+     "id": 8161,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33521,
+     "qty": 1
+    }
+   ],
+   "kind": "animakina",
+   "family": "muldo",
+   "generation": 2
+  },
+  {
+   "id": 33353,
+   "name": "Animakina Muldo de Génération 3",
+   "level": 47,
+   "ingredients": [
+    {
+     "id": 12016,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33521,
+     "qty": 2
+    }
+   ],
+   "kind": "animakina",
+   "family": "muldo",
+   "generation": 3
+  },
+  {
+   "id": 33374,
+   "name": "Animakina Muldo de Génération 4",
+   "level": 67,
+   "ingredients": [
+    {
+     "id": 8758,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33521,
+     "qty": 3
+    }
+   ],
+   "kind": "animakina",
+   "family": "muldo",
+   "generation": 4
+  },
+  {
+   "id": 33395,
+   "name": "Animakina Muldo de Génération 5",
+   "level": 87,
+   "ingredients": [
+    {
+     "id": 1691,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33521,
+     "qty": 4
+    }
+   ],
+   "kind": "animakina",
+   "family": "muldo",
+   "generation": 5
+  },
+  {
+   "id": 33416,
+   "name": "Animakina Muldo de Génération 6",
+   "level": 107,
+   "ingredients": [
+    {
+     "id": 17614,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33521,
+     "qty": 5
+    }
+   ],
+   "kind": "animakina",
+   "family": "muldo",
+   "generation": 6
+  },
+  {
+   "id": 33437,
+   "name": "Animakina Muldo de Génération 7",
+   "level": 127,
+   "ingredients": [
+    {
+     "id": 2247,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33521,
+     "qty": 6
+    }
+   ],
+   "kind": "animakina",
+   "family": "muldo",
+   "generation": 7
+  },
+  {
+   "id": 33458,
+   "name": "Animakina Muldo de Génération 8",
+   "level": 147,
+   "ingredients": [
+    {
+     "id": 8381,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33521,
+     "qty": 7
+    }
+   ],
+   "kind": "animakina",
+   "family": "muldo",
+   "generation": 8
+  },
+  {
+   "id": 33537,
+   "name": "Animakina Muldo de Génération 9",
+   "level": 165,
+   "ingredients": [
+    {
+     "id": 17620,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33521,
+     "qty": 8
+    }
+   ],
+   "kind": "animakina",
+   "family": "muldo",
+   "generation": 9
+  },
+  {
+   "id": 33540,
+   "name": "Animakina Muldo de Génération 10",
+   "level": 183,
+   "ingredients": [
+    {
+     "id": 11931,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33521,
+     "qty": 10
+    }
+   ],
+   "kind": "animakina",
+   "family": "muldo",
+   "generation": 10
+  },
+  {
+   "id": 33323,
+   "name": "Kromakina Muldo de Génération 2",
+   "level": 21,
+   "ingredients": [
+    {
+     "id": 8682,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33523,
+     "qty": 1
+    },
+    {
+     "id": 33520,
+     "qty": 1
+    },
+    {
+     "id": 33522,
+     "qty": 1
+    }
+   ],
+   "kind": "kromakina",
+   "family": "muldo",
+   "generation": 2
+  },
+  {
+   "id": 33344,
+   "name": "Kromakina Muldo de Génération 3",
+   "level": 41,
+   "ingredients": [
+    {
+     "id": 13140,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33523,
+     "qty": 2
+    },
+    {
+     "id": 33520,
+     "qty": 2
+    },
+    {
+     "id": 33522,
+     "qty": 2
+    }
+   ],
+   "kind": "kromakina",
+   "family": "muldo",
+   "generation": 3
+  },
+  {
+   "id": 33365,
+   "name": "Kromakina Muldo de Génération 4",
+   "level": 61,
+   "ingredients": [
+    {
+     "id": 2242,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33523,
+     "qty": 3
+    },
+    {
+     "id": 33520,
+     "qty": 3
+    },
+    {
+     "id": 33522,
+     "qty": 3
+    }
+   ],
+   "kind": "kromakina",
+   "family": "muldo",
+   "generation": 4
+  },
+  {
+   "id": 33386,
+   "name": "Kromakina Muldo de Génération 5",
+   "level": 81,
+   "ingredients": [
+    {
+     "id": 2621,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33523,
+     "qty": 4
+    },
+    {
+     "id": 33520,
+     "qty": 4
+    },
+    {
+     "id": 33522,
+     "qty": 4
+    }
+   ],
+   "kind": "kromakina",
+   "family": "muldo",
+   "generation": 5
+  },
+  {
+   "id": 33407,
+   "name": "Kromakina Muldo de Génération 6",
+   "level": 101,
+   "ingredients": [
+    {
+     "id": 14518,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33523,
+     "qty": 5
+    },
+    {
+     "id": 33520,
+     "qty": 5
+    },
+    {
+     "id": 33522,
+     "qty": 5
+    }
+   ],
+   "kind": "kromakina",
+   "family": "muldo",
+   "generation": 6
+  },
+  {
+   "id": 33428,
+   "name": "Kromakina Muldo de Génération 7",
+   "level": 121,
+   "ingredients": [
+    {
+     "id": 840,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33523,
+     "qty": 6
+    },
+    {
+     "id": 33520,
+     "qty": 6
+    },
+    {
+     "id": 33522,
+     "qty": 6
+    }
+   ],
+   "kind": "kromakina",
+   "family": "muldo",
+   "generation": 7
+  },
+  {
+   "id": 33449,
+   "name": "Kromakina Muldo de Génération 8",
+   "level": 141,
+   "ingredients": [
+    {
+     "id": 8399,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33523,
+     "qty": 7
+    },
+    {
+     "id": 33520,
+     "qty": 7
+    },
+    {
+     "id": 33522,
+     "qty": 7
+    }
+   ],
+   "kind": "kromakina",
+   "family": "muldo",
+   "generation": 8
+  },
+  {
+   "id": 33536,
+   "name": "Kromakina Muldo de Génération 9",
+   "level": 159,
+   "ingredients": [
+    {
+     "id": 13164,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33523,
+     "qty": 8
+    },
+    {
+     "id": 33520,
+     "qty": 8
+    },
+    {
+     "id": 33522,
+     "qty": 8
+    }
+   ],
+   "kind": "kromakina",
+   "family": "muldo",
+   "generation": 9
+  },
+  {
+   "id": 33539,
+   "name": "Kromakina Muldo de Génération 10",
+   "level": 177,
+   "ingredients": [
+    {
+     "id": 15451,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33523,
+     "qty": 10
+    },
+    {
+     "id": 33520,
+     "qty": 10
+    },
+    {
+     "id": 33522,
+     "qty": 10
+    }
+   ],
+   "kind": "kromakina",
+   "family": "muldo",
+   "generation": 10
+  },
+  {
+   "id": 33335,
+   "name": "Optimakina Muldo de Génération 2",
+   "level": 33,
+   "ingredients": [
+    {
+     "id": 838,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33525,
+     "qty": 1
+    },
+    {
+     "id": 33524,
+     "qty": 1
+    }
+   ],
+   "kind": "optimakina",
+   "family": "muldo",
+   "generation": 2
+  },
+  {
+   "id": 33356,
+   "name": "Optimakina Muldo de Génération 3",
+   "level": 53,
+   "ingredients": [
+    {
+     "id": 9388,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33525,
+     "qty": 1
+    },
+    {
+     "id": 33524,
+     "qty": 2
+    }
+   ],
+   "kind": "optimakina",
+   "family": "muldo",
+   "generation": 3
+  },
+  {
+   "id": 33377,
+   "name": "Optimakina Muldo de Génération 4",
+   "level": 73,
+   "ingredients": [
+    {
+     "id": 21264,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33525,
+     "qty": 1
+    },
+    {
+     "id": 33524,
+     "qty": 3
+    }
+   ],
+   "kind": "optimakina",
+   "family": "muldo",
+   "generation": 4
+  },
+  {
+   "id": 33398,
+   "name": "Optimakina Muldo de Génération 5",
+   "level": 93,
+   "ingredients": [
+    {
+     "id": 8403,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33525,
+     "qty": 1
+    },
+    {
+     "id": 33524,
+     "qty": 4
+    }
+   ],
+   "kind": "optimakina",
+   "family": "muldo",
+   "generation": 5
+  },
+  {
+   "id": 33419,
+   "name": "Optimakina Muldo de Génération 6",
+   "level": 113,
+   "ingredients": [
+    {
+     "id": 8486,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33525,
+     "qty": 1
+    },
+    {
+     "id": 33524,
+     "qty": 5
+    }
+   ],
+   "kind": "optimakina",
+   "family": "muldo",
+   "generation": 6
+  },
+  {
+   "id": 33440,
+   "name": "Optimakina Muldo de Génération 7",
+   "level": 133,
+   "ingredients": [
+    {
+     "id": 15457,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33525,
+     "qty": 1
+    },
+    {
+     "id": 33524,
+     "qty": 6
+    }
+   ],
+   "kind": "optimakina",
+   "family": "muldo",
+   "generation": 7
+  },
+  {
+   "id": 33461,
+   "name": "Optimakina Muldo de Génération 8",
+   "level": 153,
+   "ingredients": [
+    {
+     "id": 11321,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33525,
+     "qty": 1
+    },
+    {
+     "id": 33524,
+     "qty": 7
+    }
+   ],
+   "kind": "optimakina",
+   "family": "muldo",
+   "generation": 8
+  },
+  {
+   "id": 33538,
+   "name": "Optimakina Muldo de Génération 9",
+   "level": 171,
+   "ingredients": [
+    {
+     "id": 18568,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33525,
+     "qty": 2
+    },
+    {
+     "id": 33524,
+     "qty": 8
+    }
+   ],
+   "kind": "optimakina",
+   "family": "muldo",
+   "generation": 9
+  },
+  {
+   "id": 33541,
+   "name": "Optimakina Muldo de Génération 10",
+   "level": 189,
+   "ingredients": [
+    {
+     "id": 27439,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33525,
+     "qty": 3
+    },
+    {
+     "id": 33524,
+     "qty": 10
+    }
+   ],
+   "kind": "optimakina",
+   "family": "muldo",
+   "generation": 10
+  },
+  {
+   "id": 33325,
+   "name": "Animakina Volkorne de Génération 2",
+   "level": 25,
+   "ingredients": [
+    {
+     "id": 16002,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33529,
+     "qty": 1
+    }
+   ],
+   "kind": "animakina",
+   "family": "volkorne",
+   "generation": 2
+  },
+  {
+   "id": 33346,
+   "name": "Animakina Volkorne de Génération 3",
+   "level": 45,
+   "ingredients": [
+    {
+     "id": 8385,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33529,
+     "qty": 2
+    }
+   ],
+   "kind": "animakina",
+   "family": "volkorne",
+   "generation": 3
+  },
+  {
+   "id": 33367,
+   "name": "Animakina Volkorne de Génération 4",
+   "level": 65,
+   "ingredients": [
+    {
+     "id": 11695,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33529,
+     "qty": 3
+    }
+   ],
+   "kind": "animakina",
+   "family": "volkorne",
+   "generation": 4
+  },
+  {
+   "id": 33388,
+   "name": "Animakina Volkorne de Génération 5",
+   "level": 85,
+   "ingredients": [
+    {
+     "id": 8496,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33529,
+     "qty": 4
+    }
+   ],
+   "kind": "animakina",
+   "family": "volkorne",
+   "generation": 5
+  },
+  {
+   "id": 33409,
+   "name": "Animakina Volkorne de Génération 6",
+   "level": 105,
+   "ingredients": [
+    {
+     "id": 21268,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33529,
+     "qty": 5
+    }
+   ],
+   "kind": "animakina",
+   "family": "volkorne",
+   "generation": 6
+  },
+  {
+   "id": 33430,
+   "name": "Animakina Volkorne de Génération 7",
+   "level": 125,
+   "ingredients": [
+    {
+     "id": 8367,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33529,
+     "qty": 6
+    }
+   ],
+   "kind": "animakina",
+   "family": "volkorne",
+   "generation": 7
+  },
+  {
+   "id": 33451,
+   "name": "Animakina Volkorne de Génération 8",
+   "level": 145,
+   "ingredients": [
+    {
+     "id": 11232,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33529,
+     "qty": 7
+    }
+   ],
+   "kind": "animakina",
+   "family": "volkorne",
+   "generation": 8
+  },
+  {
+   "id": 33477,
+   "name": "Animakina Volkorne de Génération 9",
+   "level": 163,
+   "ingredients": [
+    {
+     "id": 13168,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33529,
+     "qty": 8
+    }
+   ],
+   "kind": "animakina",
+   "family": "volkorne",
+   "generation": 9
+  },
+  {
+   "id": 33495,
+   "name": "Animakina Volkorne de Génération 10",
+   "level": 181,
+   "ingredients": [
+    {
+     "id": 13157,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33529,
+     "qty": 10
+    }
+   ],
+   "kind": "animakina",
+   "family": "volkorne",
+   "generation": 10
+  },
+  {
+   "id": 33322,
+   "name": "Kromakina Volkorne de Génération 2",
+   "level": 19,
+   "ingredients": [
+    {
+     "id": 8157,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33528,
+     "qty": 1
+    },
+    {
+     "id": 33527,
+     "qty": 1
+    }
+   ],
+   "kind": "kromakina",
+   "family": "volkorne",
+   "generation": 2
+  },
+  {
+   "id": 33343,
+   "name": "Kromakina Volkorne de Génération 3",
+   "level": 39,
+   "ingredients": [
+    {
+     "id": 8388,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33528,
+     "qty": 2
+    },
+    {
+     "id": 33527,
+     "qty": 2
+    }
+   ],
+   "kind": "kromakina",
+   "family": "volkorne",
+   "generation": 3
+  },
+  {
+   "id": 33364,
+   "name": "Kromakina Volkorne de Génération 4",
+   "level": 59,
+   "ingredients": [
+    {
+     "id": 2241,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33528,
+     "qty": 3
+    },
+    {
+     "id": 33527,
+     "qty": 3
+    }
+   ],
+   "kind": "kromakina",
+   "family": "volkorne",
+   "generation": 4
+  },
+  {
+   "id": 33385,
+   "name": "Kromakina Volkorne de Génération 5",
+   "level": 79,
+   "ingredients": [
+    {
+     "id": 18371,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33528,
+     "qty": 4
+    },
+    {
+     "id": 33527,
+     "qty": 4
+    }
+   ],
+   "kind": "kromakina",
+   "family": "volkorne",
+   "generation": 5
+  },
+  {
+   "id": 33406,
+   "name": "Kromakina Volkorne de Génération 6",
+   "level": 99,
+   "ingredients": [
+    {
+     "id": 15164,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33528,
+     "qty": 5
+    },
+    {
+     "id": 33527,
+     "qty": 5
+    }
+   ],
+   "kind": "kromakina",
+   "family": "volkorne",
+   "generation": 6
+  },
+  {
+   "id": 33427,
+   "name": "Kromakina Volkorne de Génération 7",
+   "level": 119,
+   "ingredients": [
+    {
+     "id": 15727,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33528,
+     "qty": 6
+    },
+    {
+     "id": 33527,
+     "qty": 6
+    }
+   ],
+   "kind": "kromakina",
+   "family": "volkorne",
+   "generation": 7
+  },
+  {
+   "id": 33448,
+   "name": "Kromakina Volkorne de Génération 8",
+   "level": 139,
+   "ingredients": [
+    {
+     "id": 18383,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33528,
+     "qty": 7
+    },
+    {
+     "id": 33527,
+     "qty": 7
+    }
+   ],
+   "kind": "kromakina",
+   "family": "volkorne",
+   "generation": 8
+  },
+  {
+   "id": 33469,
+   "name": "Kromakina Volkorne de Génération 9",
+   "level": 157,
+   "ingredients": [
+    {
+     "id": 11333,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33528,
+     "qty": 8
+    },
+    {
+     "id": 33527,
+     "qty": 8
+    }
+   ],
+   "kind": "kromakina",
+   "family": "volkorne",
+   "generation": 9
+  },
+  {
+   "id": 33487,
+   "name": "Kromakina Volkorne de Génération 10",
+   "level": 175,
+   "ingredients": [
+    {
+     "id": 9280,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33528,
+     "qty": 10
+    },
+    {
+     "id": 33527,
+     "qty": 10
+    }
+   ],
+   "kind": "kromakina",
+   "family": "volkorne",
+   "generation": 10
+  },
+  {
+   "id": 33334,
+   "name": "Optimakina Volkorne de Génération 2",
+   "level": 31,
+   "ingredients": [
+    {
+     "id": 8557,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33530,
+     "qty": 1
+    },
+    {
+     "id": 33526,
+     "qty": 1
+    }
+   ],
+   "kind": "optimakina",
+   "family": "volkorne",
+   "generation": 2
+  },
+  {
+   "id": 33355,
+   "name": "Optimakina Volkorne de Génération 3",
+   "level": 51,
+   "ingredients": [
+    {
+     "id": 8397,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33530,
+     "qty": 1
+    },
+    {
+     "id": 33526,
+     "qty": 2
+    }
+   ],
+   "kind": "optimakina",
+   "family": "volkorne",
+   "generation": 3
+  },
+  {
+   "id": 33376,
+   "name": "Optimakina Volkorne de Génération 4",
+   "level": 71,
+   "ingredients": [
+    {
+     "id": 12076,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33530,
+     "qty": 1
+    },
+    {
+     "id": 33526,
+     "qty": 3
+    }
+   ],
+   "kind": "optimakina",
+   "family": "volkorne",
+   "generation": 4
+  },
+  {
+   "id": 33397,
+   "name": "Optimakina Volkorne de Génération 5",
+   "level": 91,
+   "ingredients": [
+    {
+     "id": 2577,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33530,
+     "qty": 1
+    },
+    {
+     "id": 33526,
+     "qty": 4
+    }
+   ],
+   "kind": "optimakina",
+   "family": "volkorne",
+   "generation": 5
+  },
+  {
+   "id": 33418,
+   "name": "Optimakina Volkorne de Génération 6",
+   "level": 111,
+   "ingredients": [
+    {
+     "id": 8485,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33530,
+     "qty": 1
+    },
+    {
+     "id": 33526,
+     "qty": 5
+    }
+   ],
+   "kind": "optimakina",
+   "family": "volkorne",
+   "generation": 6
+  },
+  {
+   "id": 33439,
+   "name": "Optimakina Volkorne de Génération 7",
+   "level": 131,
+   "ingredients": [
+    {
+     "id": 15065,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33530,
+     "qty": 1
+    },
+    {
+     "id": 33526,
+     "qty": 6
+    }
+   ],
+   "kind": "optimakina",
+   "family": "volkorne",
+   "generation": 7
+  },
+  {
+   "id": 33460,
+   "name": "Optimakina Volkorne de Génération 8",
+   "level": 151,
+   "ingredients": [
+    {
+     "id": 8490,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33530,
+     "qty": 1
+    },
+    {
+     "id": 33526,
+     "qty": 7
+    }
+   ],
+   "kind": "optimakina",
+   "family": "volkorne",
+   "generation": 8
+  },
+  {
+   "id": 33479,
+   "name": "Optimakina Volkorne de Génération 9",
+   "level": 169,
+   "ingredients": [
+    {
+     "id": 11341,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33530,
+     "qty": 2
+    },
+    {
+     "id": 33526,
+     "qty": 8
+    }
+   ],
+   "kind": "optimakina",
+   "family": "volkorne",
+   "generation": 9
+  },
+  {
+   "id": 33497,
+   "name": "Optimakina Volkorne de Génération 10",
+   "level": 187,
+   "ingredients": [
+    {
+     "id": 14928,
+     "qty": 1
+    },
+    {
+     "id": 14635,
+     "qty": 10
+    },
+    {
+     "id": 33530,
+     "qty": 3
+    },
+    {
+     "id": 33526,
+     "qty": 10
+    }
+   ],
+   "kind": "optimakina",
+   "family": "volkorne",
+   "generation": 10
+  }
+ ],
+ "nets": [
+  {
+   "id": 32521,
+   "name": "Filet de capture universel",
+   "level": 1,
+   "ingredients": [
+    {
+     "id": 303,
+     "qty": 10
+    },
+    {
+     "id": 312,
+     "qty": 10
+    }
+   ],
+   "kind": "universel",
+   "family": null
+  },
+  {
+   "id": 32525,
+   "name": "Filet multiplicateur de Dragodinde",
+   "level": 100,
+   "ingredients": [
+    {
+     "id": 461,
+     "qty": 5
+    },
+    {
+     "id": 532,
+     "qty": 5
+    },
+    {
+     "id": 2586,
+     "qty": 1
+    },
+    {
+     "id": 2599,
+     "qty": 1
+    },
+    {
+     "id": 10970,
+     "qty": 1
+    },
+    {
+     "id": 13488,
+     "qty": 1
+    }
+   ],
+   "kind": "multiplicateur",
+   "family": "dragodinde"
+  },
+  {
+   "id": 32527,
+   "name": "Filet multiplicateur de Muldo",
+   "level": 100,
+   "ingredients": [
+    {
+     "id": 33525,
+     "qty": 1
+    },
+    {
+     "id": 33524,
+     "qty": 1
+    },
+    {
+     "id": 33523,
+     "qty": 1
+    },
+    {
+     "id": 33522,
+     "qty": 1
+    },
+    {
+     "id": 33521,
+     "qty": 1
+    },
+    {
+     "id": 33520,
+     "qty": 1
+    },
+    {
+     "id": 16461,
+     "qty": 5
+    },
+    {
+     "id": 461,
+     "qty": 5
+    }
+   ],
+   "kind": "multiplicateur",
+   "family": "muldo"
+  },
+  {
+   "id": 32526,
+   "name": "Filet multiplicateur de Volkorne",
+   "level": 100,
+   "ingredients": [
+    {
+     "id": 33530,
+     "qty": 1
+    },
+    {
+     "id": 33529,
+     "qty": 1
+    },
+    {
+     "id": 33528,
+     "qty": 1
+    },
+    {
+     "id": 33527,
+     "qty": 1
+    },
+    {
+     "id": 33526,
+     "qty": 1
+    },
+    {
+     "id": 17140,
+     "qty": 5
+    },
+    {
+     "id": 461,
+     "qty": 5
+    }
+   ],
+   "kind": "multiplicateur",
+   "family": "volkorne"
+  },
+  {
+   "id": 32522,
+   "name": "Filet à Dragodinde renforcé",
+   "level": 150,
+   "ingredients": [
+    {
+     "id": 16385,
+     "qty": 5
+    },
+    {
+     "id": 13488,
+     "qty": 5
+    },
+    {
+     "id": 10970,
+     "qty": 1
+    },
+    {
+     "id": 7925,
+     "qty": 5
+    },
+    {
+     "id": 2599,
+     "qty": 5
+    },
+    {
+     "id": 2586,
+     "qty": 5
+    }
+   ],
+   "kind": "renforce",
+   "family": "dragodinde"
+  },
+  {
+   "id": 32524,
+   "name": "Filet à Muldo renforcé",
+   "level": 150,
+   "ingredients": [
+    {
+     "id": 602,
+     "qty": 5
+    },
+    {
+     "id": 7925,
+     "qty": 5
+    },
+    {
+     "id": 33520,
+     "qty": 5
+    },
+    {
+     "id": 33521,
+     "qty": 5
+    },
+    {
+     "id": 33522,
+     "qty": 5
+    },
+    {
+     "id": 33523,
+     "qty": 5
+    },
+    {
+     "id": 33524,
+     "qty": 5
+    },
+    {
+     "id": 33525,
+     "qty": 2
+    }
+   ],
+   "kind": "renforce",
+   "family": "muldo"
+  },
+  {
+   "id": 32523,
+   "name": "Filet à Volkorne renforcé",
+   "level": 150,
+   "ingredients": [
+    {
+     "id": 7925,
+     "qty": 5
+    },
+    {
+     "id": 17150,
+     "qty": 5
+    },
+    {
+     "id": 33526,
+     "qty": 5
+    },
+    {
+     "id": 33527,
+     "qty": 5
+    },
+    {
+     "id": 33528,
+     "qty": 5
+    },
+    {
+     "id": 33529,
+     "qty": 5
+    },
+    {
+     "id": 33530,
+     "qty": 2
+    }
+   ],
+   "kind": "renforce",
+   "family": "volkorne"
+  },
+  {
+   "id": 32528,
+   "name": "Filet multiplicateur de Dragodinde renforcé",
+   "level": 200,
+   "ingredients": [
+    {
+     "id": 11107,
+     "qty": 1
+    },
+    {
+     "id": 17993,
+     "qty": 2
+    },
+    {
+     "id": 11109,
+     "qty": 1
+    },
+    {
+     "id": 2588,
+     "qty": 3
+    },
+    {
+     "id": 10970,
+     "qty": 2
+    },
+    {
+     "id": 13488,
+     "qty": 10
+    },
+    {
+     "id": 2586,
+     "qty": 10
+    },
+    {
+     "id": 2599,
+     "qty": 10
+    }
+   ],
+   "kind": "multiplicateur_renforce",
+   "family": "dragodinde"
+  },
+  {
+   "id": 32530,
+   "name": "Filet multiplicateur de Muldo renforcé",
+   "level": 200,
+   "ingredients": [
+    {
+     "id": 17991,
+     "qty": 2
+    },
+    {
+     "id": 17994,
+     "qty": 2
+    },
+    {
+     "id": 33524,
+     "qty": 10
+    },
+    {
+     "id": 33523,
+     "qty": 10
+    },
+    {
+     "id": 33521,
+     "qty": 10
+    },
+    {
+     "id": 33520,
+     "qty": 10
+    },
+    {
+     "id": 33522,
+     "qty": 10
+    },
+    {
+     "id": 33525,
+     "qty": 3
+    }
+   ],
+   "kind": "multiplicateur_renforce",
+   "family": "muldo"
+  },
+  {
+   "id": 32529,
+   "name": "Filet multiplicateur de Volkorne renforcé",
+   "level": 200,
+   "ingredients": [
+    {
+     "id": 11107,
+     "qty": 1
+    },
+    {
+     "id": 17160,
+     "qty": 10
+    },
+    {
+     "id": 23825,
+     "qty": 1
+    },
+    {
+     "id": 33529,
+     "qty": 10
+    },
+    {
+     "id": 33528,
+     "qty": 10
+    },
+    {
+     "id": 33527,
+     "qty": 10
+    },
+    {
+     "id": 33530,
+     "qty": 3
+    },
+    {
+     "id": 33526,
+     "qty": 10
+    }
+   ],
+   "kind": "multiplicateur_renforce",
+   "family": "volkorne"
+  }
+ ],
+ "ingredients": [
+  {
+   "id": 289,
+   "name": "Blé",
+   "level": 1,
+   "typeId": 34,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 303,
+   "name": "Bois de Frêne",
+   "level": 1,
+   "typeId": 38,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 3
+  },
+  {
+   "id": 312,
+   "name": "Fer",
+   "level": 1,
+   "typeId": 39,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 3
+  },
+  {
+   "id": 1782,
+   "name": "Goujon",
+   "level": 1,
+   "typeId": 41,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 421,
+   "name": "Ortie",
+   "level": 1,
+   "typeId": 36,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 14635,
+   "name": "Pépite",
+   "level": 1,
+   "typeId": 50,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 81
+  },
+  {
+   "id": 16663,
+   "name": "Viande Intangible",
+   "level": 1,
+   "typeId": 63,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 16525,
+   "name": "Crâne de Kardorim",
+   "level": 10,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 16487,
+   "name": "Bois Vermoulu",
+   "level": 18,
+   "typeId": 38,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2663,
+   "name": "Engrais",
+   "level": 18,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2661,
+   "name": "Feuille de Tournesol Sauvage",
+   "level": 18,
+   "typeId": 36,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2665,
+   "name": "Herbe Folle",
+   "level": 18,
+   "typeId": 36,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 1673,
+   "name": "Patte d'Arakne Magique",
+   "level": 18,
+   "typeId": 103,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 378,
+   "name": "Sporme du Champ Champ",
+   "level": 18,
+   "typeId": 119,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 473,
+   "name": "Bois de Châtaignier",
+   "level": 20,
+   "typeId": 38,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 441,
+   "name": "Cuivre",
+   "level": 20,
+   "typeId": 39,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 400,
+   "name": "Orge",
+   "level": 20,
+   "typeId": 34,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 8682,
+   "name": "Peau de Mob l'Éponge",
+   "level": 20,
+   "typeId": 59,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8157,
+   "name": "Pétale Magique du Tournesol Affamé",
+   "level": 20,
+   "typeId": 35,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 428,
+   "name": "Sauge",
+   "level": 20,
+   "typeId": 36,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 1844,
+   "name": "Truite",
+   "level": 20,
+   "typeId": 41,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 17124,
+   "name": "Viande Faisandée",
+   "level": 20,
+   "typeId": 63,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 2574,
+   "name": "Crinière de Scélérat Strubien",
+   "level": 23,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2318,
+   "name": "Feuille de Rose Obscure",
+   "level": 23,
+   "typeId": 36,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 430,
+   "name": "Os Invisible du Chafer Invisible",
+   "level": 23,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2274,
+   "name": "Bougie du Mineur Sombre",
+   "level": 24,
+   "typeId": 15,
+   "npcPrice": 24,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 652,
+   "name": "Étoffe du Sanglier",
+   "level": 24,
+   "typeId": 55,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 6841,
+   "name": "Œil de Pikdoa",
+   "level": 26,
+   "typeId": 109,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2453,
+   "name": "Œil de Ramane Strubien",
+   "level": 26,
+   "typeId": 109,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2451,
+   "name": "Patte d'Arakne des Égouts",
+   "level": 26,
+   "typeId": 103,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 450,
+   "name": "Pierre de Granit",
+   "level": 26,
+   "typeId": 51,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2675,
+   "name": "Plume de Tofu Maléfique",
+   "level": 26,
+   "typeId": 53,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2467,
+   "name": "Rondelles de Milirat Strubien",
+   "level": 26,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2576,
+   "name": "Scalp de Milimulou",
+   "level": 26,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 886,
+   "name": "Cuir de Bouftou Royal",
+   "level": 30,
+   "typeId": 56,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2323,
+   "name": "Colonne Vertébrale",
+   "level": 34,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 1674,
+   "name": "Champignon Luidegît",
+   "level": 35,
+   "typeId": 119,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2669,
+   "name": "Chauve-souris",
+   "level": 35,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2336,
+   "name": "Crâne de Chafer",
+   "level": 36,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2463,
+   "name": "Dent de Kwoan",
+   "level": 36,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2454,
+   "name": "Estomac de Tofu Ventripotent",
+   "level": 36,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8161,
+   "name": "Ailes du Scarabosse Doré",
+   "level": 40,
+   "typeId": 104,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 533,
+   "name": "Avoine",
+   "level": 40,
+   "typeId": 34,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 476,
+   "name": "Bois de Noyer",
+   "level": 40,
+   "typeId": 38,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 11815,
+   "name": "Boostoplasme",
+   "level": 40,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 442,
+   "name": "Bronze",
+   "level": 40,
+   "typeId": 39,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 13096,
+   "name": "Fémur du Chafer Rōnin",
+   "level": 40,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 838,
+   "name": "Manuel du Directeur Grunob",
+   "level": 40,
+   "typeId": 15,
+   "npcPrice": 100,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 16002,
+   "name": "Patte de Kankreblath",
+   "level": 40,
+   "typeId": 103,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8557,
+   "name": "Plume de Batofu",
+   "level": 40,
+   "typeId": 53,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 603,
+   "name": "Poisson-Chaton",
+   "level": 40,
+   "typeId": 41,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 395,
+   "name": "Trèfle à 5 feuilles",
+   "level": 40,
+   "typeId": 36,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 17128,
+   "name": "Viande Minérale",
+   "level": 40,
+   "typeId": 63,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 8732,
+   "name": "Corail Kouraçao",
+   "level": 42,
+   "typeId": 51,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8733,
+   "name": "Corail Malibout",
+   "level": 42,
+   "typeId": 51,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8735,
+   "name": "Corail Morito",
+   "level": 42,
+   "typeId": 51,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8734,
+   "name": "Corail Passaoh",
+   "level": 42,
+   "typeId": 51,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2266,
+   "name": "Lait de Cochon de Lait",
+   "level": 43,
+   "typeId": 228,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2268,
+   "name": "Scalp de Bwork Archer",
+   "level": 43,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 27368,
+   "name": "La cambriole pour les Nuls",
+   "level": 50,
+   "typeId": 15,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8388,
+   "name": "Peau de Bworkette",
+   "level": 50,
+   "typeId": 59,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8385,
+   "name": "Peau de Shin Larve",
+   "level": 50,
+   "typeId": 59,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 12016,
+   "name": "Plume du Kwakwa",
+   "level": 50,
+   "typeId": 53,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8738,
+   "name": "Sacrum magistral",
+   "level": 50,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13140,
+   "name": "Serrure du Coffre des Forgerons",
+   "level": 50,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14463,
+   "name": "Crâne de Wabbit Squelette",
+   "level": 52,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14466,
+   "name": "Bandeau de Black Wabbit Squelette",
+   "level": 54,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14467,
+   "name": "Osselet de Black Wabbit Squelette",
+   "level": 54,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2483,
+   "name": "Bidule inutile",
+   "level": 56,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 650,
+   "name": "Duvet de Bourdard",
+   "level": 56,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 406,
+   "name": "Estomac de Wo Wabbit",
+   "level": 56,
+   "typeId": 15,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2479,
+   "name": "Fléau de Robot Fléau",
+   "level": 56,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 480,
+   "name": "Minerai Étrange",
+   "level": 56,
+   "typeId": 39,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 419,
+   "name": "Oreille du Grand Pa Wabbit",
+   "level": 56,
+   "typeId": 106,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2507,
+   "name": "Peau de Larve Champêtre",
+   "level": 56,
+   "typeId": 59,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 649,
+   "name": "Poils de Wo Wabbit",
+   "level": 56,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 1771,
+   "name": "Souris verte",
+   "level": 56,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 33526,
+   "name": "Aile de volkorne ébène",
+   "level": 60,
+   "typeId": 104,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 12
+  },
+  {
+   "id": 33529,
+   "name": "Aile de volkorne indigo",
+   "level": 60,
+   "typeId": 104,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 12
+  },
+  {
+   "id": 33528,
+   "name": "Aile de volkorne orchidée",
+   "level": 60,
+   "typeId": 104,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 12
+  },
+  {
+   "id": 33527,
+   "name": "Aile de volkorne pourpre",
+   "level": 60,
+   "typeId": 104,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 12
+  },
+  {
+   "id": 33525,
+   "name": "Bave de muldo",
+   "level": 60,
+   "typeId": 228,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 12
+  },
+  {
+   "id": 460,
+   "name": "Bois de Chêne",
+   "level": 60,
+   "typeId": 38,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 11695,
+   "name": "Carniflore",
+   "level": 60,
+   "typeId": 35,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 1794,
+   "name": "Carpe d'Iem",
+   "level": 60,
+   "typeId": 41,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 9388,
+   "name": "Feuille de Blop Royal",
+   "level": 60,
+   "typeId": 36,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 370,
+   "name": "Gelée Bleuet Royale",
+   "level": 60,
+   "typeId": 110,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2437,
+   "name": "Gelée Citron Royale",
+   "level": 60,
+   "typeId": 110,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2242,
+   "name": "Gelée Fraise Royale",
+   "level": 60,
+   "typeId": 110,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2241,
+   "name": "Gelée Menthe Royale",
+   "level": 60,
+   "typeId": 110,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 33530,
+   "name": "Griffe de volkorne",
+   "level": 60,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 12
+  },
+  {
+   "id": 401,
+   "name": "Houblon",
+   "level": 60,
+   "typeId": 34,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 443,
+   "name": "Kobalte",
+   "level": 60,
+   "typeId": 39,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 380,
+   "name": "Menthe Sauvage",
+   "level": 60,
+   "typeId": 36,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 33524,
+   "name": "Moustache de muldo doré",
+   "level": 60,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 12
+  },
+  {
+   "id": 33523,
+   "name": "Moustache de muldo ébène",
+   "level": 60,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 12
+  },
+  {
+   "id": 33521,
+   "name": "Moustache de muldo indigo",
+   "level": 60,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 12
+  },
+  {
+   "id": 33520,
+   "name": "Moustache de muldo orchidée",
+   "level": 60,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 12
+  },
+  {
+   "id": 33522,
+   "name": "Moustache de muldo pourpre",
+   "level": 60,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 12
+  },
+  {
+   "id": 8397,
+   "name": "Poil du Wa Wabbit",
+   "level": 60,
+   "typeId": 54,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 10970,
+   "name": "Sueur de dragodinde",
+   "level": 60,
+   "typeId": 228,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 12
+  },
+  {
+   "id": 17132,
+   "name": "Viande Ladre",
+   "level": 60,
+   "typeId": 63,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 2588,
+   "name": "Aile de dragodinde",
+   "level": 61,
+   "typeId": 104,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2306,
+   "name": "Cœur de Craqueleur",
+   "level": 61,
+   "typeId": 51,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2252,
+   "name": "Dent en Or de Craqueleur",
+   "level": 61,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2599,
+   "name": "Pic de dragodinde",
+   "level": 61,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 12
+  },
+  {
+   "id": 1679,
+   "name": "Pierre de Crystaloboule",
+   "level": 62,
+   "typeId": 50,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8739,
+   "name": "Humérus du Sparo",
+   "level": 63,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2505,
+   "name": "Baballe",
+   "level": 64,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8050,
+   "name": "Peau de Koalak Immature",
+   "level": 64,
+   "typeId": 59,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2586,
+   "name": "Aile de dragodinde rousse sauvage",
+   "level": 66,
+   "typeId": 104,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 3
+  },
+  {
+   "id": 2549,
+   "name": "Boîte de Vétauran",
+   "level": 66,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2550,
+   "name": "Étoffe de Foufayteur",
+   "level": 66,
+   "typeId": 55,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2295,
+   "name": "Fragment d'Épée Reptilienne",
+   "level": 66,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2500,
+   "name": "Kolérat Mort",
+   "level": 66,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2504,
+   "name": "Langue de Craquelope",
+   "level": 66,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2056,
+   "name": "Œil de Crowneille",
+   "level": 66,
+   "typeId": 109,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2598,
+   "name": "Queue de dragodinde sauvage",
+   "level": 66,
+   "typeId": 65,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 9
+  },
+  {
+   "id": 13488,
+   "name": "Aile de dragodinde dorée",
+   "level": 70,
+   "typeId": 104,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 3
+  },
+  {
+   "id": 1129,
+   "name": "Coquille de Dragoeuf Ardoise",
+   "level": 70,
+   "typeId": 111,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 842,
+   "name": "Coquille de Dragoeuf Argile",
+   "level": 70,
+   "typeId": 111,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 308,
+   "name": "Coquille de Dragoeuf Calcaire",
+   "level": 70,
+   "typeId": 111,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 843,
+   "name": "Coquille de Dragoeuf Charbon",
+   "level": 70,
+   "typeId": 111,
+   "npcPrice": 150,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 12076,
+   "name": "Duvet de Nelween",
+   "level": 70,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 21264,
+   "name": "Étoffe de Draegnerys",
+   "level": 70,
+   "typeId": 55,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8758,
+   "name": "Morceau de caleçon de Gourlo",
+   "level": 70,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2552,
+   "name": "Œil de Kanigrou",
+   "level": 70,
+   "typeId": 109,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14280,
+   "name": "Pic de dragodinde dorée",
+   "level": 70,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 9
+  },
+  {
+   "id": 8102,
+   "name": "Pierre du Craqueleur Légendaire",
+   "level": 70,
+   "typeId": 51,
+   "npcPrice": 100,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8075,
+   "name": "Boomerang du Dok Alako",
+   "level": 74,
+   "typeId": 229,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 847,
+   "name": "Œuf de Dragoeuf Calcaire",
+   "level": 74,
+   "typeId": 105,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 846,
+   "name": "Œuf de Dragoeuf Charbon",
+   "level": 74,
+   "typeId": 105,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 1660,
+   "name": "Ambre d'Abraknyde Sombre",
+   "level": 78,
+   "typeId": 50,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8077,
+   "name": "Boomerang du Warko Marron",
+   "level": 78,
+   "typeId": 229,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 1682,
+   "name": "Écorce de Liroye Merline",
+   "level": 78,
+   "typeId": 96,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 1612,
+   "name": "Racine d'Abraknyde Sombre",
+   "level": 78,
+   "typeId": 98,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14468,
+   "name": "Barbe du Wa Wobot",
+   "level": 80,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 471,
+   "name": "Bois d'Érable",
+   "level": 80,
+   "typeId": 38,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 1847,
+   "name": "Brochet",
+   "level": 80,
+   "typeId": 41,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 18371,
+   "name": "Carapace du Mantiscore",
+   "level": 80,
+   "typeId": 107,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 423,
+   "name": "Lin",
+   "level": 80,
+   "typeId": 34,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 445,
+   "name": "Manganèse",
+   "level": 80,
+   "typeId": 39,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 593,
+   "name": "Orchidée Freyesque",
+   "level": 80,
+   "typeId": 35,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 17136,
+   "name": "Viande Sanguinolente",
+   "level": 80,
+   "typeId": 63,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 8083,
+   "name": "Os de Pékeualak",
+   "level": 84,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8084,
+   "name": "Peau de Piralak",
+   "level": 84,
+   "typeId": 59,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8060,
+   "name": "Poils de Koalak Coco",
+   "level": 84,
+   "typeId": 54,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8059,
+   "name": "Poils de Koalak Griotte",
+   "level": 84,
+   "typeId": 54,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8062,
+   "name": "Poils de Koalak Indigo",
+   "level": 84,
+   "typeId": 54,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8061,
+   "name": "Poils de Koalak Reinette",
+   "level": 84,
+   "typeId": 54,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 16216,
+   "name": "Chélicères d'Arapex",
+   "level": 86,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 16218,
+   "name": "Dent de Gargantûl",
+   "level": 86,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 16219,
+   "name": "Fil de Néfileuse",
+   "level": 86,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 16217,
+   "name": "Laine de Dardalaine",
+   "level": 86,
+   "typeId": 57,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 16220,
+   "name": "Œil de Saltik",
+   "level": 86,
+   "typeId": 109,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 6740,
+   "name": "Peau de Tivelo",
+   "level": 86,
+   "typeId": 59,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2621,
+   "name": "Barbe du Chouque",
+   "level": 90,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 27375,
+   "name": "Bois de Pin",
+   "level": 90,
+   "typeId": 38,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 1691,
+   "name": "Faux Visage de Choudini",
+   "level": 90,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8496,
+   "name": "Racine d'Abraknyde Ancestral",
+   "level": 90,
+   "typeId": 98,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 16180,
+   "name": "Soie Baveuse",
+   "level": 90,
+   "typeId": 15,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8807,
+   "name": "Jus de Ouassingue",
+   "level": 92,
+   "typeId": 228,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14509,
+   "name": "Oreille de Bouledogre",
+   "level": 93,
+   "typeId": 106,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14510,
+   "name": "Patte de Bouledogre",
+   "level": 93,
+   "typeId": 103,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8055,
+   "name": "Os de Mama Koalak",
+   "level": 94,
+   "typeId": 47,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8390,
+   "name": "Peau de Cochon de Farle",
+   "level": 94,
+   "typeId": 59,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8054,
+   "name": "Peau de Drakoalak",
+   "level": 94,
+   "typeId": 59,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14512,
+   "name": "Plume de Gobvious",
+   "level": 94,
+   "typeId": 53,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14513,
+   "name": "Échasse de Molette",
+   "level": 95,
+   "typeId": 38,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 439,
+   "name": "Canine de Mergranlou",
+   "level": 96,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 291,
+   "name": "Poils de Mulounoké",
+   "level": 96,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 438,
+   "name": "Queue du Mulou",
+   "level": 96,
+   "typeId": 65,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 292,
+   "name": "Testicules de Cocholou",
+   "level": 96,
+   "typeId": 15,
+   "npcPrice": 50,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 16461,
+   "name": "Anguille",
+   "level": 100,
+   "typeId": 41,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 3
+  },
+  {
+   "id": 15167,
+   "name": "Antenne de Trésantène",
+   "level": 100,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 461,
+   "name": "Bois d'If",
+   "level": 100,
+   "typeId": 38,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 3
+  },
+  {
+   "id": 6736,
+   "name": "Bourgeon de Fourbasse",
+   "level": 100,
+   "typeId": 108,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15164,
+   "name": "Broderie de Malléfisk",
+   "level": 100,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14518,
+   "name": "Chaussette trouée de Dramak",
+   "level": 100,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15165,
+   "name": "Corde de Boursoin",
+   "level": 100,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15168,
+   "name": "Corne de Berserkoffre",
+   "level": 100,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 21268,
+   "name": "Dent du Kharnozor",
+   "level": 100,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 594,
+   "name": "Edelweiss",
+   "level": 100,
+   "typeId": 35,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 444,
+   "name": "Étain",
+   "level": 100,
+   "typeId": 39,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 2254,
+   "name": "Feuille de Fourbasse",
+   "level": 100,
+   "typeId": 36,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2253,
+   "name": "Fleur de Gloutovore",
+   "level": 100,
+   "typeId": 35,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2632,
+   "name": "Glouto Rhum",
+   "level": 100,
+   "typeId": 228,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2645,
+   "name": "Groin de Dragon Cochon",
+   "level": 100,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15166,
+   "name": "Langue de Mimikado",
+   "level": 100,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8383,
+   "name": "Peau de Moon",
+   "level": 100,
+   "typeId": 59,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2605,
+   "name": "Plume de Dostrogo",
+   "level": 100,
+   "typeId": 53,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13167,
+   "name": "Plume du Rasboul Majeur",
+   "level": 100,
+   "typeId": 53,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2577,
+   "name": "Scalp du Meulou",
+   "level": 100,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 532,
+   "name": "Seigle",
+   "level": 100,
+   "typeId": 34,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 3
+  },
+  {
+   "id": 8403,
+   "name": "Tresse du Koulosse",
+   "level": 100,
+   "typeId": 54,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2607,
+   "name": "Trukikol Mort",
+   "level": 100,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 17140,
+   "name": "Viande Exsudative",
+   "level": 100,
+   "typeId": 63,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 3
+  },
+  {
+   "id": 8741,
+   "name": "Bec du Kido",
+   "level": 101,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8811,
+   "name": "Faux menton du Bourbassingue",
+   "level": 101,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8736,
+   "name": "Cœur de pierre poli",
+   "level": 102,
+   "typeId": 51,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8762,
+   "name": "Fragment de cerveau poli",
+   "level": 102,
+   "typeId": 50,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8769,
+   "name": "Coco du Bitouf des Plaines",
+   "level": 103,
+   "typeId": 111,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8765,
+   "name": "Bâton du Kilibriss",
+   "level": 104,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8315,
+   "name": "Peau de Mandrine",
+   "level": 104,
+   "typeId": 59,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8312,
+   "name": "Peau de Minoskito",
+   "level": 104,
+   "typeId": 59,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 16211,
+   "name": "Bourgeon explosif de Damadrya",
+   "level": 110,
+   "typeId": 108,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8486,
+   "name": "Crinière de Rat Blanc",
+   "level": 110,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8485,
+   "name": "Crinière de Rat Noir",
+   "level": 110,
+   "typeId": 54,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 17614,
+   "name": "Glande du Pounicheur",
+   "level": 110,
+   "typeId": 15,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11118,
+   "name": "Clavicule de Boufmouth",
+   "level": 112,
+   "typeId": 47,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11122,
+   "name": "Corne de Boufmouth de guerre",
+   "level": 112,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13700,
+   "name": "Couche usagée de Warko Violet",
+   "level": 112,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8058,
+   "name": "Cubitus de Momie Koalak",
+   "level": 112,
+   "typeId": 47,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11120,
+   "name": "Cuir de Bouftonmouth",
+   "level": 112,
+   "typeId": 56,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11117,
+   "name": "Laine de Boufmouth",
+   "level": 112,
+   "typeId": 57,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11121,
+   "name": "Œil de Boufmouth de guerre",
+   "level": 112,
+   "typeId": 109,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11119,
+   "name": "Oreille de Bouftonmouth",
+   "level": 112,
+   "typeId": 106,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8066,
+   "name": "Poils de Barbe du Warko Violet",
+   "level": 112,
+   "typeId": 54,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8076,
+   "name": "Boomerang du Maître Koalak",
+   "level": 114,
+   "typeId": 229,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13338,
+   "name": "Enfumoir Zoth",
+   "level": 114,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8082,
+   "name": "Étoffe du Fauchalak",
+   "level": 114,
+   "typeId": 55,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8314,
+   "name": "Peau de Kraméléhon",
+   "level": 114,
+   "typeId": 59,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8052,
+   "name": "Peau de Maître Koalak",
+   "level": 114,
+   "typeId": 59,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2561,
+   "name": "Bracelet de Force de Trooll",
+   "level": 115,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2560,
+   "name": "Épaulière de Troolligark",
+   "level": 115,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 1694,
+   "name": "Laine du Trooll Furieux",
+   "level": 115,
+   "typeId": 57,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2562,
+   "name": "Slip de Troollaraj",
+   "level": 115,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8359,
+   "name": "Aile de Draguaindrop",
+   "level": 120,
+   "typeId": 104,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 350,
+   "name": "Argent",
+   "level": 120,
+   "typeId": 39,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 474,
+   "name": "Bois de Merisier",
+   "level": 120,
+   "typeId": 38,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 8804,
+   "name": "Braguette du Maître Zoth",
+   "level": 120,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14479,
+   "name": "Cawotte Transgénique",
+   "level": 120,
+   "typeId": 68,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8361,
+   "name": "Corne de Dragacé",
+   "level": 120,
+   "typeId": 47,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14477,
+   "name": "Dents de Wabbit Vampire",
+   "level": 120,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8806,
+   "name": "Écusson du Sergent Zoth",
+   "level": 120,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 9389,
+   "name": "Feuille de Blop Multicolore Royal",
+   "level": 120,
+   "typeId": 36,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14475,
+   "name": "Feuille de Cawotman",
+   "level": 120,
+   "typeId": 36,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7059,
+   "name": "Graine de Pandouille",
+   "level": 120,
+   "typeId": 58,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 11221,
+   "name": "Laine du Royalmouth",
+   "level": 120,
+   "typeId": 57,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 405,
+   "name": "Malt",
+   "level": 120,
+   "typeId": 34,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 15072,
+   "name": "Morpion de Truchideur",
+   "level": 120,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8805,
+   "name": "Mouchoir de la Gamine Zoth",
+   "level": 120,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14478,
+   "name": "Œil de Wabbit Céphale",
+   "level": 120,
+   "typeId": 109,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14476,
+   "name": "Oreilles de Wabbit Fluo",
+   "level": 120,
+   "typeId": 106,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8367,
+   "name": "Peau de Crocabulia",
+   "level": 120,
+   "typeId": 59,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8362,
+   "name": "Peau de Dragnarok",
+   "level": 120,
+   "typeId": 59,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8360,
+   "name": "Peau de Draguaindrop",
+   "level": 120,
+   "typeId": 59,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8356,
+   "name": "Peau de Dragueuse",
+   "level": 120,
+   "typeId": 59,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 1801,
+   "name": "Perche",
+   "level": 120,
+   "typeId": 41,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 15727,
+   "name": "Pixel de Fraktale",
+   "level": 120,
+   "typeId": 15,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2247,
+   "name": "Plume de Tofu Royal",
+   "level": 120,
+   "typeId": 53,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15071,
+   "name": "Plume de Truchideur",
+   "level": 120,
+   "typeId": 53,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8405,
+   "name": "Poil de Skeunk",
+   "level": 120,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 840,
+   "name": "Poils du Minotoror",
+   "level": 120,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8803,
+   "name": "Rotule du Disciple Zoth",
+   "level": 120,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14474,
+   "name": "Sang de Wabbit Garou",
+   "level": 120,
+   "typeId": 228,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8802,
+   "name": "Tibia du Guerrier Zoth",
+   "level": 120,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 17144,
+   "name": "Viande Saignante",
+   "level": 120,
+   "typeId": 63,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 15457,
+   "name": "Cœur du Capitaine Ekarlatte",
+   "level": 130,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 18361,
+   "name": "Fleur de Cactiflore",
+   "level": 130,
+   "typeId": 35,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15458,
+   "name": "Foulard de Milimaître",
+   "level": 130,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8399,
+   "name": "Koinkoin de bain de Nagate",
+   "level": 130,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 18362,
+   "name": "Moustaches de Cactoblongo",
+   "level": 130,
+   "typeId": 54,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15460,
+   "name": "Os de Sramouraï",
+   "level": 130,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15065,
+   "name": "Paire de boules de Haute Truche",
+   "level": 130,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 18359,
+   "name": "Parchemin de Cactana",
+   "level": 130,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 18383,
+   "name": "Picot d'El Piko",
+   "level": 130,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15459,
+   "name": "Sacoche de Kartouche",
+   "level": 130,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7386,
+   "name": "Testicules du Tanukouï San",
+   "level": 130,
+   "typeId": 15,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8775,
+   "name": "Écorce de Chiendent",
+   "level": 131,
+   "typeId": 96,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11224,
+   "name": "Aile de Mansobèse",
+   "level": 132,
+   "typeId": 104,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11222,
+   "name": "Bec du Timansot",
+   "level": 132,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11227,
+   "name": "Duvet de Mamansot",
+   "level": 132,
+   "typeId": 54,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8773,
+   "name": "Écorce de Nerbe",
+   "level": 132,
+   "typeId": 96,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11226,
+   "name": "Huile de Mamansot",
+   "level": 132,
+   "typeId": 60,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11225,
+   "name": "Peau de Mansobèse",
+   "level": 132,
+   "typeId": 59,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11223,
+   "name": "Plume du Timansot",
+   "level": 132,
+   "typeId": 53,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8772,
+   "name": "Écorce de Brouture",
+   "level": 133,
+   "typeId": 96,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8774,
+   "name": "Écorce de Fécorce",
+   "level": 134,
+   "typeId": 96,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8783,
+   "name": "Amygdales du Bitouf Sombre",
+   "level": 136,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8776,
+   "name": "Coco du Bitouf Sombre",
+   "level": 136,
+   "typeId": 111,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 446,
+   "name": "Bauxite",
+   "level": 140,
+   "typeId": 39,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 449,
+   "name": "Bois d'Ébène",
+   "level": 140,
+   "typeId": 38,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 7343,
+   "name": "Bracelet de Ino-Naru",
+   "level": 140,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 425,
+   "name": "Chanvre",
+   "level": 140,
+   "typeId": 34,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 11314,
+   "name": "Coquille de Fantimonier",
+   "level": 140,
+   "typeId": 111,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11318,
+   "name": "Écaille de Harpirate",
+   "level": 140,
+   "typeId": 59,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7301,
+   "name": "Étoffe de Kurookin",
+   "level": 140,
+   "typeId": 55,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11319,
+   "name": "Étoffe de Vigie Pirate",
+   "level": 140,
+   "typeId": 55,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 16385,
+   "name": "Ginseng",
+   "level": 140,
+   "typeId": 36,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 3
+  },
+  {
+   "id": 16465,
+   "name": "Lotte",
+   "level": 140,
+   "typeId": 41,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 11315,
+   "name": "Mât de Fantômat",
+   "level": 140,
+   "typeId": 38,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7298,
+   "name": "Peau de Rouquette",
+   "level": 140,
+   "typeId": 59,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11309,
+   "name": "Pince du Fancrôme",
+   "level": 140,
+   "typeId": 47,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8777,
+   "name": "Pistil du Tynril",
+   "level": 140,
+   "typeId": 36,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11232,
+   "name": "Plume du Mansot Royal",
+   "level": 140,
+   "typeId": 53,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7292,
+   "name": "Poils de Boumbardier",
+   "level": 140,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7294,
+   "name": "Poils de Pétartifoux",
+   "level": 140,
+   "typeId": 54,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11312,
+   "name": "Queue de Fantomalamère",
+   "level": 140,
+   "typeId": 65,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8381,
+   "name": "Queue Magique de Founoroshi",
+   "level": 140,
+   "typeId": 65,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 6488,
+   "name": "Racine du Chêne Mou",
+   "level": 140,
+   "typeId": 98,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7300,
+   "name": "Tête de lance de Fangshu",
+   "level": 140,
+   "typeId": 229,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 17148,
+   "name": "Viande Macérée",
+   "level": 140,
+   "typeId": 63,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 2511,
+   "name": "Cuir de Gliglibido",
+   "level": 146,
+   "typeId": 56,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2516,
+   "name": "Défense de Gliglicérin",
+   "level": 146,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2510,
+   "name": "Estomac de Gliglidoudur",
+   "level": 146,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2513,
+   "name": "Étoffe de Gliglidoudur",
+   "level": 146,
+   "typeId": 55,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 1894,
+   "name": "Poil de Gliglitch",
+   "level": 146,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 2514,
+   "name": "Sabot de Gliglicérin",
+   "level": 146,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7925,
+   "name": "Bois de Kaliptus",
+   "level": 150,
+   "typeId": 38,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 3
+  },
+  {
+   "id": 26318,
+   "name": "Bolas de Maltrio",
+   "level": 150,
+   "typeId": 229,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8787,
+   "name": "Cloaque du Poolay",
+   "level": 150,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11327,
+   "name": "Cœur de Crapeur",
+   "level": 150,
+   "typeId": 51,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15173,
+   "name": "Corne de Père Phorreur",
+   "level": 150,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15170,
+   "name": "Défense du Phossile",
+   "level": 150,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8490,
+   "name": "Fémur de Sphincter Cell",
+   "level": 150,
+   "typeId": 47,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15171,
+   "name": "Griffe de Phorrêveur",
+   "level": 150,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15174,
+   "name": "Œil de Phozami",
+   "level": 150,
+   "typeId": 109,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11328,
+   "name": "Œuf de Crapeur",
+   "level": 150,
+   "typeId": 105,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15172,
+   "name": "Peau de Métaphorreur",
+   "level": 150,
+   "typeId": 59,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 26316,
+   "name": "Pétale de Malter",
+   "level": 150,
+   "typeId": 36,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 26319,
+   "name": "Pic de Malépik",
+   "level": 150,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11323,
+   "name": "Pierre d'Atomystique",
+   "level": 150,
+   "typeId": 51,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11321,
+   "name": "Poil de Ben le Ripate",
+   "level": 150,
+   "typeId": 54,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 26320,
+   "name": "Porte-bonheur de Malalfa",
+   "level": 150,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 26317,
+   "name": "Pousse de Malzerb",
+   "level": 150,
+   "typeId": 36,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 602,
+   "name": "Requin Marteau-Faucille",
+   "level": 150,
+   "typeId": 41,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11325,
+   "name": "Résidu de Solfataré",
+   "level": 150,
+   "typeId": 51,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11324,
+   "name": "Téphra d'Atomystique",
+   "level": 150,
+   "typeId": 51,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8786,
+   "name": "Tresse du Poolay",
+   "level": 150,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11326,
+   "name": "Ulna de Solfataré",
+   "level": 150,
+   "typeId": 47,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 17150,
+   "name": "Viande de Brousse",
+   "level": 150,
+   "typeId": 63,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 8832,
+   "name": "Bave du Kaskargo",
+   "level": 154,
+   "typeId": 228,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15048,
+   "name": "Boule de Panthègros",
+   "level": 154,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15046,
+   "name": "Canine de Félygiène",
+   "level": 154,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15047,
+   "name": "Chaîne de Panthègros",
+   "level": 154,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15045,
+   "name": "Griffe de Félygiène",
+   "level": 154,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15051,
+   "name": "Crinière d'Orfélin",
+   "level": 155,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15050,
+   "name": "Étoffe de Kaniblou",
+   "level": 155,
+   "typeId": 55,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 1779,
+   "name": "Bar Rikain",
+   "level": 160,
+   "typeId": 41,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 16387,
+   "name": "Belladone",
+   "level": 160,
+   "typeId": 35,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 472,
+   "name": "Bois de Charme",
+   "level": 160,
+   "typeId": 38,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 17617,
+   "name": "Collier de Chakichan",
+   "level": 160,
+   "typeId": 164,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11340,
+   "name": "Crâne de Yokaï Givrefoux",
+   "level": 160,
+   "typeId": 47,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7407,
+   "name": "Croissant de Tsukinochi",
+   "level": 160,
+   "typeId": 229,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11337,
+   "name": "Cuir de Maho Givrefoux",
+   "level": 160,
+   "typeId": 56,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13168,
+   "name": "Ethmoïde du Minotot",
+   "level": 160,
+   "typeId": 47,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7384,
+   "name": "Étoffe de Samouraï fantôme",
+   "level": 160,
+   "typeId": 55,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7379,
+   "name": "Fleur d'Onabu-Geisha",
+   "level": 160,
+   "typeId": 35,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11338,
+   "name": "Laine de Maho Givrefoux",
+   "level": 160,
+   "typeId": 57,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 16454,
+   "name": "Maïs",
+   "level": 160,
+   "typeId": 34,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 17620,
+   "name": "Moustache de Ush",
+   "level": 160,
+   "typeId": 54,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 313,
+   "name": "Or",
+   "level": 160,
+   "typeId": 39,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 17618,
+   "name": "Oreille de Chargus",
+   "level": 160,
+   "typeId": 106,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11336,
+   "name": "Oreille de Soryo Givrefoux",
+   "level": 160,
+   "typeId": 106,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7404,
+   "name": "Os de Jiangshi-Nobi",
+   "level": 160,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11335,
+   "name": "Patte de Soryo Givrefoux",
+   "level": 160,
+   "typeId": 103,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7405,
+   "name": "Plastron de Tambouraï",
+   "level": 160,
+   "typeId": 229,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 17616,
+   "name": "Poil de Chacrebleu",
+   "level": 160,
+   "typeId": 54,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15039,
+   "name": "Poils de Kanigroula",
+   "level": 160,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 17615,
+   "name": "Queue de Chasquatch",
+   "level": 160,
+   "typeId": 65,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11882,
+   "name": "Queue de Yomi Givrefoux",
+   "level": 160,
+   "typeId": 65,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11333,
+   "name": "Scorie d'Obsidiantre",
+   "level": 160,
+   "typeId": 51,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13164,
+   "name": "Sphénoïde du Kimbo",
+   "level": 160,
+   "typeId": 47,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 17152,
+   "name": "Viande Fraîche",
+   "level": 160,
+   "typeId": 63,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 15725,
+   "name": "Barbe de Seith",
+   "level": 170,
+   "typeId": 54,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7385,
+   "name": "Braises bleutées",
+   "level": 170,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 18567,
+   "name": "Carapace de Ver des Sables",
+   "level": 170,
+   "typeId": 107,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15721,
+   "name": "Corne de XLII",
+   "level": 170,
+   "typeId": 47,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 18562,
+   "name": "Dent de Cycloporth",
+   "level": 170,
+   "typeId": 47,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15722,
+   "name": "Dent de Trezz",
+   "level": 170,
+   "typeId": 47,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11891,
+   "name": "Écorce d'Abrazif",
+   "level": 170,
+   "typeId": 96,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7381,
+   "name": "Kaokurimono",
+   "level": 170,
+   "typeId": 50,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7408,
+   "name": "Kapokaza",
+   "level": 170,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11341,
+   "name": "Laine de Tengu Givrefoux",
+   "level": 170,
+   "typeId": 57,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11885,
+   "name": "Lamelle de Dramanite",
+   "level": 170,
+   "typeId": 119,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 18563,
+   "name": "Langue de Morsquale",
+   "level": 170,
+   "typeId": 15,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7410,
+   "name": "Lanterne usée",
+   "level": 170,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11886,
+   "name": "Œil de Dramanite",
+   "level": 170,
+   "typeId": 109,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7403,
+   "name": "Œil de Madura",
+   "level": 170,
+   "typeId": 109,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 18568,
+   "name": "Œil du Père Ver",
+   "level": 170,
+   "typeId": 109,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11887,
+   "name": "Oreille de Fistulor",
+   "level": 170,
+   "typeId": 106,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15724,
+   "name": "Pagne de Trantroa",
+   "level": 170,
+   "typeId": 164,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 18564,
+   "name": "Patte de Masticroc",
+   "level": 170,
+   "typeId": 103,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 18565,
+   "name": "Peau de Trémorse",
+   "level": 170,
+   "typeId": 59,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15723,
+   "name": "Peau de Vindeux",
+   "level": 170,
+   "typeId": 59,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11889,
+   "name": "Pédoncule de Fongeur",
+   "level": 170,
+   "typeId": 119,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11892,
+   "name": "Racine d'Abrazif",
+   "level": 170,
+   "typeId": 98,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11888,
+   "name": "Volve de Fistulor",
+   "level": 170,
+   "typeId": 119,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11890,
+   "name": "Volve de Fongeur",
+   "level": 170,
+   "typeId": 119,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 7383,
+   "name": "Yokayu",
+   "level": 170,
+   "typeId": 51,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 9263,
+   "name": "Écorce de Champaknyde",
+   "level": 171,
+   "typeId": 96,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13736,
+   "name": "Furoncle de la Mama Bwork",
+   "level": 174,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13737,
+   "name": "String en Cuir de la Mama Bwork",
+   "level": 174,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13745,
+   "name": "Caleçon Blanc",
+   "level": 175,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13743,
+   "name": "Caleçon Bleu",
+   "level": 175,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13741,
+   "name": "Caleçon Brun",
+   "level": 175,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13739,
+   "name": "Caleçon Rouge",
+   "level": 175,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 9279,
+   "name": "Bave de Champ à Gnons",
+   "level": 176,
+   "typeId": 228,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 9278,
+   "name": "Lamelle de Champbis",
+   "level": 176,
+   "typeId": 119,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 9269,
+   "name": "Langue de Champodonte",
+   "level": 176,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 9277,
+   "name": "Œil de Champmane",
+   "level": 176,
+   "typeId": 109,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15453,
+   "name": "Aile de Puceronde",
+   "level": 180,
+   "typeId": 104,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 470,
+   "name": "Bois d'Orme",
+   "level": 180,
+   "typeId": 38,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 27621,
+   "name": "Cendrepierre",
+   "level": 180,
+   "typeId": 39,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 9280,
+   "name": "Épine d'Ougah",
+   "level": 180,
+   "typeId": 119,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11925,
+   "name": "Étoffe de Croleur",
+   "level": 180,
+   "typeId": 55,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11923,
+   "name": "Griffe de Blérauve",
+   "level": 180,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 16389,
+   "name": "Mandragore",
+   "level": 180,
+   "typeId": 36,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 11922,
+   "name": "Manubrium de Wolvero",
+   "level": 180,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 16456,
+   "name": "Millet",
+   "level": 180,
+   "typeId": 34,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 11927,
+   "name": "Molaire de Blérice",
+   "level": 180,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11919,
+   "name": "Œil de Fleuro",
+   "level": 180,
+   "typeId": 109,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13157,
+   "name": "Ongle du Bworker",
+   "level": 180,
+   "typeId": 47,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11934,
+   "name": "Oreille d'Apériglours",
+   "level": 180,
+   "typeId": 106,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11928,
+   "name": "Oreille de Blérice",
+   "level": 180,
+   "typeId": 106,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11926,
+   "name": "Oreille de Croleur",
+   "level": 180,
+   "typeId": 106,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11920,
+   "name": "Oreille de Fleuro",
+   "level": 180,
+   "typeId": 106,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11519,
+   "name": "Oreille de Gobosteur",
+   "level": 180,
+   "typeId": 106,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11895,
+   "name": "Patte de Korriandre",
+   "level": 180,
+   "typeId": 103,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15452,
+   "name": "Patte de Scoliopode",
+   "level": 180,
+   "typeId": 103,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15454,
+   "name": "Pince de Lucrane",
+   "level": 180,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11924,
+   "name": "Poil de Blérauve",
+   "level": 180,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11921,
+   "name": "Queue de Wolvero",
+   "level": 180,
+   "typeId": 65,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 15451,
+   "name": "Sang du Toxoliath",
+   "level": 180,
+   "typeId": 228,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 16469,
+   "name": "Tanche",
+   "level": 180,
+   "typeId": 41,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 15455,
+   "name": "Venin d'Éperfide",
+   "level": 180,
+   "typeId": 228,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 17156,
+   "name": "Viande Gâtée",
+   "level": 180,
+   "typeId": 63,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 11933,
+   "name": "Vomer d'Apériglours",
+   "level": 180,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11521,
+   "name": "Œil de Sapeur",
+   "level": 181,
+   "typeId": 109,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11527,
+   "name": "Peau d'Ouilleur",
+   "level": 183,
+   "typeId": 59,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11525,
+   "name": "Péroné du Marôdeur",
+   "level": 184,
+   "typeId": 47,
+   "npcPrice": 10,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11941,
+   "name": "Aile de Gloursaya",
+   "level": 190,
+   "typeId": 104,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11946,
+   "name": "Calcanéus de Meliglours",
+   "level": 190,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 27439,
+   "name": "Cloche de Barbéryl Clochecuivre",
+   "level": 190,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14928,
+   "name": "Corne d'Ombre",
+   "level": 190,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11931,
+   "name": "Griffe de Kolosso",
+   "level": 190,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11935,
+   "name": "Iris de Boulglours",
+   "level": 190,
+   "typeId": 109,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11937,
+   "name": "Laine de Glouragan",
+   "level": 190,
+   "typeId": 57,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11943,
+   "name": "Queue de Glourséleste",
+   "level": 190,
+   "typeId": 65,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13942,
+   "name": "Bec de Dodox",
+   "level": 200,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13985,
+   "name": "Bec de Granduk",
+   "level": 200,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 17991,
+   "name": "Bois d'Aquajou",
+   "level": 200,
+   "typeId": 38,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11107,
+   "name": "Bois de Tremble",
+   "level": 200,
+   "typeId": 38,
+   "npcPrice": 100,
+   "craftedByEleveur": false,
+   "usedIn": 2
+  },
+  {
+   "id": 14861,
+   "name": "Broderie d'Eskoglyphe",
+   "level": 200,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13932,
+   "name": "Cervelle de Verglasseur",
+   "level": 200,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14863,
+   "name": "Chaussette du Cyclophandre",
+   "level": 200,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13920,
+   "name": "Cœur d'Empaillé",
+   "level": 200,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13940,
+   "name": "Crinière de Krakal",
+   "level": 200,
+   "typeId": 54,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13914,
+   "name": "Culotte de Harrogant",
+   "level": 200,
+   "typeId": 164,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13922,
+   "name": "Dent de Cuirboule",
+   "level": 200,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13928,
+   "name": "Ethmoïde de Stalak",
+   "level": 200,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13916,
+   "name": "Étoffe de Grodruche",
+   "level": 200,
+   "typeId": 55,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 11109,
+   "name": "Frostiz",
+   "level": 200,
+   "typeId": 34,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13950,
+   "name": "Griffe de Kanimate",
+   "level": 200,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14823,
+   "name": "Huile de Pikoleur",
+   "level": 200,
+   "typeId": 60,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13930,
+   "name": "Malleus de Karkanik",
+   "level": 200,
+   "typeId": 15,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13938,
+   "name": "Molaire de Nessil",
+   "level": 200,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13926,
+   "name": "Molaire de Ventrublion",
+   "level": 200,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13976,
+   "name": "Oreille de Mécanofoux",
+   "level": 200,
+   "typeId": 106,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 17994,
+   "name": "Patelle",
+   "level": 200,
+   "typeId": 41,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13978,
+   "name": "Pédoncule de Mérulor",
+   "level": 200,
+   "typeId": 119,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13993,
+   "name": "Pic du Nocturlabe",
+   "level": 200,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 23825,
+   "name": "Pichon d'encre",
+   "level": 200,
+   "typeId": 41,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 14817,
+   "name": "Pince de Krabouilleur",
+   "level": 200,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13989,
+   "name": "Plume de Cycloïde",
+   "level": 200,
+   "typeId": 53,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13991,
+   "name": "Queue de Sinistrofu",
+   "level": 200,
+   "typeId": 65,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 17993,
+   "name": "Quisnoa",
+   "level": 200,
+   "typeId": 34,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13946,
+   "name": "Sépale de Drosérâle",
+   "level": 200,
+   "typeId": 36,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 13974,
+   "name": "Sternum de Mansordide",
+   "level": 200,
+   "typeId": 47,
+   "npcPrice": 1,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  },
+  {
+   "id": 17160,
+   "name": "Viande Goûtue",
+   "level": 200,
+   "typeId": 63,
+   "npcPrice": 0,
+   "craftedByEleveur": false,
+   "usedIn": 1
+  }
+ ]
+}
