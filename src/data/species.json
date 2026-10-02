@@ -9,21 +9,21 @@
    "extractionItemId": 33515,
    "extractionItemName": "Neurone de dragodinde",
    "captureZone": {
-    "subarea": "Plaine des Scarafeuilles",
-    "area": "Amakna",
+    "subarea": "Territoire des dragodindes sauvages",
+    "area": "Montagne des Koalaks",
     "xRange": [
-     -6,
-     5
+     -23,
+     -11
     ],
     "yRange": [
-     21,
-     32
+     -2,
+     9
     ],
     "nearestZaap": {
-     "name": "Plaine des Scarafeuilles",
+     "name": "Village des Éleveurs",
      "coords": [
-      -1,
-      24
+      -16,
+      1
      ]
     },
     "levels": [
@@ -38,6 +38,21 @@
      {
       "id": 200,
       "name": "Dragodinde rousse sauvage"
+     },
+     {
+      "id": 666,
+      "name": "Dragodinde dorée sauvage",
+      "note": "uniquement ici"
+     },
+     {
+      "id": 2379,
+      "name": "Draglida la Disparue",
+      "archimonster": true
+     },
+     {
+      "id": 2465,
+      "name": "Dragnoute l'Irascible",
+      "archimonster": true
      }
     ]
    }

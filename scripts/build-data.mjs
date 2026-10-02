@@ -198,7 +198,15 @@ const levelTable = (obj) => {
   if (out.some((v) => typeof v !== 'number')) throw new Error('table XP incomplète')
   return out
 }
-const zonesById = Object.fromEntries((strat.captureZones ?? []).map((z) => [z.family.toLowerCase(), z]))
+// Une famille peut avoir plusieurs zones dans la recherche (ex. zone héritée peu fiable) :
+// on garde la plus fiable, puis la première rencontrée.
+const CONF_RANK = { high: 0, medium: 1, low: 2 }
+const zonesById = {}
+for (const z of strat.captureZones ?? []) {
+  const k = z.family.toLowerCase()
+  const prev = zonesById[k]
+  if (!prev || (CONF_RANK[z.confidence] ?? 3) < (CONF_RANK[prev.confidence] ?? 3)) zonesById[k] = z
+}
 const game = {
   generatedFrom: 'research/data/mechanics.json + strategy.json (client Dofus 3.6.12.16 / bêta 3.7.3.3, guide DPLN, DofusDB)',
   liveClientVersion: mech.meta.liveClientVersion,
