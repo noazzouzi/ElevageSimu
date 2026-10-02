@@ -14,6 +14,8 @@ import {
   dailyRoutine,
   defaultModeParams,
   digestSummary,
+  familySwitchText,
+  genetonWhy,
   isModeId,
   liquidityCheck,
   mainMarketCheck,
@@ -29,6 +31,9 @@ import {
   rankModes,
   resolveActiveMode,
   revenueCostBreakdown,
+  routineSessionAt,
+  modeTimeline,
+  sanitizePinnedModePlan,
   sanitizeStoredModeResults,
   storeModeResults,
   strategyParamLines,
@@ -390,5 +395,228 @@ describe('résultats enregistrés et mode actif', () => {
     expect(d.netByDay.length).toBe(15)
     expect(d.prices.some((l) => l.key === 'ressource')).toBe(true)
     expect(d.routine).toEqual(s.routine)
+  })
+})
+
+// ---------- Revue économique v2 ----------
+
+describe('ECO-V2 : classement, sensibilité, montée naturelle du métier', () => {
+  it('ECO-V2-05 : sensibilité « sans génétons » pour tous les modes (−revenu des génétons)', () => {
+    for (const o of outcomes) {
+      const gen = o.digest!.steady.revenueByCategory.genetons
+      const point = modeSensitivity(o).find((x) => x.id === 'sans-genetons')
+      if (gen > 0) {
+        expect(point).toBeDefined()
+        expect(point!.delta).toBeCloseTo(-gen, 6)
+        expect(point!.netMean).toBeCloseTo(o.digest!.steady.netPerDay.mean - gen, 6)
+      }
+    }
+  })
+
+  it('ECO-V2-02 : vente au prix « HDV mixte » hors classement, jamais « auto » ; scénario « prix des montures −50 % »', () => {
+    const base = corne()
+    const mounts = 2_000_000
+    const vente: ModeOutcome = {
+      ...base,
+      modeId: 'vente-montures',
+      family: 'muldo',
+      strategy: { ...base.strategy!, steadyNet: 5e6, score: 5e6, speculative: true },
+      digest: { ...base.digest!, mode: 'vente', speculative: true, steady: { ...base.digest!.steady, revenueByCategory: { ...base.digest!.steady.revenueByCategory, montures: mounts } } },
+    }
+    const { rows, bestModeId } = rankModes([vente, ...outcomes])
+    expect(bestModeId).not.toBe('vente-montures')
+    const v = rows.find((r) => r.modeId === 'vente-montures')!
+    expect(v.speculative).toBe(true)
+    expect(v.rank).toBeNull()
+    expect(v.risks.map((r) => r.code)).toContain('hdv-mixte')
+    const half = modeSensitivity(vente).find((x) => x.id === 'prix-montures-50')!
+    expect(half.delta).toBeCloseTo(-0.5 * mounts, 6)
+  })
+
+  it('ECO-V2-01 : deux modes à égalité statistique → le moins gourmand en capital passe devant', () => {
+    const a = corne()
+    const b = brisage()
+    const sa = { ...a.strategy!, steadyNet: 1_000_000, score: 1_000_000, scoreSe: 40_000, capital: 6_000_000, stable: true }
+    const sb = { ...b.strategy!, steadyNet: 960_000, score: 960_000, scoreSe: 40_000, capital: 500_000, stable: true }
+    const { rows, bestModeId } = rankModes([{ ...a, strategy: sa }, { ...b, strategy: sb }])
+    expect(bestModeId).toBe('brisage-pa')
+    expect(rows[1].tieWithBest).toBe(true)
+    // Hors du bruit des tirages : le plus rentable reste premier.
+    expect(rankModes([{ ...a, strategy: { ...sa, scoreSe: 1_000 } }, { ...b, strategy: { ...sb, scoreSe: 1_000 } }]).bestModeId).toBe('rush-corne')
+  })
+
+  it('ECO-V2-08 : niveau 1 → enclos débloqués en route par l’XP d’élevage, comme « Sans investissement » de l’estimateur (±20 %)', async () => {
+    const { planInvestment } = await import('./investment')
+    const ctx1 = { ...ctxWith(csvMarket()), jobLevel: 1 }
+    const prices = { ctx: ctx1, saleTax: 0.02, maxMarketShare: 0.15 }
+    const inv = planInvestment({
+      budget: 20_000_000,
+      horizonDays: 60,
+      mode: 'rush-corne',
+      profile: { jobLevel: 1, hoursPerDay: 3, characters: 1, rules, family: 'volkorne' },
+      safetyReserve: 2_000_000,
+      prices,
+      levers: { levelJob: false, buyG1: false },
+      today: '2026-10-02',
+      options: { quick: true, runs: 3, sensitivity: false },
+    })
+    const plan = inv.plan!
+    expect(plan.schedule.length).toBeGreaterThan(0)
+    const g = plan.allocation.strategy.targetGeneration ?? 2
+    const p1 = profile({ jobLevel: 1, paddocks: undefined, horizonDays: plan.simDays }, ctx1)
+    const ctx = { ...modeProfileContext(p1, { modes: ['rush-corne'], runs: 3 }), grid: { extraction: { targetGeneration: [g], tier: [2 as const], mateBeforeExtract: [true], parentLevel: [40], optimakina: ['auto' as const] } } }
+    expect(ctx.naturalLeveling).toBe(true)
+    const row = compareModes(ctx).rows[0]
+    const o = outcomesFromComparison({ rows: [row], bestMode: null, horizonDays: plan.simDays, notes: [] })[0]
+    expect(o.digest!.paddockSchedule.length).toBeGreaterThan(0)
+    expect(o.digest!.config.paddocks).toBe(1)
+    expect(Math.abs(row.best!.steadyNet - plan.steadyNetPerDay) / plan.steadyNetPerDay).toBeLessThan(0.2)
+    // Enclos figés (option) : pas de calendrier.
+    expect(modeProfileContext({ ...p1, fixedPaddocks: true }).naturalLeveling).toBe(false)
+  })
+
+  it('clé des hypothèses : nouvelle version du modèle, prix « HDV mixte » comptés ou non, prix de montures du joueur', () => {
+    const p = profile()
+    const k0 = modeContextKey(p)
+    expect(k0).toContain('"montee-naturelle"')
+    expect(modeContextKey({ ...p, prices: { ...p.prices, trustMixedMountPrices: true } })).not.toBe(k0)
+    expect(modeContextKey({ ...p, prices: { ...p.prices, mountPrices: { mountOverrides: { '217|1': 50_000 }, generationOverrides: {}, useDefaults: true } } })).not.toBe(k0)
+  })
+
+  it('MKT-01 : la clé suit les prix saisis (Corne, montures), les défauts et un nouvel import du même jour', () => {
+    const p = profile()
+    const k0 = modeContextKey(p, { serverId: 'tylezia' })
+    const withCtx = (ctx: Partial<PriceContext>) => ({ ...p, prices: { ...p.prices, ctx: { ...p.prices.ctx, ...ctx } } })
+    // Prix du joueur pour la Corne de volkorne (page Prix) : la comparaison enregistrée est périmée.
+    const corne = withCtx({ overrides: { '19975': 8000 } })
+    expect(modeContextKey(corne, { serverId: 'tylezia' })).not.toBe(k0)
+    // Même prix saisi, ordre d'insertion différent : même clé (empreinte à clés triées).
+    expect(modeContextKey(withCtx({ overrides: { '1': 2, '19975': 8000 } }))).toBe(modeContextKey(withCtx({ overrides: { '19975': 8000, '1': 2 } })))
+    expect(modeContextKey(withCtx({ useDefaults: false }), { serverId: 'tylezia' })).not.toBe(k0)
+    const mp = { mountOverrides: {}, generationOverrides: {}, useDefaults: true }
+    const k1 = modeContextKey({ ...p, prices: { ...p.prices, mountPrices: mp } })
+    expect(modeContextKey({ ...p, prices: { ...p.prices, mountPrices: { ...mp, generationOverrides: { 'volkorne|6|1': 300_000 } } } })).not.toBe(k1)
+    expect(modeContextKey({ ...p, prices: { ...p.prices, mountPrices: { ...mp, useDefaults: false } } })).not.toBe(k1)
+    // Export corrigé importé le même jour (même date d'export, autre instant d'import).
+    const m = p.prices.ctx.market!
+    const reimport = withCtx({ market: { ...m, importedAt: (m.importedAt ?? 0) + 60_000 } })
+    expect(modeContextKey(reimport, { serverId: 'tylezia' })).not.toBe(k0)
+    // Le mode actif résolu avec la nouvelle clé est « à recalculer ».
+    const outcome = outcomesFromComparison(cmp)[0]
+    const rec = storeModeResults([outcome], p, { computedAt: 1, quick: true, serverId: 'tylezia' })
+    expect(resolveActiveMode(outcome.modeId, rec, { contextKey: k0 }).stale).toBe(false)
+    expect(resolveActiveMode(outcome.modeId, rec, { contextKey: modeContextKey(corne, { serverId: 'tylezia' }) }).stale).toBe(true)
+  })
+})
+
+// ---------- Revue « parcours » v2 (UX2) : chaque test reproduit un défaut corrigé ----------
+
+describe('UX2 : changement de famille, plan suivi, poids des génétons, achats', () => {
+  /** Rush Ambre fictif (Muldos) plus rentable que la Rush Corne : le mode automatique change de famille. */
+  const ambre = (): ModeOutcome => {
+    const c = corne()
+    return { ...c, modeId: 'rush-ambre', family: 'muldo', strategy: { ...c.strategy!, id: 'ambre', steadyNet: c.strategy!.steadyNet * 3, score: c.strategy!.steadyNet * 3, scoreSe: 1 }, digest: { ...c.digest!, family: 'muldo' } }
+  }
+
+  it('UX2-01 : le mode automatique qui passe aux Muldos signale le changement de famille d’un éleveur de Volkornes', () => {
+    const p = profile()
+    const rec = storeModeResults([ambre(), corne()], p, { computedAt: 1, quick: true })
+    expect(rec.bestModeId).toBe('rush-ambre')
+    const auto = resolveActiveMode('auto', rec, { family: 'volkorne' })
+    expect(auto.id).toBe('rush-ambre')
+    expect(auto.familySwitch).toEqual({ from: 'volkorne', to: 'muldo' })
+    expect(resolveActiveMode('rush-corne', rec, { family: 'volkorne' }).familySwitch).toBeNull()
+    expect(resolveActiveMode('progression', rec, { family: 'volkorne' }).familySwitch).toBeNull()
+    expect(familySwitchText('Le mode automatique (Rush Muldo)', 'volkorne', 'muldo', 12)).toMatch(/travaille les Muldos : vos 12 Volkornes ne servent plus la stratégie/)
+  })
+
+  it('UX2-04 : un plan d’investissement suivi impose sa stratégie au mode actif (et seulement à son mode)', () => {
+    const p = profile()
+    const rec = storeModeResults([corne(), brisage()], p, { computedAt: 1, quick: true })
+    const raw = JSON.parse(
+      JSON.stringify({
+        version: 1,
+        modeId: 'rush-corne',
+        family: 'volkorne',
+        params: { targetGeneration: 4, tier: 1, parentLevel: 40, optimakina: 'none', mateBeforeExtract: true },
+        label: 'Métier 120 → 160 · Rush Corne · G4',
+        source: 'investissement',
+        pinnedAt: 5,
+        budget: 20_000_000,
+        horizonDays: 60,
+        outcome: corne(),
+        contextKey: modeContextKey(p),
+      }),
+    )
+    const pinned = sanitizePinnedModePlan(raw)!
+    expect(pinned).not.toBeNull()
+    const act = resolveActiveMode('rush-corne', rec, { pinned, contextKey: modeContextKey(p) })
+    expect(act.params).toMatchObject({ targetGeneration: 4, tier: 1, optimakina: 'none' })
+    expect(act.plan).toMatchObject({ label: 'Métier 120 → 160 · Rush Corne · G4', budget: 20_000_000 })
+    expect(act.strategyLabel).toMatch(/plan d’investissement suivi/)
+    expect(act.stale).toBe(false)
+    expect(act.routine).not.toBeNull()
+    expect(resolveActiveMode('rush-corne', rec, { pinned, contextKey: 'autre' }).stale).toBe(true)
+    // Mode automatique ou autre mode : le plan n'est pas appliqué.
+    expect(resolveActiveMode('auto', rec, { pinned }).plan).toBeNull()
+    expect(resolveActiveMode('brisage-pa', rec, { pinned }).plan).toBeNull()
+    expect(sanitizePinnedModePlan({ ...raw, modeId: 'auto' })).toBeNull()
+    expect(sanitizePinnedModePlan({ ...raw, params: { tier: 9 } })?.params.tier).toBeUndefined()
+  })
+
+  it('UX2-07 : part des génétons dans le classement, « Génétons ÷ 2 », et stratégie retenue sans eux', () => {
+    const c = corne()
+    const gen = c.digest!.steady.revenueByCategory.genetons
+    const row = rankModes([c]).rows[0]
+    expect(row.genetonsPerDay).toBeCloseTo(gen, 6)
+    if (gen > 0) expect(modeSensitivity(c).find((x) => x.id === 'genetons-50')!.delta).toBeCloseTo(-0.5 * gen, 6)
+    // La G10 vit de ses génétons (50 % du net) ; la G4 en a peu : sans eux, la G4 l'emporte.
+    const g10 = { ...c.strategy!, id: 'g10', label: 'G10 · palier 2', steadyNet: 800_000, genetonShareOfNet: 0.5, comparable: true, scoreBasis: 'kamas' as const }
+    const g4 = { ...c.strategy!, id: 'g4', label: 'G4 · palier 2', steadyNet: 630_000, genetonShareOfNet: 0.05, rampUpDays: 11, capital: 1_200_000, comparable: true, scoreBasis: 'kamas' as const }
+    const o: ModeOutcome = { ...c, strategy: g10, alternatives: [g4] }
+    const why = genetonWhy(o)
+    expect(why[0]).toMatch(/Génétons : ≈ .* soit 50 % du bénéfice net/)
+    expect(why[1]).toMatch(/Sans les génétons, G4 · palier 2 serait retenue/)
+    expect(strategyWhy(o).join(' ')).toMatch(/Sans les génétons/)
+    // Peu de génétons : rien à signaler.
+    expect(genetonWhy({ ...o, strategy: { ...g10, genetonShareOfNet: 0.02 } })).toEqual([])
+    // Option « sans génétons » : autre clé des hypothèses (sans périmer les calculs avec génétons).
+    const p = profile()
+    expect(modeContextKey({ ...p, prices: { ...p.prices, includeGenetons: false } })).not.toBe(modeContextKey(p))
+    expect(modeContextKey({ ...p, prices: { ...p.prices, includeGenetons: true } })).toBe(modeContextKey(p))
+  })
+
+  it('UX2-03 : passage de la routine selon l’heure (jamais « matin » le soir) ; calendrier de montée en charge', () => {
+    const r = dailyRoutine('rush-corne', corne(), { sessionsPerDay: 2 })!
+    expect(routineSessionAt(r, 8)?.label).toBe('Matin')
+    expect(routineSessionAt(r, 20 + 43 / 60)?.label).toBe('Soir')
+    const r3 = dailyRoutine('rush-corne', corne(), { sessionsPerDay: 3 })!
+    expect(routineSessionAt(r3, 14)?.label).toBe('Après-midi')
+    const tl = modeTimeline(corne(), { freeSlots: 20 })
+    expect(tl.map((m) => m.id)).toEqual(expect.arrayContaining(['remplir', 'premiere-cible', 'premieres-ventes', 'regime', 'point-mort']))
+    expect(tl[0].text).toMatch(/^Semaine 1 : remplir 20 places/)
+    // Ordre chronologique, jalons non atteints à la fin.
+    const days = tl.map((m) => m.day ?? Infinity)
+    expect([...days].sort((a, b) => a - b)).toEqual(days)
+  })
+
+  it('enclos débloqués en route : affichés dans la stratégie et le calendrier (la routine du régime les suppose en service)', () => {
+    const c = corne()
+    const o: ModeOutcome = { ...c, digest: { ...c.digest!, config: { ...c.digest!.config, paddocks: 3 }, paddockSchedule: [{ day: 30, paddocks: 5 }, { day: 12, paddocks: 4 }] } }
+    expect(strategyParamLines(o).find((l) => l.label === 'Enclos')?.value).toBe('3 × 10 places au départ, puis 4 (jour 12), 5 (jour 30) par l’XP d’élevage')
+    const tl = modeTimeline(o)
+    expect(tl.filter((m) => m.id === 'enclos').map((m) => m.text)).toEqual(['4e enclos (XP d’élevage) ≈ jour 12', '5e enclos (XP d’élevage) ≈ jour 30'])
+    const days = tl.map((m) => m.day ?? Infinity)
+    expect([...days].sort((a, b) => a - b)).toEqual(days)
+    // Sans déblocage : nombre fixe, aucun jalon d'enclos.
+    const fixed: ModeOutcome = { ...c, digest: { ...c.digest!, paddockSchedule: [] } }
+    expect(strategyParamLines(fixed).find((l) => l.label === 'Enclos')?.value).toMatch(/^\d × 10 places$/)
+    expect(modeTimeline(fixed).some((m) => m.id === 'enclos')).toBe(false)
+  })
+
+  it('UX2-02 : achats au marché du régime permanent conservés dans le résumé du mode', () => {
+    const c = corne()
+    expect(Array.isArray(c.digest!.purchases)).toBe(true)
+    expect(c.digest!.purchases!.some((x) => x.kind === 'carburant')).toBe(true)
   })
 })

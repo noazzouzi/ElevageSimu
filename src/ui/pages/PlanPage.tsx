@@ -29,9 +29,9 @@ import {
 import { almanaxOn, serverDay, upcomingAlmanax } from '../../domain/almanax'
 import { requiredSpecies } from '../../domain/breedingPath'
 import { GAUGE_LABELS, PADDOCK_UNLOCK_LEVELS } from '../../domain/constants'
-import { NET_KIND_LABELS, batchProfile, crossingRanking, genetonKamasValue, type CrossingRank, type MountPriceContext } from '../../domain/economy'
+import { NET_KIND_LABELS, batchProfile, crossingRanking, type CrossingRank, type MountPriceContext } from '../../domain/economy'
 import { jobAlmanaxDays } from '../../domain/job'
-import { mergedSessions, modeConfig, strategyParamLines, strategyWhy, type ActiveMode, type ModeProfile } from '../../domain/modes'
+import { mergedSessions, modeConfig, modeTimeline, strategyParamLines, strategyWhy, timelineBasis, type ActiveMode, type ModeProfile } from '../../domain/modes'
 import { productionPlan, type ProductionPlanInfo } from '../../domain/production'
 import { unlockedPaddocks } from '../../domain/mountFate'
 import { effectiveFertility } from '../../domain/mounts'
@@ -44,9 +44,10 @@ import { formatDuration, formatKamas, formatKamasRange, formatNumber, formatPerc
 import { useInventory } from '../../store/inventory'
 import { journalJobXp, useJournal } from '../../store/journal'
 import { usePlanProgress } from '../../store/planProgress'
-import { usePriceContext, usePrices } from '../../store/prices'
+import { useGenetonValue, usePriceContext, usePrices } from '../../store/prices'
 import { useRules, useSettings, type Goal } from '../../store/settings'
 import { Badge, Callout, Card, Empty, PageHeader, Progress, SelectField, Stat, Tabs } from '../components'
+import { MarketStatusCallouts } from '../MarketStatus'
 import { navigate, href, useRoute } from '../router'
 import { ConfidenceBadge, SpeciesName, SpeciesPicker } from '../species'
 import { useGoalSimulation, type GoalSimulationStatus } from '../useGoalSimulation'
@@ -139,14 +140,16 @@ export default function PlanPage() {
   const ctx = usePriceContext()
   const mountOverrides = usePrices((s) => s.mounts)
   const generationOverrides = usePrices((s) => s.generations)
-  const genetonOverride = usePrices((s) => s.genetonValue)
   // Prix de l'objet-monture du marché du serveur (« HDV mixte ») : plafond de vente prudent seulement.
   const mountPrices: MountPriceContext = useMemo(
     () => ({ mountOverrides, generationOverrides, useDefaults: settings.useDefaultPrices, market: ctx.market }),
     [mountOverrides, generationOverrides, settings.useDefaultPrices, ctx.market],
   )
   // Généton : votre valeur, sinon le marché du serveur (boutique d'Eugène Éton), sinon la recherche.
-  const genetonValue = genetonKamasValue(genetonOverride, { market: ctx.market ?? null }).value
+  // Brute pour le classement des croisements (qui applique la taxe), NETTE de taxe pour les montants
+  // affichés (comme l'Accueil, les Modes et la Rentabilité).
+  const geneton = useGenetonValue()
+  const genetonValue = geneton.value
   // Mode de rentabilité actif : chaîne de production, stratégie et routine du mode.
   const mode = useActiveMode()
   const modeProfile = useModeProfile()
@@ -183,6 +186,7 @@ export default function PlanPage() {
           </a>
         }
       />
+      <MarketStatusCallouts context="routines et montants" />
       {base.error && (
         <Callout tone="warn">
           <strong>Section indisponible : objectif et captures.</strong> Le calcul a échoué ({base.error}) ; les autres onglets restent valables. Vérifiez vos montures et vos
@@ -191,7 +195,7 @@ export default function PlanPage() {
       )}
       <ModeBanner mode={mode} />
       <div className="grid grid-2 pl-top">
-        <GoalCard settings={settings} update={update} goal={goal} mounts={mounts} />
+        <GoalCard settings={settings} update={update} goal={goal} mounts={mounts} mode={mode} />
         <PhaseCard phase={phase} jobLevel={jobLevel} savedLevel={settings.jobLevel} mounts={mounts} />
       </div>
       <Tabs<TabId> tabs={TABS} value={tab} onChange={(t) => navigate('plan', { onglet: t })} />
@@ -199,7 +203,7 @@ export default function PlanPage() {
       {tab === 'chemin' &&
         !modeOn &&
         (goal ? (
-          <PathTab goal={goal} settings={settings} rules={rules} mounts={mounts} ctx={ctx} unlocked={unlocked} genetonValue={genetonValue} now={now} sim={sim} />
+          <PathTab goal={goal} settings={settings} rules={rules} mounts={mounts} ctx={ctx} unlocked={unlocked} genetonValue={geneton.net} now={now} sim={sim} />
         ) : (
           <ProfitTab
             settings={settings}
@@ -244,6 +248,14 @@ function ModeBanner({ mode }: { mode: ActiveMode }) {
       : {def.objective} Stratégie : {mode.strategyLabel}
       {net ? ` — ${formatKamasRange(net, true)} par jour en régime permanent` : ''}. Les conseils, le chemin et les routines suivent ce mode ; l’objectif ci-dessous ne sert
       qu’en mode Progression.{' '}
+      {mode.familySwitch && (
+        <>
+          <strong>
+            Ce mode travaille les {FAMILIES[mode.familySwitch.to]?.plural ?? mode.familySwitch.to}, pas vos {FAMILIES[mode.familySwitch.from]?.plural ?? mode.familySwitch.from}
+          </strong>{' '}
+          (famille des réglages).{' '}
+        </>
+      )}
       {mode.source === 'defaut' ? (
         <a href={href('modes', { mode: mode.id })}>Calculer la stratégie du mode →</a>
       ) : mode.stale ? (
@@ -304,7 +316,7 @@ function ModePathTab({ mode, profile }: { mode: ActiveMode; profile: ModeProfile
         ) : (
           <Callout tone="warn">
             Stratégie par défaut ({mode.strategyLabel}) : la comparaison des modes n’est pas calculée pour ce profil.{' '}
-            <a href={href('modes', { mode: mode.id })}>Calculer (≈ 5 s)</a>
+            <a href={href('modes', { mode: mode.id })}>Calculer (≈ 15 s)</a>
           </Callout>
         )}
         {error && <Callout tone="danger">Chaîne de production indisponible : {error}</Callout>}
@@ -431,15 +443,28 @@ function ModeRoutineCard({ mode, now }: { mode: ActiveMode; now: number }) {
     return (
       <Callout tone="warn">
         Mode {mode.def.label} : la routine précise (quantités par passage, carburant, ventes) vient de la comparaison des modes —{' '}
-        <a href={href('modes', { mode: mode.id })}>calculez-la (≈ 5 s)</a>.
+        <a href={href('modes', { mode: mode.id })}>calculez-la (≈ 15 s)</a>.
       </Callout>
     )
   const sessions = mergedSessions(routine)
+  const timeline = mode.outcome ? modeTimeline(mode.outcome) : []
+  const regime = timeline.find((t) => t.id === 'regime')
   return (
-    <Card title={`Routine du mode ${mode.def.label}`} actions={<Badge>remise à zéro chaque jour</Badge>}>
+    <Card title={`Routine du mode ${mode.def.label} (régime permanent${regime?.day ? `, ≈ jour ${regime.day}` : ''})`} actions={<Badge>remise à zéro chaque jour</Badge>}>
       <p className="muted">
-        {routine.summary}. Stratégie : {routine.strategyLabel}. Ordre d’un passage : accoupler → cloner → sortir → capturer → mettre en enclos.
+        {routine.summary}. Stratégie : {routine.strategyLabel}. Ordre d’un passage : accoupler → cloner → sortir → capturer → mettre en enclos. Quantités moyennes du régime
+        permanent : vos gestes d’aujourd’hui (d’après votre étable) sont sur l’<a href={href('accueil')}>accueil</a>.
       </p>
+      {timeline.length > 0 && (
+        <div className="pl-mode-timeline">
+          <h3 className="pl-when">Montée en charge ({timelineBasis(mode.outcome)})</h3>
+          <ol>
+            {timeline.map((t) => (
+              <li key={`${t.id}-${t.text}`}>{t.text}</li>
+            ))}
+          </ol>
+        </div>
+      )}
       <div className={`grid grid-${Math.min(3, sessions.length + 1)} pl-routine`}>
         {sessions.map((s) => (
           <div key={s.id}>
@@ -470,11 +495,13 @@ function GoalCard({
   update,
   goal,
   mounts,
+  mode: activeMode,
 }: {
   settings: PlanSettings
   update: (patch: Partial<PlanSettings>) => void
   goal: GoalStatus | null
   mounts: Mount[]
+  mode: ActiveMode
 }) {
   const [localMode, setMode] = useState<'monture' | 'rentabilite'>(settings.goalSpeciesId !== null || settings.goal !== 'profit' ? 'monture' : 'rentabilite')
   // Une monture visée (choisie ici ou via « Viser ») impose le mode « monture précise ».
@@ -514,10 +541,18 @@ function GoalCard({
           }}
         />
       ) : (
-        <p className="muted">
-          Aucune monture imposée : l'onglet « Chemin » classe les croisements des {FAMILIES[settings.family]?.plural ?? settings.family} par marge attendue avec vos prix.
-          Changez la famille dans les <a href={href('reglages')}>réglages</a>.
-        </p>
+        activeMode.kind !== 'progression' ? (
+          // Mode de rentabilité actif : l'onglet « Chemin » montre la production du mode, dans SA famille (revue UX2-01).
+          <p className="muted">
+            Mode {activeMode.def.label} actif : l'onglet « Chemin » montre la production du mode
+            {activeMode.family ? ` (${FAMILIES[activeMode.family]?.plural ?? activeMode.family})` : ''} ; cet objectif ne sert qu’en mode Progression.
+          </p>
+        ) : (
+          <p className="muted">
+            Aucune monture imposée : l'onglet « Chemin » classe les croisements des {FAMILIES[settings.family]?.plural ?? settings.family} par marge attendue avec vos prix.
+            Changez la famille dans les <a href={href('reglages')}>réglages</a>.
+          </p>
+        )
       )}
       <div className="row pl-goal-row">
         <SelectField<Goal> label="Priorité" value={settings.goal} onChange={(g) => update({ goal: g })} options={GOAL_OPTIONS} />
@@ -779,7 +814,10 @@ function PathTab({
                   <th scope="row">Génétons en route</th>
                   <td className="num">{m ? `≈ ${formatNumber(m.genetons.mean)}` : '…'}</td>
                   <td className="num">
-                    ≈ {formatNumber(effort.genetons)} <span className="muted">(≈ {formatKamas(effort.genetons * genetonValue, true)})</span>
+                    ≈ {formatNumber(effort.genetons)}{' '}
+                    <span className="muted" title={`${formatKamas(genetonValue)} par généton, net de la taxe de vente (parchemin revendu)`}>
+                      (≈ {formatKamas(effort.genetons * genetonValue, true)} net de taxe)
+                    </span>
                   </td>
                 </tr>
                 <tr>

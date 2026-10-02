@@ -13,6 +13,7 @@ import { fuelDurability } from './fuel'
 import {
   DEFAULT_MAX_MARKET_SHARE,
   GENETON_SHOP,
+  MARKET_OLD_DAYS,
   MARKET_STALE_DAYS,
   PARCHEMIN_ELEVEUR,
   PEPITE,
@@ -28,6 +29,7 @@ import {
   priceDetail,
   type ConcretePriceStat,
   type MarketSource,
+  type PriceStat,
 } from './market'
 import { craftCost, marketPrice, type PriceContext } from './pricing'
 import type { Ruleset } from './rules'
@@ -98,6 +100,8 @@ export interface MarketLine {
   confidence: 'high' | 'medium' | 'low' | null
   /** Objet absent de l'export. */
   absent: boolean
+  /** Export sans colonnes de ventes : volumes inconnus (`sellablePerDay` non significatif). */
+  volumeUnknown?: true
 }
 
 /** Prix, volume et quantité vendable d'un objet (jamais 0 pour un prix inconnu). */
@@ -124,6 +128,7 @@ export function marketLine(market: MarketSource, id: number, opts: { saleTax?: n
     sellablePerDay: perDayAvg * share,
     confidence: marketConfidence(row),
     absent: false,
+    ...(market.volumeUnknown ? { volumeUnknown: true as const } : {}),
   }
 }
 
@@ -148,15 +153,20 @@ export interface GenetonShopLine extends MarketLine {
   /** Kamas bruts par généton (prix ÷ coût). */
   perGeneton: number | null
   perGenetonNet: number | null
+  /** Échange reconfirmé après la 3.5 (Puissants Parchemins) ; sinon ligne de la capture de la bêta. */
+  confirmed: boolean
 }
 
 export interface GenetonDashboard {
   /** Lignes de la boutique, du meilleur échange au moins bon (sans prix en dernier). */
   lines: GenetonShopLine[]
+  /** Meilleur échange RECONFIRMÉ (valeur retenue dans les calculs). */
   best: GenetonShopLine | null
-  /** Valeur brute d'un généton sur ce serveur (null : aucun prix). */
+  /** Valeur brute d'un généton sur ce serveur, échanges reconfirmés (null : aucun prix). */
   value: number | null
   net: number | null
+  /** Meilleur échange de toute la boutique s'il n'est pas reconfirmé et vaut plus (valeur optimiste). */
+  optimistic: GenetonShopLine | null
 }
 
 /** Coût au point d'une jauge à un palier, à l'achat et en fabriquant (5 tailles comparées). */
@@ -260,9 +270,11 @@ export function keyPriceDashboard(ic: InsightContext): KeyPriceDashboard {
   const g = genetonValueFromMarket(r.market, r.tax)
   const shopLines: GenetonShopLine[] = GENETON_SHOP.map((s) => {
     const l = lineOf(s.id)
-    return { ...l, name: s.name, cost: s.cost, perGeneton: l.price === null ? null : l.price / s.cost, perGenetonNet: l.net === null ? null : l.net / s.cost }
+    return { ...l, name: s.name, cost: s.cost, perGeneton: l.price === null ? null : l.price / s.cost, perGenetonNet: l.net === null ? null : l.net / s.cost, confirmed: s.confirmed }
   }).sort((a, b) => (b.perGeneton ?? -1) - (a.perGeneton ?? -1) || a.cost - b.cost)
-  const best = shopLines[0] && shopLines[0].perGeneton !== null ? shopLines[0] : null
+  const best = shopLines.find((l) => l.confirmed && l.perGeneton !== null) ?? null
+  const top = shopLines[0] && shopLines[0].perGeneton !== null ? shopLines[0] : null
+  const optimistic = top && !top.confirmed && (best === null || (top.perGeneton ?? 0) > (best.perGeneton ?? 0)) ? top : null
   const others = [PEPITE, PARCHEMIN_ELEVEUR, TOURMALINE].map(lineOf)
   const makinas: MakinaPriceRow[] = [...MAKINAS]
     .sort((a, b) => a.family.localeCompare(b.family) || a.kind.localeCompare(b.kind) || a.generation - b.generation)
@@ -275,7 +287,7 @@ export function keyPriceDashboard(ic: InsightContext): KeyPriceDashboard {
   return {
     extraction,
     runes,
-    genetons: { lines: shopLines, best, value: g?.value ?? null, net: g?.net ?? null },
+    genetons: { lines: shopLines, best, value: g?.value ?? null, net: g?.net ?? null, optimistic },
     others,
     fuels: fuelPointCosts(ic),
     makinas,
@@ -591,6 +603,14 @@ export interface ServerCompareRow {
 }
 
 export interface ServerComparison {
+  /**
+   * Statistique de prix commune à tous les serveurs (`opts.stat`, sinon celle des serveurs si elles sont
+   * identiques, sinon médiane 30 j) : comparer deux serveurs avec deux statistiques différentes
+   * (automatique d'un côté, médiane 30 j de l'autre) gonflerait les écarts.
+   */
+  stat: PriceStat
+  /** Statistiques propres des serveurs (affichage : « comparés en médiane 30 j »). */
+  serverStats: PriceStat[]
   servers: { serverId: string; serverName: string; exportDate: string; ageDays: number | null }[]
   rows: ServerCompareRow[]
   /** Valeur brute d'un généton sur chaque serveur. */
@@ -605,8 +625,15 @@ export const COMPARE_DATE_GAP_DAYS = 7
  * Comparaison des objets clés entre serveurs (≥ 2 marchés), avec le moins cher et le plus cher de
  * chaque objet. null avec moins de 2 serveurs.
  */
-export function compareServers(servers: ServerMarket[], opts: { ids?: { id: number; group: string }[]; today?: string; saleTax?: number } = {}): ServerComparison | null {
-  if (servers.length < 2) return null
+export function compareServers(
+  input: ServerMarket[],
+  opts: { ids?: { id: number; group: string }[]; today?: string; saleTax?: number; stat?: PriceStat } = {},
+): ServerComparison | null {
+  if (input.length < 2) return null
+  const serverStats = input.map((s) => s.market.stat)
+  const stat: PriceStat = opts.stat ?? (serverStats.every((x) => x === serverStats[0]) ? serverStats[0] : 'median30')
+  // Même statistique pour tous les serveurs (prix, valeur du généton).
+  const servers = input.map((s) => (s.market.stat === stat ? s : { ...s, market: { ...s.market, stat } }))
   const items = opts.ids ?? COMPARE_ITEMS
   const rows: ServerCompareRow[] = items.map(({ id, group }) => {
     const cells = servers.map((s) => {
@@ -640,6 +667,8 @@ export function compareServers(servers: ServerMarket[], opts: { ids?: { id: numb
     if (a !== null && a > MARKET_STALE_DAYS) warnings.push(`${s.serverName} : export du ${frenchDay(s.market.exportDate)} (il y a ${a} jours), prix à rafraîchir.`)
   })
   return {
+    stat,
+    serverStats,
     servers: servers.map((s, i) => ({ serverId: s.serverId, serverName: s.serverName, exportDate: s.market.exportDate, ageDays: ages[i] })),
     rows,
     genetonValue: servers.map((s) => genetonValueFromMarket(s.market, opts.saleTax ?? 0.02)?.value ?? null),
@@ -649,8 +678,7 @@ export function compareServers(servers: ServerMarket[], opts: { ids?: { id: numb
 
 // ---------- (e) Fraîcheur de l'export ----------
 
-/** Au-delà de ce nombre de jours, l'export est jugé périmé (au-delà de `MARKET_STALE_DAYS` : à rafraîchir). */
-export const MARKET_OLD_DAYS = 30
+export { MARKET_OLD_DAYS }
 
 export type FreshnessLevel = 'frais' | 'a-rafraichir' | 'perime' | 'inconnu'
 

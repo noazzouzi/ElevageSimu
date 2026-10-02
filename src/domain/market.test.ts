@@ -30,6 +30,16 @@ import {
   sanitizeSnapshot,
   sellablePerDay,
   slugify,
+  snapshotPrice,
+  importCoverageDrop,
+  importPriceChanges,
+  marketItemName,
+  marketOriginMismatch,
+  marketWhere,
+  mergeSnapshots,
+  serverNameInFileName,
+  TUPLE,
+  volumeKnown,
   type MarketTuple,
 } from './market'
 import { marketPrice, resolvePrice, type PriceContext } from './pricing'
@@ -219,16 +229,23 @@ describe('instantané compact', () => {
     expect(ref?.depth?.sold24).toBe(0)
   })
 
-  it('valeur du généton : max(prix ÷ coût) sur la boutique (Tourmaline 130 comprise), brute et nette de taxe', () => {
+  it('valeur du généton : échanges reconfirmés seulement (Puissants, 160), valeur optimiste de la boutique à part', () => {
     const g = genetonValueFromMarket(snap, 0.02)
-    // Petit Parchemin de Chance (médiane 24 h 5 079 / 10) > Tourmaline (43 364 / 130) > Puissant (70 298 / 160).
-    expect(g?.best).toMatchObject({ id: 809, cost: 10, price: 5079 })
-    expect(g?.value).toBeCloseTo(507.9)
-    expect(g?.net).toBeCloseTo(507.9 * 0.98)
-    const tour = g?.lines.find((l) => l.id === 15271)
-    expect(tour?.perGeneton).toBeCloseTo(43364 / 130)
-    // Statistique médiane 30 j : 5 393 / 10.
-    expect(genetonValueFromMarket(snap, 0, 'median30')?.value).toBeCloseTo(539.3)
+    // Seul le Puissant Parchemin (160) est reconfirmé après la 3.5 : 70 298 / 160 (médiane 24 h).
+    expect(g?.confirmedOnly).toBe(true)
+    expect(g?.best).toMatchObject({ id: 814, cost: 160, price: 70298, confirmed: true })
+    expect(g?.value).toBeCloseTo(70298 / 160)
+    expect(g?.net).toBeCloseTo((70298 / 160) * 0.98)
+    expect(g?.lines.every((l) => l.confirmed)).toBe(true)
+    // Valeur optimiste (capture de la bêta) : Petit Parchemin de Chance 5 079 / 10, jamais comptée par défaut.
+    expect(g?.optimistic?.best).toMatchObject({ id: 809, cost: 10, confirmed: false })
+    expect(g?.optimistic?.value).toBeCloseTo(507.9)
+    // Toute la boutique (ancien calcul) : Petit > Tourmaline (43 364 / 130) > Puissant.
+    const all = genetonValueFromMarket(snap, 0.02, undefined, { confirmedOnly: false })
+    expect(all?.best.id).toBe(809)
+    expect(all?.lines.find((l) => l.id === 15271)?.perGeneton).toBeCloseTo(43364 / 130)
+    // Statistique médiane 30 j : 68 823 / 160.
+    expect(genetonValueFromMarket(snap, 0, 'median30')?.value).toBeCloseTo(68823 / 160)
     expect(genetonValueFromMarket(null)).toBeNull()
   })
 
@@ -335,5 +352,104 @@ describe('préréglage de Tylezia (src/data/market/tylezia-2026-10-02.json)', ()
     expect(s.rows).toEqual(preset.snapshot?.rows)
     expect(s.stats).toEqual(preset.snapshot?.stats)
     expect(s.stats.missing.map((m) => m.name)).toContain('Volkorne Améthyste et Émeraude')
+  })
+})
+
+describe('revue « marché » (MKT)', () => {
+  it('MKT-13 : la médiane 24 h n’est retenue qu’avec ≥ 5 ventes en 24 h (sinon médiane 30 j, signalée)', () => {
+    // Dragodinde Dorée et Pourpre (Tylezia) : 2 ventes en 24 h à 495 000 pour une médiane 30 j de 61 033.
+    expect(priceDetail([61033, 138265, 495000, 2, 15, 88, 179030], 'median24')).toEqual({ price: 61033, stat: 'median30' })
+    expect(priceDetail([61033, 138265, 0, 0, 15, 88, 179030], 'median24')).toEqual({ price: 61033, stat: 'median30' })
+    expect(priceDetail([30205, 32111, 26497, 10744, 38301, 127342, 128212170], 'median24')).toEqual({ price: 26497, stat: 'median24' })
+    expect(priceDetail([0, 500, 900, 2, 2, 2, 1], 'median24')).toEqual({ price: 500, stat: 'mean30' })
+  })
+
+  it('MKT-05 : export sans colonnes de ventes → liquidité inconnue (null), jamais « 0 vente »', () => {
+    const csv = ['gid;nom;median_30j;moyen_30j', '19975;Corne de volkorne;30205;32111', '33515;Neurone de dragodinde;26056;28517'].join('\n')
+    const parsed = parseHdvCsv(csv)
+    expect(parsed.error).toBeUndefined()
+    expect(parsed.missingColumns).toEqual(expect.arrayContaining(['sold24', 'sold7', 'sold30', 'median24', 'kamasPerDay']))
+    const snap = buildSnapshot(parsed, { serverName: 'X', exportDate: '2026-10-02' })
+    expect(snap.missingColumns).toEqual(expect.arrayContaining(['sold30']))
+    expect(snap.missingColumns).not.toContain('name')
+    expect(volumeKnown(snap)).toBe(false)
+    const src = marketSourceOf(snap, 'auto', 'X')
+    expect(src.volumeUnknown).toBe(true)
+    expect(marketDepth(src, CORNE)).toBeNull()
+    expect(marketDepth(snap, CORNE)).toBeNull()
+    expect(sellablePerDay(src, CORNE)).toBeNull()
+    // Le prix reste connu (médiane 30 j), confiance basse.
+    expect(snapshotPrice(src, CORNE)).toBe(30205)
+    expect(marketPrice(CORNE, { overrides: {}, useDefaults: false, market: src })).toMatchObject({ price: 30205, confidence: 'low', market: { volumeUnknown: true } })
+    // Gardé à la normalisation (stockage, sauvegarde).
+    const back = sanitizeSnapshot(JSON.parse(JSON.stringify(snap))).snapshot!
+    expect(back.missingColumns).toEqual(snap.missingColumns)
+    expect(marketDepth(marketSourceOf(back), CORNE)).toBeNull()
+    // Export complet : volumes connus.
+    const full = buildSnapshot(parseHdvCsv(FIXTURE), { serverName: 'Tylezia', exportDate: '2026-10-02' })
+    expect(full.missingColumns).toBeUndefined()
+    expect(marketDepth(marketSourceOf(full), CORNE)?.sold24).toBe(10744)
+  })
+
+  it('MKT-09 : un réimport identique ne montre aucune variation ; prix clés nommés sans les noms de l’export', () => {
+    const snap = buildSnapshot(parseHdvCsv(FIXTURE), { serverName: 'Tylezia', exportDate: '2026-10-02', importedAt: 1 })
+    // Historique (prix clés en statistique automatique) comparé au même export, serveur en médiane 30 j.
+    const fromHistory = importPriceChanges(snap, { history: historyEntryOf(snap) }, 'median30')
+    expect(fromHistory.stat).toBe('auto')
+    expect(fromHistory.changes.filter((c) => c.change !== 0)).toEqual([])
+    expect(diffPrices(historyEntryOf(snap).keyPrices, snap, { stat: 'auto' }).filter((c) => c.change !== 0)).toEqual([])
+    // L'ancien calcul (historique « auto » comparé en médiane 30 j) inventait des variations.
+    expect(diffPrices(historyEntryOf(snap).keyPrices, snap, { stat: 'median30' }).some((c) => (c.change ?? 0) !== 0)).toBe(true)
+    // Instantané courant : même statistique des deux côtés.
+    const fromCurrent = importPriceChanges(snap, { snapshot: snap }, 'median30')
+    expect(fromCurrent.stat).toBe('median30')
+    expect(fromCurrent.changes.every((c) => c.change === 0)).toBe(true)
+    expect(importPriceChanges(snap, {}, 'auto')).toEqual({ changes: [], stat: 'auto', previousDate: null })
+    // Noms connus sans les noms du fichier.
+    expect(marketItemName(34203)).toBe("Parchemin d'Éleveur")
+    expect(marketItemName(801)).toBe("Puissant Parchemin d'Agilité")
+    expect(marketItemName(15271)).toBe('Tourmaline')
+    for (const id of KEY_MARKET_IDS) expect(marketItemName(id), String(id)).not.toMatch(/^Objet #/)
+  })
+
+  it('MKT-10 : origine de l’export gardée ; libellé « HDV de Tylezia …, chargés pour Mon serveur »', () => {
+    const snap = buildSnapshot(parseHdvCsv(FIXTURE), { serverName: 'Tylezia', exportDate: '2026-10-02' })
+    const own = marketSourceOf(snap, 'auto', 'tylézia')
+    expect(marketOriginMismatch(own)).toBeNull()
+    const other = marketSourceOf(snap, 'auto', 'Mon serveur')
+    expect(other).toMatchObject({ serverName: 'Mon serveur', originServer: 'Tylezia', importedAt: snap.importedAt })
+    expect(marketOriginMismatch(other)).toBe('Tylezia')
+    expect(marketWhere(other)).toBe('HDV de Tylezia du 02/10/2026, chargés pour Mon serveur')
+    expect(marketWhere(own)).toBe('HDV de tylézia du 02/10/2026')
+    expect(marketPrice(NEURONE, { overrides: {}, useDefaults: true, market: other }).market).toMatchObject({ serverName: 'Tylezia', loadedFor: 'Mon serveur' })
+    // Nom de fichier → serveur.
+    expect(serverNameInFileName('tylezia-2026-10-02.csv', ['Mon serveur', 'Tylezia'])).toBe('Tylezia')
+    expect(serverNameInFileName('HDV Mon Serveur 02-10.csv', ['Mon serveur', 'Tylezia'])).toBe('Mon serveur')
+    expect(serverNameInFileName('export.csv', ['Mon serveur', 'Tylezia'])).toBeNull()
+    expect(serverNameInFileName('tylezianne.csv', ['Tylezia'])).toBeNull()
+  })
+
+  it('MKT-12 : fichier partiel détecté ; « compléter » garde les objets absents du nouveau fichier', () => {
+    const full = buildSnapshot(parseHdvCsv(FIXTURE), { serverName: 'Tylezia', exportDate: '2026-10-02', importedAt: 1, source: 'complet.csv' })
+    const partial = buildSnapshot(parseHdvCsv([HEADER, '19975;Corne de volkorne;60;Os;Ressource;9000;38301;127342;31000;32111;29000;1'].join('\n')), {
+      serverName: 'Tylezia',
+      exportDate: '2026-10-05',
+      importedAt: 2,
+      source: 'partiel.csv',
+    })
+    expect(importCoverageDrop(full, partial)).toMatchObject({ drop: true, currentUseful: 13, incomingUseful: 1 })
+    expect(importCoverageDrop(full, full).drop).toBe(false)
+    expect(importCoverageDrop(null, partial).drop).toBe(false)
+    const merged = mergeSnapshots(full, partial, { importedAt: 3 })
+    expect(Object.keys(merged.rows)).toHaveLength(13)
+    expect(merged.rows['19975'][TUPLE.median24]).toBe(29000)
+    expect(merged.rows[String(NEURONE)]).toEqual(full.rows[String(NEURONE)])
+    // Date : la plus ancienne (12 objets datent encore du 02/10) — la fraîcheur ne rajeunit pas.
+    expect(merged).toMatchObject({ exportDate: '2026-10-02', importedAt: 3, serverName: 'Tylezia' })
+    expect(merged.stats.useful).toBe(13)
+    expect(merged.source).toMatch(/^partiel\.csv \(05\/10\/2026\) — complété par 12 objets de l’export du 02\/10\/2026/)
+    // Le nouvel export couvre tout : sa date.
+    expect(mergeSnapshots(partial, { ...partial, importedAt: 4 }).exportDate).toBe('2026-10-05')
+    expect(merged.names['15271']).toBe('Tourmaline')
   })
 })

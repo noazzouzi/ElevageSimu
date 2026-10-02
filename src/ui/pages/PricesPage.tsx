@@ -37,6 +37,7 @@ import {
   parseKamas,
   parsePriceExport,
   priceCoverage,
+  priceFileServerMismatch,
   type BulkPriceEntry,
   type BulkPriceError,
   type DefaultPriceIssue,
@@ -44,21 +45,21 @@ import {
   type MountPriceContext,
 } from '../../domain/economy'
 import { FUEL_SIZE_LABELS, FUEL_TIERS, bestFuel, dustOption, fillPlan, fuelOption, fuelsOf } from '../../domain/fuel'
-import { MOUNT_MARKET_NOTE, PRICE_STAT_LABELS, PRICE_STAT_SHORT, frenchDay, marketMountReference, type MarketSource } from '../../domain/market'
-import { snapshotFreshness } from '../../domain/marketInsights'
+import { MOUNT_MARKET_NOTE, PRICE_STAT_LABELS, frenchDay, marketMountReference, slugify, type MarketSource } from '../../domain/market'
 import { craftCost, marketQuote, resolvePrice, type PriceContext, type ResolvedPrice } from '../../domain/pricing'
 import type { FamilyId, FuelTier, GaugeId, MakinaKind } from '../../domain/types'
-import { formatDate, formatKamas, formatNumber } from '../../lib/format'
+import { formatDate, formatKamas, formatNumber, plural } from '../../lib/format'
 import { useMarket, useMarketGeneton } from '../../store/market'
 import { usePriceContext, usePrices } from '../../store/prices'
-import { useActiveProfile, useActiveServer } from '../../store/profiles'
+import { profilesOnServer } from '../../store/profileRegistry'
+import { ACTIVE_SERVER_ID, useActiveProfile, useActiveServer, useProfiles } from '../../store/profiles'
 import { useRules, useSettings } from '../../store/settings'
 import { Badge, Callout, Card, Empty, GaugeChip, NumberField, PageHeader, Progress, Tabs } from '../components'
+import { MarketStatusCallouts, marketPriceTitle } from '../MarketStatus'
 import MarketImport from '../MarketImport'
 import MarketInsightsPanel from '../MarketInsightsPanel'
 import { href, useRoute } from '../router'
 import { ConfidenceBadge, GenBadge } from '../species'
-import { useServerDay } from '../useServerDay'
 import './PricesPage.css'
 
 type TabId = 'ressources' | 'carburants' | 'makinas' | 'filets' | 'ingredients' | 'montures' | 'marche' | 'hdv' | 'masse'
@@ -235,7 +236,7 @@ function DefaultCell({ d, onConfirm }: { d?: DefaultItemPrice | DefaultMountPric
 const shortDay = (iso: string) => frenchDay(iso).slice(0, 5)
 
 function marketTitle(r: NonNullable<ResolvedPrice['market']>): string {
-  return `Prix du marché importé (export HDV${r.serverName ? ` de ${r.serverName}` : ''} du ${frenchDay(r.exportDate)}, ${PRICE_STAT_SHORT[r.stat]}) : ${formatNumber(r.sold24)} vendus en 24 h, ${formatNumber(r.sold30)} en 30 jours (≈ ${formatNumber(r.perDayAvg, 1)}/jour).`
+  return marketPriceTitle(r)
 }
 
 function EffectiveCell({ r }: { r: ResolvedPrice }) {
@@ -247,7 +248,7 @@ function EffectiveCell({ r }: { r: ResolvedPrice }) {
           marché ({shortDay(r.market.exportDate)})
         </Badge>
         <small className="muted" title={marketTitle(r.market)}>
-          {formatNumber(r.market.sold24)} vendus/24 h
+          {r.market.volumeUnknown ? 'volume inconnu' : `${formatNumber(r.market.sold24)} vendus/24 h`}
         </small>
         {r.craftLocked !== undefined && <small className="muted">craft niv. {r.craftLocked} requis : prix HDV retenu</small>}
       </span>
@@ -995,7 +996,9 @@ function BulkTab() {
   const [message, setMessage] = useState<{ tone: 'ok' | 'warn' | 'danger'; text: string } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const state = usePrices()
-  const server = useSettings((s) => s.server)
+  // Serveur du profil ouvert : ses prix saisis sont partagés par tous ses profils.
+  const server = useActiveServer().name
+  const sharing = useProfiles((s) => profilesOnServer(s.registry, ACTIVE_SERVER_ID).map((p) => p.name).join('|'))
 
   const apply = () => {
     if (!preview?.entries.length) return
@@ -1024,6 +1027,18 @@ function BulkTab() {
       if (!parsed.ok) {
         setMessage({ tone: 'danger', text: parsed.error })
         return
+      }
+      // Fichier exporté depuis un AUTRE serveur : confirmation (les prix d'une autre économie fausseraient
+      // les calculs de tous les profils de ce serveur).
+      if (priceFileServerMismatch(parsed.server, server)) {
+        const names = sharing ? sharing.split('|') : []
+        const ok = window.confirm(
+          `Ce fichier contient les prix du serveur « ${parsed.server} ». Les importer dans « ${server} » ? Ils seront partagés par ${plural(names.length, 'profil')}${names.length ? ` : ${names.map((n) => `« ${n} »`).join(', ')}` : ''}.`,
+        )
+        if (!ok) {
+          setMessage({ tone: 'warn', text: `Import annulé : ce fichier vient du serveur « ${parsed.server} », pas de « ${server} ».` })
+          return
+        }
       }
       const s = parsed.snapshot
       state.replaceAll({
@@ -1198,8 +1213,6 @@ function PricesView({ initialQuery, initialTab }: { initialQuery: string; initia
   const profile = useActiveProfile()
   const server = useActiveServer()
   const snapshot = useMarket((st) => st.snapshot)
-  const today = useServerDay()
-  const freshness = snapshot ? snapshotFreshness(snapshot.exportDate, today) : null
   const counts = useMemo(() => Object.fromEntries(ITEM_TABS.map((t) => [t, countMatches(t, q)])) as Record<TabId, number>, [q])
   const ownCount = Object.keys(ctx.overrides).length + Object.keys(pMounts).length + Object.keys(pGenerations).length
 
@@ -1239,7 +1252,8 @@ function PricesView({ initialQuery, initialTab }: { initialQuery: string; initia
         </div>
         {snapshot ? (
           <small className="muted" style={{ display: 'block', marginTop: 6 }}>
-            Marché : export HDV de {server.name} du <strong>{frenchDay(snapshot.exportDate)}</strong> ({formatNumber(snapshot.stats.useful)} objets, {PRICE_STAT_LABELS[server.priceStat].toLowerCase()}) —{' '}
+            Marché : export HDV de {snapshot.serverName || server.name}
+            {snapshot.serverName && slugify(snapshot.serverName) !== slugify(server.name) ? ` (chargé pour ${server.name})` : ''} du <strong>{frenchDay(snapshot.exportDate)}</strong> ({formatNumber(snapshot.stats.useful)} objets, {PRICE_STAT_LABELS[server.priceStat].toLowerCase()}) —{' '}
             <button className="btn ghost small" type="button" onClick={() => setTab('marche')}>
               lecture du marché
             </button>
@@ -1256,7 +1270,7 @@ function PricesView({ initialQuery, initialTab }: { initialQuery: string; initia
             pour chiffrer d’un coup ingrédients, carburants, makinas, filets et ressources.
           </Callout>
         )}
-        {freshness && freshness.level !== 'frais' && <Callout tone={freshness.tone === 'ok' ? undefined : freshness.tone}>{freshness.message}</Callout>}
+        <MarketStatusCallouts context="prix" />
         {settings.useDefaultPrices && (
           <small className="muted" style={{ display: 'block', marginTop: 6 }}>
             Défauts (après vos prix et le marché) : {PRICES_DEFAULT.asOf}. {PRICES_DEFAULT.server}.

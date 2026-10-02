@@ -9,13 +9,16 @@ import {
   MOUNT_MARKET_NOTE,
   PRICE_STATS,
   PRICE_STAT_LABELS,
+  PRICE_STAT_SHORT,
+  MARKET_COLUMN_LABELS,
   buildSnapshot,
-  diffPrices,
   frenchDay,
+  importCoverageDrop,
+  importPriceChanges,
   isIsoDay,
-  keyPrices,
   marketItemName,
   parseHdvCsv,
+  serverNameInFileName,
   slugify,
   type CsvParseResult,
   type MarketHistoryEntry,
@@ -24,12 +27,26 @@ import {
   type PriceStat,
 } from '../domain/market'
 import { formatDate, formatKamas, formatNumber, formatPercent, plural } from '../lib/format'
-import { MARKET_PRESETS, applyMarketSnapshot, clearServerMarket, presetForServer, serverMarketHistory, useMarket, useMarketHistory, type MarketPreset } from '../store/market'
+import {
+  MARKET_PRESETS,
+  applyMarketSnapshot,
+  clearServerMarket,
+  mergeMarketSnapshot,
+  presetForServer,
+  serverMarketHistory,
+  serverMarketSnapshot,
+  undoMarketImport,
+  useMarket,
+  useMarketHistory,
+  useMarketUndo,
+  type MarketPreset,
+} from '../store/market'
 import { ACTIVE_SERVER_ID, useActiveServer, useProfiles } from '../store/profiles'
 import { Badge, Callout, Card, Empty, Progress, Stat } from './components'
 import './MarketImport.css'
 
-type Message = { tone: 'ok' | 'warn' | 'danger'; text: string } | null
+/** Message après une action ; `undoServerId` : l'import peut être annulé (bouton « Annuler l'import »). */
+type Message = { tone: 'ok' | 'warn' | 'danger'; text: string; undoServerId?: string } | null
 
 interface LoadedFile {
   name: string
@@ -77,7 +94,7 @@ function ChangesTable({ changes, beforeLabel, afterLabel }: { changes: PriceChan
               <td className="num">{c.after === null ? '—' : formatKamas(c.after)}</td>
               <td className="num">
                 {c.change === null ? (
-                  <span className="muted">{c.before === null ? 'nouveau' : 'disparu'}</span>
+                  <span className="muted">{c.before === null ? 'nouveau' : 'absent du fichier'}</span>
                 ) : (
                   <span className={c.change > 0.005 ? 'mi-up' : c.change < -0.005 ? 'mi-down' : undefined}>
                     {c.change > 0 ? '+' : ''}
@@ -105,7 +122,11 @@ function PresetButton({ preset, serverId, serverName, onMessage }: { preset: Mar
       const r = applyMarketSnapshot(serverId, snap)
       onMessage(
         r.ok
-          ? { tone: same ? 'ok' : 'warn', text: `Prix du marché de ${preset.serverName} (export du ${frenchDay(preset.exportDate)}) chargés pour ${serverName} : ${formatNumber(Object.keys(snap.rows).length)} objets.${same ? '' : ` Attention : ce sont les prix de ${preset.serverName}.`}` }
+          ? {
+              tone: same ? 'ok' : 'warn',
+              text: `Prix du marché de ${preset.serverName} (export du ${frenchDay(preset.exportDate)}) chargés pour ${serverName} : ${formatNumber(Object.keys(snap.rows).length)} objets.${same ? '' : ` Attention : ce sont les prix de ${preset.serverName}.`}`,
+              undoServerId: serverId,
+            }
           : { tone: 'danger', text: r.error },
       )
     } catch {
@@ -207,24 +228,34 @@ export default function MarketImport() {
   const [confirmClear, setConfirmClear] = useState(false)
   const [historyServer, setHistoryServer] = useState(ACTIVE_SERVER_ID)
   const [historyTick, setHistoryTick] = useState(0)
+  /** Remplacement confirmé malgré un fichier partiel (moins de la moitié des objets actuels). */
+  const [confirmReplace, setConfirmReplace] = useState(false)
+  /** Serveur évoqué par le nom du fichier (« tylezia-2026-10-02.csv » → Tylezia). */
+  const [fileServer, setFileServer] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const targetServer = registry.servers.find((s) => s.id === target) ?? activeServer
+  const lastUndo = useMarketUndo(ACTIVE_SERVER_ID)
 
   const preview = useMemo(() => {
     if (!file || !parsed || parsed.error || !isIsoDay(exportDate)) return null
     return buildSnapshot(parsed, { serverName: targetServer.name, exportDate, source: file.name })
   }, [file, parsed, exportDate, targetServer.name])
 
-  // Prix clés actuels du serveur cible (comparaison avant / après l'import).
-  // (autre serveur : derniers prix clés de son historique)
-  const targetCurrent = target === ACTIVE_SERVER_ID ? current : null
+  // Prix actuels du serveur cible (comparaison avant / après l'import, fichier partiel, fusion) : son
+  // instantané enregistré, sinon les prix clés de son dernier import (historique, statistique automatique).
+  const targetCurrent = useMemo(() => (target === ACTIVE_SERVER_ID ? current : historyTick >= 0 ? serverMarketSnapshot(target) : null), [target, current, historyTick])
   const targetHistory = useMemo(() => (target === ACTIVE_SERVER_ID ? activeHistory : historyTick >= 0 ? serverMarketHistory(target) : []), [target, activeHistory, historyTick])
-  const changes = useMemo(() => {
-    if (!preview) return []
-    const before = targetCurrent ? keyPrices(targetCurrent, targetServer.priceStat) : targetHistory.at(-1)?.keyPrices
-    return before ? diffPrices(before, preview, { stat: targetServer.priceStat }) : []
-  }, [preview, targetCurrent, targetHistory, targetServer.priceStat])
-  const previousDate = targetCurrent?.exportDate ?? targetHistory.at(-1)?.exportDate ?? null
+  const compared = useMemo(
+    () => (preview ? importPriceChanges(preview, { snapshot: targetCurrent, history: targetHistory.at(-1) ?? null }, targetServer.priceStat) : null),
+    [preview, targetCurrent, targetHistory, targetServer.priceStat],
+  )
+  const changes = compared?.changes ?? []
+  const previousDate = compared?.previousDate ?? null
+  const coverage = preview ? importCoverageDrop(targetCurrent, preview) : null
+  const fileServerMismatch = fileServer !== null && slugify(fileServer) !== slugify(targetServer.name)
+  const VOLUME_COLUMNS: string[] = ['sold24', 'sold7', 'sold30', 'kamasPerDay']
+  const volumeMissing = parsed ? parsed.missingColumns.filter((c) => VOLUME_COLUMNS.includes(c)) : []
+  const otherMissing = parsed ? parsed.missingColumns.filter((c) => c !== 'name' && !VOLUME_COLUMNS.includes(c)) : []
 
   const history = useMemo(() => (historyServer === ACTIVE_SERVER_ID ? activeHistory : historyTick >= 0 ? serverMarketHistory(historyServer) : []), [historyServer, activeHistory, historyTick])
 
@@ -238,25 +269,74 @@ export default function MarketImport() {
       // Date de l'export : date de modification du fichier (modifiable), sinon une date AAAA-MM-JJ du nom.
       const fromName = /(\d{4}-\d{2}-\d{2})/.exec(f.name)?.[1]
       setExportDate(fromName && isIsoDay(fromName) ? fromName : isoDay(f.lastModified || Date.now()))
+      // Serveur évoqué par le nom du fichier : présélectionné s'il existe, sinon signalé.
+      const named = serverNameInFileName(f.name, [...registry.servers.map((x) => x.name), ...MARKET_PRESETS.map((x) => x.serverName)])
+      setFileServer(named)
+      const known = named ? registry.servers.find((x) => slugify(x.name) === slugify(named)) : undefined
+      setTarget(known ? known.id : ACTIVE_SERVER_ID)
+      setConfirmReplace(false)
     } catch {
       setMessage({ tone: 'danger', text: 'Lecture du fichier impossible.' })
     }
     if (fileRef.current) fileRef.current.value = ''
   }
 
+  const reset = () => {
+    setFile(null)
+    setParsed(null)
+    setFileServer(null)
+    setConfirmReplace(false)
+    setHistoryTick((n) => n + 1)
+  }
+
   const apply = () => {
     if (!preview) return
+    // Fichier partiel : le remplacement effacerait les prix des objets absents — confirmation demandée.
+    if (coverage?.drop && !confirmReplace) {
+      setConfirmReplace(true)
+      return
+    }
     const r = applyMarketSnapshot(target, { ...preview, importedAt: Date.now() })
     if (!r.ok) {
       setMessage({ tone: 'danger', text: r.error })
       return
     }
     setMessage({
-      tone: 'ok',
+      tone: coverage?.drop ? 'warn' : 'ok',
       text: `Prix du marché de ${targetServer.name} remplacés : ${formatNumber(preview.stats.useful)} objets avec un prix (export du ${frenchDay(preview.exportDate)}).${target === ACTIVE_SERVER_ID ? ' Toutes les pages les utilisent dès maintenant.' : ''}`,
+      undoServerId: target,
     })
-    setFile(null)
-    setParsed(null)
+    reset()
+  }
+
+  const merge = () => {
+    if (!preview) return
+    const r = mergeMarketSnapshot(target, { ...preview, importedAt: Date.now() })
+    if (!r.ok) {
+      setMessage({ tone: 'danger', text: r.error })
+      return
+    }
+    setMessage({
+      tone: 'ok',
+      text: `Prix du marché de ${targetServer.name} complétés : ${formatNumber(preview.stats.useful)} objets mis à jour (export du ${frenchDay(preview.exportDate)}), ${formatNumber(r.snapshot?.stats.useful ?? 0)} objets avec un prix au total (les autres gardent leur prix précédent${r.snapshot && r.snapshot.exportDate !== preview.exportDate ? ` ; date retenue : ${frenchDay(r.snapshot.exportDate)}, celle des prix les plus anciens` : ''}).`,
+      undoServerId: target,
+    })
+    reset()
+  }
+
+  const undo = (serverId: string) => {
+    const name = registry.servers.find((x) => x.id === serverId)?.name ?? serverId
+    const r = undoMarketImport(serverId)
+    setMessage(
+      r.ok
+        ? {
+            tone: 'ok',
+            text: r.restored
+              ? `Import annulé : prix du marché de ${name} rétablis (export du ${frenchDay(r.restored.exportDate)}, ${formatNumber(r.restored.stats.useful)} objets).`
+              : `Import annulé : ${name} n’a plus de prix du marché (comme avant l’import).`,
+          }
+        : { tone: 'danger', text: r.error },
+    )
     setHistoryTick((n) => n + 1)
   }
 
@@ -264,7 +344,19 @@ export default function MarketImport() {
 
   return (
     <div className="stack market-import">
-      {message && <Callout tone={message.tone}>{message.text}</Callout>}
+      {message && (
+        <Callout tone={message.tone}>
+          {message.text}
+          {message.undoServerId && (
+            <>
+              {' '}
+              <button className="btn small" type="button" onClick={() => undo(message.undoServerId as string)}>
+                Annuler l’import
+              </button>
+            </>
+          )}
+        </Callout>
+      )}
 
       <Card title={`Prix du marché de ${activeServer.name}`}>
         {current ? (
@@ -295,6 +387,16 @@ export default function MarketImport() {
             </select>
           </label>
           {preset && <PresetButton preset={preset} serverId={ACTIVE_SERVER_ID} serverName={activeServer.name} onMessage={setMessage} />}
+          {lastUndo && !message?.undoServerId && (
+            <button
+              className="btn"
+              type="button"
+              onClick={() => undo(ACTIVE_SERVER_ID)}
+              title={lastUndo.previous ? `Rétablir l’export du ${frenchDay(lastUndo.previous.exportDate)} (${lastUndo.previous.source || 'import précédent'})` : 'Revenir à aucun prix du marché'}
+            >
+              Annuler le dernier import
+            </button>
+          )}
           <div className="spacer" />
           {current &&
             (confirmClear ? (
@@ -360,6 +462,12 @@ export default function MarketImport() {
               </label>
               {!isIsoDay(exportDate) && <Badge tone="danger">date à saisir</Badge>}
             </div>
+            {fileServerMismatch && (
+              <Callout tone="warn">
+                Le nom du fichier évoque le serveur « {fileServer} » : cet export est-il bien celui de « {targetServer.name} » ? Chaque serveur a ses prix —
+                choisissez le bon serveur ci-dessus.
+              </Callout>
+            )}
             {preview && (
               <>
                 <div className="grid grid-4">
@@ -373,8 +481,19 @@ export default function MarketImport() {
                   />
                 </div>
                 <CoverageBars snapshot={preview} />
-                {parsed.missingColumns.length > 0 && (
-                  <Callout tone="warn">Colonnes absentes (valeurs comptées comme « pas de donnée ») : {parsed.missingColumns.join(', ')}.</Callout>
+                {volumeMissing.length > 0 && (
+                  <Callout tone="warn">
+                    Volumes absents ({volumeMissing.map((c) => MARKET_COLUMN_LABELS[c as keyof typeof MARKET_COLUMN_LABELS]).join(', ')}) :{' '}
+                    {volumeMissing.includes('sold30')
+                      ? 'la liquidité sera inconnue — les plafonds de vente (part du volume du serveur) seront désactivés et signalés, jamais comptés comme « 0 vente ».'
+                      : 'ces volumes ne seront pas affichés (« pas de donnée »).'}
+                  </Callout>
+                )}
+                {otherMissing.length > 0 && (
+                  <Callout tone="warn">
+                    Colonnes de prix absentes ({otherMissing.map((c) => MARKET_COLUMN_LABELS[c as keyof typeof MARKET_COLUMN_LABELS]).join(', ')}) : la statistique de prix se replie
+                    sur les colonnes présentes.
+                  </Callout>
                 )}
                 {parsed.invalid.length > 0 && (
                   <details>
@@ -405,26 +524,38 @@ export default function MarketImport() {
                 )}
                 {previousDate && (
                   <>
-                    <h4 style={{ margin: '6px 0 0' }}>Prix clés : export du {frenchDay(previousDate)} → {frenchDay(preview.exportDate)}</h4>
+                    <h4 style={{ margin: '6px 0 0' }}>
+                      Prix clés : export du {frenchDay(previousDate)} → {frenchDay(preview.exportDate)}{' '}
+                      {compared && (
+                        <small className="muted">({compared.stat === 'auto' ? 'statistique automatique' : PRICE_STAT_SHORT[compared.stat]} des deux côtés)</small>
+                      )}
+                    </h4>
                     {previousDate > preview.exportDate && <Callout tone="warn">Cet export est plus ancien que celui déjà importé pour {targetServer.name}.</Callout>}
                     <ChangesTable changes={changes.slice(0, 12)} beforeLabel={frenchDay(previousDate)} afterLabel={frenchDay(preview.exportDate)} />
                   </>
                 )}
+                {coverage?.drop && (
+                  <Callout tone="warn">
+                    Fichier partiel : {formatNumber(coverage.incomingUseful)} objets avec un prix, contre {formatNumber(coverage.currentUseful)} dans les prix actuels de{' '}
+                    {targetServer.name}. Remplacer effacerait le prix des {formatNumber(Math.max(0, coverage.currentUseful - coverage.incomingUseful))} autres objets :
+                    préférez « Compléter », qui met à jour les objets du fichier et garde les autres.
+                    {confirmReplace && <strong> Cliquez à nouveau sur « Remplacer » pour confirmer.</strong>}
+                  </Callout>
+                )}
                 <div className="row">
-                  <button className="btn primary" type="button" onClick={apply}>
-                    Remplacer les prix du marché de {targetServer.name}
+                  {targetCurrent && (
+                    <button className={coverage?.drop ? 'btn primary' : 'btn'} type="button" onClick={merge} title="Les objets du fichier remplacent les anciens ; les objets absents du fichier gardent leur prix précédent.">
+                      Compléter les prix actuels de {targetServer.name}
+                    </button>
+                  )}
+                  <button className={coverage?.drop ? (confirmReplace ? 'btn danger' : 'btn') : 'btn primary'} type="button" onClick={apply}>
+                    {confirmReplace ? `Confirmer : remplacer par ${formatNumber(preview.stats.useful)} objets seulement` : `Remplacer les prix du marché de ${targetServer.name}`}
                   </button>
-                  <button
-                    className="btn ghost"
-                    type="button"
-                    onClick={() => {
-                      setFile(null)
-                      setParsed(null)
-                    }}
-                  >
+                  <button className="btn ghost" type="button" onClick={reset}>
                     Annuler
                   </button>
                 </div>
+                <small className="muted">Un import (remplacement ou complément) peut être annulé tant que cet onglet reste ouvert (« Annuler l’import »).</small>
                 {target !== ACTIVE_SERVER_ID && <small className="muted">Ce serveur n’est pas celui du profil ouvert : ses profils verront ces prix à leur prochaine ouverture.</small>}
               </>
             )}

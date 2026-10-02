@@ -21,23 +21,36 @@ import { RULESETS, type Ruleset } from '../../domain/rules'
 import type { FamilyId, FuelTier, RulesetId } from '../../domain/types'
 import { jobLevelFromXp, jobXpBetween, jobXpForLevel, mountXpForLevel } from '../../domain/xp'
 import {
-  TYPICAL_STORAGE_QUOTA_BYTES,
+  TYPICAL_STORAGE_QUOTA_CHARS,
   downloadBackup,
   downloadProfileBackup,
+  getBrowserStorage,
   importAll,
+  isServerDataEmpty,
+  planProfileServer,
   readBackupFile,
+  removeRegenerableData,
   resetAll,
+  storageQuotaChars,
   storageUsage,
   summarizeBackup,
+  type BackupFile,
   type BackupValidation,
   type ImportMode,
+  type ServerDataChoice,
+  type ServerDataSummary,
 } from '../../lib/backup'
-import { formatDate, formatDuration, formatNumber, formatPercent, plural } from '../../lib/format'
+import { formatChars, formatDate, formatDuration, formatNumber, formatPercent, plural } from '../../lib/format'
 import { journalJobXp, useJournal } from '../../store/journal'
-import { useStorageHealth } from '../../store/persistence'
-import { ACTIVE_PROFILE_ID, useActiveProfile, useActiveServer, useProfiles } from '../../store/profiles'
+import { useModeResults } from '../../store/modeResults'
+import { retryPendingWrites, useStorageHealth } from '../../store/persistence'
+import { profilesOnServer } from '../../store/profileRegistry'
+import { ACTIVE_PROFILE_ID, ACTIVE_SERVER_ID, useActiveProfile, useActiveServer, useProfiles } from '../../store/profiles'
 import { useRules, useSettings, type Goal } from '../../store/settings'
-import { Badge, Callout, Card, NumberField, PageHeader, Progress, Stat } from '../components'
+import { PROFILE_MODES, type ProfileMode } from '../../store/schema'
+import { familySwitchText, modeDef } from '../../domain/modes'
+import { useInventory } from '../../store/inventory'
+import { Badge, Callout, Card, NumberField, PageHeader, Progress, SelectField, Stat } from '../components'
 import { href, useRoute } from '../router'
 import ProfilesSection from '../ProfilesSection'
 import { ConfidenceBadge, GenBadge, SpeciesPicker } from '../species'
@@ -110,12 +123,6 @@ function frDates(text: string): string[] {
 }
 const PRICE_DATES = frDates(PRICES_DEFAULT.asOf)
 const FEES_CONFIDENCE = (PRICES_DEFAULT.marketFees as unknown as { confidence?: string }).confidence ?? 'medium'
-
-function formatBytes(n: number): string {
-  if (n < 1024) return `${formatNumber(n)} o`
-  if (n < 1024 * 1024) return `${formatNumber(n / 1024, 1)} Ko`
-  return `${formatNumber(n / (1024 * 1024), 2)} Mo`
-}
 
 /** Bloc champ + explication. */
 function Field({ children, help, wide }: { children: ReactNode; help?: ReactNode; wide?: boolean }) {
@@ -257,14 +264,27 @@ const JOURNAL_KEEP_OPTIONS: { months: number; label: string }[] = [
 
 type ImportState =
   | { status: 'idle' }
-  | { status: 'error'; message: string }
+  /** `snapshot` : données d'avant un import interrompu, à télécharger tout de suite. */
+  | { status: 'error'; message: string; snapshot?: BackupFile }
   | { status: 'ready'; fileName: string; validation: Extract<BackupValidation, { ok: true }> }
+
+/** « 120 prix, généton, marché du 02/10/2026 (1 022 objets), 3 imports » ou « aucun prix ». */
+function describeServerData(d: ServerDataSummary): string {
+  const parts: string[] = []
+  if (d.prices) parts.push(plural(d.prices, 'prix saisi', 'prix saisis'))
+  if (d.geneton) parts.push('valeur du généton')
+  if (d.marketExportDate) parts.push(`marché du ${d.marketExportDate.split('-').reverse().join('/')} (${plural(d.marketItems, 'objet')})`)
+  if (d.history) parts.push(plural(d.history, 'import HDV', 'imports HDV'))
+  if (d.unreadable) parts.push('données illisibles')
+  return parts.length ? parts.join(', ') : 'aucun prix'
+}
 
 function DataSection() {
   const [usage, setUsage] = useState(() => storageUsage())
   const refreshUsage = () => setUsage(storageUsage())
   const [exported, setExported] = useState<string | null>(null)
   const [imp, setImp] = useState<ImportState>({ status: 'idle' })
+  const [serverData, setServerData] = useState<ServerDataChoice>('keep')
   const [confirmReset, setConfirmReset] = useState<'none' | 'all' | 'settings'>('none')
   // Le message laissé avant un rechargement (import, remise à zéro, changement de profil) est affiché
   // par l'application (App.tsx, FlashBanner), quelle que soit la page.
@@ -306,17 +326,42 @@ function DataSection() {
     if (!file) return
     const v = await readBackupFile(file)
     setImp(v.ok ? { status: 'ready', fileName: file.name, validation: v } : { status: 'error', message: v.error })
+    setServerData('keep')
     if (fileRef.current) fileRef.current.value = ''
   }
 
   const doImport = (mode: ImportMode, asNewProfile = false) => {
     if (imp.status !== 'ready') return
-    const r = importAll(imp.validation.backup, { mode, asNewProfile })
+    const r = importAll(imp.validation.backup, { mode, asNewProfile, serverData })
     // En cas de succès, la page se recharge (message affiché au retour).
-    if (!r.ok) setImp({ status: 'error', message: r.error })
+    if (!r.ok) setImp({ status: 'error', message: r.error, snapshot: r.snapshot })
   }
 
-  const pct = usage.totalBytes / TYPICAL_STORAGE_QUOTA_BYTES
+  // Serveur d'une sauvegarde de profil face aux serveurs d'ici (choix des prix si les deux en ont).
+  const registry = useProfiles((st) => st.registry)
+  const serverPlan = useMemo(() => {
+    const ls = getBrowserStorage()
+    return imp.status === 'ready' && ls ? planProfileServer(imp.validation.backup, ls, { registry }) : null
+  }, [imp, registry])
+  const activeServerName = useActiveServer().name
+  const activeServerProfiles = profilesOnServer(registry, ACTIVE_SERVER_ID).map((p) => `« ${p.name} »`)
+
+  // Place : en caractères, contre la limite de ce navigateur (Safari : moitié moins).
+  const quota = storageQuotaChars()
+  const pct = usage.totalChars / quota
+  const regenerable = usage.entries.filter((e) => e.regenerable)
+  const regenerableChars = regenerable.reduce((t, e) => t + e.chars, 0)
+  const removeRegenerable = () => {
+    const removed = removeRegenerableData()
+    useModeResults.setState({ results: null })
+    // De la place vient de se libérer : on réessaie les enregistrements en échec.
+    const flushed = retryPendingWrites()
+    setMessage({
+      tone: 'ok',
+      text: `${plural(removed.length, 'résultat recalculable supprimé', 'résultats recalculables supprimés')} (${formatChars(regenerableChars)} libérés).${flushed ? '' : ' Certaines modifications ne sont toujours pas enregistrées : libérez encore de la place.'} Relancez la comparaison sur la page Modes quand vous en aurez besoin.`,
+    })
+    refreshUsage()
+  }
   return (
     <Card title="Sauvegarde des données">
       {message && <Callout tone={message.tone}>{message.text}</Callout>}
@@ -333,11 +378,30 @@ function DataSection() {
           ) : (
             <>
               <div className="row" style={{ justifyContent: 'space-between' }}>
-                <strong>{formatBytes(usage.totalBytes)}</strong>
-                <small>sur ≈ {formatBytes(TYPICAL_STORAGE_QUOTA_BYTES)} autorisés par le navigateur ({formatPercent(pct, 1)})</small>
+                <strong>{formatChars(usage.totalChars)}</strong>
+                <small>
+                  {formatPercent(pct, 1)} de la limite de ce navigateur (≈ {formatChars(quota)})
+                </small>
               </div>
-              <Progress value={usage.totalBytes} max={TYPICAL_STORAGE_QUOTA_BYTES} color={pct > 0.8 ? 'var(--danger)' : pct > 0.5 ? 'var(--warn)' : undefined} />
-              {pct > 0.8 && <Callout tone="danger">Stockage presque plein : exportez une sauvegarde puis allégez le journal.</Callout>}
+              <Progress value={usage.totalChars} max={quota} color={pct > 0.8 ? 'var(--danger)' : pct > 0.5 ? 'var(--warn)' : undefined} />
+              <small className="muted">
+                Limite du navigateur : ≈ {formatNumber(TYPICAL_STORAGE_QUOTA_CHARS / 1e6, 1)} millions de caractères dans Chrome, Edge et Firefox ; Safari (et
+                tout navigateur sur iPhone ou iPad) en accepte environ moitié moins.
+              </small>
+              {pct > 0.8 && (
+                <Callout tone="danger">
+                  Stockage presque plein : exportez une sauvegarde, puis libérez de la place
+                  {regenerableChars > 0 ? ' — d’abord les résultats recalculables de la comparaison des modes (bouton ci-dessous), puis le journal ancien' : ' (journal ancien, ancienne copie, profils inutiles)'}.
+                </Callout>
+              )}
+              {regenerableChars > 0 && (
+                <div className="row">
+                  <button className="btn" type="button" onClick={removeRegenerable}>
+                    Supprimer les résultats recalculables ({formatChars(regenerableChars)})
+                  </button>
+                  <small className="muted">Résultats de la comparaison des modes de tous les profils : recalculés à la demande sur la page Modes.</small>
+                </div>
+              )}
               <div className="table-wrap">
                 <table className="table">
                   <thead>
@@ -350,11 +414,11 @@ function DataSection() {
                     {usage.entries.map((e) => (
                       <tr key={e.key}>
                         <td>
-                          {e.label}
+                          {e.label} {e.regenerable && <Badge tone="info">recalculable</Badge>}
                           <br />
                           <small className="mono">{e.key}</small>
                         </td>
-                        <td className="num">{formatBytes(e.bytes)}</td>
+                        <td className="num">{formatChars(e.chars)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -390,7 +454,18 @@ function DataSection() {
               <input ref={fileRef} type="file" accept=".json,application/json" onChange={(e) => void onFile(e.target.files?.[0])} />
             </label>
           </div>
-          {imp.status === 'error' && <Callout tone="danger">{imp.message}</Callout>}
+          {imp.status === 'error' && (
+            <Callout tone="danger">
+              {imp.message}
+              {imp.snapshot && (
+                <div className="row" style={{ marginTop: 6 }}>
+                  <button className="btn small primary" type="button" onClick={() => imp.snapshot && setExported(downloadBackup(imp.snapshot))}>
+                    Télécharger mes données d’avant l’import
+                  </button>
+                </div>
+              )}
+            </Callout>
+          )}
           {imp.status === 'ready' && (
             <div className="gs-import-preview">
               <strong>{imp.fileName}</strong>
@@ -419,18 +494,53 @@ function DataSection() {
                 </Callout>
               ))}
               {imp.validation.backup.scope?.kind === 'profile' ? (
-                <p className="gs-help">
-                  <strong>Restaurer ce profil</strong> : le profil d’origine (même identifiant) est remplacé, ou créé s’il n’existe pas ici ; les autres profils ne changent pas.{' '}
-                  <strong>Importer comme nouveau profil</strong> : une copie est ajoutée. Si son serveur existe déjà ici, ses prix actuels sont gardés.
-                  Le profil importé est ensuite ouvert (la page se recharge).
-                </p>
+                <>
+                  <p className="gs-help">
+                    <strong>Restaurer ce profil</strong> : le profil d’origine (même identifiant) est remplacé, ou créé s’il n’existe pas ici ; les autres profils ne
+                    changent pas. <strong>Importer comme nouveau profil</strong> : une copie est ajoutée. Le profil importé est ensuite ouvert (la page se
+                    recharge).{' '}
+                    {serverPlan?.action === 'create' &&
+                      `Son serveur « ${serverPlan.server.name} » n’existe pas ici : il est ajouté avec les prix du fichier${serverPlan.idConflict ? ` (serveur distinct de « ${serverPlan.idConflict.name} », qui a le même identifiant mais un autre nom)` : ''}.`}
+                    {serverPlan?.action === 'adopt' &&
+                      `En le restaurant, le serveur vide « ${serverPlan.local?.name} » d’ici prend le nom « ${serverPlan.server.name} » et les prix du fichier.`}
+                    {serverPlan?.action === 'existing' &&
+                      !serverPlan.needsChoice &&
+                      (isServerDataEmpty(serverPlan.backupData)
+                        ? `Son serveur « ${serverPlan.server.name} » existe déjà ici (le fichier ne contient pas de prix).`
+                        : `Son serveur « ${serverPlan.server.name} » existe ici sans prix : les prix et le marché du fichier y sont repris.`)}
+                  </p>
+                  {serverPlan?.needsChoice && (
+                    <fieldset className="gs-fieldset">
+                      <legend>
+                        Prix du serveur « {serverPlan.server.name} » (déjà présent ici
+                        {serverPlan.sharedWith.length ? `, partagé par ${serverPlan.sharedWith.map((n) => `« ${n} »`).join(', ')}` : ''})
+                      </legend>
+                      {(
+                        [
+                          ['keep', 'Garder ceux de ce navigateur', serverPlan.localData ? describeServerData(serverPlan.localData) : ''],
+                          ['replace', 'Prendre ceux de la sauvegarde', describeServerData(serverPlan.backupData)],
+                          ['merge', 'Fusionner', 'prix ajoutés (ceux de ce navigateur gardés en cas de doublon), marché le plus récent gardé'],
+                        ] as [ServerDataChoice, string, string][]
+                      ).map(([value, title, detail]) => (
+                        <label key={value} className="gs-check">
+                          <input type="radio" name="server-data" checked={serverData === value} onChange={() => setServerData(value)} />
+                          <span>
+                            {title} <small className="muted">— {detail}</small>
+                          </span>
+                        </label>
+                      ))}
+                    </fieldset>
+                  )}
+                </>
               ) : (
                 <p className="gs-help">
                   <strong>Remplacer</strong> : toutes vos données actuelles (tous les profils) sont effacées et remplacées par celles du fichier
                   {imp.validation.backup.version < 2 ? ' (reprises dans le profil « Principal »)' : ''}. <strong>Fusionner</strong> : seules les données
                   présentes dans le fichier sont remplacées, le reste est gardé
-                  {imp.validation.backup.version < 2 ? ` (une sauvegarde d’avant les profils est versée dans le profil ouvert, « ${profile.name} »)` : ''}. La page
-                  se recharge ensuite.
+                  {imp.validation.backup.version < 2
+                    ? ` (une sauvegarde d’avant les profils est versée dans le profil ouvert, « ${profile.name} » ; ses prix saisis sont ajoutés à ceux du serveur « ${activeServerName} », partagés par ${plural(activeServerProfiles.length, 'profil')} : ${activeServerProfiles.join(', ')} — ceux du fichier l’emportent en cas de doublon)`
+                    : ''}
+                  . La page se recharge ensuite.
                 </p>
               )}
               <div className="row">
@@ -729,6 +839,14 @@ export default function SettingsPage() {
 
       <div id="reglages-objectif" className="gs-anchor">
         <Card title="Objectif d’élevage">
+          <ModeSetting />
+          <div className="divider" />
+          {s.mode !== 'progression' && (
+            <Callout tone="warn">
+              Objectif ignoré tant que le mode <strong>{modeDef(s.mode).label}</strong> est actif : les conseils, le plan et le tri des montures suivent la stratégie du mode.
+              La monture visée et la priorité ci-dessous ne servent qu’en mode Progression.
+            </Callout>
+          )}
           <div className="grid grid-2">
             <div className="stack">
               <h3>Famille et monture visée</h3>
@@ -996,6 +1114,35 @@ export default function SettingsPage() {
           </Callout>
         </Card>
       </div>
+    </div>
+  )
+}
+
+// ---------- Mode de rentabilité (revue UX2-14) ----------
+
+/**
+ * Réglage du mode de rentabilité du profil (`settings.mode`), aussi proposé sur la page Modes : un mode qui
+ * travaille une autre famille que celle du profil demande confirmation (revue UX2-01).
+ */
+function ModeSetting() {
+  const mode = useSettings((s) => s.mode)
+  const family = useSettings((s) => s.family)
+  const update = useSettings((s) => s.update)
+  const mounts = useInventory((s) => s.mounts)
+  const choose = (m: ProfileMode) => {
+    const fam = modeDef(m).family
+    if (fam && fam !== family) {
+      const owned = mounts.filter((x) => getSpecies(x.speciesId)?.family === family).length
+      if (!window.confirm(`${familySwitchText(`Le mode ${modeDef(m).label}`, family, fam, owned)}\n\nActiver quand même ?`)) return
+    }
+    update({ mode: m })
+  }
+  return (
+    <div className="row gs-mode">
+      <SelectField<ProfileMode> label="Mode de rentabilité" value={mode} onChange={choose} options={PROFILE_MODES.map((m) => ({ value: m, label: `${modeDef(m).icon} ${modeDef(m).label}` }))} />
+      <small className="muted">
+        {modeDef(mode).description} <a href={href('modes', { mode })}>Comparer les modes</a>
+      </small>
     </div>
   )
 }

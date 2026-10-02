@@ -25,10 +25,12 @@ import {
   type AdvisorSettings,
   type GoalStatus,
 } from '../../domain/advisor'
+import { marketWhere } from '../../domain/market'
 import { almanaxOn, serverDay, serverDayStart, upcomingAlmanax } from '../../domain/almanax'
 import { PADDOCK_SLOTS } from '../../domain/constants'
 import type { MountPriceContext } from '../../domain/economy'
-import { dailyRoutine, mergedSessions, type ActiveMode } from '../../domain/modes'
+import type { Mount } from '../../domain/types'
+import { dailyRoutine, familySwitchText, modeTimeline, routineSessionAt, timelineBasis, type ActiveMode } from '../../domain/modes'
 import { validateActiveGauges } from '../../domain/paddock'
 import { downloadBackup } from '../../lib/backup'
 import { formatClock, formatDate, formatKamas, formatKamasRange, formatNumber } from '../../lib/format'
@@ -40,9 +42,12 @@ import { PLAN_PROGRESS_RETENTION_MS, usePlanProgress } from '../../store/planPro
 import { usePriceContext, usePrices } from '../../store/prices'
 import { useRules, useSettings } from '../../store/settings'
 import { Badge, Callout, Card, Empty, PageHeader, Progress, Stat } from '../components'
+import { MarketStatusCallouts } from '../MarketStatus'
 import { href } from '../router'
 import { useGoalSimulation } from '../useGoalSimulation'
 import { useActiveMode } from '../useModes'
+import { useAdvisorSettings } from '../useAdvisorSettings'
+import { useModesRun } from '../useModesRun'
 import { useActiveServer } from '../../store/profiles'
 import './HomePage.css'
 import './HomeMode.css'
@@ -96,25 +101,8 @@ function useNow(intervalMs = REFRESH_MS): [number, () => void] {
 
 /** Entrées de l'aide construites depuis les stores (valeurs stables entre deux rendus). */
 function useAdvisorStores() {
-  const jobLevel = useSettings((s) => s.jobLevel)
-  const family = useSettings((s) => s.family)
-  const goalSpeciesId = useSettings((s) => s.goalSpeciesId)
-  const goal = useSettings((s) => s.goal)
-  const preferredTier = useSettings((s) => s.preferredTier)
-  const xpFiller = useSettings((s) => s.xpFiller)
-  const parentTargetLevel = useSettings((s) => s.parentTargetLevel)
-  const useOptimakina = useSettings((s) => s.useOptimakina)
-  const saleTax = useSettings((s) => s.saleTax)
-  const useDefaultPrices = useSettings((s) => s.useDefaultPrices)
-  const accounts = useSettings((s) => s.accounts)
-  const hoursPerDay = useSettings((s) => s.hoursPerDay)
-  const checkIntervalMinutes = useSettings((s) => s.checkIntervalMinutes)
-  const almanaxGaugeDoubling = useSettings((s) => s.almanaxGaugeDoubling)
+  const settings = useAdvisorSettings()
   const jobLevelUpdatedAt = useSettings((s) => s.jobLevelUpdatedAt)
-  const settings: AdvisorSettings = useMemo(
-    () => ({ jobLevel, family, goalSpeciesId, goal, preferredTier, xpFiller, parentTargetLevel, useOptimakina, saleTax, useDefaultPrices, accounts, hoursPerDay, checkIntervalMinutes, almanaxGaugeDoubling }),
-    [jobLevel, family, goalSpeciesId, goal, preferredTier, xpFiller, parentTargetLevel, useOptimakina, saleTax, useDefaultPrices, accounts, hoursPerDay, checkIntervalMinutes, almanaxGaugeDoubling],
-  )
   // XP d'Éleveur du journal depuis la dernière saisie du niveau (niveau estimé, XP jusqu'au prochain enclos).
   const journal = useJournal((s) => s.entries)
   const journalXp = useMemo(() => ({ xp: journalJobXp(journal, jobLevelUpdatedAt).xp }), [journal, jobLevelUpdatedAt])
@@ -129,19 +117,21 @@ function useAdvisorStores() {
   const pricedItems = Object.keys(usePrices((s) => s.items)).length
   // Prix de l'objet-monture du marché du serveur (« HDV mixte ») : plafond de vente prudent seulement.
   const mountPrices: MountPriceContext = useMemo(
-    () => ({ mountOverrides, generationOverrides, useDefaults: useDefaultPrices, market: priceCtx.market }),
-    [mountOverrides, generationOverrides, useDefaultPrices, priceCtx.market],
+    () => ({ mountOverrides, generationOverrides, useDefaults: settings.useDefaultPrices, market: priceCtx.market }),
+    [mountOverrides, generationOverrides, settings.useDefaultPrices, priceCtx.market],
   )
   // Mode de rentabilité actif (stratégie de la dernière comparaison enregistrée pour ce profil).
   const mode = useActiveMode()
-  const maxMarketShare = useActiveServer().maxMarketShare
-  return { settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp, mode, maxMarketShare }
+  const server = useActiveServer()
+  const maxMarketShare = server.maxMarketShare
+  const serverName = server.name
+  return { settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp, mode, maxMarketShare, serverName }
 }
 
 export default function HomePage() {
   const [now, refresh] = useNow()
   const st = useAdvisorStores()
-  const { settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp, mode, maxMarketShare } = st
+  const { settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp, mode, maxMarketShare, serverName } = st
   const advance = usePaddockPlans((s) => s.advance)
   const setActive = usePaddocks((s) => s.setActive)
   const done = usePlanProgress((s) => s.done)
@@ -166,8 +156,8 @@ export default function HomePage() {
   const sim = useGoalSimulation(simConfig)
   const goalView = useMemo(() => withGoalSimulation(analysis.goal, mounts, sim.summary, rules), [analysis.goal, mounts, sim.summary, rules])
   const advice = useMemo(
-    () => adviseNow({ now, settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp, goalSim: sim.summary, mode, maxMarketShare }, analysis),
-    [now, settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp, sim.summary, analysis, mode, maxMarketShare],
+    () => adviseNow({ now, settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp, goalSim: sim.summary, mode, maxMarketShare, serverName }, analysis),
+    [now, settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp, sim.summary, analysis, mode, maxMarketShare, serverName],
   )
   // Sections indisponibles : regroupées dans un encadré en haut (et non mêlées aux actions).
   const failures = advice.filter((a) => a.category === 'erreur')
@@ -209,6 +199,7 @@ export default function HomePage() {
           </>
         }
       />
+      <MarketStatusCallouts context="conseils" />
 
       <AlmanaxStrip now={now} analysis={analysis} />
 
@@ -216,7 +207,7 @@ export default function HomePage() {
 
       {onboarding ? <OnboardingCard advice={onboarding} /> : <Kpis analysis={analysis} goal={goalView} now={now} alarm={alarm} finishedPlans={finishedPlans} settings={settings} />}
 
-      {!onboarding && <ModeCard mode={mode} analysis={analysis} accounts={settings.accounts ?? 1} maxMarketShare={maxMarketShare} />}
+      {!onboarding && <ModeCard mode={mode} analysis={analysis} accounts={settings.accounts ?? 1} maxMarketShare={maxMarketShare} now={now} mounts={mounts} />}
 
       {groups.length === 0 && !onboarding && (
         <Card>
@@ -278,8 +269,16 @@ export default function HomePage() {
 
       <p className="muted hp-footnote">
         Ordre conseillé d'une session : accouplements, clonages, captures, extractions, rangement. Les heures viennent des plans démarrés dans la page{' '}
-        <a href={href('enclos')}>Enclos</a> et des niveaux de jauges saisis ; les montants utilisent vos prix (page <a href={href('prix')}>Prix</a>) et les prix par
-        défaut datés de la recherche. Un prix manquant n'est jamais compté comme nul : le coût est alors marqué « incomplet ». Règles du jeu {rules.label}.
+        <a href={href('enclos')}>Enclos</a> et des niveaux de jauges saisis ; les montants utilisent vos prix (page <a href={href('prix')}>Prix</a>)
+        {priceCtx.market ? (
+          <>
+            , puis l’export {marketWhere(priceCtx.market)} (<a href={href('prix', { onglet: 'hdv' })}>marché du serveur</a>)
+            {priceCtx.useDefaults ? ', puis les prix par défaut datés de la recherche' : ''}
+          </>
+        ) : (
+          ' et les prix par défaut datés de la recherche (aucun export HDV importé pour ce serveur)'
+        )}
+        . Un prix manquant n'est jamais compté comme nul : le coût est alors marqué « incomplet ». Règles du jeu {rules.label}.
       </p>
     </div>
   )
@@ -444,7 +443,8 @@ function Kpis({
  * Mode actif : stratégie suivie, bénéfice net attendu par jour et routine du jour (premier passage avec
  * les places libres d'aujourd'hui, ventes dans la limite du volume). Progression : rappel discret.
  */
-function ModeCard({ mode, analysis, accounts, maxMarketShare }: { mode: ActiveMode; analysis: AdvisorAnalysis; accounts: number; maxMarketShare: number }) {
+function ModeCard({ mode, analysis, accounts, maxMarketShare, now, mounts }: { mode: ActiveMode; analysis: AdvisorAnalysis; accounts: number; maxMarketShare: number; now: number; mounts: readonly Mount[] }) {
+  const running = useModesRun((s) => s.progress)
   const routine = useMemo(
     () => (mode.outcome && mode.kind !== 'progression' ? dailyRoutine(mode.id, mode.outcome, { freeSlots: analysis.freeSlots, characters: accounts, maxMarketShare }) : null),
     [mode, analysis.freeSlots, accounts, maxMarketShare],
@@ -463,8 +463,11 @@ function ModeCard({ mode, analysis, accounts, maxMarketShare }: { mode: ActiveMo
       </div>
     )
   const net = mode.outcome?.strategy?.net ?? null
-  const first = routine ? mergedSessions(routine)[0] : null
-  const sales = routine?.daily.filter((it) => it.kind === 'vente') ?? []
+  // Passage du moment (heure de Paris) : jamais « matin » le soir (revue UX2-03).
+  const hour = (now - serverDayStart(serverDay(now))) / 3_600_000
+  const session = routine ? routineSessionAt(routine, hour) : null
+  const timeline = mode.outcome ? modeTimeline(mode.outcome, { freeSlots: analysis.freeSlots }) : []
+  const sw = mode.familySwitch
   return (
     <Card
       className="hp-mode"
@@ -500,7 +503,7 @@ function ModeCard({ mode, analysis, accounts, maxMarketShare }: { mode: ActiveMo
       {mode.source === 'defaut' && (
         <Callout tone="warn">
           Stratégie par défaut : la comparaison des modes n’a pas encore été calculée pour ce profil.{' '}
-          <a href={href('modes', { mode: mode.id })}>Calculer (≈ 5 s)</a>
+          <a href={href('modes', { mode: mode.id })}>Calculer (≈ 15 s)</a>
         </Callout>
       )}
       {mode.stale && (
@@ -508,15 +511,40 @@ function ModeCard({ mode, analysis, accounts, maxMarketShare }: { mode: ActiveMo
           Calcul du {mode.computedAt ? formatDate(mode.computedAt) : '?'} fait avec d’autres réglages ou d’autres prix : <a href={href('modes', { mode: mode.id })}>recalculer</a>.
         </Callout>
       )}
-      {first && (
-        <div className="hp-mode-today">
-          <h3>Routine du mode — {first.label.toLowerCase()}</h3>
-          <p className="muted hp-mode-note">Quantités moyennes du régime permanent ; vos actions concrètes du moment sont dans les conseils ci-dessous.</p>
-          <ul>
-            {first.items.map((it) => (
-              <li key={it.id}>{it.text}</li>
+      {sw && (
+        <Callout tone="warn">
+          {familySwitchText(mode.requested === 'auto' ? `Le mode automatique (${def.label})` : `Le mode ${def.label}`, sw.from, sw.to, mounts.filter((m) => getSpecies(m.speciesId)?.family === sw.from).length)}{' '}
+          <a href={href('modes')}>Choisir un autre mode</a>
+        </Callout>
+      )}
+      {mode.plan && (
+        <p className="muted hp-mode-note">
+          Plan d’investissement suivi : <strong>{mode.plan.label}</strong>
+          {mode.plan.budget !== null ? ` (budget ${formatKamas(mode.plan.budget, true)})` : ''} — <a href={href('investissement', { mode: mode.id })}>Investissement</a>.
+        </p>
+      )}
+      {running && (
+        <p className="muted hp-mode-note">
+          Comparaison des modes en cours en arrière-plan ({Math.round((running.done / Math.max(1, running.total)) * 100)} %) : elle sera enregistrée à la fin.
+        </p>
+      )}
+      {timeline.length > 0 && (
+        <div className="hp-mode-timeline">
+          <h3>Montée en charge</h3>
+          <p className="muted hp-mode-note">{timelineBasis(mode.outcome).replace(/^s/, 'S')} (joueur parfait) : les quantités de la routine s’appliquent une fois le régime atteint.</p>
+          <ol>
+            {timeline.map((t) => (
+              <li key={`${t.id}-${t.text}`}>{t.text}</li>
             ))}
-            {sales.map((it) => (
+          </ol>
+        </div>
+      )}
+      {session && (
+        <div className="hp-mode-today">
+          <h3>Routine du mode — passage du {session.label.toLowerCase()} (régime permanent)</h3>
+          <p className="muted hp-mode-note">Quantités moyennes du régime permanent, pas la liste d’aujourd’hui : vos actions concrètes du jour sont dans les conseils ci-dessous.</p>
+          <ul>
+            {session.items.map((it) => (
               <li key={it.id}>{it.text}</li>
             ))}
           </ul>

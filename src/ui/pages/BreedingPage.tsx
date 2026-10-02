@@ -6,7 +6,7 @@ import { FAMILIES, FAMILY_IDS, getSpecies, speciesOfFamily } from '../../data'
 import { almanaxOn, isoDaysBetween, TAKEZA_DATES, type AlmanaxEffect } from '../../domain/almanax'
 import { cleanParent } from '../../domain/breedingPath'
 import { ABILITY_LABELS } from '../../domain/constants'
-import { genetonKamasValue, makinaCost, mountValuation, type MakinaCost, type MountValuation } from '../../domain/economy'
+import { makinaCost, mountValuation, type MakinaCost, type MountValuation } from '../../domain/economy'
 import { POSITION_WEIGHT_PARENT, POSITION_WEIGHT_SELF, TARGET_BASE, TARGET_PER_LEVEL, TAKEZA_BONUS, type BreedingParent, type BreedingResult } from '../../domain/genetics'
 import { effectiveFertility, FERTILITY_LABELS, GENDER_ICONS, GENDER_LABELS, mountName } from '../../domain/mounts'
 import {
@@ -47,9 +47,10 @@ import type { Ability, FamilyId, Gender, MakinaKind, Mount, Species } from '../.
 import { capitalize, formatDate, formatIsoDay, formatKamas, formatNumber, formatPercent } from '../../lib/format'
 import { useInventory } from '../../store/inventory'
 import { useJournal, type JournalEntry } from '../../store/journal'
-import { usePriceContext, usePrices } from '../../store/prices'
+import { genetonOriginLabel, useGenetonValue, usePriceContext, usePrices } from '../../store/prices'
 import { useRules, useSettings } from '../../store/settings'
 import { Badge, Callout, Card, Empty, NumberField, PageHeader, SelectField, Stat, Tabs } from '../components'
+import { MarketStatusCallouts, PriceOriginNote } from '../MarketStatus'
 import { href, useRoute } from '../router'
 import { ConfidenceBadge, GenBadge, SpeciesName, SpeciesPicker } from '../species'
 import { useServerDay } from '../useServerDay'
@@ -79,6 +80,8 @@ interface EconomyKit {
   makina: (kind: MakinaKind, family: FamilyId, generation: number) => MakinaCost
   genetonValue: number
   genetonFromPlayer: boolean
+  /** Libellé de l'origine de la valeur du généton (« votre valeur », « marché (…) », « valeur par défaut »). */
+  genetonLabel: string
   /** C_eff de la règle de prix de l'Optimakina (remplacement des parents − valeur des stériles). */
   coupleCost: CoupleCostModel
 }
@@ -87,7 +90,7 @@ function useEconomyKit(rules: Ruleset): EconomyKit {
   const priceCtx = usePriceContext()
   const mountOverrides = usePrices((s) => s.mounts)
   const generationOverrides = usePrices((s) => s.generations)
-  const genetonOverride = usePrices((s) => s.genetonValue)
+  const geneton = useGenetonValue()
   const useDefaults = useSettings((s) => s.useDefaultPrices)
   const saleTax = useSettings((s) => s.saleTax)
   const jobLevel = useSettings((s) => s.jobLevel)
@@ -95,7 +98,8 @@ function useEconomyKit(rules: Ruleset): EconomyKit {
   return useMemo(() => {
     // Niveau d'Éleveur : une makina ou un filet hors de portée du métier est payé au prix HDV (economy.md).
     const ctx = { ...priceCtx, jobLevel }
-    const mountPrices = { mountOverrides, generationOverrides, useDefaults }
+    // Marché du serveur : prix « HDV mixte » des objets-montures (plafond de vente), comme Rentabilité et Plan.
+    const mountPrices = { mountOverrides, generationOverrides, useDefaults, market: priceCtx.market ?? null }
     const vals = new Map<string, MountValuation>()
     const valuation = (id: number, level: number) => {
       const k = `${id}|${level}`
@@ -116,10 +120,17 @@ function useEconomyKit(rules: Ruleset): EconomyKit {
       }
       return m
     }
-    const g = genetonKamasValue(genetonOverride)
     const coupleCost = economyCoupleCost({ ctx, mountPrices, saleTax, rules, jobLevel, tier })
-    return { valueOf: (id: number, level: number) => valuation(id, level).best, valuation, makina, genetonValue: g.value, genetonFromPlayer: g.origin === 'joueur', coupleCost }
-  }, [priceCtx, mountOverrides, generationOverrides, useDefaults, saleTax, genetonOverride, rules, jobLevel, tier])
+    return {
+      valueOf: (id: number, level: number) => valuation(id, level).best,
+      valuation,
+      makina,
+      genetonValue: geneton.value,
+      genetonFromPlayer: geneton.origin === 'joueur',
+      genetonLabel: genetonOriginLabel(geneton),
+      coupleCost,
+    }
+  }, [priceCtx, mountOverrides, generationOverrides, useDefaults, saleTax, geneton, rules, jobLevel, tier])
 }
 
 // ---------- Takeza et Almanax ----------
@@ -232,7 +243,7 @@ function MakinaPriceView({ cost }: { cost: MakinaCost }) {
           <PriceLink name={cost.makina.name} />
         </>
       )}
-      {cost.complete && cost.origin !== 'joueur' && <span className="muted">({cost.origin === 'craft' ? 'coût des ingrédients' : 'prix par défaut'})</span>}
+      {cost.complete && cost.origin !== 'joueur' && <PriceOriginNote origin={cost.origin} market={cost.market} />}
     </span>
   )
 }
@@ -387,6 +398,7 @@ export default function BreedingPage() {
           </>
         }
       />
+      <MarketStatusCallouts context="conseils d’accouplement (makinas, valeurs des bébés)" showSource />
       <Tabs<TabId>
         tabs={[
           { id: 'simulateur', label: 'Simulateur' },
@@ -1216,7 +1228,7 @@ function CouplesTab({ mounts, rules, kit, day, onSimulate }: { mounts: Mount[]; 
         <div className="br-subtle" style={{ marginTop: 8 }}>
           {objective === 'progression' &&
             'Score de progression = Σ P(bébé nouveau, absent des deux arbres) × génération × pertinence (×3 objectif, ×2 recette la moins chère, ×1,5 autre ascendance, ×0,5 hors objectif).'}
-          {objective === 'genetons' && `Score = génétons attendus par accouplement (1 généton ≈ ${formatKamas(kit.genetonValue)}${kit.genetonFromPlayer ? ', votre valeur' : ', valeur par défaut'}).`}
+          {objective === 'genetons' && `Score = génétons attendus par accouplement (1 généton ≈ ${formatKamas(kit.genetonValue)}, ${kit.genetonLabel}).`}
           {objective === 'profit' && 'Score = valeur attendue des bébés (niveau 1) + génétons − makina. Les parents deviennent stériles quel que soit le couple : leur valeur résiduelle ne change pas le classement.'}{' '}
           {policy === 'auto' &&
             `Optimakina automatique (M-OPTI-01) : achetée si son prix < C_eff × Δ / p (C_eff = remplacement des deux parents − valeur de leurs stériles, calculé avec vos prix ; à défaut, écart de valeur des bébés ou de génétons). Si le prix ou cette valeur manque : dès la cible G${OPTIMAKINA_SYSTEMATIC_GENERATION}, et sur une étape G4–G5 de votre objectif ; jamais en G2–G3 sans prix.`}

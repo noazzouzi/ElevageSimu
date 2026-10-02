@@ -8,7 +8,7 @@ import { FAMILIES, STRATEGY, getSpecies, itemName } from '../../data'
 import { minCaptures } from '../../domain/breedingPath'
 import { goalStatus, sessionsPerDayFor } from '../../domain/advisor'
 import { FUEL_TIER_NAMES } from '../../domain/constants'
-import { NET_KIND_LABELS, batchProfile, findNet, genetonKamasValue, type NetKind } from '../../domain/economy'
+import { NET_KIND_LABELS, batchProfile, findNet, type NetKind } from '../../domain/economy'
 import {
   FUEL_GAUGES,
   MAX_DAYS,
@@ -37,10 +37,11 @@ import type { FamilyId, FuelTier } from '../../domain/types'
 import { jobLevelFromXp, jobXpForLevel } from '../../domain/xp'
 import { formatDuration, formatKamas, formatNumber, formatPercent } from '../../lib/format'
 import { useInventory } from '../../store/inventory'
-import { usePriceContext, usePrices } from '../../store/prices'
+import { useGenetonValue, usePriceContext } from '../../store/prices'
 import { useRules, useSettings } from '../../store/settings'
 import { profileKey } from '../../store/profiles'
 import { Badge, Callout, Card, Empty, GaugeChip, NumberField, PageHeader, Progress, SelectField, Stat, Tabs } from '../components'
+import { MarketStatusCallouts } from '../MarketStatus'
 import { href } from '../router'
 import { ConfidenceBadge, GenBadge, SpeciesName, SpeciesPicker } from '../species'
 import './OptimizerPage.css'
@@ -372,7 +373,10 @@ export default function OptimizerPage() {
   const updateSettings = useSettings((s) => s.update)
   const rules = useRules()
   const ctx = usePriceContext()
-  const genetonValue = genetonKamasValue(usePrices((s) => s.genetonValue)).value
+  // Valeur du généton du profil (votre valeur, sinon marché du serveur, sinon défaut), NETTE de la taxe
+  // de revente du parchemin — la même que Plan, Accueil, Modes et Rentabilité.
+  const geneton = useGenetonValue()
+  const genetonValue = geneton.net
 
   // Réglages en direct + écarts saisis ici + champs propres à la page (aucune copie figée des réglages).
   const live = useMemo(
@@ -632,6 +636,7 @@ export default function OptimizerPage() {
         subtitle="Simulez un programme complet (captures → fécondations → accouplements → clonages) jusqu'à votre monture cible, puis comparez les stratégies : durée, ressources et coût."
         actions={<Badge tone="info">Règles {rules.label}</Badge>}
       />
+      <MarketStatusCallouts context="coûts" showSource />
 
       <div className="opt-layout">
         <Card title="1. Objectif et moyens">
@@ -999,7 +1004,7 @@ function StrategyDetail({ outcome, onApply, jobLevel, genetonValue }: { outcome:
       <div className="grid grid-4 opt-stats">
         <Stat label="Durée (joueur parfait)" value={`${fmtDays(m.days.mean)} j`} hint={`≈ ${fmtInt(m.days.mean * 1.5)} à ${fmtInt(m.days.mean * 2)} j en réel · ${fmtInt(m.cycles.mean)} sessions`} />
         <Stat label="XP d'Éleveur" value={fmtInt(m.jobXp.mean)} hint={`niv. ${jobLevel} → ${levelAfter} (accouplements ${fmtInt(m.jobXpMatings.mean)} + captures ${fmtInt(m.jobXpCaptures.mean)})`} />
-        <Stat label="Génétons gagnés en route" value={fmtInt(m.genetons.mean)} hint={`≈ ${formatKamas(m.genetons.mean * genetonValue, true)} (${formatKamas(genetonValue)} / généton)`} />
+        <Stat label="Génétons gagnés en route" value={fmtInt(m.genetons.mean)} hint={`≈ ${formatKamas(m.genetons.mean * genetonValue, true)} net de taxe (${formatKamas(genetonValue)} / généton net)`} />
         <Stat
           label="Pic de montures hors enclos"
           value={fmtInt(m.peakHeld.mean)}
@@ -1322,7 +1327,7 @@ function CostDetail({ cost }: { cost: ProgramCost | null }) {
             {cost.genetonsValue !== null && (
               <tr>
                 <td colSpan={3} className="muted">
-                  Valeur des génétons gagnés en route (non déduite)
+                  Valeur des génétons gagnés en route (nette de taxe, non déduite)
                 </td>
                 <td className="num muted">{formatKamas(cost.genetonsValue, true)}</td>
                 <td>

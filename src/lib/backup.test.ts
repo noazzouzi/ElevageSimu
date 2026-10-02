@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_SETTINGS } from '../store/schema'
+import { bootProfiles, legacyDivergence } from '../store/profileRegistry'
+import { DEFAULT_SETTINGS, PROFILES_SHADOW_KEY } from '../store/schema'
 import {
   BACKUP_APP,
   BACKUP_VERSION,
@@ -11,9 +12,16 @@ import {
   exportProfile,
   importAll,
   isAppKey,
+  isRegenerableKey,
+  mergePriceStates,
   parseBackup,
+  planProfileServer,
+  removeRegenerableData,
   resetAll,
   serializeBackup,
+  TYPICAL_STORAGE_QUOTA_CHARS,
+  WEBKIT_STORAGE_QUOTA_CHARS,
+  storageQuotaChars,
   storageUsage,
   storeLabel,
   summarizeBackup,
@@ -21,6 +29,8 @@ import {
   type BackupFile,
   type StorageLike,
 } from './backup'
+
+const CHROME_UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36'
 
 /** Faux localStorage (ordre d'insertion, comme un navigateur). */
 class FakeStorage implements StorageLike {
@@ -107,7 +117,7 @@ describe('filtrage des clés', () => {
 
   it('renvoie une liste vide sans stockage', () => {
     expect(appKeys(null)).toEqual([])
-    expect(storageUsage(null)).toEqual({ totalBytes: 0, entries: [] })
+    expect(storageUsage(null)).toEqual({ totalChars: 0, entries: [] })
   })
 
   it('donne un libellé lisible aux clés connues et inconnues', () => {
@@ -392,12 +402,23 @@ describe('resetAll', () => {
 })
 
 describe('storageUsage', () => {
-  it('compte 2 octets par caractère (clé + valeur), du plus gros au plus petit', () => {
+  it('compte des CARACTÈRES (clé + valeur, l’unité du quota de Chrome, Edge et Firefox), du plus gros au plus petit', () => {
     const s = new FakeStorage({ 'elevagesimu:a': 'xx', 'elevagesimu:bb': 'xxxxxxxx', 'autre:c': 'zzzzzzzzzzzz' })
     const u = storageUsage(s)
     expect(u.entries.map((e) => e.key)).toEqual(['elevagesimu:bb', 'elevagesimu:a'])
-    expect(u.entries[0].bytes).toBe(2 * ('elevagesimu:bb'.length + 8))
-    expect(u.totalBytes).toBe(2 * ('elevagesimu:a'.length + 2) + 2 * ('elevagesimu:bb'.length + 8))
+    expect(u.entries[0].chars).toBe('elevagesimu:bb'.length + 8)
+    expect(u.totalChars).toBe('elevagesimu:a'.length + 2 + 'elevagesimu:bb'.length + 8)
+    // 2,6 millions de caractères = la moitié de la limite de Chrome (et pas 100 %).
+    expect(TYPICAL_STORAGE_QUOTA_CHARS).toBe(5 * 1024 * 1024)
+    expect((2.6e6 / storageQuotaChars(CHROME_UA)) * 100).toBeCloseTo(49.6, 0)
+  })
+
+  it('limite du navigateur : Chrome, Edge, Firefox ≈ 5,2 M caractères ; Safari et iPhone moitié moins', () => {
+    expect(storageQuotaChars(CHROME_UA)).toBe(TYPICAL_STORAGE_QUOTA_CHARS)
+    expect(storageQuotaChars('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36 Edg/120.0')).toBe(TYPICAL_STORAGE_QUOTA_CHARS)
+    expect(storageQuotaChars('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:120.0) Gecko/20100101 Firefox/120.0')).toBe(TYPICAL_STORAGE_QUOTA_CHARS)
+    expect(storageQuotaChars('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15')).toBe(WEBKIT_STORAGE_QUOTA_CHARS)
+    expect(storageQuotaChars('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/120.0 Mobile/15E148 Safari/604.1')).toBe(WEBKIT_STORAGE_QUOTA_CHARS)
   })
 })
 
@@ -556,5 +577,291 @@ describe('sauvegardes v2 (profils et serveurs)', () => {
     expect(target.getItem('elevagesimu:s:salar:prices')).toBe(pricesOf(7))
     expect(target.getItem('elevagesimu:p:gamma:montures-ui')).toBe(JSON.stringify({ sort: 'x' }))
     expect(target.getItem('elevagesimu:inventory')).toBeNull()
+  })
+})
+
+// ---------- Revue v2 « données » (DI-01, DI-02, DI-08, DI-09, DI-12) ----------
+
+const NOW = 1_790_000_000_000
+const pricesState = (items: Record<string, number>, extra: Record<string, unknown> = {}) =>
+  JSON.stringify({ state: { items, mounts: {}, generations: {}, genetonValue: null, updatedAt: 1, ...extra }, version: 1 })
+const marketAt = (exportDate: string, importedAt: number) => {
+  const m = JSON.parse(market) as { state: { snapshot: Record<string, unknown> }; version: number }
+  return JSON.stringify({ state: { snapshot: { ...m.state.snapshot, exportDate, importedAt } }, version: 1 })
+}
+const historyOf = (...importedAt: number[]) =>
+  JSON.stringify({ state: { entries: importedAt.map((t) => ({ importedAt: t, exportDate: '2026-10-02', source: 'x.csv', serverName: 'X', useful: 1, recognized: 1, read: 1, keyPrices: {} })) }, version: 1 })
+const regOf = (server: { id: string; name: string }, profiles: { id: string; name: string }[] = [{ id: 'principal', name: 'Principal' }]) =>
+  JSON.stringify({
+    version: 1,
+    activeProfileId: profiles[0].id,
+    profiles: profiles.map((p, i) => ({ ...p, serverId: server.id, createdAt: i + 1 })),
+    servers: [{ ...server, createdAt: 1, priceStat: 'auto', maxMarketShare: 0.15 }],
+  })
+const stateOf = (s: StorageLike, key: string) => (JSON.parse(s.getItem(key) ?? 'null') as { state: Record<string, unknown> } | null)?.state
+
+/** Sauvegarde du profil « Principal » d'un navigateur où son serveur (« mon-serveur ») porte ce nom. */
+function principalBackup(serverName = 'Mon serveur'): BackupFile {
+  const source = new FakeStorage({
+    'elevagesimu:profiles': regOf({ id: 'mon-serveur', name: serverName }),
+    'elevagesimu:p:principal:settings': JSON.stringify(settings),
+    'elevagesimu:s:mon-serveur:prices': pricesState({ '1844': 30, '33515': 27000, '7033': 100 }, { genetonValue: 420, mounts: { '94|1': 5000 }, generations: { 'muldo|1|1': 3000 } }),
+    'elevagesimu:s:mon-serveur:market': marketAt('2026-10-02', 2_000),
+    'elevagesimu:s:mon-serveur:market-history': historyOf(2_000),
+  })
+  return exportProfile('principal', source) as BackupFile
+}
+
+describe('restaurer un profil sur un serveur déjà présent ici (DI-01)', () => {
+  it('navigateur neuf (« Mon serveur » vide) : les prix et le marché de la sauvegarde sont écrits, et annoncés', () => {
+    const target = new FakeStorage()
+    bootProfiles(target, NOW)
+    const r = importAll(principalBackup(), { storage: target, reload: false })
+    expect(r.ok).toBe(true)
+    expect(stateOf(target, 'elevagesimu:s:mon-serveur:prices')).toMatchObject({ items: { '1844': 30, '33515': 27000, '7033': 100 }, genetonValue: 420 })
+    expect(stateOf(target, 'elevagesimu:s:mon-serveur:market')?.snapshot).toMatchObject({ exportDate: '2026-10-02' })
+    expect(stateOf(target, 'elevagesimu:s:mon-serveur:market-history')?.entries).toHaveLength(1)
+    expect(r.ok && r.warnings.join(' ')).toMatch(/repris de la sauvegarde/)
+  })
+
+  it('serveur renommé dans la sauvegarde, navigateur neuf : le serveur vide d’ici prend son nom et ses prix', () => {
+    const target = new FakeStorage()
+    bootProfiles(target, NOW)
+    const r = importAll(principalBackup('Tylezia'), { storage: target, reload: false })
+    expect(r.ok).toBe(true)
+    const reg = JSON.parse(target.getItem('elevagesimu:profiles') ?? 'null')
+    expect(reg.servers).toEqual([expect.objectContaining({ id: 'mon-serveur', name: 'Tylezia' })])
+    expect(stateOf(target, 'elevagesimu:s:mon-serveur:prices')?.items).toMatchObject({ '33515': 27000 })
+  })
+
+  it('même identifiant mais autre nom, serveur d’ici utilisé : serveur distinct créé (jamais de rattachement silencieux)', () => {
+    const target = new FakeStorage({
+      'elevagesimu:profiles': regOf({ id: 'mon-serveur', name: 'Jahash' }, [
+        { id: 'principal', name: 'Principal' },
+        { id: 'alt', name: 'Alt' },
+      ]),
+      'elevagesimu:s:mon-serveur:prices': pricesState({ '33515': 11111 }),
+    })
+    const r = importAll(principalBackup('Tylezia'), { storage: target, reload: false })
+    expect(r.ok).toBe(true)
+    const reg = JSON.parse(target.getItem('elevagesimu:profiles') ?? 'null')
+    expect(reg.servers.map((x: { id: string; name: string }) => `${x.id}:${x.name}`)).toEqual(['mon-serveur:Jahash', 'tylezia:Tylezia'])
+    expect(reg.profiles.find((p: { id: string }) => p.id === 'principal').serverId).toBe('tylezia')
+    expect(stateOf(target, 'elevagesimu:s:tylezia:prices')?.items).toMatchObject({ '33515': 27000 })
+    expect(stateOf(target, 'elevagesimu:s:mon-serveur:prices')?.items).toEqual({ '33515': 11111 })
+    expect(r.ok && r.warnings.join(' ')).toMatch(/même identifiant que « Jahash »/)
+  })
+
+  function localWithPrices() {
+    return new FakeStorage({
+      'elevagesimu:profiles': regOf({ id: 'mon-serveur', name: 'Mon serveur' }, [
+        { id: 'principal', name: 'Principal' },
+        { id: 'alt', name: 'Alt' },
+      ]),
+      'elevagesimu:s:mon-serveur:prices': pricesState({ '1844': 31, '999': 5 }),
+      'elevagesimu:s:mon-serveur:market': marketAt('2026-09-01', 1_000),
+      'elevagesimu:s:mon-serveur:market-history': historyOf(1_000),
+    })
+  }
+
+  it('prix des deux côtés, choix par défaut « garder » : ceux d’ici restent, avertissement (et aperçu : choix nécessaire)', () => {
+    const target = localWithPrices()
+    const before = target.getItem('elevagesimu:s:mon-serveur:prices')
+    const plan = planProfileServer(principalBackup(), target)
+    expect(plan).toMatchObject({ action: 'existing', needsChoice: true, sharedWith: ['Alt'] })
+    expect(plan?.localData).toMatchObject({ prices: 2, marketExportDate: '2026-09-01', history: 1 })
+    expect(plan?.backupData).toMatchObject({ prices: 5, geneton: true, marketExportDate: '2026-10-02' })
+    const r = importAll(principalBackup(), { storage: target, reload: false })
+    expect(r.ok && r.warnings.join(' ')).toMatch(/ceux de ce navigateur sont gardés/)
+    expect(target.getItem('elevagesimu:s:mon-serveur:prices')).toBe(before)
+  })
+
+  it('« prendre ceux de la sauvegarde » : prix, marché et historique remplacés', () => {
+    const target = localWithPrices()
+    const r = importAll(principalBackup(), { storage: target, reload: false, serverData: 'replace' })
+    expect(r.ok && r.warnings.join(' ')).toMatch(/remplacés par ceux de la sauvegarde, partagés aussi par « Alt »/)
+    expect(stateOf(target, 'elevagesimu:s:mon-serveur:prices')?.items).toEqual({ '1844': 30, '33515': 27000, '7033': 100 })
+    expect(stateOf(target, 'elevagesimu:s:mon-serveur:market')?.snapshot).toMatchObject({ exportDate: '2026-10-02' })
+  })
+
+  it('« fusionner » : prix réunis (ceux d’ici gardés en cas de doublon), marché le plus récent, historiques réunis', () => {
+    const target = localWithPrices()
+    const r = importAll(principalBackup(), { storage: target, reload: false, serverData: 'merge' })
+    expect(r.ok).toBe(true)
+    expect(stateOf(target, 'elevagesimu:s:mon-serveur:prices')).toMatchObject({
+      items: { '1844': 31, '999': 5, '33515': 27000, '7033': 100 },
+      mounts: { '94|1': 5000 },
+      genetonValue: 420,
+    })
+    expect(stateOf(target, 'elevagesimu:s:mon-serveur:market')?.snapshot).toMatchObject({ exportDate: '2026-10-02', importedAt: 2_000 })
+    const history = (stateOf(target, 'elevagesimu:s:mon-serveur:market-history')?.entries ?? []) as { importedAt: number }[]
+    expect(history.map((e) => e.importedAt)).toEqual([1_000, 2_000])
+  })
+
+  it('fusions pures : un prix absent n’est jamais compté comme 0', () => {
+    const local = { items: { a: 1 }, mounts: {}, generations: {}, genetonValue: null, updatedAt: 1 }
+    const incoming = { items: { a: 2, b: 3 }, mounts: { m: 4 }, generations: {}, genetonValue: 400, updatedAt: 2 }
+    expect(mergePriceStates(local, incoming, 'local')).toEqual({ items: { a: 1, b: 3 }, mounts: { m: 4 }, generations: {}, genetonValue: 400, updatedAt: 2 })
+    expect(mergePriceStates(local, incoming, 'incoming').items).toEqual({ a: 2, b: 3 })
+  })
+})
+
+/** Faux stockage dont le quota compte les caractères (clé + valeur), comme Chrome. */
+function quotaStorage(init: Record<string, string>, margin: number) {
+  const s = new FakeStorage(init)
+  s.quota = s.used() + margin
+  return s
+}
+const sized = (n: number) => 'x'.repeat(n)
+const precious = JSON.stringify({ state: { entries: [{ id: 'precieux', kind: 'note', at: 1, text: 'entrée précieuse' }] }, version: 1 })
+
+describe('import interrompu par le quota : retour EXACT à l’état d’avant (DI-02)', () => {
+  it('sauvegarde complète : toutes les clés et valeurs identiques, journal compris, quel que soit l’ordre des écritures', () => {
+    const target = quotaStorage(
+      { 'elevagesimu:aaa': JSON.stringify(sized(3000)), 'elevagesimu:bbb': JSON.stringify(sized(500)), 'elevagesimu:ccc': JSON.stringify(sized(1500)), 'elevagesimu:journal': precious },
+      150,
+    )
+    const before = target.snapshot()
+    const backup = { app: BACKUP_APP, version: 1, exportedAt: '2026-10-02T00:00:00Z', stores: { 'elevagesimu:aaa': sized(500), 'elevagesimu:bbb': sized(3000), 'elevagesimu:ddd': sized(2000) } }
+    const r = importAll(backup, { mode: 'replace', storage: target, reload: false })
+    expect(r).toMatchObject({ ok: false, error: expect.stringMatching(/vos données n’ont pas changé/) })
+    expect(target.snapshot()).toEqual(before)
+  })
+
+  it('sauvegarde d’un profil : idem', () => {
+    const reg = JSON.stringify(REG)
+    const source = new FakeStorage({
+      'elevagesimu:profiles': reg,
+      'elevagesimu:p:alpha:aaa': JSON.stringify(sized(500)),
+      'elevagesimu:p:alpha:bbb': JSON.stringify(sized(3000)),
+      'elevagesimu:p:alpha:ddd': JSON.stringify(sized(2000)),
+    })
+    const target = quotaStorage(
+      {
+        'elevagesimu:profiles': reg,
+        'elevagesimu:p:alpha:aaa': JSON.stringify(sized(3000)),
+        'elevagesimu:p:alpha:bbb': JSON.stringify(sized(500)),
+        'elevagesimu:p:alpha:ccc': JSON.stringify(sized(1500)),
+        'elevagesimu:p:alpha:journal': precious,
+      },
+      150,
+    )
+    const before = target.snapshot()
+    const r = importAll(exportProfile('alpha', source) as BackupFile, { storage: target, reload: false })
+    expect(r.ok).toBe(false)
+    expect(target.snapshot()).toEqual(before)
+  })
+
+  it('restauration impossible (un autre onglet remplit le stockage) : erreur distincte et copie des données d’avant', () => {
+    class HostileStorage extends FakeStorage {
+      broken = false
+      setItem(k: string, v: string) {
+        if (this.broken) throw Object.assign(new Error('quota'), { name: 'QuotaExceededError' })
+        try {
+          super.setItem(k, v)
+        } catch (e) {
+          this.broken = true
+          throw e
+        }
+      }
+    }
+    const target = new HostileStorage({ 'elevagesimu:aaa': JSON.stringify(sized(3000)), 'elevagesimu:journal': precious })
+    target.quota = target.used() + 100
+    const r = importAll({ app: BACKUP_APP, version: 1, exportedAt: '2026-10-02T00:00:00Z', stores: { 'elevagesimu:aaa': sized(10), 'elevagesimu:bbb': sized(4000) } }, { storage: target, reload: false })
+    expect(r).toMatchObject({ ok: false, error: expect.stringMatching(/Import interrompu/) })
+    if (r.ok) return
+    expect(r.snapshot?.stores['elevagesimu:journal']).toEqual(JSON.parse(precious))
+    expect(r.snapshot?.stores['elevagesimu:aaa']).toBe(sized(3000))
+  })
+})
+
+describe('sauvegarde d’avant les profils fusionnée (DI-08)', () => {
+  it('ses prix sont fusionnés clé par clé avec ceux du serveur ouvert (pas de remplacement en bloc), avertissement nommant le serveur et ses profils', () => {
+    const target = new FakeStorage({
+      'elevagesimu:profiles': regOf({ id: 'tylezia', name: 'Tylezia' }, [
+        { id: 'principal', name: 'Principal' },
+        { id: 'alt', name: 'Alt' },
+      ]),
+      'elevagesimu:s:tylezia:prices': pricesState({ '33515': 27000, '1844': 30 }),
+    })
+    const v1 = { app: BACKUP_APP, version: 1, exportedAt: '2026-01-01T00:00:00Z', stores: { 'elevagesimu:prices': JSON.parse(pricesState({ '1844': 7 })) } }
+    const r = importAll(v1, { storage: target, mode: 'merge', reload: false })
+    expect(r.ok && r.warnings.join(' ')).toMatch(/serveur « Tylezia » .*partagés par 2 profils : « Principal », « Alt »/)
+    expect(stateOf(target, 'elevagesimu:s:tylezia:prices')?.items).toEqual({ '33515': 27000, '1844': 7 })
+  })
+})
+
+describe('registre illisible dans une sauvegarde complète (DI-09)', () => {
+  it('« remplacer » : le registre est reconstruit d’après les données du fichier (le message dit vrai)', () => {
+    const source = v2Storage()
+    source.setItem(PROFILES_SHADOW_KEY, JSON.stringify(REG))
+    const b = exportAll(source)
+    const broken = { ...b, stores: { ...b.stores, 'elevagesimu:profiles': 'cassé' } }
+    const target = new FakeStorage()
+    const r = importAll(broken, { storage: target, reload: false })
+    expect(r.ok && r.warnings.join(' ')).toMatch(/Registre des profils reconstruit/)
+    const reg = JSON.parse(target.getItem('elevagesimu:profiles') ?? 'null')
+    // Copie de secours du fichier : noms et serveurs repris.
+    expect(reg.profiles.map((p: { id: string; name: string; serverId: string }) => `${p.id}:${p.name}@${p.serverId}`).sort()).toEqual(['alpha:Alpha@tylezia', 'beta:Beta@salar'])
+    expect(bootProfiles(target, NOW).registry.profiles).toHaveLength(2)
+  })
+})
+
+describe('données recalculables (DI-12)', () => {
+  it('les résultats des modes sont libellés « recalculables » et supprimables pour tous les profils', () => {
+    expect(storeLabel('elevagesimu:p:principal:modes')).toMatch(/recalculables/)
+    expect(storeLabel('elevagesimu:p:principal:modes-ui')).toBe('Préférences de la page Modes — profil principal')
+    expect(storeLabel('elevagesimu:p:principal:investissement')).toBe('Préférences de la page Investissement — profil principal')
+    const s = new FakeStorage({ 'elevagesimu:p:a:modes': sized(80_000), 'elevagesimu:p:b:modes': '{}', 'elevagesimu:p:a:modes-ui': '{}', 'elevagesimu:p:a:inventory': '{}' })
+    const u = storageUsage(s)
+    expect(u.entries[0]).toMatchObject({ key: 'elevagesimu:p:a:modes', regenerable: true })
+    expect(u.entries.find((e) => e.key === 'elevagesimu:p:a:modes-ui')?.regenerable).toBe(false)
+    expect(isRegenerableKey('elevagesimu:s:x:modes')).toBe(false)
+    expect(removeRegenerableData(s)).toEqual(['elevagesimu:p:a:modes', 'elevagesimu:p:b:modes'])
+    expect(appKeys(s)).toEqual(['elevagesimu:p:a:inventory', 'elevagesimu:p:a:modes-ui'])
+  })
+})
+
+describe('restauration complète et copie d’avant les profils (intégration finale)', () => {
+  // Anciens réglages v3 sans le champ `mode` (ajouté par la v2 à la normalisation de la sauvegarde).
+  const legacySettings = JSON.stringify({ state: { ruleset: '3.6', jobLevel: 85, family: 'volkorne', server: '', saleTax: 0.02 }, version: 3 })
+  const migrated = () => {
+    const source = new FakeStorage({
+      'elevagesimu:settings': legacySettings,
+      'elevagesimu:journal': JSON.stringify({ state: { entries: [] }, version: 1 }),
+    })
+    bootProfiles(source, NOW)
+    return source
+  }
+
+  it('aucune fausse alerte « modifiées par l’ancienne version » après avoir restauré une sauvegarde complète dans un navigateur neuf', () => {
+    const source = migrated()
+    expect(legacyDivergence(source, JSON.parse(source.getItem('elevagesimu:profiles') ?? 'null'))).toEqual([])
+    const text = serializeBackup(exportAll(source, new Date(NOW)))
+    // Fichier brut, ou sauvegarde déjà validée (normalisée) comme le fait la page Réglages.
+    const validated = parseBackup(text)
+    expect(validated.ok).toBe(true)
+    for (const input of [JSON.parse(text) as BackupFile, validated.ok ? validated.backup : null]) {
+      const target = new FakeStorage()
+      bootProfiles(target, NOW)
+      const r = importAll(input, { storage: target, reload: false })
+      expect(r.ok).toBe(true)
+      // La normalisation a bien réécrit l'ancienne clé (champ `mode` ajouté)…
+      expect(target.getItem('elevagesimu:settings')).not.toBe(legacySettings)
+      // … sans lever d'alerte de divergence.
+      const reg = JSON.parse(target.getItem('elevagesimu:profiles') ?? 'null')
+      expect(legacyDivergence(target, reg)).toEqual([])
+    }
+  })
+
+  it('une ancienne clé déjà modifiée après la reprise dans le navigateur d’origine reste signalée après la restauration', () => {
+    const source = migrated()
+    source.setItem('elevagesimu:journal', JSON.stringify({ state: { entries: [{ id: 'x', at: NOW, kind: 'note', text: 'onglet resté en v1' }] }, version: 1 }))
+    expect(legacyDivergence(source, JSON.parse(source.getItem('elevagesimu:profiles') ?? 'null'))).toEqual(['elevagesimu:journal'])
+    const validated = parseBackup(serializeBackup(exportAll(source, new Date(NOW))))
+    const target = new FakeStorage()
+    const r = importAll(validated.ok ? validated.backup : null, { storage: target, reload: false })
+    expect(r.ok).toBe(true)
+    expect(legacyDivergence(target, JSON.parse(target.getItem('elevagesimu:profiles') ?? 'null'))).toEqual(['elevagesimu:journal'])
   })
 })

@@ -5,7 +5,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { FAMILIES, FAMILY_IDS, SPECIES, STRATEGY, getSpecies } from '../../data'
 import { ABILITY_LABELS, JOB_XP_PER_CAPTURE, MOUNT_STAT_MAX, PADDOCK_SLOTS, PADDOCK_UNLOCK_LEVELS, SERENITY_MAX, SERENITY_MIN } from '../../domain/constants'
-import { BRISAGE_RISK_NOTE, genetonKamasValue, levelingCost, mountValuation, normalizeName, parseKamas, type MountPriceContext } from '../../domain/economy'
+import { BRISAGE_RISK_NOTE, mountValuation, normalizeName, parseKamas, type MountPriceContext } from '../../domain/economy'
 import {
   FATE_ACTION_LABELS,
   FATE_ACTIONS,
@@ -24,25 +24,23 @@ import {
   moveBlockers,
   paddockOccupancy,
   parseLocationKey,
-  recommendFates,
   unlockedPaddocks,
   type CaptureLine,
   type FateAction,
   type FateValuation,
   type InventorySummary,
-  type LevelCostFn,
   type LocationKey,
   type MountFate,
   type UsefulnessKind,
   type ValuationFn,
 } from '../../domain/mountFate'
 import { cloningBlockers, effectiveFertility, FERTILITY_LABELS, GENDER_ICONS, GENDER_LABELS, mountName } from '../../domain/mounts'
-import { almanaxOn } from '../../domain/almanax'
-import { bestDisjointPairs, objectiveFromGoal, rankPairs } from '../../domain/pairing'
+import { serverDayStart } from '../../domain/almanax'
+import { modeAwareFates, type ModeAnalysis } from '../../domain/advisor'
 import { serenityBand, type SerenityBand } from '../../domain/paddock'
 import { marketPrice } from '../../domain/pricing'
 import type { Ruleset } from '../../domain/rules'
-import type { FamilyId, Fertility, FuelTier, Mount } from '../../domain/types'
+import type { FamilyId, Fertility, Mount } from '../../domain/types'
 import { formatKamas, formatNumber } from '../../lib/format'
 import { useInventory, type NewMount } from '../../store/inventory'
 import { useJournal } from '../../store/journal'
@@ -50,10 +48,13 @@ import { usePriceContext, usePrices } from '../../store/prices'
 import { useRules, useSettings } from '../../store/settings'
 import { profileKey } from '../../store/profiles'
 import { Badge, Callout, Card, Empty, NumberField, PageHeader, Progress, Stat } from '../components'
+import { MarketStatusCallouts } from '../MarketStatus'
 import { GaugeBars, Modal, MountEditor, SerenitySmiley, SmileyPicker, StatusBadge } from '../MountEditor'
 import { href, useRoute } from '../router'
 import { ConfidenceBadge, GenBadge, SpeciesName } from '../species'
 import { useServerDay } from '../useServerDay'
+import { useActiveMode } from '../useModes'
+import { useAdvisorSettings } from '../useAdvisorSettings'
 import './MountsPage.css'
 
 // ---------- Constantes d'affichage ----------
@@ -180,70 +181,48 @@ export default function MountsPage() {
   const removeMany = useInventory((s) => s.removeMany)
   const log = useJournal((s) => s.log)
   const goalSpeciesId = useSettings((s) => s.goalSpeciesId)
-  const settingsGoal = useSettings((s) => s.goal)
-  const useOptimakina = useSettings((s) => s.useOptimakina)
   const jobLevel = useSettings((s) => s.jobLevel)
   const saleTax = useSettings((s) => s.saleTax)
-  const preferredTier = useSettings((s) => s.preferredTier)
   const useDefaultPrices = useSettings((s) => s.useDefaultPrices)
   const preferredFamily = useSettings((s) => s.family)
   const rules = useRules()
   const ctx = usePriceContext()
   const pMounts = usePrices((s) => s.mounts)
   const pGenerations = usePrices((s) => s.generations)
-  const genetonOverride = usePrices((s) => s.genetonValue)
-  const mctx = useMemo<MountPriceContext>(() => ({ mountOverrides: pMounts, generationOverrides: pGenerations, useDefaults: useDefaultPrices }), [pMounts, pGenerations, useDefaultPrices])
-  const genetonValue = genetonKamasValue(genetonOverride).value
+  // Marché du serveur : prix « HDV mixte » des objets-montures (plafond de vente, montures séniles
+  // probables), et valeur du généton du marché — comme Rentabilité, le Plan et l'Accueil.
+  const mctx = useMemo<MountPriceContext>(
+    () => ({ mountOverrides: pMounts, generationOverrides: pGenerations, useDefaults: useDefaultPrices, market: ctx.market ?? null }),
+    [pMounts, pGenerations, useDefaultPrices, ctx.market],
+  )
 
   const valuation = useCallback<ValuationFn>(
     (speciesId, level, o) => mountValuation(speciesId, level, { ctx, mountPrices: mctx, saleTax, state: o.state, senile: o.senile }),
     [ctx, mctx, saleTax],
   )
-  // Montée de niveau des montures de surplus : coût du lot réel (montures montées ensemble), au palier
-  // de Mangeoire le moins cher entre le palier 1 (Extraits, C-BREAK-01) et votre palier préféré.
-  const levelCost = useCallback<LevelCostFn>(
-    (from, to, m, batchSize) => {
-      const tiers: FuelTier[] = preferredTier === 1 ? [1] : [1, preferredTier]
-      let best: { cost: number | null; complete: boolean; seconds?: number; tier?: number; batchSize?: number } | null = null
-      for (const tier of tiers) {
-        const c = levelingCost(from, to, { tier, batchSize, sage: m.ability === 'sage', ctx, rules, jobLevel })
-        const option = { cost: c.costPerMount, complete: c.complete, seconds: c.secondsPerBatch, tier, batchSize }
-        if (!best || (option.complete && option.cost !== null && (!best.complete || best.cost === null || option.cost < best.cost))) best = option
-      }
-      return best ?? { cost: null, complete: false }
-    },
-    [preferredTier, ctx, rules, jobLevel],
-  )
-  // Plan d'accouplement (mêmes réglages que l'Accueil) : une monture prévue au plan n'est jamais conseillée en sortie immédiate.
+  // Sort conseillé EXACTEMENT comme l'accueil (revue UX2-05) : plan d'accouplement, sort des montures, puis
+  // sorts pilotés par le mode de rentabilité actif (rush : extraire au lieu de garder…), mêmes entrées.
   const today = useServerDay()
-  const plannedPartners = useMemo(() => {
-    const out = new Map<string, string>()
-    if (mounts.filter((m) => effectiveFertility(m) === 'feconde').length < 2) return out
-    try {
-      const plan = bestDisjointPairs(
-        rankPairs(mounts, {
-          rules,
-          objective: objectiveFromGoal(settingsGoal),
-          goalSpeciesId,
-          makinaPolicy: useOptimakina ? 'auto' : 'jamais',
-          takeza: !!almanaxOn(today)?.takeza,
-          mountValue: (id, level) => valuation(id, level, { state: 'fertile', senile: false }).best,
-          genetonValue,
-        }),
-      )
-      for (const p of plan) {
-        out.set(p.a.id, p.b.id)
-        out.set(p.b.id, p.a.id)
-      }
-    } catch {
-      // Plan indisponible : les sorts restent calculés sans lui.
+  const advisorSettings = useAdvisorSettings()
+  const rawGeneton = usePrices((s) => s.genetonValue)
+  const activeMode = useActiveMode()
+  const shared = useMemo(
+    () => modeAwareFates({ now: serverDayStart(today) + 12 * 3_600_000, settings: advisorSettings, rules, mounts, priceCtx: ctx, mountPrices: mctx, genetonValue: rawGeneton, mode: activeMode }),
+    [today, advisorSettings, rules, mounts, ctx, mctx, rawGeneton, activeMode],
+  )
+  const fates = shared.fates
+  const modeFateIds = shared.modeFateIds
+  // Indications du marché par monture : prix « HDV mixte » (plafond, non compté) et séniles probables.
+  const marketHints = useMemo(() => {
+    const out = new Map<string, MarketHint>()
+    if (!mctx.market) return out
+    for (const m of mounts) {
+      const v = mountValuation(m.speciesId, m.level, { ctx, mountPrices: mctx, saleTax, ...fateState(m) })
+      const ceiling = v.sale.net === null && v.sale.reference?.kind === 'marche' ? v.sale.reference.net : null
+      if (ceiling !== null || v.marketWarning) out.set(m.id, { ceiling, title: v.sale.reference?.reason ?? v.sale.note, warning: v.marketWarning })
     }
     return out
-  }, [mounts, rules, settingsGoal, goalSpeciesId, useOptimakina, today, valuation, genetonValue])
-  const fates = useMemo(
-    () => recommendFates({ inventory: mounts, goalSpeciesId, rules, valuation, levelCost, genetonValue, plannedPartners, goal: settingsGoal }),
-    [mounts, goalSpeciesId, rules, valuation, levelCost, genetonValue, plannedPartners, settingsGoal],
-  )
+  }, [mounts, ctx, mctx, saleTax])
   const summary = useMemo(() => inventorySummary(mounts), [mounts])
   const byId = useMemo(() => new Map(mounts.map((m) => [m.id, m])), [mounts])
 
@@ -414,6 +393,7 @@ export default function MountsPage() {
           </>
         }
       />
+      <MarketStatusCallouts context="conseils (garder, vendre, extraire)" />
 
       {flash && <Callout tone={flash.tone}>{flash.text}</Callout>}
 
@@ -421,7 +401,7 @@ export default function MountsPage() {
         <Onboarding onCapture={() => setCaptureOpen(true)} onAdd={() => setEditor({ mode: 'new' })} />
       ) : (
         <>
-          <GoalBanner goalSpeciesId={goalSpeciesId} />
+          <GoalBanner goalSpeciesId={goalSpeciesId} mode={shared.mode} />
           <SummaryCard
             summary={summary}
             fateCounts={fateCounts}
@@ -544,6 +524,8 @@ export default function MountsPage() {
                         key={m.id}
                         m={m}
                         fate={fates.get(m.id)}
+                        modeLabel={modeFateIds.has(m.id) ? activeMode.def.label : undefined}
+                        marketHint={marketHints.get(m.id)}
                         partner={(() => {
                           const pid = fates.get(m.id)?.partnerId
                           return pid ? byId.get(pid) : undefined
@@ -692,8 +674,40 @@ export default function MountsPage() {
 
 // ---------- Bandeau objectif ----------
 
-function GoalBanner({ goalSpeciesId }: { goalSpeciesId: number | null }) {
+function GoalBanner({ goalSpeciesId, mode }: { goalSpeciesId: number | null; mode: ModeAnalysis | null }) {
   const goal = goalSpeciesId !== null ? getSpecies(goalSpeciesId) : undefined
+  // Mode de rentabilité actif (rush, brisage, vente) : c'est lui qui décide du sort des montures — même
+  // espèce visée que l'accueil (cible de la stratégie), l'objectif des réglages ne sert qu'en Progression.
+  if (mode) {
+    const a = mode.active
+    const target = mode.goalSpeciesId !== null ? getSpecies(mode.goalSpeciesId) : undefined
+    const fam = FAMILIES[mode.family]?.plural ?? mode.family
+    const exit =
+      a.kind === 'brisage'
+        ? `les ${fam} montent au niveau ${a.params.brisageLevel} puis sortent par brisage`
+        : a.kind === 'vente'
+          ? `les ${fam} de G${a.params.targetGeneration} et plus sortent par la vente si leur prix prudent dépasse l’extraction, sinon par extraction`
+          : `les ${fam} de G${a.params.targetGeneration} et plus sortent par extraction${a.params.mateBeforeExtract ? ' (accouplement d’abord : bébé gratuit)' : ''}`
+    return (
+      <Callout tone="ok">
+        <strong>Mode {a.def.label}</strong>
+        {target && (
+          <>
+            {' '}
+            : chaîne vers <SpeciesName id={target.id} /> — les montures de sa recette sont gardées et accouplées
+          </>
+        )}{' '}
+        ; {exit} ; les autres montures sans usage prennent leur meilleure sortie. Sort décidé comme sur l’accueil (badge « mode »).
+        {goal && (
+          <>
+            {' '}
+            Votre monture visée (<SpeciesName id={goal.id} />) ne sert qu’en mode Progression.
+          </>
+        )}{' '}
+        <a href={href('modes')}>Détail du mode</a>
+      </Callout>
+    )
+  }
   if (!goal)
     return (
       <Callout>
@@ -987,6 +1001,8 @@ function SortTh({ label, k, sort, onSort, num, className }: { label: string; k: 
 function MountRow({
   m,
   fate,
+  modeLabel,
+  marketHint,
   partner,
   selected,
   expanded,
@@ -1003,6 +1019,9 @@ function MountRow({
 }: {
   m: Mount
   fate: MountFate | undefined
+  /** Sort piloté par le mode de rentabilité actif (badge « mode … »). */
+  modeLabel?: string
+  marketHint?: MarketHint
   partner: Mount | undefined
   selected: boolean
   expanded: boolean
@@ -1077,7 +1096,7 @@ function MountRow({
           {eff === 'feconde' && m.location.kind === 'enclos' && <div className="mt-warn-text">à ramener à l'étable</div>}
         </td>
         <td className="mt-hide-sm">{m.ability ? <Badge tone="gold">{ABILITY_LABELS[m.ability]}</Badge> : <span className="muted">—</span>}</td>
-        <td className="mt-c-fate">{fate ? <FateCell fate={fate} m={m} expanded={expanded} onExpand={onExpand} /> : <span className="muted">—</span>}</td>
+        <td className="mt-c-fate">{fate ? <FateCell fate={fate} m={m} hint={marketHint} modeLabel={modeLabel} expanded={expanded} onExpand={onExpand} /> : <span className="muted">—</span>}</td>
         <td className="mt-c-actions">
           <div className="mt-actions">
             <button className="btn ghost small" onClick={onEdit} aria-label={`Modifier ${mountName(m)}`} title="Modifier">
@@ -1103,7 +1122,16 @@ function MountRow({
   )
 }
 
-function FateCell({ fate, m, expanded, onExpand }: { fate: MountFate; m: Mount; expanded: boolean; onExpand: () => void }) {
+/** Indication du marché du serveur pour une monture (prix « HDV mixte » non compté, séniles probables). */
+interface MarketHint {
+  /** Prix de l'objet-monture à l'HDV, net de taxe : plafond de vente, jamais compté seul. */
+  ceiling: number | null
+  title?: string
+  /** Prix du marché < ½ valeur d'extraction dès la G5 : montures séniles probables. */
+  warning?: string
+}
+
+function FateCell({ fate, m, hint, modeLabel, expanded, onExpand }: { fate: MountFate; m: Mount; hint?: MarketHint; modeLabel?: string; expanded: boolean; onExpand: () => void }) {
   const sp = getSpecies(m.speciesId)
   let valueLine: ReactNode
   if (fate.action === 'a-chiffrer')
@@ -1148,12 +1176,23 @@ function FateCell({ fate, m, expanded, onExpand }: { fate: MountFate; m: Mount; 
     <div className="mt-fate">
       <button className="mt-fate-btn" onClick={onExpand} aria-expanded={expanded} title={fate.reason}>
         <Badge tone={FATE_TONES[fate.action]}>{fate.label}</Badge>
+        {modeLabel && (
+          <Badge tone="accent" title={`Sort décidé par le mode de rentabilité actif (${modeLabel}), comme sur l’accueil.`}>
+            mode {modeLabel}
+          </Badge>
+        )}
         <ConfidenceBadge level={fate.confidence} />
         <span className="muted" aria-hidden>
           {expanded ? '▴' : '▾'}
         </span>
       </button>
       <small>{valueLine}</small>
+      {hint && (hint.ceiling !== null || hint.warning) && (
+        <small className="muted" title={[hint.title, hint.warning].filter(Boolean).join('\n')}>
+          {hint.ceiling !== null && <>HDV mixte ≈ {formatKamas(hint.ceiling, true)} (plafond, non compté) </>}
+          {hint.warning && <Badge tone="warn">sénile probable</Badge>}
+        </small>
+      )}
     </div>
   )
 }

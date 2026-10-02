@@ -288,7 +288,10 @@ const THEN_LABEL: Record<FateKind, string> = { vente: 'vendre', extraction: 'ext
 function optionsSummary(v: FateValuation): string {
   const parts = [v.sale, v.extraction, v.brisage].map((f) => {
     if (!f.possible) return `${KIND_LABEL[f.kind]} : impossible`
-    if (f.net === null) return `${KIND_LABEL[f.kind]} : prix manquant`
+    if (f.net === null)
+      return f.reference?.kind === 'marche'
+        ? `${KIND_LABEL[f.kind]} : prix manquant (HDV mixte ≈ ${formatKamas(f.reference.net)} : plafond, non compté)`
+        : `${KIND_LABEL[f.kind]} : prix manquant`
     return `${KIND_LABEL[f.kind]} ≈ ${formatKamas(f.net)}`
   })
   return `${parts.join(' · ')} (nets de taxe).`

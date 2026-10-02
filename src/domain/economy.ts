@@ -42,6 +42,8 @@ import {
   marketConfidence,
   marketDepth,
   marketItemName,
+  marketWhere,
+  slugify,
   snapshotPrice,
   type ConcretePriceStat,
   type GenetonMarketValue,
@@ -462,7 +464,7 @@ export function mountSalePrice(speciesId: number, level: number, mctx: MountPric
   if (!mq) return base
   const withMarket = { ...base, market: mq, ceiling: mq.price }
   if (base.origin === 'joueur-espece' || base.origin === 'joueur-generation') return withMarket
-  const where = `l’HDV${mq.serverName ? ` de ${mq.serverName}` : ''} du ${frenchDay(mq.exportDate)}`
+  const where = `l’${mctx.market ? marketWhere(mctx.market) : `HDV du ${frenchDay(mq.exportDate)}`}`
   if (base.price !== null) {
     if (mq.price >= base.price) return withMarket
     return {
@@ -879,13 +881,13 @@ export function genetonKamasValue(override?: number | null, opts: { market?: Mar
   const m = opts.market ? genetonValueFromMarket(opts.market, tax ?? 0) : null
   if (m && opts.market) {
     const row = opts.market.rows[String(m.best.id)]
-    const where = `HDV${opts.market.serverName ? ` de ${opts.market.serverName}` : ''} du ${frenchDay(opts.market.exportDate)}`
+    const where = marketWhere(opts.market)
     return withNet({
       value: m.value,
       range: g.range,
       origin: 'marche',
       confidence: row ? marketConfidence(row) : 'low',
-      basis: `${m.best.name} ${fmtK(m.best.price ?? 0)} ÷ ${m.best.cost} génétons (${where}, ${fmtN(m.best.sold24)} vendus/24 h).`,
+      basis: `${m.best.name} ${fmtK(m.best.price ?? 0)} ÷ ${m.best.cost} génétons (${where}, ${fmtN(m.best.sold24)} vendus/24 h) — échange reconfirmé après la 3.5${m.optimistic ? ` ; ${fmtK(m.optimistic.value)} par généton avec ${m.optimistic.best.name} (boutique de la bêta, non reconfirmée)` : ''}.`,
       market: { ...m, exportDate: opts.market.exportDate, serverName: opts.market.serverName },
     })
   }
@@ -1685,6 +1687,8 @@ export interface MakinaCost {
   beta37: boolean
   /** Prix de craft d'une makina que vous ne savez pas fabriquer (niveau requis) : estimation du prix HDV. */
   craftLocked?: number
+  /** Prix du marché importé (`origin: 'marche'`) : date de l'export, statistique, volume (« marché (02/10) · N vendus/24 h »). */
+  market?: MarketPriceInfo
 }
 
 /**
@@ -1709,7 +1713,7 @@ export function makinaCost(kind: MakinaKind, family: FamilyId, generation: numbe
     const complete = missing.length === 0
     const locked = !canCraftRecipe(makina.id, ctx)
     if (market.price !== null && (locked || !complete || market.price <= total))
-      return { makina, price: market.price, complete: true, origin: market.origin, missing: [], beta37: true }
+      return { makina, price: market.price, complete: true, origin: market.origin, missing: [], beta37: true, ...(market.market ? { market: market.market } : {}) }
     return { makina, price: complete || total > 0 ? total : null, complete, origin: 'craft', missing: uniq(missing), beta37: true, craftLocked: locked ? makina.level : undefined }
   }
   const p = resolvePrice(makina.id, ctx)
@@ -1721,6 +1725,7 @@ export function makinaCost(kind: MakinaKind, family: FamilyId, generation: numbe
     missing: p.complete ? [] : p.missing.length ? p.missing : [makina.id],
     beta37: false,
     craftLocked: p.origin === 'craft' ? p.craftLocked : undefined,
+    ...(p.origin === 'marche' && p.market ? { market: p.market } : {}),
   }
 }
 
@@ -2189,7 +2194,26 @@ export interface CycleResult {
   estimated: boolean
   /** Libellés des estimations utilisées. */
   estimates: string[]
-  ranges: { cost: Range; revenue: Range; profit: Range; kamasPerHour: Range; roi: Range }
+  ranges: {
+    cost: Range
+    revenue: Range
+    profit: Range
+    kamasPerHour: Range
+    roi: Range
+    /** Bénéfice du cycle quand ses ventes sont plafonnées par la liquidité (cycle répété en continu). */
+    profitCapped: Range
+    kamasPerHourCapped: Range
+  }
+  /**
+   * Plafond de liquidité (cycle répété en continu, marché importé) : la part des ventes au-delà de la
+   * part vendable du volume quotidien ne se vend pas au prix prévu — une monture invendable est extraite
+   * (valeur d'extraction), une ressource, une rune ou un généton au-delà du plafond ne rapporte rien.
+   * Égal au bénéfice brut quand rien ne dépasse ou sans marché.
+   */
+  profitCapped: number
+  kamasPerHourCapped: number | null
+  /** Ventes réduites par le plafond (vide si rien ne dépasse). */
+  cappedSales: CappedSale[]
   profitStatus: ProfitStatus
   unpricedFertility: UnpricedFertility
   /** Socle des paliers ≥ 2 : investissement unique (reste dans les jauges), hors bénéfice récurrent. */
@@ -2219,6 +2243,20 @@ export interface CycleResult {
    * marché importé. Les dépassements sont aussi dans `warnings`.
    */
   liquidity: LiquidityCheck[]
+}
+
+/** Ventes d'un cycle réduites par le plafond de liquidité. */
+export interface CappedSale {
+  itemId: number
+  name: string
+  kind: SaleKind
+  /** Part des ventes prévues au-delà du plafond (0 … 1). */
+  excessShare: number
+  /** Revenu retiré (part au-delà du plafond) et valeur de repli comptée à la place (extraction des montures). */
+  removed: number
+  fallback: number
+  /** Valeur de repli inconnue (prix de la ressource d'extraction manquant) : non comptée. */
+  fallbackUnknown: boolean
 }
 
 function sumCat(lines: MaterialLine[], cat: CostCategory): CategoryTotal {
@@ -2667,31 +2705,74 @@ export function cycleProfit(cfg: CycleConfig): CycleResult {
   const hours = total / 3600
   const perHour = (x: number | null) => (x === null || hours <= 0 ? null : x / hours)
   const roiOf = (rev: number | null, cost: number | null) => (rev === null || cost === null || cost <= 0 ? null : rev / cost - 1)
-  const ranges = {
-    cost: costR,
-    revenue: revR,
-    profit: profitR,
-    kamasPerHour: { low: perHour(profitR.low), high: perHour(profitR.high) },
-    roi: { low: roiOf(revR.low, costR.high), high: roiOf(revR.high, costR.low) },
-  }
-
   // Liquidité : ventes du cycle répété en continu face au volume du marché du serveur.
   let liquidity: LiquidityCheck[] = []
   const market = ctx.market ?? null
+  const cappedSales: CappedSale[] = []
+  let cappedRemoved = 0
+  let cappedFallback = 0
+  let cappedUnknown = false
   if (market && total > 0) {
     const cyclesPerDay = 86_400 / total
     const sales: PlannedSale[] = []
+    const lineItems = new Map<RevenueLine, number[]>()
     for (const l of revenue) {
       if (l.speciesId === undefined || (l.kind !== 'bebe' && l.kind !== 'sterile')) continue
       const gross = l.unitValue === null ? null : tax < 1 ? l.unitValue / (1 - tax) : null
-      sales.push(...salesOfFate(l.speciesId, l.fate, l.qty * cyclesPerDay, ctx, gross))
+      const ls = salesOfFate(l.speciesId, l.fate, l.qty * cyclesPerDay, ctx, gross)
+      lineItems.set(l, ls.map((x) => x.itemId))
+      sales.push(...ls)
     }
     const share = cfg.maxMarketShare ?? DEFAULT_MAX_MARKET_SHARE
     liquidity = checkPlannedSales(sales, market, share)
     const gl = genetonLiquidityCheck(expectedGenetons * cyclesPerDay, market, share)
     if (gl) liquidity.push(gl)
     for (const l of liquidity) if (l.exceeds && l.message) warnings.push(`Liquidité (cycle répété en continu) — ${l.message}`)
+    // Ventes plafonnées : la part au-delà du plafond ne se vend pas au prix prévu.
+    for (const chk of liquidity) {
+      if (!chk.exceeds || chk.cap === null || !(chk.perDay > 0)) continue
+      const excess = Math.max(0, Math.min(1, 1 - chk.cap / chk.perDay))
+      let removed = 0
+      let fallback = 0
+      let unknown = false
+      if (chk.kind === 'parchemin') {
+        // Génétons au-delà de ce que la boutique écoule : non valorisés.
+        for (const l of revenue) if (l.kind === 'genetons' && l.subtotal !== null) removed += excess * l.subtotal
+      } else
+        for (const [l, items] of lineItems) {
+          if (!items.includes(chk.itemId) || l.subtotal === null) continue
+          removed += excess * l.subtotal
+          if (chk.kind === 'monture' && l.speciesId !== undefined) {
+            // Monture invendable : extraite (génération × ressource, taxe déduite).
+            const sp = getSpecies(l.speciesId)
+            const res = sp ? marketPrice(FAMILIES[sp.family].extractionItemId, ctx).price : null
+            if (sp && sp.extractionQty > 0 && res === null) unknown = true
+            else if (sp && res !== null) fallback += excess * l.qty * sp.extractionQty * res * (1 - tax)
+          }
+        }
+      if (removed <= 0) continue
+      cappedRemoved += removed
+      cappedFallback += fallback
+      cappedUnknown ||= unknown
+      cappedSales.push({ itemId: chk.itemId, name: chk.name, kind: chk.kind, excessShare: excess, removed, fallback, fallbackUnknown: unknown })
+    }
   }
+  const cappedDelta = cappedFallback - cappedRemoved
+  const profitCappedR: Range = {
+    low: profitR.low === null ? null : profitR.low + cappedDelta,
+    // Repli inconnu : seule borne haute sûre, le bénéfice non plafonné.
+    high: profitR.high === null ? null : cappedUnknown ? profitR.high : profitR.high + cappedDelta,
+  }
+  const ranges = {
+    cost: costR,
+    revenue: revR,
+    profit: profitR,
+    kamasPerHour: { low: perHour(profitR.low), high: perHour(profitR.high) },
+    roi: { low: roiOf(revR.low, costR.high), high: roiOf(revR.high, costR.low) },
+    profitCapped: profitCappedR,
+    kamasPerHourCapped: { low: perHour(profitCappedR.low), high: perHour(profitCappedR.high) },
+  }
+  const profitCapped = profit + cappedDelta
 
   // Coût par bébé cible : brut (dépenses) et net (formule de la recherche).
   const targetBabies = pairs * result.babies * result.targetChance
@@ -2776,6 +2857,9 @@ export function cycleProfit(cfg: CycleConfig): CycleResult {
     firstCycleCash,
     seconds: { fertility: fertSec, leveling: levelSec, perRound, total, idealFertility: fertilitySeconds(cfg.tier, rules, profile.serenityPoints) },
     kamasPerHour: hours > 0 ? profit / hours : null,
+    profitCapped,
+    kamasPerHourCapped: hours > 0 ? profitCapped / hours : null,
+    cappedSales,
     roi: totalCost > 0 ? profit / totalCost : null,
     expectedTargetBabies: targetBabies,
     costPerTargetBaby: targetBabies > 0 ? materialCost / targetBabies : null,
@@ -3235,6 +3319,16 @@ function cleanRecord(v: unknown): Record<string, number> | null {
     out[k] = x
   }
   return out
+}
+
+/**
+ * Le fichier de prix vient-il d'un AUTRE serveur que celui du profil ouvert ? (noms comparés sans casse
+ * ni accents ; un fichier sans serveur noté n'est pas signalé). Les prix saisis sont partagés par tous les
+ * profils d'un serveur : importer ceux d'une autre économie les fausserait tous.
+ */
+export function priceFileServerMismatch(fileServer: string | null | undefined, activeServerName: string): boolean {
+  const file = slugify(fileServer ?? '')
+  return file !== '' && file !== slugify(activeServerName)
 }
 
 /** Valide un export de prix (ou un état brut du store). */

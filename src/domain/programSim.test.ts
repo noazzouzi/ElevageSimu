@@ -102,6 +102,19 @@ describe('générateur et configuration', () => {
     expect(makinaPolicyLabel('none')).toBe('sans makina')
   })
 
+  it('distStat interpolé (moteur de production) : avec 3 tirages, p10 ≠ min et p90 ≠ médiane ; n et écart-type exposés', () => {
+    const d = distStat([100, 200, 400], { interpolate: true })
+    expect(d.p10).toBeCloseTo(120, 10) // 100 + 0,2 × (200 − 100)
+    expect(d.p90).toBeCloseTo(360, 10) // 200 + 0,8 × (400 − 200)
+    expect(d.n).toBe(3)
+    expect(d.sd).toBeCloseTo(Math.sqrt(((100 - 700 / 3) ** 2 + (200 - 700 / 3) ** 2 + (400 - 700 / 3) ** 2) / 2), 10)
+    // Ancienne convention avec 3 valeurs : p10 = min, p90 = médiane (la moyenne 233 sortait de la bande).
+    const old = distStat([100, 200, 400])
+    expect(old.p10).toBe(100)
+    expect(old.p90).toBe(200)
+    expect(distStat([7], { interpolate: true })).toMatchObject({ p10: 7, p90: 7, n: 1, sd: 0 })
+  })
+
   it('distStat suit la convention de la recherche (v[floor(0,1·(n−1))])', () => {
     const d = distStat([5, 1, 4, 2, 3, 10, 7, 6, 9, 8])
     expect(d.mean).toBe(5.5)

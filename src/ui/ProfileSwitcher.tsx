@@ -1,11 +1,11 @@
 // Sélecteur de profil de la barre latérale : profil ouvert — serveur, date du dernier import des prix
 // du marché (HDV) du serveur, changement de profil (enregistre puis recharge) et lien « Gérer ».
 import { useMemo, useState } from 'react'
-import { exportAgeDays, frenchDay, MARKET_STALE_DAYS } from '../domain/market'
+import { exportAgeDays, frenchDay, MARKET_STALE_DAYS, marketOriginMismatch } from '../domain/market'
 import { formatInDays } from '../lib/format'
-import { useMarket } from '../store/market'
-import { pendingWrites } from '../store/persistence'
+import { useMarket, useMarketSource } from '../store/market'
 import { ACTIVE_PROFILE_ID, useActiveProfile, useActiveServer, useProfiles } from '../store/profiles'
+import { confirmPendingThenRetry } from './confirmPending'
 import { href } from './router'
 import { useServerDay } from './useServerDay'
 import './ProfileSwitcher.css'
@@ -17,6 +17,8 @@ export default function ProfileSwitcher() {
   const readOnly = useProfiles((s) => s.readOnly)
   const switchProfile = useProfiles((s) => s.switchProfile)
   const exportDate = useMarket((s) => s.snapshot?.exportDate ?? null)
+  // Prix d'un autre serveur chargés pour celui-ci (préréglage de Tylezia pour « Mon serveur »…).
+  const origin = marketOriginMismatch(useMarketSource())
   const [error, setError] = useState<string | null>(null)
   const today = useServerDay()
   const age = exportDate ? exportAgeDays(exportDate, today) : null
@@ -27,9 +29,9 @@ export default function ProfileSwitcher() {
 
   const onSwitch = (id: string) => {
     if (id === ACTIVE_PROFILE_ID) return
-    if (Object.keys(pendingWrites()).length && !window.confirm('Des modifications ne sont pas enregistrées (stockage plein) : elles seront perdues en changeant de profil. Continuer ?')) return
-    const r = switchProfile(id)
-    if (!r.ok) setError(r.error)
+    // Modifications non enregistrées (stockage plein) : sauvegarde proposée, puis confirmation.
+    const r = confirmPendingThenRetry(switchProfile(id), 'Changer de profil', () => switchProfile(id, undefined, { force: true }))
+    if (r && !r.ok) setError(r.error)
   }
 
   return (
@@ -59,8 +61,12 @@ export default function ProfileSwitcher() {
       )}
       <div className="ps-meta">
         {exportDate ? (
-          <a href={href('prix', { onglet: 'hdv' })} className={age !== null && age > MARKET_STALE_DAYS ? 'ps-stale' : undefined} title="Prix du marché importés pour ce serveur (export HDV)">
-            Prix HDV du {frenchDay(exportDate)}
+          <a
+            href={href('prix', { onglet: 'hdv' })}
+            className={(age !== null && age > MARKET_STALE_DAYS) || origin ? 'ps-stale' : undefined}
+            title={origin ? `Prix de l’HDV de ${origin} chargés pour ${server.name} : importez l’export de votre serveur` : 'Prix du marché importés pour ce serveur (export HDV)'}
+          >
+            Prix HDV{origin ? ` de ${origin}` : ''} du {frenchDay(exportDate)}
             {age !== null && age > 0 ? ` (${formatInDays(-age)})` : ''}
           </a>
         ) : (

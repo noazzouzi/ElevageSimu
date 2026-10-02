@@ -7,6 +7,7 @@ import { sanitizeSnapshot } from '../../domain/market'
 import { useInventory } from '../../store/inventory'
 import { useJournal } from '../../store/journal'
 import { useMarket } from '../../store/market'
+import { useModePlan } from '../../store/modeResults'
 import { usePrices } from '../../store/prices'
 import { profileKey } from '../../store/profiles'
 import { DEFAULT_SETTINGS, useSettings } from '../../store/settings'
@@ -21,6 +22,7 @@ function reset() {
   useJournal.setState({ entries: [] })
   usePrices.setState({ items: {}, mounts: {}, generations: {}, genetonValue: null, updatedAt: 0 })
   useMarket.setState({ snapshot: sanitizeSnapshot(tylezia).snapshot })
+  useModePlan.setState({ plan: null })
 }
 
 const field = (name: RegExp) => screen.getByRole('spinbutton', { name }) as HTMLInputElement
@@ -62,8 +64,26 @@ describe('Investissement', () => {
     expect(screen.getByRole('heading', { name: 'Autres allocations' })).toBeTruthy()
     expect(screen.getByRole('img', { name: /Cumul de trésorerie/ })).toBeTruthy()
     expect(screen.getAllByText(/dans le budget/).length).toBeGreaterThan(0)
+    // UX2-04 : « Suivre ce plan » règle le mode du profil et épingle la stratégie du plan (accueil, plan).
+    fireEvent.click(screen.getByRole('button', { name: 'Suivre ce plan' }))
+    expect(useSettings.getState().mode).toBe('rush-ambre')
+    const pinned = useModePlan.getState().plan
+    expect(pinned).toMatchObject({ modeId: 'rush-ambre', source: 'investissement', budget: 3_000_000 })
+    expect(pinned?.outcome?.digest).toBeTruthy()
+    expect(screen.getByText('Plan suivi par l’accueil et le plan d’élevage')).toBeTruthy()
     // Une modification des entrées signale un résultat périmé.
     fireEvent.click(screen.getByRole('button', { name: '60 j' }))
     expect(screen.getByText('Paramètres modifiés : recalculez')).toBeTruthy()
   }, 90_000)
+
+  it('UX2-04 : sans préférence enregistrée, le mode proposé est le mode actif du profil (progression → automatique)', () => {
+    useSettings.setState({ mode: 'rush-corne' })
+    render(<InvestmentPage />)
+    expect((screen.getByLabelText('Mode de rentabilité') as HTMLSelectElement).value).toBe('rush-corne')
+    expect(screen.getByText(/Mode actif du profil/)).toBeTruthy()
+    cleanup()
+    useSettings.setState({ mode: 'progression' })
+    render(<InvestmentPage />)
+    expect((screen.getByLabelText('Mode de rentabilité') as HTMLSelectElement).value).toBe('auto')
+  })
 })

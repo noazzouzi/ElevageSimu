@@ -274,6 +274,54 @@ describe('marché importé, par serveur', () => {
     expect(stored('elevagesimu:s:tylezia:market')?.state.snapshot).toBeNull()
   })
 
+  it('MKT-12 : import annulable (instantané précédent rétabli, import retiré de l’historique) ; « compléter » garde les objets absents du fichier', async () => {
+    seedTwoProfiles()
+    const m = await load()
+    const full = snapshot('Tylezia')
+    expect(m.applyMarketSnapshot('tylezia', full)).toEqual({ ok: true })
+    // Export partiel (une seule ligne) importé par-dessus : remplacement, puis annulation.
+    const partial = buildSnapshot(parseHdvCsv([HEADER, '33515;Neurone de dragodinde;60;x;y;9;9;900;1;1;30000;1'].join('\n')), { serverName: 'Tylezia', exportDate: '2026-10-03', source: 'partiel.csv', importedAt: 5_000 })
+    expect(m.applyMarketSnapshot('tylezia', partial)).toEqual({ ok: true })
+    expect(Object.keys(m.useMarket.getState().snapshot?.rows ?? {})).toEqual(['33515'])
+    expect(m.marketUndoFor('tylezia')?.previous?.importedAt).toBe(1_000)
+    expect(m.undoMarketImport('tylezia')).toMatchObject({ ok: true })
+    expect(Object.keys(m.useMarket.getState().snapshot?.rows ?? {}).sort()).toEqual(['1844', '33515'])
+    expect(stored('elevagesimu:s:tylezia:market')?.state.snapshot).toMatchObject({ importedAt: 1_000 })
+    expect(m.useMarketHistory.getState().entries.map((e) => e.importedAt)).toEqual([1_000])
+    // Plus rien à annuler (l'annulation n'est pas elle-même annulable).
+    expect(m.undoMarketImport('tylezia')).toMatchObject({ ok: false })
+    // Compléter : la Neurone prend le nouveau prix, la Truite (absente du fichier) garde l'ancien.
+    const r = m.mergeMarketSnapshot('tylezia', { ...partial, importedAt: 6_000 })
+    expect(r.ok).toBe(true)
+    const merged = m.useMarket.getState().snapshot!
+    expect(merged.rows['33515'][2]).toBe(30000)
+    expect(merged.rows['1844']).toEqual(full.rows['1844'])
+    expect(merged.exportDate).toBe('2026-10-02') // la Truite date encore du 02/10
+    expect(merged.source).toMatch(/complété par 1 objet de l’export du 02\/10\/2026/)
+    // Annuler la fusion rétablit l'export complet.
+    expect(m.undoMarketImport('tylezia')).toMatchObject({ ok: true })
+    expect(m.useMarket.getState().snapshot?.importedAt).toBe(1_000)
+    // Autre serveur : même chose sur ses clés ; serveur sans marché avant l'import → plus de marché.
+    expect(m.applyMarketSnapshot('salar', { ...snapshot('Salar'), importedAt: 7_000 })).toEqual({ ok: true })
+    expect(m.undoMarketImport('salar')).toMatchObject({ ok: true, restored: null })
+    expect(localStorage.getItem('elevagesimu:s:salar:market')).toBeNull()
+    expect(m.serverMarketHistory('salar')).toEqual([])
+    // L'annulation survit au rechargement de l'onglet (sessionStorage).
+    expect(m.applyMarketSnapshot('tylezia', partial)).toEqual({ ok: true })
+    const m2 = await load()
+    expect(m2.marketUndoFor('tylezia')?.previous?.importedAt).toBe(1_000)
+  })
+
+  it('MKT-10 : les prix d’un autre serveur chargés pour celui-ci gardent leur origine', async () => {
+    seedTwoProfiles()
+    const m = await load()
+    // Le serveur « Tylezia » reçoit l'export d'« Ombre » : origine Ombre, chargés pour Tylezia.
+    expect(m.applyMarketSnapshot('tylezia', snapshot('Ombre'))).toEqual({ ok: true })
+    const { result } = renderHook(() => m.useMarketSource())
+    expect(result.current).toMatchObject({ serverName: 'Tylezia', originServer: 'Ombre' })
+    expect(resolvePrice(33515, { overrides: {}, useDefaults: true, market: result.current })).toMatchObject({ market: { serverName: 'Ombre', loadedFor: 'Tylezia' } })
+  })
+
   it('préréglage de Tylezia : chargé à la demande, proposé pour un serveur nommé Tylezia', async () => {
     seedTwoProfiles()
     const m = await load()
@@ -283,5 +331,194 @@ describe('marché importé, par serveur', () => {
     expect(snap.serverName).toBe('Tylezia')
     expect(snap.source).toMatch(/Préréglage/)
     expect(Object.keys(snap.rows).length).toBeGreaterThan(1000)
+  })
+})
+
+// ---------- Revue v2 « données » ----------
+
+const quotaError = () => Object.assign(new Error('The quota has been exceeded.'), { name: 'QuotaExceededError' })
+/** localStorage qui refuse (quota) l'écriture des clés choisies. */
+function refuseWrites(keys: string[]) {
+  const real = Storage.prototype.setItem
+  return vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (this: Storage, k: string, v: string) {
+    if (this === localStorage && keys.includes(k)) throw quotaError()
+    return real.call(this, k, v)
+  })
+}
+
+describe('modifications non enregistrées et changement de profil (DI-03)', () => {
+  it('ouvrir un autre profil ou changer le serveur du profil ouvert est refusé (code « pending ») sans « force »', async () => {
+    seedTwoProfiles()
+    const m = await load()
+    const spy = refuseWrites(['elevagesimu:p:alpha:settings'])
+    m.useSettings.getState().update({ jobLevel: 57 })
+    expect(Object.keys(m.pendingWrites())).toEqual(['elevagesimu:p:alpha:settings'])
+    expect(m.hasPendingForActive()).toBe(true)
+
+    expect(m.useProfiles.getState().switchProfile('beta')).toMatchObject({ ok: false, code: 'pending', error: expect.stringMatching(/pas enregistrées/) })
+    expect(registry().activeProfileId).toBe('alpha')
+    expect(m.writesFrozen()).toBe(false)
+    expect(sessionStorage.getItem('elevagesimu-flash')).toBeNull()
+    expect(m.useProfiles.getState().setProfileServer('alpha', 'salar')).toMatchObject({ ok: false, code: 'pending' })
+    expect(registry().profiles[0].serverId).toBe('tylezia')
+    // Sans rechargement (autre profil) : accepté.
+    expect(m.useProfiles.getState().setProfileServer('beta', 'tylezia')).toMatchObject({ ok: true })
+    spy.mockRestore()
+
+    // Confirmé par le joueur (après sauvegarde proposée) : on passe outre.
+    expect(m.useProfiles.getState().switchProfile('beta', undefined, { force: true })).toMatchObject({ ok: true })
+    expect(registry().activeProfileId).toBe('beta')
+    expect(m.writesFrozen()).toBe(true)
+  })
+})
+
+describe('profil de chaque onglet (DI-04)', () => {
+  it('un rechargement garde le profil de CET onglet, même si un autre onglet en a ouvert un autre', async () => {
+    seedTwoProfiles()
+    let m = await load()
+    expect(m.ACTIVE_PROFILE_ID).toBe('alpha')
+    expect(sessionStorage.getItem('elevagesimu-tab-profile')).toBe('alpha')
+    // Un autre onglet ouvre « beta » : le registre (profil par défaut des nouveaux onglets) change.
+    localStorage.setItem(PROFILES_KEY, JSON.stringify({ ...REGISTRY, activeProfileId: 'beta' }))
+    m = await load()
+    expect(m.ACTIVE_PROFILE_ID).toBe('alpha')
+    expect(m.ACTIVE_SERVER_ID).toBe('tylezia')
+    expect(registry().activeProfileId).toBe('beta')
+    // Changer de profil dans cet onglet : registre ET choix de l'onglet.
+    m.useProfiles.getState().switchProfile('beta')
+    expect(sessionStorage.getItem('elevagesimu-tab-profile')).toBe('beta')
+    // Nouvel onglet (sessionStorage vide) : profil par défaut du registre.
+    sessionStorage.clear()
+    localStorage.setItem(PROFILES_KEY, JSON.stringify({ ...REGISTRY, activeProfileId: 'alpha' }))
+    m = await load()
+    expect(m.ACTIVE_PROFILE_ID).toBe('alpha')
+  })
+
+  it('profil de l’onglet supprimé entre-temps : profil par défaut ouvert, avec un message', async () => {
+    seedTwoProfiles()
+    sessionStorage.setItem('elevagesimu-tab-profile', 'gamma')
+    const m = await load()
+    expect(m.ACTIVE_PROFILE_ID).toBe('alpha')
+    expect(sessionStorage.getItem('elevagesimu-flash')).toMatch(/Le profil de cet onglet a été supprimé : « Alpha » ouvert/)
+    expect(sessionStorage.getItem('elevagesimu-tab-profile')).toBe('alpha')
+  })
+})
+
+describe('copie d’avant les profils modifiée par un onglet resté sur l’ancienne version (DI-05)', () => {
+  function seedV1() {
+    localStorage.setItem('elevagesimu:settings', st({ jobLevel: 87, server: 'Salar' }, 3))
+    localStorage.setItem('elevagesimu:inventory', st({ mounts: [mountOf('v1')] }))
+  }
+
+  it('alerte, suppression de l’ancienne copie refusée ; « reprendre » copie le changement dans « Principal »', async () => {
+    seedV1()
+    let m = await load()
+    expect(m.MIGRATED_AT_BOOT).toBe(true)
+    expect(sessionStorage.getItem('elevagesimu-flash')).toMatch(/Fermez ou rechargez les autres onglets/)
+    expect(m.useStorageHealth.getState().issues.filter((i) => i.kind === 'divergence')).toEqual([])
+    // L'onglet v1 enregistre une capture après la reprise.
+    localStorage.setItem('elevagesimu:inventory', st({ mounts: [mountOf('v1'), mountOf('CAPTURE-APRES-MIGRATION')] }))
+    window.dispatchEvent(new StorageEvent('storage', { key: 'elevagesimu:inventory', storageArea: localStorage }))
+    expect(m.useStorageHealth.getState().issues.some((i) => i.kind === 'divergence')).toBe(true)
+
+    m = await load()
+    expect(m.useStorageHealth.getState().issues.find((i) => i.kind === 'divergence')?.message).toMatch(/Montures/)
+    expect(m.useProfiles.getState().removeLegacyCopy()).toMatchObject({ ok: false, error: expect.stringMatching(/modifiée/) })
+    expect(localStorage.getItem('elevagesimu:inventory')).toContain('CAPTURE-APRES-MIGRATION')
+
+    expect(m.useProfiles.getState().adoptLegacyChanges(['elevagesimu:inventory'])).toMatchObject({ ok: true })
+    expect(localStorage.getItem('elevagesimu:p:principal:inventory')).toContain('CAPTURE-APRES-MIGRATION')
+    m = await load()
+    expect(m.useInventory.getState().mounts.map((x) => x.id)).toEqual(['v1', 'CAPTURE-APRES-MIGRATION'])
+    expect(m.useStorageHealth.getState().issues.filter((i) => i.kind === 'divergence')).toEqual([])
+    expect(m.useProfiles.getState().removeLegacyCopy()).toMatchObject({ ok: true })
+    expect(localStorage.getItem('elevagesimu:inventory')).toBeNull()
+  })
+
+  it('« ignorer » : le changement n’est pas repris, l’ancienne copie redevient supprimable', async () => {
+    seedV1()
+    await load()
+    localStorage.setItem('elevagesimu:inventory', st({ mounts: [] }))
+    const m = await load()
+    expect(m.useProfiles.getState().ignoreLegacyChanges(['elevagesimu:inventory'])).toMatchObject({ ok: true })
+    expect(mountCount('elevagesimu:p:principal:inventory')).toBe(1)
+    expect(m.useProfiles.getState().removeLegacyCopy()).toMatchObject({ ok: true })
+  })
+})
+
+describe('serveur du profil ouvert changé dans un autre onglet (DI-06)', () => {
+  const moved = () => ({ ...REGISTRY, profiles: [{ ...REGISTRY.profiles[0], serverId: 'salar' }, REGISTRY.profiles[1]] })
+  const changeElsewhere = () => {
+    localStorage.setItem(PROFILES_KEY, JSON.stringify(moved()))
+    window.dispatchEvent(new StorageEvent('storage', { key: PROFILES_KEY, newValue: JSON.stringify(moved()), storageArea: localStorage }))
+  }
+
+  it('plus aucune écriture sur l’ancien serveur, rechargement (prix et marché du nouveau serveur)', async () => {
+    seedTwoProfiles()
+    const m = await load()
+    changeElsewhere()
+    expect(m.writesFrozen()).toBe(true)
+    expect(sessionStorage.getItem('elevagesimu-flash')).toMatch(/serveur de ce profil a été changé dans un autre onglet \(« Salar »\)/)
+    m.usePrices.getState().setItem(1844, 777)
+    expect(stored('elevagesimu:s:tylezia:prices')?.state.items).toEqual({ '1844': 30 })
+    const again = await load()
+    expect(again.ACTIVE_SERVER_ID).toBe('salar')
+  })
+
+  it('avec des modifications non enregistrées : pas de rechargement automatique, alerte avec sauvegarde', async () => {
+    seedTwoProfiles()
+    const m = await load()
+    const spy = refuseWrites(['elevagesimu:p:alpha:settings'])
+    m.useSettings.getState().update({ jobLevel: 57 })
+    spy.mockRestore()
+    changeElsewhere()
+    expect(m.writesFrozen()).toBe(true)
+    expect(m.useStorageHealth.getState().issues.find((i) => i.kind === 'onglet')?.message).toMatch(/téléchargez une sauvegarde/)
+    expect(Object.keys(m.pendingWrites())).toEqual(['elevagesimu:p:alpha:settings'])
+  })
+})
+
+describe('import HDV refusé par le stockage (DI-07)', () => {
+  it('serveur ouvert : erreur, marché et historique inchangés (ni « succès » ni historique enregistré)', async () => {
+    seedTwoProfiles()
+    const m = await load()
+    const spy = refuseWrites(['elevagesimu:s:tylezia:market'])
+    const r = m.applyMarketSnapshot('tylezia', snapshot('Tylezia'))
+    spy.mockRestore()
+    expect(r).toMatchObject({ ok: false, error: expect.stringMatching(/stockage plein\) : prix du marché inchangés/) })
+    expect(m.useMarket.getState().snapshot).toBeNull()
+    expect(m.useMarketHistory.getState().entries).toEqual([])
+    expect(localStorage.getItem('elevagesimu:s:tylezia:market-history')).toBeNull()
+    // Rien n'est « en attente » : l'import n'a simplement pas eu lieu.
+    expect(m.pendingWrites()).toEqual({})
+    // Autre serveur : même garantie, sans fausse alerte « modifications non enregistrées ».
+    const spy2 = refuseWrites(['elevagesimu:s:salar:market'])
+    expect(m.applyMarketSnapshot('salar', snapshot('Salar'))).toMatchObject({ ok: false })
+    spy2.mockRestore()
+    expect(m.useStorageHealth.getState().issues.filter((i) => i.kind === 'ecriture')).toEqual([])
+  })
+})
+
+describe('supprimer l’ancienne copie (DI-13)', () => {
+  const legacy = { migratedAt: 1, keys: ['elevagesimu:inventory'], moved: [], removedAt: 0 }
+
+  it('registre d’une version plus récente (lecture seule) : refus AVANT toute suppression', async () => {
+    localStorage.setItem(PROFILES_KEY, JSON.stringify({ ...REGISTRY, version: 2, legacy }))
+    localStorage.setItem('elevagesimu:inventory', 'PRE-V2-ORIGINAL')
+    const m = await load()
+    expect(m.useProfiles.getState().readOnly).toBe(true)
+    expect(m.useProfiles.getState().removeLegacyCopy()).toMatchObject({ ok: false })
+    expect(localStorage.getItem('elevagesimu:inventory')).toBe('PRE-V2-ORIGINAL')
+  })
+
+  it('registre impossible à enregistrer : les anciennes clés restent en place', async () => {
+    seedTwoProfiles()
+    localStorage.setItem(PROFILES_KEY, JSON.stringify({ ...REGISTRY, legacy }))
+    localStorage.setItem('elevagesimu:inventory', st({ mounts: [] }))
+    const m = await load()
+    const spy = refuseWrites([PROFILES_KEY])
+    expect(m.useProfiles.getState().removeLegacyCopy()).toMatchObject({ ok: false })
+    spy.mockRestore()
+    expect(localStorage.getItem('elevagesimu:inventory')).not.toBeNull()
   })
 })

@@ -88,9 +88,11 @@ describe('(a) prix clés de l’élevage', () => {
   })
 
   it('boutique de génétons : meilleur échange (prix ÷ coût), valeur brute et nette', () => {
-    expect(d.genetons.best).toMatchObject({ id: 809, cost: 10 })
-    expect(d.genetons.value).toBeCloseTo(507.9, 10)
-    expect(d.genetons.net).toBeCloseTo(507.9 * 0.98, 10)
+    // Valeur retenue : échange reconfirmé (Puissant, 160) ; le Petit Parchemin est la valeur optimiste.
+    expect(d.genetons.best).toMatchObject({ id: 814, cost: 160, confirmed: true })
+    expect(d.genetons.value).toBeCloseTo(70298 / 160, 10)
+    expect(d.genetons.net).toBeCloseTo((70298 / 160) * 0.98, 10)
+    expect(d.genetons.optimistic).toMatchObject({ id: 809, confirmed: false })
     const priced = d.genetons.lines.filter((l) => l.perGeneton !== null)
     expect(priced.map((l) => l.id)).toEqual([809, 814, 15271]) // 507,9 > 439,4 > 333,6
     expect(d.genetons.lines.at(-1)!.perGeneton).toBeNull() // objets sans prix en dernier, jamais 0
@@ -272,9 +274,29 @@ describe('(d) comparaison entre serveurs', () => {
     // Objet sans prix des deux côtés : pas d'extrêmes.
     const net = c.rows.find((r) => r.group === 'Filets')!
     expect(net).toMatchObject({ cheapest: null, priciest: null, spread: null })
-    expect(c.genetonValue[0]).toBeCloseTo(507.9, 10)
+    expect(c.genetonValue[0]).toBeCloseTo(70298 / 160, 10)
     expect(c.warnings.some((w) => w.includes('12 jours'))).toBe(true) // 20/09 → 02/10
     expect(c.warnings.some((w) => w.startsWith('Draconiros'))).toBe(true) // plus de 14 jours
+    expect(c.stat).toBe('auto')
+  })
+
+  it('MKT-08 : deux serveurs aux mêmes lignes mais à statistiques différentes → écart nul (statistique commune)', () => {
+    const median30: MarketSource = { ...fixture, serverName: 'Ombre', stat: 'median30' }
+    const servers = [
+      { serverId: 'tylezia', serverName: 'Tylezia', market: fixture },
+      { serverId: 'ombre', serverName: 'Ombre', market: median30 },
+    ]
+    const c = compareServers(servers, { today: '2026-10-02' })!
+    // Statistiques différentes : comparées en médiane 30 j (statistique commune par défaut).
+    expect(c.stat).toBe('median30')
+    expect(c.serverStats).toEqual(['auto', 'median30'])
+    for (const r of c.rows) if (r.spread !== null) expect(r.spread, r.name).toBe(0)
+    expect(c.rows.find((r) => r.id === 19975)!.cells.map((x) => x.price)).toEqual([30_205, 30_205])
+    expect(c.genetonValue[0]).toBe(c.genetonValue[1])
+    // Statistique imposée (celle du serveur ouvert).
+    const auto = compareServers(servers, { stat: 'auto' })!
+    expect(auto.stat).toBe('auto')
+    expect(auto.rows.find((r) => r.id === 19975)!.cells.map((x) => x.price)).toEqual([26_497, 26_497])
   })
 })
 

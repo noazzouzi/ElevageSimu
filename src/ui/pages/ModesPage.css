@@ -7,7 +7,17 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px 16px;
-  align-items: end;
+  /* Tuiles de même hauteur ; le choix de la précision reste aligné en bas. */
+  align-items: stretch;
+}
+.modes-page .md-assumptions > .field {
+  align-self: end;
+  min-width: 0;
+  grid-column: span 2;
+}
+.modes-page .md-assumptions > .field select {
+  width: 100%;
+  max-width: 100%;
 }
 
 .modes-page .md-note {
@@ -265,5 +275,32 @@
   .modes-page .md-params > div {
     grid-template-columns: 1fr;
     gap: 0;
+  }
+}
+
+.modes-page label.md-trust {
+  display: block;
+  margin-top: 0.6rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.modes-page label.md-trust input {
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+
+/* Petit écran : le tableau comparatif défile à l'horizontale (dans .table-wrap) au lieu d'écraser
+   la colonne des montants en une suite de mots coupés. */
+@media (max-width: 720px) {
+  .modes-page .md-table {
+    min-width: 760px;
+  }
+  .modes-page .md-table td:first-child {
+    max-width: 220px;
+  }
+  .modes-page .md-table td:nth-child(2),
+  .modes-page .md-table td:nth-child(3) {
+    min-width: 150px;
   }
 }

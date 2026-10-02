@@ -654,23 +654,50 @@ export function simulateProgram(input: ProgramConfig, seed: number): ProgramRun 
 
 export interface DistStat {
   mean: number
-  /** 10e centile (même convention que la recherche : v[floor(0,1·(n−1))]). */
+  /**
+   * 10e centile. Convention de la recherche (défaut) : v[floor(0,1·(n−1))] ; avec `interpolate` :
+   * interpolation linéaire entre les deux valeurs encadrantes (ne colle plus au minimum pour n = 3).
+   */
   p10: number
   p90: number
   min: number
   max: number
+  /** Nombre de valeurs (tirages). */
+  n?: number
+  /** Écart-type de l'échantillon (n − 1 ; 0 pour une seule valeur). */
+  sd?: number
 }
 
-export function distStat(values: number[]): DistStat {
-  if (!values.length) return { mean: 0, p10: 0, p90: 0, min: 0, max: 0 }
+/** Quantile q (0…1) d'une liste triée, par interpolation linéaire. */
+export function quantileSorted(sorted: readonly number[], q: number): number {
+  const n = sorted.length
+  if (!n) return 0
+  const pos = Math.min(1, Math.max(0, q)) * (n - 1)
+  const lo = Math.floor(pos)
+  const hi = Math.min(n - 1, lo + 1)
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo)
+}
+
+/** Écart-type d'échantillon (n − 1) ; 0 pour moins de deux valeurs. */
+export function sampleSd(values: readonly number[]): number {
+  const n = values.length
+  if (n < 2) return 0
+  const m = values.reduce((s, x) => s + x, 0) / n
+  return Math.sqrt(values.reduce((s, x) => s + (x - m) * (x - m), 0) / (n - 1))
+}
+
+export function distStat(values: number[], opts: { interpolate?: boolean } = {}): DistStat {
+  if (!values.length) return { mean: 0, p10: 0, p90: 0, min: 0, max: 0, n: 0, sd: 0 }
   const v = [...values].sort((x, y) => x - y)
   const n = v.length
   return {
     mean: v.reduce((s, x) => s + x, 0) / n,
-    p10: v[Math.floor(0.1 * (n - 1))],
-    p90: v[Math.floor(0.9 * (n - 1))],
+    p10: opts.interpolate ? quantileSorted(v, 0.1) : v[Math.floor(0.1 * (n - 1))],
+    p90: opts.interpolate ? quantileSorted(v, 0.9) : v[Math.floor(0.9 * (n - 1))],
     min: v[0],
     max: v[n - 1],
+    n,
+    sd: sampleSd(v),
   }
 }
 

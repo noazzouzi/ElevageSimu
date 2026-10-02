@@ -50,7 +50,7 @@ export default function App() {
         </div>
         <main className="main">
           {/* Alarmes des plans d'enclos : actives quelle que soit la page affichée. */}
-          <FlashBanner />
+          <FlashBanner page={page.id} />
           <AlarmBoundary>
             <PlanAlarms />
             <DueSwitchBanner pageId={page.id} />
@@ -76,9 +76,12 @@ function readFlashOnce(): string | null {
   return flashOnce
 }
 
-function FlashBanner() {
+function FlashBanner({ page }: { page: string }) {
   const [message, setMessage] = useState(readFlashOnce)
-  if (!message) return null
+  // Le message accompagne la page d'arrivée : il disparaît dès qu'on change de page (lu ou ignoré).
+  const [landing] = useState(page)
+  if (message && page !== landing) setMessage(null)
+  if (!message || page !== landing) return null
   return (
     <div className="callout ok row" role="status" style={{ justifyContent: 'space-between' }}>
       <span>{message}</span>

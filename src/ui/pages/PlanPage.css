@@ -298,3 +298,10 @@
   font-size: 0.88rem;
   color: var(--text-muted);
 }
+/* Montée en charge du mode (revue UX2-03). */
+.pl-mode-timeline ol {
+  margin: 4px 0 12px;
+  padding-left: 20px;
+  display: grid;
+  gap: 2px;
+}

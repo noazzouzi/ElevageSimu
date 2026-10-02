@@ -50,3 +50,18 @@
   font-size: 0.82rem;
   margin: -2px 0 6px;
 }
+/* Montée en charge du mode (revue UX2-03). */
+.hp-mode-timeline {
+  margin-top: 12px;
+}
+.hp-mode-timeline h3 {
+  font-size: 0.95rem;
+  margin: 0 0 4px;
+}
+.hp-mode-timeline ol {
+  margin: 4px 0 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 2px;
+  font-size: 0.9rem;
+}

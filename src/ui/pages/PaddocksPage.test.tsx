@@ -8,7 +8,10 @@ import { effectiveFertility } from '../../domain/mounts'
 import { planPaddock, toSimMount } from '../../domain/paddockAssign'
 import { RULESETS } from '../../domain/rules'
 import type { GaugeId, Mount } from '../../domain/types'
+import tylezia from '../../data/market/tylezia-2026-10-02.json'
+import { sanitizeSnapshot } from '../../domain/market'
 import { useInventory } from '../../store/inventory'
+import { useMarket } from '../../store/market'
 import { useJournal } from '../../store/journal'
 import { usePaddockPlans, type NewPaddockPlan } from '../../store/paddockPlans'
 import { initialPaddocks, usePaddocks } from '../../store/paddocks'
@@ -244,5 +247,22 @@ describe('Enclos — répartition automatique (ux F18, ux F21)', () => {
     expect(screen.getByText(/Déplacements enregistrés \(1\/10 faits en jeu\)/)).toBeTruthy()
     expect(screen.getByRole('link', { name: "Ouvrir l'enclos 1 et démarrer le plan" }).getAttribute('href')).toBe('#/enclos?enclos=1')
     expect(useInventory.getState().mounts.every((m) => m.location.kind === 'enclos')).toBe(true)
+  })
+})
+
+describe('Enclos — origine des prix du carburant (revue « marché », MKT-14)', () => {
+  it('chaque carburant à acheter dit d’où vient son prix : « marché (02/10) · volume » ou « coût des ingrédients »', () => {
+    reset(blueLot())
+    useMarket.setState({ snapshot: sanitizeSnapshot(tylezia).snapshot })
+    try {
+      render(<PaddocksPage />)
+      const fuel = document.querySelector('.pd-fuel-table') as HTMLElement
+      const items = [...fuel.querySelectorAll('.pd-items li')].map((li) => li.textContent ?? '')
+      expect(items.length).toBeGreaterThan(0)
+      for (const t of items) expect(t, t).toMatch(/l'unité, (marché \(02\/10\)( de Tylezia)? · (\d[\d\s]* vendus\/24 h|≈\s[\d,\s]+ vendus\/jour \(30 j\))|coût des ingrédients|votre prix|prix par défaut \(recherche\))\)/)
+      expect(items.some((t) => /marché \(02\/10\)/.test(t))).toBe(true)
+    } finally {
+      useMarket.setState({ snapshot: null })
+    }
   })
 })

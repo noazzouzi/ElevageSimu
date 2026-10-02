@@ -16,6 +16,8 @@ import { marketItemName } from './market'
 import {
   compareRanked,
   DEFAULT_BRISAGE_LEVEL,
+  rankWithTies,
+  statisticalTie,
   DEFAULT_PARENT_LEVEL,
   PRODUCTION_COST_LABELS,
   PRODUCTION_REVENUE_LABELS,
@@ -38,6 +40,7 @@ import {
   type ProfileProductionContext,
   type ProfitModeDef,
   type ProfitModeId,
+  type PurchaseCheck,
   type RankedStrategy,
   type SteadyState,
   type StrategyParams,
@@ -88,6 +91,9 @@ export const DEFAULT_MODE: ModeId = 'progression'
 
 /** Durée simulée pour comparer les modes (jours). */
 export const MODE_HORIZON_DAYS = 60
+
+/** Version du modèle de comparaison (clé des hypothèses : un calcul plus ancien est à recalculer). */
+export const MODE_MODEL_VERSION = 2
 
 const RISK_BRISAGE: ModeRisk = {
   code: 'brisage-correctif',
@@ -204,6 +210,13 @@ export interface ModeProfile {
   prices: ProductionPrices
   /** Enclos débloqués (défaut : d'après le niveau d'Éleveur). */
   paddocks?: number
+  /** XP déjà gagnée dans le niveau d'Éleveur (montée naturelle du métier pendant la simulation). */
+  jobXp?: number
+  /**
+   * Enclos figés au niveau actuel (pas de montée naturelle du métier par l'XP d'élevage). Défaut faux :
+   * les enclos et filets se débloquent en cours de route, comme « Sans investissement » de l'estimateur.
+   */
+  fixedPaddocks?: boolean
   sessionsPerDay?: number
   horizonDays?: number
   /** Famille du profil (progression). */
@@ -231,6 +244,9 @@ export function modeProfileContext(p: ModeProfile, opts: { modes?: ModeId[]; qui
     sessionsPerDay: p.sessionsPerDay,
     characters: Math.max(1, Math.round(p.characters || 1)),
     horizonDays: opts.horizonDays ?? p.horizonDays ?? MODE_HORIZON_DAYS,
+    // Montée naturelle du métier : enclos (40/80/120/160/200) et filets débloqués par l'XP d'élevage.
+    naturalLeveling: !p.fixedPaddocks,
+    jobXp: p.jobXp,
     modes: opts.modes?.filter((m) => productionModeOf(m) !== null),
     quick: opts.quick ?? true,
     runs: opts.runs,
@@ -286,12 +302,58 @@ export function defaultModeParams(mode: ModeId): StrategyParams {
 }
 
 /**
- * Clé des hypothèses d'un calcul (niveau, enclos, temps de jeu, personnages, règles, marché, taxe, part du
- * marché) : un résultat enregistré avec une autre clé est « à recalculer ».
+ * Clé des hypothèses d'un calcul (niveau, enclos, temps de jeu, personnages, règles, marché et instant de
+ * son import, prix saisis par le joueur, prix par défaut, taxe, part du marché) : un résultat enregistré
+ * avec une autre clé est « à recalculer ».
  */
+/** JSON à clés triées (empreinte stable d'un objet de prix, quel que soit l'ordre d'insertion). */
+function stableJson(v: unknown): string {
+  if (Array.isArray(v)) return `[${v.map(stableJson).join(',')}]`
+  if (v && typeof v === 'object')
+    return `{${Object.keys(v as Record<string, unknown>)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${stableJson((v as Record<string, unknown>)[k])}`)
+      .join(',')}}`
+  return JSON.stringify(v ?? null)
+}
+
+/** Empreinte FNV-1a 32 bits (hexadécimal) d'un texte. */
+function fnv1a(text: string): string {
+  let h = 0x811c9dc5
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i)
+    h = Math.imul(h, 0x01000193)
+  }
+  return (h >>> 0).toString(16).padStart(8, '0')
+}
+
+/**
+ * Empreinte des PRIX d'un calcul : prix saisis par le joueur (objets, montures par couleur et par
+ * génération), « utiliser les prix par défaut », instant de l'import du marché (un nouvel import du même
+ * jour) et liquidité connue. Une saisie sur la page Prix rend les résultats enregistrés « à recalculer ».
+ */
+export function modePriceFingerprint(prices: ProductionPrices): string {
+  const ctx = prices.ctx
+  const mp = prices.mountPrices
+  const m = ctx.market
+  return fnv1a(
+    stableJson([
+      ctx.overrides ?? {},
+      ctx.useDefaults !== false,
+      mp ? [mp.mountOverrides ?? {}, mp.generationOverrides ?? {}, mp.useDefaults !== false] : null,
+      m ? [m.importedAt ?? null, m.volumeUnknown === true, m.originServer ?? null] : null,
+    ]),
+  )
+}
+
 export function modeContextKey(p: ModeProfile, extra: { serverId?: string; quick?: boolean } = {}): string {
   const m = p.prices.ctx.market
   return JSON.stringify([
+    // Version du modèle (régime stabilisé, montée naturelle du métier, ventes « HDV mixte » à part) :
+    // un calcul enregistré avant ces corrections est à recalculer.
+    MODE_MODEL_VERSION,
+    p.fixedPaddocks ? 'enclos-figes' : 'montee-naturelle',
+    p.prices.trustMixedMountPrices ? 'hdv-mixte-compte' : 'hdv-mixte-a-part',
     p.jobLevel,
     profilePaddocks(p),
     p.hoursPerDay,
@@ -302,6 +364,13 @@ export function modeContextKey(p: ModeProfile, extra: { serverId?: string; quick
     p.prices.maxMarketShare ?? 0.15,
     p.prices.genetonValue ?? null,
     extra.serverId ?? null,
+    // Prix de montures du joueur : ils décident des espèces vendues (et rendent une vente non spéculative).
+    p.prices.mountPrices ? JSON.stringify([p.prices.mountPrices.mountOverrides ?? {}, p.prices.mountPrices.generationOverrides ?? {}]) : null,
+    // Prix saisis des objets (Corne, carburants, makinas…), défauts de la recherche, import du marché.
+    modePriceFingerprint(p.prices),
+    // Génétons exclus (option « sans génétons » de la page Modes) : ajouté seulement dans ce cas, pour ne pas
+    // périmer les calculs enregistrés avec les génétons.
+    ...(p.prices.includeGenetons === false ? ['sans-genetons'] : []),
   ])
 }
 
@@ -328,6 +397,8 @@ export interface ModeDigest {
     captureHoursPerDay: number
     horizonDays: number
     rulesId: string
+    /** Montures au départ de la simulation (0 = élevage vide ; absent des anciens résultats). */
+    initialStockCount?: number
   }
   runs: number
   cycleHours: number
@@ -336,8 +407,12 @@ export interface ModeDigest {
   steady: SteadyState
   rampUpDays: number | null
   firstTargetDay: number | null
+  /** Premier jour (moyenne des tirages) où la production vend ou brise quelque chose (absent des anciens résultats). */
+  firstSaleDay?: number | null
   capital: { socleLow: number; socleHigh: number | null; peakCashNeed: number; total: number; breakEvenDay: number | null }
   market: MarketCheck[]
+  /** Achats au marché face au volume du serveur (absent des résultats enregistrés avant la revue UX2). */
+  purchases?: PurchaseCheck[]
   routine: ProductionRoutine
   plan: Pick<ProductionPlanInfo, 'targetGeneration' | 'targets' | 'steps' | 'captureShares' | 'optimakina'>
   prices: PriceLine[]
@@ -350,6 +425,10 @@ export interface ModeDigest {
   netByDay: number[]
   /** Cumul connu moyen par jour. */
   cumulativeByDay: number[]
+  /** Vente chiffrée au prix « HDV mixte » (sans prix du joueur) : projection spéculative. */
+  speculative: boolean
+  /** Enclos débloqués en cours de route (montée naturelle du métier, jalons). */
+  paddockSchedule: { day: number; paddocks: number }[]
 }
 
 /** Résume un résultat de simulation pour l'affichage et la routine. */
@@ -375,6 +454,7 @@ export function digestSummary(s: ProductionSummary): ModeDigest {
       captureHoursPerDay: c.captureHoursPerDay,
       horizonDays: s.horizonDays,
       rulesId: c.rulesId,
+      initialStockCount: c.initialStockCount,
     },
     runs: s.runs,
     cycleHours: s.cycleHours,
@@ -383,8 +463,10 @@ export function digestSummary(s: ProductionSummary): ModeDigest {
     steady: s.steady,
     rampUpDays: s.rampUpDays,
     firstTargetDay: s.firstTargetDay ? s.firstTargetDay.mean : null,
+    firstSaleDay: s.daily.find((x) => x.resourcesSold + x.mountsSold + x.broken >= 0.5)?.day ?? null,
     capital: { socleLow: s.capital.socleLow, socleHigh: s.capital.socleHigh, peakCashNeed: s.capital.peakCashNeed, total: s.capital.total, breakEvenDay: s.capital.breakEvenDay },
     market: s.market,
+    purchases: s.purchases,
     routine: s.routine,
     plan: { targetGeneration: s.plan.targetGeneration, targets: s.plan.targets, steps: s.plan.steps, captureShares: s.plan.captureShares, optimakina: s.plan.optimakina },
     prices: s.prices,
@@ -395,6 +477,8 @@ export function digestSummary(s: ProductionSummary): ModeDigest {
     assumptions: s.assumptions,
     netByDay: s.daily.map((d) => Math.round(d.net.mean)),
     cumulativeByDay: s.daily.map((d) => Math.round(d.cumulative.mean)),
+    speculative: s.speculative,
+    paddockSchedule: c.paddockSchedule ?? [],
   }
 }
 
@@ -477,6 +561,12 @@ export function outcomeFromSummary(mode: ModeId, s: ProductionSummary, label: st
     saturated: s.market.some((m) => m.saturated),
     targetGeneration: s.plan.targetGeneration,
     runs: s.runs,
+    scoreSe: s.steady.netPerDaySe,
+    stable: s.steady.stable,
+    extendedDays: null,
+    speculative: s.speculative,
+    genetonShareOfNet: s.steady.genetonShareOfNet,
+    tieWithBest: false,
   }
   return { modeId: mode, family: s.config.family, available: true, strategy, alternatives: [], variants: [], digest: digestSummary(s), evaluated: 1, notes: [] }
 }
@@ -513,6 +603,19 @@ export interface ModeRanking {
   capital: number | null
   breakEvenDay: number | null
   risks: ModeRisk[]
+  /** Régime réellement permanent sur la fenêtre (sinon badge « non stabilisé »). */
+  stable: boolean
+  /** Vente au prix « HDV mixte » sans prix du joueur : hors classement, jamais « auto ». */
+  speculative: boolean
+  /** À égalité statistique avec le meilleur mode (écart dans le bruit des tirages). */
+  tieWithBest: boolean
+  /** Tirages et erreur type du bénéfice par jour. */
+  runs: number
+  netSe: number
+  /** Part des génétons dans le bénéfice net (régime permanent). */
+  genetonShareOfNet: number | null
+  /** Valeur nette des génétons par jour (régime permanent, estimation). */
+  genetonsPerDay: number
   /** Meilleur mode (« auto »). */
   best: boolean
 }
@@ -539,11 +642,20 @@ export function outcomeRisks(o: ModeOutcome): ModeRisk[] {
     else if (w.code === 'prix-manquants') add({ code: 'prix-manquants', tone: 'warn', label: 'Prix manquants', text: w.text })
     else if (w.code === 'cible-non-atteinte') add({ code: 'cible-non-atteinte', tone: 'warn', label: 'Cible pas toujours atteinte', text: w.text })
     else if (w.code === 'etable') add({ code: 'etable', tone: 'warn', label: 'Étable pleine', text: w.text })
+    else if (w.code === 'etable-saturee') add({ code: 'etable-saturee', tone: 'warn', label: 'Étable saturée', text: w.text })
     else if (w.code === 'genetons') add({ code: 'genetons', tone: 'info', label: 'Génétons estimés', text: w.text })
+    else if (w.code === 'speculatif') add({ code: 'speculatif', tone: 'danger', label: 'Spéculatif (HDV mixte)', text: w.text })
+    else if (w.code === 'volume-achat' && w.tone === 'warn') add({ code: 'volume-achat', tone: 'warn', label: 'Achats au-delà du volume', text: w.text })
+    else if (w.code === 'montee') add({ code: 'non-stabilise', tone: 'warn', label: 'Non stabilisé', text: w.text })
   }
   const ramp = o.strategy?.rampUpDays ?? null
+  const stable = o.strategy?.stable ?? o.digest?.steady.stable ?? true
   if (ramp !== null && ramp > 30) add(RISK_LONG_RAMP)
-  else if (ramp === null && o.strategy && o.digest?.mode !== 'brisage') add({ ...RISK_LONG_RAMP, text: 'Le régime permanent n’est pas atteint sur la durée simulée : la production augmente encore.' })
+  else if ((ramp === null || !stable) && o.strategy && o.digest?.mode !== 'brisage')
+    add({ code: 'non-stabilise', tone: 'warn', label: 'Non stabilisé', text: o.digest?.steady.instability?.length ? `Régime non stabilisé : ${o.digest.steady.instability.join(' ; ')}.` : 'Le régime permanent n’est pas atteint sur la durée simulée : la production change encore.' })
+  const gshare = o.strategy?.genetonShareOfNet ?? o.digest?.steady.genetonShareOfNet ?? null
+  if (gshare !== null && gshare > 0.25)
+    add({ code: 'genetons-part', tone: 'warn', label: `Génétons ${formatNumber(gshare * 100)} % du net`, text: `Les génétons font ${formatNumber(gshare * 100)} % du bénéfice net par jour : valeur estimée (boutique d’Eugène Éton), à vérifier avant d’y engager du capital.` })
   const main = mainMarketCheck(o)
   if (main && !main.saturated && main.capPerDay !== null && main.producedPerDay > 0.7 * main.capPerDay)
     add({ code: 'liquidite-limite', tone: 'warn', label: 'Proche du plafond', text: `${main.name} : la production approche le volume vendable sans saturer le marché (${formatNumber(main.producedPerDay, 1)}/jour pour ${formatNumber(main.capPerDay)}/jour).` })
@@ -585,22 +697,40 @@ export function rankModes(outcomes: readonly ModeOutcome[]): { rows: ModeRanking
       capital: s ? s.capital : null,
       breakEvenDay: s?.breakEvenDay ?? null,
       risks: outcomeRisks(o),
+      stable: s?.stable ?? o.digest?.steady.stable ?? true,
+      speculative: isSpeculative(o),
+      tieWithBest: false,
+      runs: s?.runs ?? o.digest?.runs ?? 0,
+      netSe: s?.scoreSe ?? o.digest?.steady.netPerDaySe ?? 0,
+      genetonShareOfNet: s?.genetonShareOfNet ?? o.digest?.steady.genetonShareOfNet ?? null,
+      genetonsPerDay: o.digest?.steady.revenueByCategory.genetons ?? 0,
       best: false,
     }
   })
-  const strat = (r: ModeRanking) => r.outcome.strategy as ModeStrategy
-  rows.sort((a, b) => {
-    if (a.available !== b.available) return a.available ? -1 : 1
-    if (!a.available) return MODE_IDS.indexOf(a.modeId) - MODE_IDS.indexOf(b.modeId)
-    // Un mode dont le produit n'a pas de prix (classé en quantité) passe après ceux chiffrés en kamas.
-    if (a.scoreBasis !== b.scoreBasis) return a.scoreBasis === 'kamas' ? -1 : 1
-    return compareRanked({ ...strat(a), summary: null }, { ...strat(b), summary: null })
-  })
+  const strat = (r: ModeRanking) => ({ ...(r.outcome.strategy as ModeStrategy), scoreSe: r.netSe, summary: null })
+  // Classes : disponibles, puis chiffrés en kamas (le produit sans prix est classé en quantité), puis
+  // ventes spéculatives (prix « HDV mixte ») à part ; dans une classe, égalités statistiques départagées
+  // par le capital puis la montée (`rankWithTies`).
+  const klass = (r: ModeRanking) => (!r.available ? 3 : r.scoreBasis !== 'kamas' ? 2 : r.speculative ? 1 : 0)
+  const groups = [0, 1, 2, 3].map((k) => rows.filter((r) => klass(r) === k))
+  const ordered = [
+    ...groups.slice(0, 3).flatMap((g) => rankWithTies(g, strat, (a, b) => compareRanked(strat(a), strat(b)))),
+    ...groups[3].sort((a, b) => MODE_IDS.indexOf(a.modeId) - MODE_IDS.indexOf(b.modeId)),
+  ]
+  // Ventes spéculatives (prix « HDV mixte ») : affichées, mais hors classement.
   let rank = 0
-  for (const r of rows) if (r.available) r.rank = ++rank
-  const best = rows.find((r) => r.available && r.comparable && r.scoreBasis === 'kamas') ?? null
-  if (best) best.best = true
-  return { rows, bestModeId: best?.modeId ?? null }
+  for (const r of ordered) if (r.available && !r.speculative) r.rank = ++rank
+  const best = ordered.find((r) => r.available && r.comparable && r.scoreBasis === 'kamas' && !r.speculative) ?? null
+  if (best) {
+    best.best = true
+    for (const r of ordered) if (r !== best && klass(r) === 0) r.tieWithBest = statisticalTie(strat(best), strat(r))
+  }
+  return { rows: ordered, bestModeId: best?.modeId ?? null }
+}
+
+/** Vente chiffrée au prix « HDV mixte » sans prix du joueur (projection spéculative). */
+export function isSpeculative(o: Pick<ModeOutcome, 'strategy' | 'digest'>): boolean {
+  return !!(o.strategy?.speculative ?? o.digest?.speculative)
 }
 
 // ---------- Analyse d'un mode ----------
@@ -619,7 +749,9 @@ export function mainRevenueCategory(o: Pick<ModeOutcome, 'modeId' | 'digest'>): 
 }
 
 export interface SensitivityPoint {
-  /** Facteur appliqué au prix du produit principal (0,8 = −20 %). */
+  /** `prix-<facteur>` (prix du produit principal), `genetons-50`, `sans-genetons`, `prix-montures-50`. */
+  id: string
+  /** Facteur appliqué au revenu concerné (0,8 = −20 % ; 0 = sans génétons). */
   factor: number
   label: string
   net: Range
@@ -631,24 +763,28 @@ export interface SensitivityPoint {
 /**
  * Sensibilité du bénéfice par jour au prix du produit principal (Corne, Ambre, Neurone, rune, monture),
  * à stratégie et quantités vendues inchangées (plafond de volume) : bénéfice + (facteur − 1) × revenu de
- * ce produit. Bornes inconnues gardées inconnues.
+ * ce produit. Puis : **génétons ÷ 2** et **sans génétons** (valeur estimée, liés au compte) pour tous
+ * les modes, et **prix des montures −50 %** pour la vente (prix « HDV mixte »). Bornes inconnues gardées
+ * inconnues.
  */
 export function modeSensitivity(o: ModeOutcome, factors: readonly number[] = [0.8, 1.2]): SensitivityPoint[] {
   const d = o.digest
   if (!d || !o.strategy) return []
   const cat = mainRevenueCategory(o)
-  const rev = d.steady.revenueByCategory[cat] ?? 0
-  return factors.map((f) => {
+  const point = (id: string, label: string, f: number, rev: number): SensitivityPoint => {
     const delta = (f - 1) * rev
     const shift = (v: number | null) => (v === null ? null : v + delta)
-    return {
-      factor: f,
-      label: `${f >= 1 ? '+' : '−'}${formatNumber(Math.abs(f - 1) * 100)} %`,
-      net: { low: shift(d.steady.net.low), high: shift(d.steady.net.high) },
-      netMean: d.steady.netPerDay.mean + delta,
-      delta,
-    }
-  })
+    return { id, factor: f, label, net: { low: shift(d.steady.net.low), high: shift(d.steady.net.high) }, netMean: d.steady.netPerDay.mean + delta, delta }
+  }
+  const out = factors.map((f) => point(`prix-${f}`, `${f >= 1 ? '+' : '−'}${formatNumber(Math.abs(f - 1) * 100)} %`, f, d.steady.revenueByCategory[cat] ?? 0))
+  const gen = d.steady.revenueByCategory.genetons ?? 0
+  if (gen > 0 && cat !== 'genetons') {
+    out.push(point('genetons-50', 'Génétons ÷ 2', 0.5, gen))
+    out.push(point('sans-genetons', 'Sans génétons', 0, gen))
+  }
+  const mounts = d.steady.revenueByCategory.montures ?? 0
+  if (mounts > 0) out.push(point('prix-montures-50', 'Prix des montures −50 %', 0.5, mounts))
+  return out
 }
 
 export type LiquidityStatus = 'ok' | 'limite' | 'sature' | 'inconnu'
@@ -728,10 +864,29 @@ export function strategyParamLines(o: ModeOutcome): { label: string; value: stri
     out.push({ label: 'Clonage', value: p.cloning === false ? 'non' : 'oui (générations sous la cible)' })
   }
   if (d) {
-    out.push({ label: 'Enclos', value: `${d.config.paddocks} × 10 places` })
+    out.push({ label: 'Enclos', value: paddocksText(d) })
     out.push({ label: 'Passages aux enclos', value: `${d.config.sessionsPerDay} par jour (toutes les ${formatNumber(d.cycleHours)} h)` })
   }
   return out
+}
+
+/** Enclos débloqués en cours de route par l'XP d'élevage (après le départ), par ordre de jour. */
+function paddockUnlocks(d: ModeDigest): { day: number; paddocks: number }[] {
+  let n = d.config.paddocks
+  const out: { day: number; paddocks: number }[] = []
+  for (const s of [...(d.paddockSchedule ?? [])].sort((a, b) => a.day - b.day))
+    if (s.paddocks > n) {
+      out.push(s)
+      n = s.paddocks
+    }
+  return out
+}
+
+/** « 3 × 10 places au départ, puis 4 (jour 23), 5 (jour 70) par l'XP d'élevage » : la routine du régime en tient compte. */
+function paddocksText(d: ModeDigest): string {
+  const steps = paddockUnlocks(d)
+  if (!steps.length) return `${d.config.paddocks} × 10 places`
+  return `${d.config.paddocks} × 10 places au départ, puis ${steps.map((x) => `${x.paddocks} (jour ${formatNumber(x.day)})`).join(', ')} par l’XP d’élevage`
 }
 
 function optimakinaText(o: OptimakinaPolicy | undefined, d: ModeDigest | null): string {
@@ -787,6 +942,35 @@ export function strategyWhy(o: ModeOutcome): string[] {
       )
     if (s.rampUpDays !== null && s.rampUpDays > 20) out.push(`Montée en charge longue (${formatNumber(s.rampUpDays)} jours) et capital avancé ≈ ${kamas(s.capital)} : comparez avec une génération plus basse si vous voulez un retour plus rapide.`)
   }
+  out.push(...genetonWhy(o))
+  return out
+}
+
+/** Bénéfice par jour d'une stratégie sans ses génétons (part du net × net). */
+function netWithoutGenetons(x: Pick<ModeStrategy, 'steadyNet' | 'genetonShareOfNet'>): number {
+  return x.steadyNet * (1 - (x.genetonShareOfNet ?? 0))
+}
+
+/**
+ * Poids des génétons dans le choix (revue UX2-07) : leur part du bénéfice net, et la stratégie qui serait
+ * retenue sans eux (classement des stratégies évaluées sur « bénéfice − génétons ») si elle change.
+ */
+export function genetonWhy(o: ModeOutcome): string[] {
+  const s = o.strategy
+  if (!s || s.scoreBasis !== 'kamas') return []
+  const share = s.genetonShareOfNet ?? o.digest?.steady.genetonShareOfNet ?? null
+  if (share === null || share < 0.1 || s.steadyNet <= 0) return []
+  const out = [
+    `Génétons : ≈ ${kamas(s.steadyNet * share)}/jour, soit ${formatNumber(share * 100)} % du bénéfice net — valeur estimée (Puissants Parchemins revendus, liés au compte selon DPLN) : sans eux, ≈ ${kamas(netWithoutGenetons(s))}/jour.`,
+  ]
+  const pool = [s, ...o.alternatives].filter((x) => x.comparable === s.comparable && x.scoreBasis === 'kamas')
+  const best = [...pool].sort((a, b) => netWithoutGenetons(b) - netWithoutGenetons(a))[0]
+  if (best && best.id !== s.id && netWithoutGenetons(best) > netWithoutGenetons(s))
+    out.push(
+      `Sans les génétons, ${best.label} serait retenue (≈ ${kamas(netWithoutGenetons(best))}/jour${best.rampUpDays !== null ? `, montée ${formatNumber(best.rampUpDays)} j` : ''}, capital ${kamas(best.capital)}) : ${
+        share > 0.25 ? 'le choix de cette stratégie repose sur leur valeur estimée.' : 'à comparer si vous ne comptez pas les revendre.'
+      }`,
+    )
   return out
 }
 
@@ -1090,6 +1274,7 @@ export function dailyRoutine(mode: ModeId, outcome: ModeOutcome, profile: Routin
     if (f.pointsPerDay <= 0) continue
     const line = priceLine(d, f.gauge === 'mangeoire' ? (d.mode === 'brisage' && !s.params.mateBeforeExtract ? 'xp:level' : 'xp:fecond') : `fuel:${f.gauge}`)
     const unit = f.costPerDay !== null && f.itemsPerDay ? f.costPerDay / f.itemsPerDay : null
+    const thinFuel = d.warnings.filter((w) => w.code === 'volume-achat' && w.text.startsWith(f.fuelName))
     daily.push({
       id: `carburant-${f.gauge}-${f.tier}`,
       kind: 'carburant',
@@ -1097,10 +1282,10 @@ export function dailyRoutine(mode: ModeId, outcome: ModeOutcome, profile: Routin
         f.itemsPerDay !== null
           ? `${f.fuelName} : ≈ ${qty(f.itemsPerDay)} par jour (≈ ${formatNumber(Math.ceil(f.itemsPerDay * 7))} par semaine) — ${originText(line) || 'prix inconnu'}`
           : `${gaugeName(f.gauge)} palier ${f.tier} : ≈ ${formatNumber(f.pointsPerDay)} points par jour — carburant à chiffrer`,
-      hint: `${gaugeName(f.gauge)} palier ${f.tier}, ${formatNumber(f.pointsPerDay)} points/jour${f.durability ? ` (${formatNumber(f.durability)} par objet)` : ''}${unit !== null ? ` · ≈ ${formatKamas(unit)} l’objet` : ''}`,
+      hint: `${gaugeName(f.gauge)} palier ${f.tier}, ${formatNumber(f.pointsPerDay)} points/jour${f.durability ? ` (${formatNumber(f.durability)} par objet)` : ''}${unit !== null ? ` · ≈ ${formatKamas(unit)} l’objet` : ''}${thinFuel.length ? ` · ${thinFuel.map((w) => w.text).join(' ')}` : ''}`,
       perDay: f.itemsPerDay ?? undefined,
       kamas: { label: 'Coût par jour', value: f.costPerDay, complete: f.complete && f.costPerDay !== null },
-      tone: f.complete ? undefined : 'warn',
+      tone: f.complete && !thinFuel.length ? undefined : 'warn',
     })
   }
   if (st.optimakinasPerDay > 0.01) {
@@ -1110,13 +1295,16 @@ export function dailyRoutine(mode: ModeId, outcome: ModeOutcome, profile: Routin
       .filter((l): l is PriceLine => !!l)
       .slice(0, 3)
       .map((l) => `G${l.key.split(':')[1]} ${l.value !== null ? kamas(l.value) : '?'} (${originText(l)})`)
+    // Liquidité à l'achat : Optimakinas du marché au-delà de la part vendable de leur volume (à fabriquer).
+    const thin = d.warnings.filter((w) => w.code === 'volume-achat' && /Optimakina/.test(w.text))
     daily.push({
       id: 'optimakinas',
       kind: 'makina',
-      text: `Optimakinas : ≈ ${qty(st.optimakinasPerDay)} par jour (bébés G${Math.min(...gens)} à G${Math.max(...gens)})`,
-      hint: lines.length ? `Prix : ${lines.join(', ')}${gens.length > 3 ? '…' : ''}` : undefined,
+      text: `Optimakinas : ≈ ${qty(st.optimakinasPerDay)} par jour (bébés G${Math.min(...gens)} à G${Math.max(...gens)})${thin.length ? ' — en partie à fabriquer (volume de l’HDV insuffisant)' : ''}`,
+      hint: [lines.length ? `Prix : ${lines.join(', ')}${gens.length > 3 ? '…' : ''}` : '', ...thin.map((w) => w.text)].filter(Boolean).join(' ') || undefined,
       perDay: st.optimakinasPerDay,
       kamas: { label: 'Coût par jour', value: st.costByCategory.makina, complete: d.complete },
+      tone: thin.length ? 'warn' : undefined,
     })
   }
   if (st.costByCategory.capture > 0.5) {
@@ -1198,6 +1386,17 @@ export function dailyRoutine(mode: ModeId, outcome: ModeOutcome, profile: Routin
 }
 
 /**
+ * Passage de la routine correspondant à une heure de la journée (heure de Paris, 0–24) : les passages sont
+ * répartis sur la journée (2 passages : matin avant midi, soir après). Jamais « matin » le soir (revue UX2-03).
+ */
+export function routineSessionAt(routine: Pick<ModeRoutine, 'sessions'>, hour: number): RoutineSession | null {
+  const n = routine.sessions.length
+  if (!n) return null
+  const h = Number.isFinite(hour) ? Math.min(23.999, Math.max(0, hour)) : 0
+  return routine.sessions[Math.min(n - 1, Math.floor(h / (24 / n)))]
+}
+
+/**
  * Passages regroupés pour l'affichage : des passages consécutifs aux gestes identiques n'en font qu'un
  * (« Matin et soir », « Après-midi et soir ») ; un premier passage différent (places libres du jour) reste à part.
  */
@@ -1229,6 +1428,59 @@ const GAUGE_NAMES: Record<GaugeId, string> = {
 
 function gaugeName(g: GaugeId): string {
   return GAUGE_NAMES[g] ?? g
+}
+
+// ---------- Montée en charge (calendrier) ----------
+
+/** Point de départ de la simulation d'un résultat : « depuis un élevage vide » ou « depuis N montures au départ ». */
+export function timelineBasis(o: Pick<ModeOutcome, 'digest'> | null | undefined): string {
+  const n = o?.digest?.config.initialStockCount ?? 0
+  return n > 0 ? `simulation depuis ${formatNumber(n)} monture${n > 1 ? 's' : ''} au départ` : 'simulation depuis un élevage vide'
+}
+
+/** Jalon de la montée en charge d'un mode (simulation depuis un élevage vide). */
+export interface ModeMilestone {
+  id: 'remplir' | 'premiere-cible' | 'premieres-ventes' | 'enclos' | 'regime' | 'point-mort'
+  /** Jour de la simulation (1 = premier jour), null si non atteint sur la durée simulée. */
+  day: number | null
+  text: string
+}
+
+/**
+ * Calendrier de montée en charge d'un mode (revue UX2-03) : remplir les places, première monture de la
+ * génération visée, premières ventes (ou brisages), régime permanent, point mort — jours de la simulation
+ * (élevage parti de zéro, joueur parfait). Les quantités de la routine sont celles du régime permanent :
+ * ce calendrier dit quand elles s'appliquent.
+ */
+export function modeTimeline(o: ModeOutcome, opts: { freeSlots?: number | null } = {}): ModeMilestone[] {
+  const d = o.digest
+  const s = o.strategy
+  if (!d || !s) return []
+  const out: ModeMilestone[] = []
+  const places = opts.freeSlots ?? d.config.paddocks * 10
+  const captures = d.routine.capturesPerDay.reduce((t, c) => t + c.perDay, 0)
+  if (places > 0) out.push({ id: 'remplir', day: 1, text: `Semaine 1 : remplir ${formatNumber(places)} place${places > 1 ? 's' : ''} d’enclos (capacité ≈ ${formatNumber(d.captureCapacityPerDay)} captures/jour${captures > 0 ? `, ≈ ${qty(captures)}/jour ensuite` : ''})` })
+  if (d.mode !== 'brisage') {
+    const T = d.config.targetGeneration
+    out.push({ id: 'premiere-cible', day: d.firstTargetDay !== null ? Math.max(1, Math.round(d.firstTargetDay)) : null, text: d.firstTargetDay !== null ? `1re G${T} ≈ jour ${formatNumber(Math.max(1, Math.round(d.firstTargetDay)))}` : `1re G${T} : pas sur les ${d.config.horizonDays} jours simulés` })
+  }
+  const product = mainMarketCheck(o)?.name ?? modeDef(o.modeId).resourceName
+  if (d.firstSaleDay !== undefined)
+    out.push({
+      id: 'premieres-ventes',
+      day: d.firstSaleDay,
+      text: d.firstSaleDay !== null ? `${d.mode === 'brisage' ? 'Premiers brisages' : `Premières ventes${product ? ` (${product})` : ''}`} ≈ jour ${formatNumber(d.firstSaleDay)}` : 'Premières ventes : pas sur la durée simulée',
+    })
+  out.push({
+    id: 'regime',
+    day: s.rampUpDays,
+    text: s.rampUpDays !== null ? `Régime permanent (quantités de la routine) ≈ jour ${formatNumber(s.rampUpDays)}` : `Régime permanent : pas stabilisé sur ${formatNumber(s.extendedDays ?? d.config.horizonDays)} jours`,
+  })
+  out.push({ id: 'point-mort', day: s.breakEvenDay, text: s.breakEvenDay !== null ? `Point mort ≈ jour ${formatNumber(s.breakEvenDay)}` : 'Point mort : pas sur la durée simulée' })
+  // Enclos débloqués par l'XP d'élevage : la routine du régime permanent les suppose en service.
+  for (const u of paddockUnlocks(d)) out.push({ id: 'enclos', day: u.day, text: `${u.paddocks}e enclos (XP d’élevage) ≈ jour ${formatNumber(u.day)}` })
+  // Ordre chronologique (jalons non atteints à la fin).
+  return out.map((m, i) => ({ m, i })).sort((a, b) => (a.m.day ?? Infinity) - (b.m.day ?? Infinity) || a.i - b.i).map((x) => x.m)
 }
 
 // ---------- Résultats enregistrés et mode actif ----------
@@ -1338,6 +1590,77 @@ export interface ActiveMode {
   sellCapPerDay: number | null
   /** `auto` sans calcul : pourquoi on revient à la progression. */
   note?: string
+  /**
+   * Le mode travaille une autre famille que celle du profil (`settings.family`) : vos montures de la famille
+   * du profil ne servent plus sa stratégie (revue UX2-01). null sinon.
+   */
+  familySwitch: { from: FamilyId; to: FamilyId } | null
+  /** Plan d'investissement suivi (« Suivre ce plan ») : sa stratégie remplace celle de la comparaison. */
+  plan: { label: string; pinnedAt: number; budget: number | null; horizonDays: number | null } | null
+}
+
+// ---------- Plan d'investissement suivi (« Suivre ce plan ») ----------
+
+/**
+ * Stratégie d'un plan d'investissement suivie par le profil (revue UX2-04) : l'accueil, le plan et le
+ * conseiller appliquent ces paramètres (et la routine de ce plan) tant que le mode du profil est le sien.
+ */
+export interface PinnedModePlan {
+  version: 1
+  modeId: ModeId
+  family: FamilyId | null
+  params: StrategyParams
+  label: string
+  source: 'investissement'
+  pinnedAt: number
+  budget: number | null
+  horizonDays: number | null
+  /** Résultat du plan (stratégie et routine du régime permanent) ; null si trop volumineux. */
+  outcome: ModeOutcome | null
+  /** `modeContextKey` du profil au moment du choix (niveau, prix…) : autre clé → plan « à recalculer ». */
+  contextKey: string | null
+}
+
+const isFamily = (v: unknown): v is FamilyId => typeof v === 'string' && v in FAMILIES
+
+/** Lecture tolérante d'un plan suivi (null si illisible). */
+export function sanitizePinnedModePlan(raw: unknown): PinnedModePlan | null {
+  if (!isObj(raw) || raw.version !== 1 || !isModeId(raw.modeId) || raw.modeId === 'auto' || raw.modeId === 'progression') return null
+  if (!isObj(raw.params) || typeof raw.label !== 'string' || typeof raw.pinnedAt !== 'number') return null
+  const params: StrategyParams = {}
+  const p = raw.params
+  if (typeof p.targetGeneration === 'number') params.targetGeneration = p.targetGeneration
+  if (typeof p.parentLevel === 'number') params.parentLevel = p.parentLevel
+  if (typeof p.brisageLevel === 'number') params.brisageLevel = p.brisageLevel
+  if (typeof p.tier === 'number' && [1, 2, 3, 4].includes(p.tier)) params.tier = p.tier as FuelTier
+  if (typeof p.mateBeforeExtract === 'boolean') params.mateBeforeExtract = p.mateBeforeExtract
+  if (p.optimakina === 'none' || p.optimakina === 'auto' || p.optimakina === 'all' || (isObj(p.optimakina) && typeof p.optimakina.fromGeneration === 'number'))
+    params.optimakina = p.optimakina as OptimakinaPolicy
+  const o = raw.outcome
+  const outcome =
+    isObj(o) && o.modeId === raw.modeId && isObj(o.strategy) && isObj(o.digest) && isObj(o.digest.steady) && isObj(o.digest.routine) && Array.isArray(o.digest.market) && isObj(o.digest.plan)
+      ? (o as unknown as ModeOutcome)
+      : null
+  return {
+    version: 1,
+    modeId: raw.modeId,
+    family: isFamily(raw.family) ? raw.family : null,
+    params,
+    label: raw.label.slice(0, 300),
+    source: 'investissement',
+    pinnedAt: raw.pinnedAt,
+    budget: typeof raw.budget === 'number' && Number.isFinite(raw.budget) ? raw.budget : null,
+    horizonDays: typeof raw.horizonDays === 'number' && Number.isFinite(raw.horizonDays) ? raw.horizonDays : null,
+    outcome,
+    contextKey: typeof raw.contextKey === 'string' ? raw.contextKey : null,
+  }
+}
+
+/** Phrase d'avertissement d'un changement de famille (activation d'un mode, bandeau de l'accueil). */
+export function familySwitchText(modeLabel: string, from: FamilyId, to: FamilyId, owned: number): string {
+  const f = FAMILIES[from]
+  const t = FAMILIES[to]
+  return `${modeLabel} travaille les ${t?.plural ?? to} : ${owned > 0 ? `vos ${formatNumber(owned)} ${owned >= 2 ? (f?.plural ?? from) : (f?.label ?? from)} ne servent plus la stratégie (captures, accouplements et sorties du mode portent sur les ${t?.plural ?? to})` : `vos captures et conseils passent aux ${t?.plural ?? to}`}.`
 }
 
 function strategyParamsOf(mode: ModeId, o: ModeOutcome | null): ModeStrategyParams {
@@ -1359,7 +1682,11 @@ function strategyParamsOf(mode: ModeId, o: ModeOutcome | null): ModeStrategyPara
  * progression, avec une note) ; la stratégie vient de la comparaison enregistrée (sinon stratégie par
  * défaut, signalée). `contextKey` (hypothèses actuelles) signale un calcul périmé.
  */
-export function resolveActiveMode(requested: ModeId | string | null | undefined, stored: StoredModeResults | null, opts: { contextKey?: string; family?: FamilyId; routine?: RoutineProfile } = {}): ActiveMode {
+export function resolveActiveMode(
+  requested: ModeId | string | null | undefined,
+  stored: StoredModeResults | null,
+  opts: { contextKey?: string; family?: FamilyId; routine?: RoutineProfile; pinned?: PinnedModePlan | null } = {},
+): ActiveMode {
   const req: ModeId = isModeId(requested) ? requested : DEFAULT_MODE
   let id: ModeId = req
   let note: string | undefined
@@ -1371,10 +1698,13 @@ export function resolveActiveMode(requested: ModeId | string | null | undefined,
     }
   }
   const def = modeDef(id)
-  const outcome = stored?.outcomes.find((o) => o.modeId === id && o.strategy && o.digest) ?? null
+  // Plan d'investissement suivi : seulement pour son mode, demandé explicitement (pas en « auto »).
+  const pinned = opts.pinned && opts.pinned.modeId === id && req === id ? opts.pinned : null
+  const computed = stored?.outcomes.find((o) => o.modeId === id && o.strategy && o.digest) ?? null
+  const outcome = pinned ? pinned.outcome : computed
   const kind = def.kind === 'auto' ? 'progression' : def.kind
-  const family = def.family ?? (kind === 'vente' ? (outcome?.family ?? opts.family ?? null) : null)
-  const params = strategyParamsOf(id, outcome)
+  const family = def.family ?? (kind === 'vente' ? (pinned?.family ?? outcome?.family ?? opts.family ?? null) : null)
+  const params = pinned ? { ...strategyParamsOf(id, outcome), ...pinnedParams(pinned) } : strategyParamsOf(id, outcome)
   const itemId = def.resourceItemId ?? (kind === 'vente' && family ? FAMILIES[family].extractionItemId : null)
   const main = outcome ? mainMarketCheck(outcome) : null
   const routine = outcome && kind !== 'progression' ? dailyRoutine(id, outcome, opts.routine) : null
@@ -1385,20 +1715,40 @@ export function resolveActiveMode(requested: ModeId | string | null | undefined,
     kind,
     family,
     params,
-    strategyLabel: outcome?.strategy?.label ?? (kind === 'progression' ? 'Objectif du plan d’élevage' : `${def.kind === 'brisage' ? `Brisage niv. ${params.brisageLevel} · palier ${params.tier}` : `G${params.targetGeneration} · parents niv. ${params.parentLevel} · Optimakina auto · palier ${params.tier}`} (par défaut, non calculée)`),
-    source: outcome ? 'calcul' : 'defaut',
-    computedAt: stored?.computedAt ?? null,
-    stale: !!stored && opts.contextKey !== undefined && stored.contextKey !== opts.contextKey,
+    strategyLabel: pinned
+      ? `${pinned.label} (plan d’investissement suivi)`
+      : (outcome?.strategy?.label ??
+        (kind === 'progression' ? 'Objectif du plan d’élevage' : `${def.kind === 'brisage' ? `Brisage niv. ${params.brisageLevel} · palier ${params.tier}` : `G${params.targetGeneration} · parents niv. ${params.parentLevel} · Optimakina auto · palier ${params.tier}`} (par défaut, non calculée)`)),
+    source: outcome || pinned ? 'calcul' : 'defaut',
+    computedAt: pinned ? pinned.pinnedAt : (stored?.computedAt ?? null),
+    stale: pinned
+      ? opts.contextKey !== undefined && pinned.contextKey !== null && pinned.contextKey !== opts.contextKey
+      : !!stored && opts.contextKey !== undefined && stored.contextKey !== opts.contextKey,
     outcome,
     routine,
     itemId,
     sellCapPerDay: main && main.kind !== 'monture' ? main.capPerDay : null,
     ...(note ? { note } : {}),
+    familySwitch: kind !== 'progression' && family && opts.family && family !== opts.family ? { from: opts.family, to: family } : null,
+    plan: pinned ? { label: pinned.label, pinnedAt: pinned.pinnedAt, budget: pinned.budget, horizonDays: pinned.horizonDays } : null,
   }
+}
+
+/** Paramètres d'un plan suivi au format du conseiller (valeurs absentes : celles de la stratégie). */
+function pinnedParams(p: PinnedModePlan): Partial<ModeStrategyParams> {
+  const out: Partial<ModeStrategyParams> = {}
+  const x = p.params
+  if (x.targetGeneration !== undefined) out.targetGeneration = x.targetGeneration
+  if (x.parentLevel !== undefined) out.parentLevel = x.parentLevel
+  if (x.brisageLevel !== undefined) out.brisageLevel = x.brisageLevel
+  if (x.tier !== undefined) out.tier = x.tier
+  if (x.mateBeforeExtract !== undefined) out.mateBeforeExtract = x.mateBeforeExtract
+  if (x.optimakina !== undefined) out.optimakina = x.optimakina
+  return out
 }
 
 /** Clé courte d'un mode actif (cache de l'analyse du conseiller). */
 export function activeModeKey(m: ActiveMode | null | undefined): string {
   if (!m) return ''
-  return JSON.stringify([m.id, m.family, m.params, m.source, m.computedAt])
+  return JSON.stringify([m.id, m.family, m.params, m.source, m.computedAt, m.plan?.pinnedAt ?? null])
 }

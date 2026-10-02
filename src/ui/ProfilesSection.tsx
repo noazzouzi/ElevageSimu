@@ -2,27 +2,33 @@
 // dupliquer, sauvegarder, supprimer avec confirmation et sauvegarde proposée), création d'un profil
 // (vierge ou copie, serveur existant ou nouveau, préréglage de prix), serveurs (renommer, statistique de
 // prix, part du marché, dernier import HDV, supprimer s'il est inutilisé) et copie des données d'avant
-// les profils. Logique : src/store/profiles.ts (store) et src/store/profileRegistry.ts (pur).
+// les profils (avec les changements faits après la reprise par un onglet resté sur l'ancienne version).
+// Logique : src/store/profiles.ts (store) et src/store/profileRegistry.ts (pur).
 import { useMemo, useState, type FormEvent } from 'react'
 import { PRICE_STATS, PRICE_STAT_LABELS, frenchDay, type PriceStat } from '../domain/market'
-import { downloadBackup, downloadProfileBackup, getBrowserStorage } from '../lib/backup'
-import { formatDate, formatNumber, plural } from '../lib/format'
+import { downloadBackup, downloadProfileBackup, getBrowserStorage, storeLabel } from '../lib/backup'
+import { formatChars, formatDate, formatNumber, plural } from '../lib/format'
 import { MARKET_PRESETS, applyMarketSnapshot, presetForServer, type MarketPreset } from '../store/market'
-import { PROFILE_COLORS, legacyKeys, profileDataSummary, profilesOnServer, serverMarketMeta, type ProfileColor, type ProfileEntry, type ServerEntry } from '../store/profileRegistry'
+import {
+  PROFILE_COLORS,
+  legacyDivergence,
+  legacyKeys,
+  profileDataSummary,
+  profilesOnServer,
+  serverMarketMeta,
+  type ProfileColor,
+  type ProfileEntry,
+  type ServerEntry,
+} from '../store/profileRegistry'
 import { ACTIVE_PROFILE_ID, ACTIVE_SERVER_ID, useProfiles, type ActionResult } from '../store/profiles'
 import { Badge, Callout, NumberField } from './components'
+import { confirmPendingThenRetry } from './confirmPending'
 import { href } from './router'
 import './ProfilesSection.css'
 
 const COLOR_LABELS: Record<ProfileColor, string> = { accent: 'Vert', gold: 'Or', info: 'Bleu', ok: 'Vert clair', warn: 'Orange', danger: 'Rouge' }
 
 type Message = { tone: 'ok' | 'warn' | 'danger'; text: string } | null
-
-function formatBytes(n: number): string {
-  if (n < 1024) return `${formatNumber(n)} o`
-  if (n < 1024 * 1024) return `${formatNumber(n / 1024, 1)} Ko`
-  return `${formatNumber(n / (1024 * 1024), 2)} Mo`
-}
 
 function ColorDot({ color }: { color?: ProfileColor }) {
   return <span className="gs-profile-dot" style={{ background: `var(--${color ?? 'accent'})` }} aria-hidden />
@@ -82,7 +88,9 @@ function ProfileRow({
   const [confirmDelete, setConfirmDelete] = useState(false)
   const actions = useProfiles.getState()
   const active = profile.id === ACTIVE_PROFILE_ID
-  const report = (r: ActionResult, ok?: string) => onMessage(r.ok ? (ok || r.message ? { tone: 'ok', text: ok ?? r.message ?? '' } : null) : { tone: 'danger', text: r.error })
+  const report = (r: ActionResult | null, ok?: string) => {
+    if (r) onMessage(r.ok ? (ok || r.message ? { tone: 'ok', text: ok ?? r.message ?? '' } : null) : { tone: 'danger', text: r.error })
+  }
   const server = servers.find((s) => s.id === profile.serverId)
   return (
     <tr>
@@ -128,9 +136,11 @@ function ProfileRow({
           disabled={readOnly}
           aria-label={`Serveur du profil ${profile.name}`}
           onChange={(e) => {
-            const target = servers.find((s) => s.id === e.target.value)
+            const serverId = e.target.value
+            const target = servers.find((s) => s.id === serverId)
             if (active && !window.confirm(`Passer le profil ouvert sur le serveur « ${target?.name} » ? Ses prix et son marché seront ceux de ce serveur (l’application se recharge).`)) return
-            report(actions.setProfileServer(profile.id, e.target.value), `Profil « ${profile.name} » rattaché au serveur « ${target?.name} ».`)
+            const r = confirmPendingThenRetry(actions.setProfileServer(profile.id, serverId), 'Changer de serveur', () => actions.setProfileServer(profile.id, serverId, { force: true }))
+            report(r, `Profil « ${profile.name} » rattaché au serveur « ${target?.name} ».`)
           }}
         >
           {servers.map((s) => (
@@ -140,6 +150,20 @@ function ProfileRow({
           ))}
         </select>
         {!server && <Badge tone="danger">serveur inconnu</Badge>}
+        {profile.serverToCheck && (
+          <div className="row" style={{ gap: 4, marginTop: 4 }}>
+            <Badge tone="warn">serveur à vérifier</Badge>
+            <button
+              className="btn small"
+              type="button"
+              disabled={readOnly}
+              title="Le registre des profils a été reconstruit et ce serveur a été deviné : confirmez-le, ou choisissez le bon dans la liste."
+              onClick={() => report(actions.setProfileServer(profile.id, profile.serverId), `Serveur « ${server?.name ?? profile.serverId} » confirmé pour « ${profile.name} ».`)}
+            >
+              C’est le bon
+            </button>
+          </div>
+        )}
       </td>
       <td>
         {summary ? (
@@ -148,7 +172,7 @@ function ProfileRow({
             {summary.jobLevel !== null && ` · Éleveur niv. ${summary.jobLevel}`}
             {summary.journal ? ` · ${plural(summary.journal, 'entrée', 'entrées')} de journal` : ''}
             <br />
-            <span className="muted">{formatBytes(summary.bytes)}</span>
+            <span className="muted">{formatChars(summary.chars)}</span>
           </small>
         ) : (
           '—'
@@ -182,7 +206,12 @@ function ProfileRow({
         ) : (
           <div className="row" style={{ gap: 6 }}>
             {!active && (
-              <button className="btn small primary" type="button" disabled={readOnly} onClick={() => report(actions.switchProfile(profile.id))}>
+              <button
+                className="btn small primary"
+                type="button"
+                disabled={readOnly}
+                onClick={() => report(confirmPendingThenRetry(actions.switchProfile(profile.id), 'Ouvrir ce profil', () => actions.switchProfile(profile.id, undefined, { force: true })))}
+              >
                 Ouvrir
               </button>
             )}
@@ -242,9 +271,17 @@ function NewProfileForm({ duplicate, onDone, onMessage, readOnly }: { duplicate:
       setBusy(false)
       lines.push(p.ok ? (p.message ?? '') : `Préréglage non chargé : ${p.error}`)
     }
-    onMessage({ tone: 'ok', text: lines.join(' ') })
     onDone()
-    if (open && created) useProfiles.getState().switchProfile(created.id, `${lines.join(' ')} Profil ouvert.`)
+    if (!open || !created) {
+      onMessage({ tone: 'ok', text: lines.join(' ') })
+      return
+    }
+    const flash = `${lines.join(' ')} Profil ouvert.`
+    const sw = useProfiles.getState().switchProfile
+    // Modifications non enregistrées du profil ouvert : sauvegarde proposée, puis confirmation.
+    const opened = confirmPendingThenRetry(sw(created.id, flash), 'Ouvrir le nouveau profil', () => sw(created.id, flash, { force: true }))
+    if (!opened) onMessage({ tone: 'ok', text: `${lines.join(' ')} Profil créé (non ouvert).` })
+    else if (!opened.ok) onMessage({ tone: 'warn', text: `${lines.join(' ')} Profil créé (non ouvert) : ${opened.error}` })
   }
 
   return (
@@ -529,9 +566,11 @@ export default function ProfilesSection() {
     if (!ls || mode !== 'profiles' || refresh < 0) return null
     const keys = legacyKeys(ls)
     if (!keys.length) return null
-    const bytes = keys.reduce((t, k) => t + 2 * (k.length + (ls.getItem(k)?.length ?? 0)), 0)
-    return { keys, bytes }
-  }, [mode, refresh])
+    const chars = keys.reduce((t, k) => t + k.length + (ls.getItem(k)?.length ?? 0), 0)
+    // Anciennes clés modifiées après la reprise (onglet resté sur l'ancienne version).
+    const diverged = legacyDivergence(ls, registry)
+    return { keys, chars, diverged }
+  }, [mode, refresh, registry])
   const onMessage = (m: Message) => {
     setMessage(m)
     setRefresh((n) => n + 1)
@@ -549,7 +588,7 @@ export default function ProfilesSection() {
 
       <h3>Profils</h3>
       <div className="table-wrap">
-        <table className="table">
+        <table className="table gs-profiles-table">
           <thead>
             <tr>
               <th>Profil</th>
@@ -590,7 +629,7 @@ export default function ProfilesSection() {
       <div className="divider" />
       <h3>Serveurs</h3>
       <div className="table-wrap">
-        <table className="table">
+        <table className="table gs-servers-table">
           <thead>
             <tr>
               <th>Serveur et profils</th>
@@ -618,8 +657,52 @@ export default function ProfilesSection() {
         <>
           <div className="divider" />
           <h3>Données d’avant les profils</h3>
+          {legacy.diverged.length > 0 && (
+            <Callout tone="warn">
+              <strong>
+                {plural(legacy.diverged.length, 'donnée modifiée', 'données modifiées')} par l’ancienne version après la reprise
+              </strong>{' '}
+              (un onglet d’ElevageSimu est sans doute resté ouvert sur l’ancienne version) : {legacy.diverged.map((k) => storeLabel(k)).join(', ')}. Ces changements ne
+              sont pas dans vos profils. <strong>Reprendre</strong> remplace les données correspondantes du profil «{' '}
+              {registry.profiles.find((p) => p.id === 'principal')?.name ?? 'Principal'} » (pour les prix saisis : ceux de son serveur) par celles de l’ancienne version ;{' '}
+              <strong>Ignorer</strong> les laisse de côté. Fermez d’abord les onglets restés sur l’ancienne version.
+              <div className="row" style={{ marginTop: 8 }}>
+                <button className="btn small" type="button" onClick={() => onMessage({ tone: 'ok', text: `Sauvegarde téléchargée : ${downloadBackup()}` })}>
+                  Télécharger une sauvegarde d’abord
+                </button>
+                <button
+                  className="btn small primary"
+                  type="button"
+                  disabled={readOnly}
+                  onClick={() => {
+                    if (
+                      !window.confirm(
+                        `Reprendre ces changements de l’ancienne version (${legacy.diverged.map((k) => storeLabel(k)).join(', ')}) ? Les données correspondantes du profil « Principal » seront remplacées (l’application se recharge).`,
+                      )
+                    )
+                      return
+                    const r = useProfiles.getState().adoptLegacyChanges(legacy.diverged)
+                    onMessage(r.ok ? { tone: 'ok', text: r.message ?? '' } : { tone: 'danger', text: r.error })
+                  }}
+                >
+                  Reprendre ces changements…
+                </button>
+                <button
+                  className="btn small"
+                  type="button"
+                  disabled={readOnly}
+                  onClick={() => {
+                    const r = useProfiles.getState().ignoreLegacyChanges(legacy.diverged)
+                    onMessage(r.ok ? { tone: 'ok', text: r.message ?? '' } : { tone: 'danger', text: r.error })
+                  }}
+                >
+                  Ignorer
+                </button>
+              </div>
+            </Callout>
+          )}
           <Callout>
-            {plural(legacy.keys.length, 'donnée', 'données')} ({formatBytes(legacy.bytes)}) de l’ancienne version ont été reprises dans le profil «{' '}
+            {plural(legacy.keys.length, 'donnée', 'données')} ({formatChars(legacy.chars)}) de l’ancienne version ont été reprises dans le profil «{' '}
             {registry.profiles.find((p) => p.id === 'principal')?.name ?? 'Principal'} » le {formatDate(registry.legacy.migratedAt)}. L’original est gardé
             par sécurité : supprimez-le quand tout vous semble correct, pour libérer de la place.
             {confirmLegacy ? (
@@ -630,6 +713,7 @@ export default function ProfilesSection() {
                 <button
                   className="btn small danger"
                   type="button"
+                  disabled={readOnly}
                   onClick={() => {
                     const r = useProfiles.getState().removeLegacyCopy()
                     onMessage(r.ok ? { tone: 'ok', text: r.message ?? 'Ancienne copie supprimée.' } : { tone: 'danger', text: r.error })
@@ -644,7 +728,13 @@ export default function ProfilesSection() {
               </div>
             ) : (
               <div className="row" style={{ marginTop: 8 }}>
-                <button className="btn small" type="button" onClick={() => setConfirmLegacy(true)}>
+                <button
+                  className="btn small"
+                  type="button"
+                  disabled={readOnly || legacy.diverged.length > 0}
+                  title={legacy.diverged.length ? 'Reprenez ou ignorez d’abord les changements de l’ancienne version (ci-dessus).' : undefined}
+                  onClick={() => setConfirmLegacy(true)}
+                >
                   Supprimer l’ancienne copie…
                 </button>
               </div>

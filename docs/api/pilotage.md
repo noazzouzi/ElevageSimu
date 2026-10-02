@@ -5,7 +5,7 @@ projection des jauges et des montures, Almanax, plan d'accouplement, sort des mo
 enclos, captures vers l'objectif, métier, prix manquants) en une liste d'actions **ordonnées, datées et
 expliquées**, et fournit les briques du plan d'élevage (phase P0–P6, captures restantes, calendrier depuis
 l'étable, critères de sortie détectés, repères de stratégie). Module pur (aucun React, aucun store), testé
-dans `src/domain/advisor.test.ts` (47 tests, états synthétiques à heure fixe) et
+dans `src/domain/advisor.test.ts` (67 tests, états synthétiques à heure fixe ; bloc « UX2 » de la revue « parcours » v2) et
 `src/domain/advisor.errors.test.ts` (section en panne, `vi.mock`).
 
 Pages associées : `src/ui/pages/HomePage.tsx` (`#/accueil`, page d'accueil) et
@@ -75,7 +75,7 @@ regroupe dans un encadré avec « Télécharger une sauvegarde ».
 
 | Conseil | Priorité | Source |
 |---|---|---|
-| Premiers pas / profil à compléter | 1 / 2 | réglages, prix saisis |
+| Premiers pas / profil à compléter (étape « Importer l'export HDV de <serveur> (CSV) — ou saisir quelques prix », lien `prix?onglet=hdv`, cochée par un prix saisi **ou un marché importé** — revue UX2-19 ; `AdvisorInput.serverName`) | 1 / 2 | réglages, prix saisis, marché |
 | Changement de jauges (dû, fenêtre, retard) | 1–3 | `planStatus` (paddockPlanStatus) |
 | **Plan dépassé** (`stale`) : « relevez les sérénités et recalculez » — ni « faites-le tout de suite » ni bouton « Fait » | 1 | `planStatus` |
 | **Plan terminé** / fin non validée : « Appliquer au lot » (lien Enclos, fécondes estimées par `projectMountsFromPlan`) ; pour cet enclos : ni « démarrer le plan », ni recharge | 2 | `planStatus`, `projectMountsFromPlan` |
@@ -112,14 +112,37 @@ Sans mode, ou en `progression` : comportement inchangé (objectif de génératio
     accouplement prévu au plan est gardé (« Accoupler puis briser »).
   Les autres familles et les séniles gardent leur sort.
 - **Conseils** : « Mode … : routine du jour » (`category: 'objectif'`, priorité 2 si stratégie non calculée
-  ou périmée, sinon 3) : ventes des ressources **dans la limite du volume** (part du marché du serveur),
-  carburant à acheter/fabriquer par jour et par semaine, Optimakinas, génétons, montures dont le sort suit
-  le mode, bénéfice attendu (`amount`) ; « Calculer / Recalculer » (lien `modes`) ; `auto` sans calcul :
+  ou périmée, sinon 3) — **d'après l'étable du jour** (revue UX2-03, `modeTodayItems`) : carburant des lots à lancer
+  aujourd'hui (enclos où des montures sont à poser × carburant d'un lot de la stratégie), Optimakinas des seuls couples
+  prévus qui en prennent une, « Extraire N montures aujourd'hui → ≈ R Cornes (au plus X vendues par jour) » (ressources par
+  famille), sinon « Rien à vendre aujourd'hui : premières ventes ≈ jour X » ; calendrier de montée en charge
+  (`modeTimeline`) ; montures dont le sort suit le mode, bénéfice attendu (`amount`). Les quantités du **régime
+  permanent** (ventes sous le plafond, carburant par jour et par semaine, Optimakinas, génétons) passent dans une carte à
+  part « Mode … : routine du régime permanent (≈ jour Z) » (priorité 4, cette semaine) ; « Calculer / Recalculer » (lien `modes`) ; `auto` sans calcul :
   « Mode automatique : comparez les modes de rentabilité ». **Captures** : famille du mode, couleurs de la
   routine (ou du plan de production), nombre = places libres, sexe en déficit par couleur (brisage sans
   accouplement : sexe indifférent), combats, zone, filet. Pas de conseil d'objectif (« choisir une monture
   visée »). Accouplements et sorties mentionnent le mode.
 - `analyzeStateCached` compare aussi `activeModeKey(mode)` et `maxMarketShare`.
+- **Famille du mode** (revue UX2-01) : la carte « Accoupler » ne nomme la chaîne du mode (« chaîne vers … ») que pour des
+  couples de sa famille ; des couples d'une autre famille sont annoncés « Plan d'appariement de vos Volkornes, hors
+  stratégie du mode … (qui travaille les Muldos) ». Le Plan (objectif) et l'accueil signalent un mode d'une autre famille
+  (`ActiveMode.familySwitch`).
+- **Takeza** (revue UX2-15, `TAKEZA_KEEP_DAYS` = 3) : à plus de 3 jours, la carte Takeza dit d'accoupler les couples prêts
+  sans attendre (un cycle perdu coûte plus que +20 %) ; dans les 3 derniers jours, les couples de cible ≥ G6 sont
+  « réservés Takeza » dans la carte « Accoupler » (titre « Accoupler N couples (+ M réservés Takeza) » ou « Garder M couples
+  pour le Takeza ») et la carte Takeza y renvoie ; en mode de rentabilité, les accouplements « avant d'extraire »
+  n'attendent pas.
+- **Optimakina** (revue UX2-06) : la ligne d'un couple reprend `makinaAdvice.decision` (pairing.ts), le même critère que la
+  page Accouplement (« seuil seulement borné (≤ X…) ; systématique dès la cible G6 », « prix X < seuil Y ») — plus
+  « faute de prix décisif » quand un seuil borné existe.
+- **Sorts partagés** (revue UX2-05) : `modeAwareFates(input)` (plan d'accouplement → `recommendFates` → sorts du mode, avec
+  `modeFateIds`) est la partie « sorts » de `analyzeState` ; Mes montures l'appelle avec les mêmes entrées que l'accueil
+  (`useAdvisorSettings`, src/ui) : même sort sur les deux pages, badge « mode … » quand le mode l'a décidé. En
+  rush, brisage ou vente, le bandeau d'objectif de Mes montures décrit le mode (`ModeAwareFates.mode` : chaîne vers
+  l'espèce visée par la stratégie, génération qui sort, extraction / vente / brisage) au lieu de la monture visée des
+  réglages, qui ne sert qu'en Progression (comme le Plan). Une extraction du jour hors de la famille du mode est dite
+  telle (« Extraire 1 monture hors de la famille du mode (Muldos) aujourd'hui → ≈ 2 Ambres de muldo »).
 
 ## Fonctions
 
@@ -153,10 +176,16 @@ garde les 12 derniers résultats en mémoire (non persistés) et les partage ent
 
 ## Pages
 
-- **Accueil** (v2) : carte du **mode actif** (stratégie, bénéfice net attendu par jour, résumé et routine du
-  premier passage avec les places libres du jour, ventes sous le plafond ; calcul absent ou périmé
-  signalé) ; en progression, bandeau discret « Comparer les modes ». Prix HDV des montures (`market`) et
-  généton du marché passés au conseiller.
+- **Accueil** (v2) : carte du **mode actif** (stratégie, bénéfice net attendu par jour, résumé, **montée en charge**
+  datée, routine du **passage de l'heure** — « passage du soir (régime permanent) » le soir, `routineSessionAt` —, mode d'une
+  autre famille signalé, plan d'investissement suivi, comparaison en cours en arrière-plan ; calcul absent ou périmé
+  signalé — y compris après une saisie de prix ou un nouvel import du même jour, `modeContextKey`) ; en
+  progression, bandeau discret « Comparer les modes ». Prix HDV des montures (`market`) et généton du marché
+  passés au conseiller. Bandeaux `MarketStatusCallouts` (export périmé, prix d'un autre serveur, volumes
+  absents) ; le pied de page nomme l'export utilisé (« vos prix, puis l'export HDV de Tylezia du 02/10/2026,
+  puis les prix par défaut… »).
+- **Plan** : généton du profil (`useGenetonValue`) ; « Génétons en route ≈ N (≈ X K net de taxe) » — net,
+  comme l'Accueil ; valeur brute seulement pour le classement des croisements (qui applique la taxe).
 - **Accueil** : `analyzeStateCached` ; simulation de l'objectif (si non atteint) ; KPI « Niveau d'Éleveur »
   au niveau estimé (« saisi : niv. N, +X XP au journal ») ; objectif « ≈ N captures restantes (simulation) »
   ou « jusqu'à ≈ N (borne haute) » ; « Prochaine alarme » signale un plan terminé à appliquer ; encadré

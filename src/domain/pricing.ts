@@ -9,7 +9,7 @@
 // - un prix par défaut (relevé sur un autre serveur, daté) nettement plus bas qu'un craft complet
 //   chiffré avec VOS prix d'ingrédients est gardé, mais signalé (`conflict`) : à vérifier en jeu.
 import { defaultItemPrice, getRecipe } from '../data'
-import { marketConfidence, priceDetail, TUPLE, type ConcretePriceStat, type MarketSource } from './market'
+import { marketConfidence, marketOriginMismatch, priceDetail, TUPLE, type ConcretePriceStat, type MarketSource } from './market'
 
 /** Origine d'un prix : saisi (joueur), marché importé (export HDV du serveur), défaut de la recherche, coût de craft. */
 export type PriceOrigin = 'joueur' | 'marche' | 'defaut' | 'craft' | 'manquant'
@@ -45,7 +45,10 @@ export interface PriceContext {
 export interface MarketPriceInfo {
   /** Date de l'export (AAAA-MM-JJ). */
   exportDate: string
+  /** Serveur de l'EXPORT (d'où vient le prix). */
   serverName?: string
+  /** Prix d'un autre serveur chargés pour celui-ci : nom du serveur du profil (sinon absent). */
+  loadedFor?: string
   /** Statistique réellement utilisée (repli si la statistique choisie n'a pas de vente). */
   stat: ConcretePriceStat
   sold24: number
@@ -55,6 +58,8 @@ export interface MarketPriceInfo {
   perDayAvg: number
   /** Kamas échangés par jour. */
   kamasPerDay: number
+  /** Export sans colonnes de ventes : volumes inconnus (les `sold*` valent 0 faute de donnée, pas « aucune vente »). */
+  volumeUnknown?: true
 }
 
 /** Prix par défaut (autre serveur) nettement plus bas que le craft chiffré avec vos ingrédients. */
@@ -110,18 +115,21 @@ export function marketQuote(id: number, market: MarketSource | null | undefined)
   if (!market || !row) return null
   const d = priceDetail(row, market.stat)
   if (!d) return null
+  const origin = marketOriginMismatch(market)
   return {
     price: d.price,
     confidence: marketConfidence(row),
     info: {
       exportDate: market.exportDate,
-      serverName: market.serverName,
+      serverName: origin ?? market.serverName,
+      ...(origin && market.serverName ? { loadedFor: market.serverName } : {}),
       stat: d.stat,
       sold24: row[TUPLE.sold24],
       sold7: row[TUPLE.sold7],
       sold30: row[TUPLE.sold30],
       perDayAvg: row[TUPLE.sold30] / 30,
       kamasPerDay: row[TUPLE.kamasPerDay],
+      ...(market.volumeUnknown ? { volumeUnknown: true as const } : {}),
     },
   }
 }

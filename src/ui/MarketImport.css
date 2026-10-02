@@ -42,3 +42,16 @@
 .market-import details summary {
   cursor: pointer;
 }
+/* Écrans étroits (390 px) : l'en-tête CSV et la liste de statistiques ne débordent pas (revue UX2-13). */
+.market-import code {
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+.market-import .field {
+  min-width: 0;
+  max-width: 100%;
+}
+.market-import .field select,
+.market-import .field input {
+  max-width: 100%;
+}

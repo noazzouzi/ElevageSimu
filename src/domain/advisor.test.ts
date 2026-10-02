@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { FUELS, SPECIES, STRATEGY } from '../data'
+import { FUELS, SPECIES, STRATEGY, getSpecies as getSpeciesById } from '../data'
 import { serverDayStart } from './almanax'
 import { formatClock, formatDuration } from '../lib/format'
 import {
@@ -14,6 +14,7 @@ import {
   typicalBatchSeconds,
   jobStatus,
   largestRemainder,
+  modeAwareFates,
   ownedRecipeSupply,
   remainingProgram,
   sessionsPerDayFor,
@@ -1083,14 +1084,16 @@ describe('mode de rentabilité actif', () => {
   })
 
   it('Vente : vendre au prix prudent du marché si la vente dépasse l’extraction, sinon extraire', () => {
-    const rich = mk(122, { gender: 'male' }) // Muldo Pourpre et Ivoire (G6) : ≈ 699 K prudent à Tylezia
+    // Muldo Pourpre et Ivoire (G6) : prudent = min(médiane 30 j 822 221, moyenne 30 j 538 083) × 0,85 ≈ 457 K
+    // à Tylezia (revue UX2-01 : la moyenne compte aussi ; avant, ≈ 699 K au-dessus de la moyenne des ventes).
+    const rich = mk(122, { gender: 'male' })
     const poor = mk(142, { gender: 'femelle' }) // Muldo Turquoise et Ébène (G6) : ≈ 104 K < 6 Ambres
     const base = resolveActiveMode('vente-montures', null, { family: 'muldo' })
     const mode: ActiveMode = { ...base, params: { ...base.params, targetGeneration: 6, mateBeforeExtract: false } }
     const a = fatesOf([rich, poor], mode, {}, tyleziaCtx)
     expect(a.fates.get(rich.id)).toMatchObject({ action: 'vente', exit: 'vente', complete: false })
     expect(a.fates.get(rich.id)?.reason).toMatch(/prix prudent du marché/)
-    expect(a.fates.get(rich.id)?.value).toBeGreaterThan(600_000)
+    expect(a.fates.get(rich.id)?.value).toBeCloseTo(538_083 * 0.85 * 0.98, -1)
     expect(a.fates.get(poor.id)).toMatchObject({ action: 'extraction', exit: 'extraction' })
   })
 
@@ -1119,8 +1122,13 @@ describe('mode de rentabilité actif', () => {
     const mode = resolveActiveMode('rush-ambre', stored)
     expect(mode.source).toBe('calcul')
     const list = adviseNow(input({ mounts: [mk(DORE)], mode, priceCtx: tyleziaCtx, settings: { jobLevel: 120 } }))
-    const modeAdv = list.find((x) => x.id.startsWith('mode:rush-ambre'))!
-    const sell = modeAdv.items?.find((i) => i.id === 'routine-vendre-17864')
+    const modeAdv = list.find((x) => x.id.startsWith('mode:rush-ambre') && !x.id.includes(':regime:'))!
+    // Revue UX2-03 : les quantités du régime permanent sont dans une carte à part (cette semaine), pas
+    // dans la routine du jour.
+    expect(modeAdv.items?.some((i) => i.id === 'routine-vendre-17864')).toBe(false)
+    const regime = list.find((x) => x.id.startsWith('mode:rush-ambre:regime:'))!
+    expect(regime.horizon).toBe('semaine')
+    const sell = regime.items?.find((i) => i.id === 'routine-vendre-17864')
     // Ambre de muldo : 72 027 ventes sur 30 jours → 15 % ≈ 360 par jour.
     expect(sell?.text).toMatch(/Ambres? de muldo par jour, jamais plus de 360/)
     expect(modeAdv.amount?.label).toMatch(/Bénéfice net attendu/)
@@ -1136,5 +1144,112 @@ describe('mode de rentabilité actif', () => {
     expect(a2).not.toBe(a1)
     expect(analyzeStateCached({ ...base, mode: rushAmbre() })).toBe(a2)
     expect(a2.fates.get(mounts[0].id)?.action).toBe('extraction')
+  })
+})
+
+// ---------- Revue « parcours » v2 (UX2) : chaque test reproduit un défaut corrigé ----------
+
+describe('UX2 : routine du jour, Takeza, famille du mode, premiers pas, sorts partagés', () => {
+  const market = marketSourceOf(sanitizeSnapshot(tylezia).snapshot!, 'auto', 'Tylezia')
+  const tyleziaCtx: PriceContext = { overrides: {}, useDefaults: true, market, jobLevel: 120 }
+  const VOLK = (gen: number) => cheapestOfGeneration('volkorne', gen) as number
+  /** Rush Corne calculée (G6, 2 enclos, 30 jours) : Optimakinas, ventes de Cornes en régime permanent. */
+  let rushCorne: ActiveMode
+  beforeEach(() => {
+    if (rushCorne) return
+    const profile: ModeProfile = { jobLevel: 120, hoursPerDay: 3, characters: 1, rules: R36, prices: { ctx: tyleziaCtx, saleTax: 0.02, maxMarketShare: 0.15 }, paddocks: 2, horizonDays: 30 }
+    const cfg = { ...modeConfig('rush-corne', profile)!, targetGeneration: 6 }
+    const outcome = outcomeFromSummary('rush-corne', runProduction(cfg, { runs: 1 }), 'G6 · test')
+    rushCorne = resolveActiveMode('rush-corne', storeModeResults([outcome], profile, { computedAt: 1, quick: true }))
+  })
+
+  it('UX2-03 : étable du jour 0 (aucune Corne, aucune G6+) — pas de « Vendre ≈ N Cornes » ni d’Optimakinas du régime permanent ; calendrier de montée', () => {
+    expect(rushCorne.routine?.daily.some((i) => i.kind === 'vente')).toBe(true)
+    const mounts = [1, 1, 2, 2, 3, 3, 4, 5, 5].map((g, i) => mk(VOLK(g), { gender: i % 2 ? 'male' : 'femelle' }))
+    const inp = input({ mounts, mode: rushCorne, priceCtx: tyleziaCtx, settings: { jobLevel: 120, family: 'volkorne' } })
+    const a = analyzeState(inp)
+    const card = adviseNow(inp, a).find((x) => x.id.startsWith('mode:rush-corne:') && !x.id.includes(':regime:'))!
+    const texts = (card.items ?? []).map((i) => i.text)
+    expect(texts.some((t) => /^Vendre ≈ .* par jour/.test(t))).toBe(false)
+    expect(texts.some((t) => t.startsWith('Optimakinas : ≈'))).toBe(false)
+    const planned = a.pairs.filter((p) => p.makina === 'optimakina').length
+    const opti = card.items?.find((i) => i.id === 'jour-optimakinas')
+    if (planned === 0) expect(opti).toBeUndefined()
+    expect(card.items?.find((i) => i.id === 'jour-ventes')?.text).toMatch(/Rien à vendre aujourd'hui/)
+    expect(card.items?.find((i) => i.id === 'calendrier')?.text).toMatch(/1re G6 ≈ jour \d+/)
+    // Les quantités du régime permanent restent consultables, à part (cette semaine).
+    const regime = adviseNow(inp, a).find((x) => x.id.startsWith('mode:rush-corne:regime:'))
+    expect(regime?.horizon).toBe('semaine')
+    expect(regime?.title).toMatch(/régime permanent/)
+  })
+
+  it('UX2-03 : une G6 féconde à extraire → « Extraire 1 monture aujourd’hui → ≈ 6 Cornes »', () => {
+    const g6 = mk(VOLK(6), { fertility: 'sterile' })
+    const card = adviseNow(input({ mounts: [g6], mode: rushCorne, priceCtx: tyleziaCtx, settings: { jobLevel: 120, family: 'volkorne' } })).find(
+      (x) => x.id.startsWith('mode:rush-corne:') && !x.id.includes(':regime:'),
+    )!
+    expect(card.items?.find((i) => i.id === 'jour-extraire')?.text).toMatch(/Extraire 1 monture aujourd.hui → ≈ 6 Cornes de volkorne \(au plus \d+ vendues par jour\) à vendre/)
+  })
+
+  it('UX2-15 : Takeza dans 10 jours — accoupler maintenant, sans « gardez pour ce jour » contradictoire ; dans 2 jours — couple réservé', () => {
+    // Couple dont la cible est G6 : les deux parents G5 du croisement le moins cher.
+    const [pa, pb] = getSpeciesById(cheapestOfGeneration('muldo', 6) as number)!.crossings[0]
+    const pair = [fecund(pa, { gender: 'male', level: 100 }), fecund(pb, { gender: 'femelle', level: 100 })]
+    const list = adviseNow(input({ mounts: pair, settings: { jobLevel: 120 } }))
+    const mating = byCat(list, 'accouplement').find((x) => x.id.startsWith('accouplement:'))!
+    expect(mating.title).toBe('Accoupler 1 couple fécond')
+    expect(mating.items?.some((i) => /réservé/.test(i.hint ?? '') || i.id === 'takeza')).toBe(false)
+    const prep = list.find((x) => x.id === 'almanax:2026-10-12:takeza-prep')!
+    expect(prep.detail).toMatch(/accouplez vos couples prêts sans attendre/)
+    expect(prep.detail).not.toMatch(/\. Gardez pour ce jour les couples/)
+    // Deux jours avant : le couple G10 est réservé au Takeza, des deux côtés.
+    const soon = adviseNow(input({ now: new Date(2026, 9, 10, 10).getTime(), mounts: pair, settings: { jobLevel: 120 } }))
+    const m2 = byCat(soon, 'accouplement').find((x) => x.id.startsWith('accouplement:'))!
+    expect(m2.title).toMatch(/^Garder 1 couple fécond pour le Takeza/)
+    expect(m2.items?.find((i) => i.id !== 'takeza' && i.id !== 'sortir')?.hint).toMatch(/réservé Takeza/)
+    expect(soon.find((x) => x.id === 'almanax:2026-10-12:takeza-prep')?.detail).toMatch(/marqués « réservé Takeza » dans « Accoupler »/)
+  })
+
+  it('UX2-01 : couples de Volkornes sous un mode Muldo — jamais « chaîne vers Muldo … » au-dessus de couples de Volkornes', () => {
+    const volk = [fecund(VOLK(3), { gender: 'male' }), fecund(VOLK(3), { gender: 'femelle' })]
+    const list = adviseNow(input({ mounts: volk, mode: resolveActiveMode('rush-ambre', null), settings: { jobLevel: 120, family: 'volkorne' } }))
+    const mating = byCat(list, 'accouplement').find((x) => x.id.startsWith('accouplement:'))!
+    expect(mating.detail).not.toMatch(/chaîne vers/)
+    expect(mating.detail).toMatch(/vos Volkornes, hors stratégie du mode « Rush Muldo \(Ambres\) » \(qui travaille les Muldos\)/)
+  })
+
+  it('UX2-19 : premiers pas — l’étape « prix » propose l’export HDV du serveur et se coche avec un marché importé', () => {
+    const none = adviseNow(input({ mounts: [], serverName: 'Tylezia' })).find((a) => a.id === 'onboarding:premiers-pas')!
+    const step = none.items!.find((i) => i.id === 'prix')!
+    expect(step.text).toMatch(/^Importer l'export HDV de Tylezia \(CSV\) — ou saisir quelques prix/)
+    expect(step.link).toMatchObject({ page: 'prix', params: { onglet: 'hdv' } })
+    expect(step.done).toBe(false)
+    const imported = adviseNow(input({ mounts: [], priceCtx: tyleziaCtx, serverName: 'Tylezia' })).find((a) => a.id === 'onboarding:premiers-pas')!
+    expect(imported.items!.find((i) => i.id === 'prix')!.done).toBe(true)
+  })
+
+  it('UX2-06 : l’Optimakina de l’accueil est justifiée par le même critère que la page Accouplement (seuil borné, pas « faute de prix décisif »)', () => {
+    // Volkorne Amande (G3) × Volkorne Améthyste (G9) → G10 (52 %), prix du marché de Tylezia.
+    const mounts = [fecund(181, { gender: 'male', level: 40 }), fecund(190, { gender: 'femelle', level: 40 })]
+    const inp = input({ mounts, priceCtx: tyleziaCtx, mountPrices: { mountOverrides: {}, generationOverrides: {}, useDefaults: true, market }, settings: { jobLevel: 120, family: 'volkorne' } })
+    const a = analyzeState(inp)
+    const pair = a.pairs[0]
+    expect(pair.makina).toBe('optimakina')
+    expect(pair.makinaAdvice.decision).toBeTruthy()
+    const item = byCat(adviseNow(inp, a), 'accouplement')[0].items!.find((i) => i.id === pair.key)!
+    expect(item.hint).toContain(pair.makinaAdvice.decision!)
+    if (pair.makinaAdvice.thresholdIsUpperBound) expect(item.hint).toMatch(/seuil seulement borné/)
+    expect(item.hint).not.toMatch(/faute de prix décisif/)
+  })
+
+  it('UX2-05 : sorts partagés avec Mes montures (modeAwareFates) = sorts du conseiller, mode compris', () => {
+    const mounts = [fecund(VOLK(10), { gender: 'male' }), fecund(VOLK(10), { gender: 'femelle' }), mk(VOLK(10), { gender: 'male' }), mk(VOLK(4), { fertility: 'sterile' })]
+    const inp = input({ mounts, mode: rushCorne, priceCtx: tyleziaCtx, settings: { jobLevel: 120, family: 'volkorne' } })
+    const shared = modeAwareFates(inp)
+    const full = analyzeState(inp)
+    expect([...shared.fates.entries()]).toEqual([...full.fates.entries()])
+    // La G10 fertile suit la stratégie du mode (féconder, accoupler puis extraire), signalée « mode ».
+    expect(shared.fates.get(mounts[2].id)?.label).toBe("Féconder, accoupler puis extraire (Rush Corne)")
+    expect(shared.modeFateIds.has(mounts[2].id)).toBe(true)
   })
 })

@@ -58,10 +58,12 @@ import { useJournal } from '../../store/journal'
 import { nextAlarm, usePaddockPlans, type ActivePaddockPlan } from '../../store/paddockPlans'
 import { emptyPaddock, gaugeEnteredAt, levelsFromOtherRuleset, paddockProjectionInput, usePaddocks, type PaddockRecord } from '../../store/paddocks'
 import { usePriceContext } from '../../store/prices'
+import { useActiveServer } from '../../store/profiles'
 import { useRules, useSettings } from '../../store/settings'
 import { NotificationControl, planStatusText, useAdvancePlan, usePlanClock } from '../alarms'
 import { GaugeBars, SerenitySmiley, StatusBadge } from '../MountEditor'
 import { Badge, Callout, Card, Empty, GaugeChip, NumberField, PageHeader, Progress, Stat, Tabs } from '../components'
+import { MarketStatusCallouts, PriceOriginNote } from '../MarketStatus'
 import { href, navigate, useRoute } from '../router'
 import { ConfidenceBadge, SpeciesName } from '../species'
 import './PaddocksPage.css'
@@ -262,6 +264,7 @@ export default function PaddocksPage() {
   return (
     <div className="pd-page">
       <PageHeader title="Enclos" subtitle="Jauges, placement des montures, plan de fécondité minuté et alarmes de changement." actions={<NotificationControl />} />
+      <MarketStatusCallouts context="coûts de carburant" showSource />
 
       <div className="grid grid-4 pd-summary">
         <Stat
@@ -1838,6 +1841,8 @@ function FuelCard({
   rules: Ruleset
 }) {
   const convertLevels = usePaddocks((s) => s.convertLevels)
+  // Part du volume quotidien du serveur au-delà de laquelle un achat est signalé (réglage du serveur).
+  const maxMarketShare = useActiveServer().maxMarketShare
   const title = running ? 'Carburant pour la suite du plan' : 'Carburant pour ce plan'
   if (mismatch)
     return (
@@ -1957,7 +1962,17 @@ function FuelCard({
                               prix à saisir
                             </a>
                           ) : (
-                            <small className="muted">({formatKamas(it.unitPrice)} l'unité)</small>
+                            <small className="muted">
+                              ({formatKamas(it.unitPrice)} l'unité, <PriceOriginNote origin={it.origin} market={it.market} />)
+                            </small>
+                          )}{' '}
+                          {it.origin === 'marche' && it.market && !it.market.volumeUnknown && it.count > maxMarketShare * it.market.perDayAvg && (
+                            <Badge
+                              tone="warn"
+                              title={`${it.count} à acheter pour ≈ ${formatNumber(it.market.perDayAvg, it.market.perDayAvg < 10 ? 1 : 0)} vendus par jour sur le serveur (plus de ${Math.round(maxMarketShare * 100)} % du volume quotidien) : achat lent ou prix qui monte — fabriquez-le ou prenez un autre carburant.`}
+                            >
+                              volume HDV faible
+                            </Badge>
                           )}{' '}
                           {it.canCraft ? <Badge tone="ok">fabricable</Badge> : <small className="muted">craft niv. {it.craftLevel}</small>}
                         </li>

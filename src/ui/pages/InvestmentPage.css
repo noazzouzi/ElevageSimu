@@ -339,3 +339,34 @@
     margin: 4px 10px 12px;
   }
 }
+
+.investment-page .inv-worst {
+  fill: none;
+  stroke: var(--danger, #c0392b);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  opacity: 0.85;
+}
+/* Ingrédients d'un objet du socle à fabriquer (revue UX2-10) et « Suivre ce plan » (UX2-04). */
+.investment-page .inv-ingredients {
+  margin: 4px 0 0;
+  padding-left: 16px;
+  font-size: 0.82rem;
+}
+.investment-page .inv-follow {
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  margin: 8px 0;
+}
+/* Repères d'un même jour regroupés (« 1–2 ») et échelle en racine carrée (revue UX2-17). */
+.investment-page .inv-dot.wide {
+  width: auto;
+  min-width: 22px;
+  padding: 0 5px;
+}
+.investment-page .inv-scale {
+  display: block;
+  margin: 2px 0 8px;
+  font-size: 0.78rem;
+}

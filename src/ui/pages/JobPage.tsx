@@ -29,7 +29,7 @@ import {
   type PlanSegment,
   type ShoppingLine,
 } from '../../domain/job'
-import { PRICE_STAT_SHORT, frenchDay, marketDepth, type MarketSource } from '../../domain/market'
+import { frenchDay, marketDepth, type MarketSource } from '../../domain/market'
 import { marketQuote, type PriceOrigin } from '../../domain/pricing'
 import type { GaugeId } from '../../domain/types'
 import { craftXp, jobLevelFromXp, jobXpForLevel, MAX_LEVEL } from '../../domain/xp'
@@ -40,6 +40,7 @@ import type { PriceContext } from '../../domain/pricing'
 import { useRules, useSettings } from '../../store/settings'
 import { profileKey } from '../../store/profiles'
 import { Badge, Callout, Card, Empty, NumberField, PageHeader, Progress, SelectField, Stat, Tabs } from '../components'
+import { MarketStatusCallouts, marketPriceTitle } from '../MarketStatus'
 import { href } from '../router'
 import { ConfidenceBadge } from '../species'
 import { useServerDay } from '../useServerDay'
@@ -268,6 +269,7 @@ export default function JobPage() {
         subtitle="Quoi crafter, combien et pour quel coût pour monter Éleveur au plus vite et au moindre prix — et ce que chaque niveau débloque."
         actions={<Badge tone={rules.id === '3.7' ? 'warn' : 'info'}>Règles {rules.label}</Badge>}
       />
+      <MarketStatusCallouts context="coûts de la montée du métier" showSource />
 
       <div className="grid grid-2">
         <LevelCard
@@ -880,7 +882,7 @@ function ShoppingTab({ plan, market }: { plan: LevelingPlan; market: MarketSourc
                       {q ? (
                         <Badge
                           tone="info"
-                          title={`Prix du marché importé (HDV${q.info.serverName ? ` de ${q.info.serverName}` : ''} du ${frenchDay(q.info.exportDate)}, ${PRICE_STAT_SHORT[q.info.stat]}) : ${formatNumber(q.info.sold24)} vendus en 24 h.`}
+                          title={marketPriceTitle(q.info)}
                         >
                           marché ({frenchDay(q.info.exportDate).slice(0, 5)})
                         </Badge>

@@ -18,15 +18,19 @@
 // À l'import, chaque store connu est vérifié par src/store/schema.ts : version plus récente que
 // l'application → refus (rien n'est écrit) ; version plus ancienne → migration ; état normalisé (entrées
 // invalides écartées, valeurs bornées) avec un avertissement par correction.
-import { slugify } from '../domain/market'
+import { MARKET_HISTORY_MAX, slugify, type MarketHistoryEntry, type MarketSnapshot } from '../domain/market'
 import { freezeWrites, pendingWrites } from '../store/persistence'
 import {
   bootProfiles,
+  fingerprintOf,
   freeId,
+  hashText,
   idsWithData,
   keysWithPrefix,
   migratedKey,
   profileById,
+  profilesOnServer,
+  rebuildRegistry,
   sanitizeRegistry,
   serverById,
   serverByName,
@@ -38,14 +42,20 @@ import {
   PERSISTED_STORES,
   PROFILES_KEY,
   STORAGE_PREFIX,
+  createMemoryStorage,
   normalizeStoreValue,
   parseStoreKey,
   persistedStoreInfo,
   profileKeyPrefix,
   profileStoreKey,
   serverKeyPrefix,
+  serverStoreKey,
+  type MarketData,
+  type MarketHistoryData,
+  type PricesData,
   type StorageLike,
 } from '../store/schema'
+import { clearTabProfile, writeTabProfile } from '../store/tabProfile'
 import { plural } from './format'
 
 export { STORAGE_PREFIX, type StorageLike } from '../store/schema'
@@ -80,6 +90,14 @@ export type BackupValidation =
 
 export type ImportMode = 'replace' | 'merge'
 
+/**
+ * Sauvegarde d'un profil dont le serveur existe déjà ici AVEC des prix ou un marché : que faire de ceux de
+ * la sauvegarde ? 'keep' (défaut) : ceux de ce navigateur sont gardés ; 'replace' : ceux de la sauvegarde
+ * les remplacent (prix saisis, marché, historique) ; 'merge' : prix fusionnés clé par clé (ceux de ce
+ * navigateur gardés en cas de doublon), marché le plus récent gardé, historiques réunis.
+ */
+export type ServerDataChoice = 'keep' | 'replace' | 'merge'
+
 export interface ImportOptions {
   /**
    * Tout : 'replace' (défaut) : l'état local devient exactement celui de la sauvegarde (les clés absentes
@@ -90,6 +108,8 @@ export interface ImportOptions {
   mode?: ImportMode
   /** Sauvegarde d'un profil : l'importer comme un NOUVEAU profil (copie) au lieu de remplacer celui du même identifiant. */
   asNewProfile?: boolean
+  /** Sauvegarde d'un profil dont le serveur existe déjà ici avec des données : voir `ServerDataChoice` (défaut 'keep'). */
+  serverData?: ServerDataChoice
   /** Stockage cible (défaut : localStorage du navigateur). */
   storage?: StorageLike | null
   /** Recharger l'application après l'import (défaut : vrai ; sans effet hors navigateur). */
@@ -100,7 +120,12 @@ export interface ImportOptions {
 
 export type ImportResult =
   | { ok: true; mode: ImportMode; written: string[]; removed: string[]; warnings: string[]; profileId?: string }
-  | { ok: false; error: string }
+  /**
+   * `snapshot` : l'écriture a échoué ET l'état d'avant n'a pas pu être entièrement remis en place (autre
+   * onglet qui écrit en même temps…) : copie de toutes les données d'avant l'import, à proposer au
+   * téléchargement (`downloadBackup(snapshot)`).
+   */
+  | { ok: false; error: string; snapshot?: BackupFile }
 
 /**
  * Stores d'avant les profils (anciennes clés) : leur valeur doit avoir la forme `{ state: {…}, version }`.
@@ -116,15 +141,41 @@ export function isKnownStoreKey(key: string): boolean {
   return persistedStoreInfo(key) !== undefined
 }
 
-/** Préférences d'affichage connues (une par page), par base de clé. */
+/** Préférences d'affichage connues (une par page) et autres données hors stores, par base de clé. */
 const PAGE_PREFS: Record<string, string> = {
   metier: 'Préférences de la page Métier',
   rentabilite: 'Préférences de la page Rentabilité',
   optimiseur: 'Préférences de l’Optimiseur',
   'montures-ui': 'Préférences de la page Montures',
+  modes: 'Résultats de la comparaison des modes (recalculables)',
+  'modes-ui': 'Préférences de la page Modes',
+  investissement: 'Préférences de la page Investissement',
+  'mode-plan': 'Plan d’investissement suivi',
   'enclos-notifications': 'Notifications des enclos',
   profiles: 'Profils et serveurs',
   'profiles-corrompu': 'Profils et serveurs (copie illisible)',
+  'profiles-precedent': 'Profils et serveurs (copie de secours)',
+}
+
+/**
+ * Bases de clés de profil dont le contenu se recalcule à la demande (résultats de la comparaison des modes,
+ * souvent la plus grosse donnée d'un profil) : supprimables sans perte pour libérer de la place.
+ */
+export const REGENERABLE_BASES: ReadonlySet<string> = new Set(['modes'])
+
+/** Donnée recalculable (voir `REGENERABLE_BASES`) ? */
+export function isRegenerableKey(key: string): boolean {
+  const p = parseStoreKey(key)
+  return p?.kind === 'profile' && REGENERABLE_BASES.has(p.base)
+}
+
+/** Supprime les données recalculables de TOUS les profils ; renvoie les clés effacées. */
+export function removeRegenerableData(storage?: StorageLike | null): string[] {
+  const s = resolveStorage(storage)
+  if (!s) return []
+  const keys = appKeys(s).filter(isRegenerableKey)
+  for (const k of keys) s.removeItem(k)
+  return keys
 }
 
 /** Noms des profils et serveurs (pour les libellés), d'après un registre. */
@@ -360,6 +411,9 @@ export function validateBackup(data: unknown): BackupValidation {
   const backup: BackupFile = { app: BACKUP_APP, version, exportedAt, stores }
   if (scope) backup.scope = scope
   if (Object.keys(raw).length) backup.raw = raw
+  // Texte d'origine des données (avant normalisation), retrouvé par `importAll(backup)` : empreintes.
+  const source = originalStores(data)
+  if (source) SOURCE_TEXT.set(backup, source)
   return { ok: true, backup, keys, warnings }
 }
 
@@ -388,20 +442,41 @@ export function mergeRegistries(local: ProfilesRegistry, incoming: ProfilesRegis
 
 type WritePlan = { entries: [string, string][]; removed: string[] }
 
-/** Écrit tout ou rien : en cas d'échec (quota), l'état précédent des clés de l'application est restauré. */
-function writeAll(storage: StorageLike, plan: WritePlan): { ok: true } | { ok: false; error: string } {
-  const existing = appKeys(storage)
-  const snapshot = new Map(existing.map((k) => [k, storage.getItem(k)]))
+/** Valeurs actuelles de toutes les clés de l'application. */
+function snapshotApp(storage: StorageLike): Map<string, string> {
+  const snapshot = new Map<string, string>()
+  for (const k of appKeys(storage)) {
+    const v = storage.getItem(k)
+    if (v !== null) snapshot.set(k, v)
+  }
+  return snapshot
+}
+
+/**
+ * Écrit tout ou rien : en cas d'échec (quota), l'état précédent des clés de l'application est restauré.
+ * Ordre d'écriture qui limite l'occupation maximale : suppressions d'abord, puis les écritures qui
+ * réduisent la place occupée, enfin celles qui l'augmentent le plus.
+ */
+function writeAll(storage: StorageLike, plan: WritePlan): { ok: true } | { ok: false; error: string; snapshot?: BackupFile } {
+  const snapshot = snapshotApp(storage)
+  const growth = ([k, val]: [string, string]) => val.length - (snapshot.has(k) ? (snapshot.get(k) as string).length : -k.length)
+  const entries = [...plan.entries].sort((a, b) => growth(a) - growth(b))
   try {
     for (const k of plan.removed) storage.removeItem(k)
-    for (const [k, val] of plan.entries) storage.setItem(k, val)
+    for (const [k, val] of entries) storage.setItem(k, val)
   } catch (e) {
-    restoreSnapshot(storage, snapshot)
+    if (!restoreSnapshot(storage, snapshot))
+      return {
+        ok: false,
+        error:
+          'Import interrompu : certaines de vos données n’ont pas pu être remises en place (un autre onglet d’ElevageSimu écrit-il en même temps ?). Téléchargez tout de suite la copie de vos données d’avant l’import (bouton ci-dessous), fermez les autres onglets, puis rechargez la page.',
+        snapshot: exportAll(createMemoryStorage(snapshot)),
+      }
     const quota = e instanceof Error && /quota/i.test(`${e.name} ${e.message}`)
     return {
       ok: false,
       error: quota
-        ? 'Espace de stockage du navigateur insuffisant : import annulé, vos données n’ont pas changé.'
+        ? 'Espace de stockage du navigateur insuffisant : import annulé, vos données n’ont pas changé. Libérez de la place (Réglages › Données : résultats recalculables des modes, journal ancien, ancienne copie) puis réessayez.'
         : 'Écriture impossible dans le stockage du navigateur : import annulé, vos données n’ont pas changé.',
     }
   }
@@ -409,13 +484,269 @@ function writeAll(storage: StorageLike, plan: WritePlan): { ok: true } | { ok: f
 }
 
 /**
+ * Remet les clés de l'application dans l'état `snapshot`, quel que soit l'ordre des écritures faites
+ * avant : (1) efface les clés absentes de l'instantané, (2) efface chaque clé dont la valeur a changé,
+ * (3) réécrit leurs valeurs d'origine. Après (1) et (2), le stockage ne contient qu'un sous-ensemble de
+ * l'état d'origine (qui tenait) : (3) ne peut pas dépasser le quota, sauf écriture concurrente d'un autre
+ * onglet. Réessaie tant qu'il progresse ; vrai si tout est remis en place.
+ */
+function restoreSnapshot(storage: StorageLike, snapshot: Map<string, string>): boolean {
+  try {
+    for (const k of appKeys(storage)) if (!snapshot.has(k)) storage.removeItem(k)
+  } catch {
+    // Continuer : l'étape suivante libère aussi de la place.
+  }
+  let todo: string[] = []
+  for (const [k, v] of snapshot) {
+    let current: string | null = null
+    try {
+      current = storage.getItem(k)
+    } catch {
+      current = null
+    }
+    if (current === v) continue
+    try {
+      storage.removeItem(k)
+    } catch {
+      // Sera réessayée ci-dessous.
+    }
+    todo.push(k)
+  }
+  let progress = true
+  while (todo.length && progress) {
+    progress = false
+    const left: string[] = []
+    for (const k of todo) {
+      try {
+        storage.setItem(k, snapshot.get(k) as string)
+        progress = true
+      } catch {
+        left.push(k)
+      }
+    }
+    todo = left
+  }
+  return todo.length === 0
+}
+
+// ---------- Fusion des données d'un serveur ----------
+
+/** Valeur `{state, version}` d'un store connu, normalisée (null si illisible ou d'une version plus récente). */
+function readStoreText(key: string, text: string | null): { state: Record<string, unknown>; version: number } | null {
+  if (text === null) return null
+  try {
+    const r = normalizeStoreValue(key, JSON.parse(text))
+    return r.ok ? r.value : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Prix saisis fusionnés clé par clé (objets, montures, générations) : `prefer` l'emporte en cas de doublon ;
+ * valeur du généton de `prefer`, sinon de l'autre. Un prix absent n'est jamais compté comme 0.
+ */
+export function mergePriceStates(local: PricesData, incoming: PricesData, prefer: 'local' | 'incoming'): PricesData {
+  const pick = <T>(a: Record<string, T>, b: Record<string, T>) => (prefer === 'local' ? { ...b, ...a } : { ...a, ...b })
+  return {
+    items: pick(local.items, incoming.items),
+    mounts: pick(local.mounts, incoming.mounts),
+    generations: pick(local.generations, incoming.generations),
+    genetonValue: prefer === 'local' ? (local.genetonValue ?? incoming.genetonValue) : (incoming.genetonValue ?? local.genetonValue),
+    updatedAt: Math.max(local.updatedAt || 0, incoming.updatedAt || 0),
+  }
+}
+
+/** Instantané du marché le plus récent (date d'export, puis date d'import). */
+export function newerMarketSnapshot(a: MarketSnapshot | null, b: MarketSnapshot | null): MarketSnapshot | null {
+  if (!a) return b
+  if (!b) return a
+  if (a.exportDate !== b.exportDate) return a.exportDate > b.exportDate ? a : b
+  return a.importedAt >= b.importedAt ? a : b
+}
+
+/** Historiques des imports réunis (un import par date d'import), plus récent en dernier. */
+export function mergeMarketHistories(a: MarketHistoryEntry[], b: MarketHistoryEntry[]): MarketHistoryEntry[] {
+  const byTime = new Map<number, MarketHistoryEntry>()
+  for (const e of [...b, ...a]) byTime.set(e.importedAt, e)
+  return [...byTime.values()].sort((x, y) => x.importedAt - y.importedAt).slice(-MARKET_HISTORY_MAX)
+}
+
+/**
+ * Fusion d'une donnée de serveur (prix saisis, marché, historique) : texte à écrire, ou null pour garder
+ * la valeur locale telle quelle (illisible ou d'une version plus récente : jamais écrasée par une fusion).
+ */
+function mergeServerValue(key: string, localText: string | null, incomingText: string, prefer: 'local' | 'incoming'): string | null {
+  if (localText === null) return incomingText
+  const local = readStoreText(key, localText)
+  const incoming = readStoreText(key, incomingText)
+  if (!local || !incoming) return null
+  let state: Record<string, unknown>
+  switch (persistedStoreInfo(key)?.base) {
+    case 'prices':
+      state = mergePriceStates(local.state as unknown as PricesData, incoming.state as unknown as PricesData, prefer) as unknown as Record<string, unknown>
+      break
+    case 'market':
+      state = { snapshot: newerMarketSnapshot((local.state as unknown as MarketData).snapshot, (incoming.state as unknown as MarketData).snapshot) }
+      break
+    case 'market-history':
+      state = { entries: mergeMarketHistories((local.state as unknown as MarketHistoryData).entries, (incoming.state as unknown as MarketHistoryData).entries) }
+      break
+    default:
+      return prefer === 'local' ? localText : incomingText
+  }
+  return JSON.stringify({ state, version: local.version })
+}
+
+// ---------- Contenu des données d'un serveur ----------
+
+/** Ce que contiennent les données d'un serveur (aperçu d'un import). */
+export interface ServerDataSummary {
+  /** Prix saisis (objets, montures, générations). */
+  prices: number
+  /** Valeur du généton saisie. */
+  geneton: boolean
+  /** Date de l'export HDV du marché importé (AAAA-MM-JJ), ou null sans marché. */
+  marketExportDate: string | null
+  /** Objets avec un prix dans le marché importé. */
+  marketItems: number
+  /** Imports HDV dans l'historique. */
+  history: number
+  /** Une donnée est illisible (ou d'une version plus récente) : à ne jamais écraser sans le dire. */
+  unreadable: boolean
+}
+
+/** Aucune donnée (prix, marché, historique) ? */
+export function isServerDataEmpty(d: ServerDataSummary): boolean {
+  return !d.unreadable && d.prices === 0 && !d.geneton && d.marketExportDate === null && d.history === 0
+}
+
+function summarizeServerData(read: (base: 'prices' | 'market' | 'market-history') => { present: boolean; value: { state: Record<string, unknown> } | null }): ServerDataSummary {
+  const out: ServerDataSummary = { prices: 0, geneton: false, marketExportDate: null, marketItems: 0, history: 0, unreadable: false }
+  const prices = read('prices')
+  if (prices.present && !prices.value) out.unreadable = true
+  if (prices.value) {
+    const st = prices.value.state
+    out.prices = countOf(st.items) + countOf(st.mounts) + countOf(st.generations)
+    out.geneton = typeof st.genetonValue === 'number'
+  }
+  const market = read('market')
+  if (market.present && !market.value) out.unreadable = true
+  const snap = market.value && isPlainObject(market.value.state.snapshot) ? market.value.state.snapshot : null
+  if (snap) {
+    out.marketExportDate = typeof snap.exportDate === 'string' ? snap.exportDate : '?'
+    out.marketItems = countOf(snap.rows)
+  }
+  const history = read('market-history')
+  if (history.present && !history.value) out.unreadable = true
+  if (history.value) out.history = countOf(history.value.state.entries)
+  return out
+}
+
+/** Données d'un serveur dans un stockage. */
+export function serverDataSummary(storage: StorageLike, serverId: string): ServerDataSummary {
+  return summarizeServerData((base) => {
+    const key = serverStoreKey(serverId, base)
+    const text = storage.getItem(key)
+    return { present: text !== null, value: readStoreText(key, text) }
+  })
+}
+
+/** Données du serveur contenues dans la sauvegarde d'un profil. */
+function backupServerData(backup: BackupFile, serverId: string): ServerDataSummary {
+  return summarizeServerData((base) => {
+    const key = serverStoreKey(serverId, base)
+    if (Object.hasOwn(backup.raw ?? {}, key)) return { present: true, value: null }
+    if (!Object.hasOwn(backup.stores, key)) return { present: false, value: null }
+    const r = normalizeStoreValue(key, backup.stores[key])
+    return { present: true, value: r.ok ? r.value : null }
+  })
+}
+
+/** Que devient le serveur d'une sauvegarde de profil à l'import (voir `planProfileServer`). */
+export interface ProfileServerPlan {
+  /**
+   * 'create' : serveur ajouté ici avec les données du fichier ; 'existing' : serveur déjà présent ici (même
+   * nom) ; 'adopt' : serveur d'ici de même identifiant, vide et sans autre profil, repris sous le nom et les
+   * options de la sauvegarde.
+   */
+  action: 'create' | 'existing' | 'adopt'
+  /** Serveur après l'import (identifiant d'ici). */
+  server: ServerEntry
+  /** Serveur d'ici concerné ('existing', 'adopt'), tel qu'il est avant l'import. */
+  local: ServerEntry | null
+  /** Données de ce serveur ici (null pour 'create'). */
+  localData: ServerDataSummary | null
+  /** Données du serveur dans la sauvegarde. */
+  backupData: ServerDataSummary
+  /** Les deux côtés ont des prix ou un marché : un choix `ServerDataChoice` s'applique (défaut 'keep'). */
+  needsChoice: boolean
+  /** Autres profils d'ici sur ce serveur (ils partagent ses prix). */
+  sharedWith: string[]
+  /** Serveur d'ici de même identifiant mais d'un autre nom : la sauvegarde n'y est PAS rattachée ('create'). */
+  idConflict: ServerEntry | null
+}
+
+/**
+ * Serveur d'une sauvegarde de profil face aux serveurs d'ici : même nom (casse et accents ignorés) → ce
+ * serveur ; même identifiant mais autre nom → serveur distinct (jamais de rattachement silencieux), sauf si
+ * le serveur d'ici est vide et sans autre profil (cas d'un navigateur neuf : « Mon serveur » est repris
+ * sous le nom de la sauvegarde) ; sinon → nouveau serveur.
+ */
+export function planProfileServer(backup: BackupFile, storage: StorageLike, opts: { asNewProfile?: boolean; registry?: ProfilesRegistry | null } = {}): ProfileServerPlan | null {
+  const scope = backup.scope
+  if (scope?.kind !== 'profile') return null
+  const reg = opts.registry ?? readRegistry(storage)
+  const backupData = backupServerData(backup, scope.server.id)
+  const replaced = !opts.asNewProfile && reg && profileById(reg, scope.profile.id) ? scope.profile.id : null
+  const others = (sid: string) => (reg ? profilesOnServer(reg, sid).filter((p) => p.id !== replaced).map((p) => p.name) : [])
+  const taken = idsWithData(storage)
+  const newId = () => freeId(scope.server.name, [...(reg?.servers.map((x) => x.id) ?? []), ...taken.servers], 'serveur')
+  const sameName = reg ? serverByName(reg, scope.server.name) : undefined
+  if (sameName) {
+    const localData = serverDataSummary(storage, sameName.id)
+    return {
+      action: 'existing',
+      server: sameName,
+      local: sameName,
+      localData,
+      backupData,
+      needsChoice: !isServerDataEmpty(localData) && !isServerDataEmpty(backupData),
+      sharedWith: others(sameName.id),
+      idConflict: null,
+    }
+  }
+  const sameId = reg ? serverById(reg, scope.server.id) : undefined
+  if (sameId) {
+    const localData = serverDataSummary(storage, sameId.id)
+    if (isServerDataEmpty(localData) && others(sameId.id).length === 0)
+      return { action: 'adopt', server: { ...scope.server, id: sameId.id }, local: sameId, localData, backupData, needsChoice: false, sharedWith: [], idConflict: null }
+    return { action: 'create', server: { ...scope.server, id: newId() }, local: null, localData: null, backupData, needsChoice: false, sharedWith: [], idConflict: sameId }
+  }
+  const id = taken.servers.has(scope.server.id) ? newId() : scope.server.id
+  return { action: 'create', server: { ...scope.server, id }, local: null, localData: null, backupData, needsChoice: false, sharedWith: [], idConflict: null }
+}
+
+/** Profils et serveurs d'un registre ajoutés à un autre (ceux d'ici gardés tels quels). */
+function addMissingToRegistry(local: ProfilesRegistry, incoming: ProfilesRegistry): ProfilesRegistry {
+  return {
+    ...local,
+    servers: [...local.servers, ...incoming.servers.filter((x) => !serverById(local, x.id))],
+    profiles: [...local.profiles, ...incoming.profiles.filter((p) => !profileById(local, p.id))],
+  }
+}
+
+/**
  * Restaure une sauvegarde (texte JSON, objet décodé ou `BackupFile`) dans le stockage, après validation.
  *  - sauvegarde complète (v1 ou v2) : 'replace' = l'état local devient celui du fichier (une sauvegarde v1
  *    sera migrée vers le profil « Principal » au rechargement) ; 'merge' = clés du fichier écrites,
- *    registres fusionnés, et une sauvegarde v1 est versée dans le profil actif (et son serveur) ;
+ *    registres fusionnés, et une sauvegarde v1 est versée dans le profil actif (ses prix saisis fusionnés,
+ *    clé par clé, avec ceux du serveur de ce profil) ;
+ *  - registre du fichier illisible (sauvegarde v2) : reconstruit d'après les données du fichier ;
  *  - sauvegarde d'un profil : voir `importProfileBackup`.
  * En cas d'échec d'écriture (quota dépassé…), l'état précédent est restauré et une erreur est renvoyée.
- * Recharge ensuite l'application (option `reload`, vraie par défaut) pour relire tous les stores.
+ * Recharge ensuite l'application (option `reload`, vraie par défaut) pour relire tous les stores ; les
+ * avertissements de l'import sont repris dans le message affiché au retour.
  */
 export function importAll(input: unknown, opts: ImportOptions = {}): ImportResult {
   const mode: ImportMode = opts.mode ?? 'replace'
@@ -425,46 +756,154 @@ export function importAll(input: unknown, opts: ImportOptions = {}): ImportResul
   if (!v.ok) return v
   if (v.backup.scope?.kind === 'profile') return importProfileBackup(v.backup, { ...opts, storage, mode })
 
+  const now = opts.now ?? Date.now()
   const warnings = [...v.warnings]
   let entries: [string, string][] = [
     ...Object.entries(v.backup.stores).map(([k, val]): [string, string] => [k, JSON.stringify(val)]),
     ...Object.entries(v.backup.raw ?? {}),
   ]
   const localRegistry = readRegistry(storage)
+  const incomingRegistry = v.backup.stores[PROFILES_KEY] as ProfilesRegistry | undefined
+  // Registre du fichier illisible (sauvegarde v2) : reconstruit d'après ses données (et sa copie de secours).
+  const rebuilt =
+    !incomingRegistry && v.backup.version >= 2 && entries.some(([k]) => parseStoreKey(k)?.kind === 'profile') ? rebuildRegistry(createMemoryStorage(entries), now) : null
+  if (rebuilt) {
+    const n = rebuilt.registry.profiles.length
+    warnings.push(`Registre des profils reconstruit d’après les données du fichier : ${plural(n, 'profil')} (noms et serveurs à vérifier dans Réglages › Profils).`)
+  }
   if (mode === 'merge' && localRegistry) {
-    const incomingRegistry = v.backup.stores[PROFILES_KEY] as ProfilesRegistry | undefined
     if (incomingRegistry) entries = entries.map(([k, val]): [string, string] => (k === PROFILES_KEY ? [k, JSON.stringify(mergeRegistries(localRegistry, incomingRegistry))] : [k, val]))
     else {
+      if (rebuilt) entries.push([PROFILES_KEY, JSON.stringify(addMissingToRegistry(localRegistry, rebuilt.registry))])
       // Sauvegarde d'avant les profils : versée dans le profil actif et son serveur.
       const active = profileById(localRegistry, localRegistry.activeProfileId) ?? localRegistry.profiles[0]
+      const activeServer = serverById(localRegistry, active.serverId)
       let moved = 0
-      entries = entries.map(([k, val]): [string, string] => {
+      let pricesMerged = false
+      let pricesKept = false
+      const mapped: [string, string][] = []
+      for (const [k, val] of entries) {
         const target = parseStoreKey(k)?.kind === 'legacy' ? migratedKey(k, active.id, active.serverId) : null
-        if (!target) return [k, val]
+        if (!target) {
+          mapped.push([k, val])
+          continue
+        }
         moved++
-        return [target, val]
-      })
-      if (moved) warnings.push(`Sauvegarde d’avant les profils : ${plural(moved, 'donnée versée', 'données versées')} dans le profil « ${active.name} ».`)
+        if (persistedStoreInfo(target)?.base === 'prices') {
+          // Prix du SERVEUR (partagés par ses profils) : fusionnés clé par clé, jamais remplacés en bloc.
+          const local = storage.getItem(target)
+          const merged = mergeServerValue(target, local, val, 'incoming')
+          if (merged === null) pricesKept = true
+          else {
+            if (local !== null) pricesMerged = true
+            mapped.push([target, merged])
+          }
+          continue
+        }
+        mapped.push([target, val])
+      }
+      entries = mapped
+      if (moved) {
+        const shared = profilesOnServer(localRegistry, active.serverId).map((p) => `« ${p.name} »`)
+        const serverName = activeServer?.name ?? active.serverId
+        warnings.push(`Sauvegarde d’avant les profils : ${plural(moved, 'donnée versée', 'données versées')} dans le profil « ${active.name} ».`)
+        if (pricesMerged)
+          warnings.push(
+            `Ses prix saisis sont ajoutés à ceux du serveur « ${serverName} » (ceux du fichier l’emportent en cas de doublon ; vos autres prix sont gardés), partagés par ${plural(shared.length, 'profil')} : ${shared.join(', ')}.`,
+          )
+        if (pricesKept) warnings.push(`Prix saisis du serveur « ${serverName} » illisibles ou d’une version plus récente ici : gardés tels quels, ceux du fichier ne sont pas importés.`)
+      }
     }
-  }
+  } else if (rebuilt) entries.push([PROFILES_KEY, JSON.stringify(rebuilt.registry)])
+  entries = resyncLegacyFingerprints(entries, originalStores(input), incomingRegistry)
   const incoming = new Set(entries.map(([k]) => k))
   const removed = mode === 'replace' ? appKeys(storage).filter((k) => !incoming.has(k)) : []
   const w = writeAll(storage, { entries, removed })
   if (!w.ok) return w
   if (opts.reload ?? true) {
     freezeWrites()
-    reloadApp(`Sauvegarde importée : ${entries.length} élément${entries.length > 1 ? 's' : ''} restauré${entries.length > 1 ? 's' : ''}.`)
+    // Tout remplacé : l'onglet ouvre le profil actif du fichier ; fusion : il garde son profil.
+    if (mode === 'replace') clearTabProfile()
+    reloadApp(
+      [`Sauvegarde importée : ${entries.length} élément${entries.length > 1 ? 's' : ''} restauré${entries.length > 1 ? 's' : ''}.`, ...warnings.slice(v.warnings.length)].join(' '),
+    )
   }
   return { ok: true, mode, written: [...incoming].sort(), removed, warnings }
+}
+
+/** Sauvegarde validée → texte d'origine de ses données (le fichier avant normalisation). */
+const SOURCE_TEXT = new WeakMap<object, Record<string, string>>()
+
+/**
+ * Texte d'origine de chaque donnée du fichier (avant normalisation), pour comparer les empreintes : celui
+ * du fichier lu par `validateBackup` quand on importe la sauvegarde qu'elle a renvoyée (Réglages).
+ */
+function originalStores(input: unknown): Record<string, string> | null {
+  if (typeof input === 'object' && input !== null && SOURCE_TEXT.has(input)) return SOURCE_TEXT.get(input) ?? null
+  let data = input
+  if (typeof input === 'string')
+    try {
+      data = JSON.parse(input)
+    } catch {
+      return null
+    }
+  if (!isPlainObject(data) || !isPlainObject(data.stores)) return null
+  const out: Record<string, string> = {}
+  for (const [k, v] of Object.entries(data.stores)) out[k] = JSON.stringify(v)
+  if (isPlainObject(data.raw)) for (const [k, v] of Object.entries(data.raw)) if (typeof v === 'string') out[k] = v
+  return out
+}
+
+/**
+ * Empreintes des anciennes clés (copie d'avant les profils) après un import complet : la normalisation de
+ * la sauvegarde peut réécrire leur valeur (champ ajouté par une migration…). Une ancienne clé à jour dans le
+ * fichier (sa valeur d'origine correspond à l'empreinte du registre du fichier) reçoit l'empreinte de la
+ * valeur réellement écrite : sinon l'alerte « Données modifiées par l'ancienne version » se lèverait à tort
+ * après chaque restauration. Une clé déjà divergente dans le fichier (modifiée après la reprise, ou
+ * déplacée puis réécrite) garde son empreinte : l'alerte reste justifiée.
+ */
+function resyncLegacyFingerprints(entries: [string, string][], original: Record<string, string> | null, incomingRegistry: ProfilesRegistry | undefined): [string, string][] {
+  const ri = entries.findIndex(([k]) => k === PROFILES_KEY)
+  if (ri < 0) return entries
+  let reg: ProfilesRegistry
+  try {
+    reg = JSON.parse(entries[ri][1]) as ProfilesRegistry
+  } catch {
+    return entries
+  }
+  const l = reg.legacy
+  if (!l || l.removedAt) return entries
+  const fileLegacy = incomingRegistry?.legacy
+  const fingerprints = { ...l.fingerprints }
+  const known = new Set(l.keys)
+  const moved = new Set(l.moved)
+  let changed = false
+  for (const [k, val] of entries) {
+    if (parseStoreKey(k)?.kind !== 'legacy') continue
+    if (fileLegacy?.moved.includes(k)) continue
+    const fp = fileLegacy?.fingerprints?.[k]
+    const text = original?.[k]
+    if (fp && (text === undefined || fp.len !== text.length || fp.hash !== hashText(text))) continue
+    fingerprints[k] = fingerprintOf(val)
+    known.add(k)
+    moved.delete(k)
+    changed = true
+  }
+  if (!changed) return entries
+  const next: ProfilesRegistry = { ...reg, legacy: { ...l, keys: [...known].sort(), moved: [...moved].sort(), fingerprints } }
+  return entries.map(([k, v], i): [string, string] => (i === ri ? [k, JSON.stringify(next)] : [k, v]))
 }
 
 /**
  * Restaure la sauvegarde d'UN profil sans toucher aux autres :
  *  - profil : même identifiant (remplacé : 'replace' efface d'abord ses données absentes du fichier), ou
  *    nouveau profil (copie) si `asNewProfile` ; un nom déjà pris reçoit un suffixe « (2) » ; le profil
- *    importé devient le profil actif ;
- *  - serveur : s'il existe déjà ici (même identifiant ou même nom), ses prix et son marché sont GARDÉS
- *    (avertissement) ; sinon il est créé avec les données du fichier.
+ *    importé devient le profil actif (et celui de cet onglet) ;
+ *  - serveur (`planProfileServer`) : créé avec les données du fichier s'il n'existe pas ici ; s'il existe
+ *    (même nom) sans prix ni marché, ceux du fichier y sont écrits ; s'il en a, `serverData` décide
+ *    ('keep' par défaut, 'replace' ou 'merge') ; même identifiant mais autre nom → serveur distinct (ou
+ *    serveur vide d'ici repris sous le nom du fichier).
+ * Les avertissements sont renvoyés ET repris dans le message affiché après le rechargement.
  */
 export function importProfileBackup(backup: BackupFile, opts: ImportOptions & { storage: StorageLike }): ImportResult {
   const storage = opts.storage
@@ -476,22 +915,34 @@ export function importProfileBackup(backup: BackupFile, opts: ImportOptions & { 
   // Registre local (créé, et anciennes données migrées, s'il n'existe pas encore).
   let reg = readRegistry(storage) ?? bootProfiles(storage, now).registry
   const taken = idsWithData(storage)
+  const plan = planProfileServer(backup, storage, { asNewProfile: opts.asNewProfile, registry: reg })
+  if (!plan) return { ok: false, error: 'Ce n’est pas la sauvegarde d’un profil.' }
 
   // Serveur.
-  let serverId = scope.server.id
-  let writeServerData = false
-  const sameId = serverById(reg, scope.server.id)
-  const sameName = serverByName(reg, scope.server.name)
-  if (sameId) {
-    if (Object.keys(backup.stores).some((k) => k.startsWith(serverKeyPrefix(scope.server.id)))) warnings.push(`Serveur « ${sameId.name} » déjà présent : ses prix et son marché actuels sont gardés.`)
-  } else if (sameName) {
-    serverId = sameName.id
-    warnings.push(`Serveur « ${sameName.name} » déjà présent : le profil y est rattaché, ses prix et son marché actuels sont gardés.`)
-  } else {
-    if (taken.servers.has(serverId)) serverId = freeId(scope.server.name, [...reg.servers.map((x) => x.id), ...taken.servers], 'serveur')
-    reg = { ...reg, servers: [...reg.servers, { ...scope.server, id: serverId }] }
-    writeServerData = true
-  }
+  const serverId = plan.server.id
+  const backupHasData = !isServerDataEmpty(plan.backupData)
+  /** Données du serveur : écrites telles quelles, fusionnées, ou gardées (rien n'est écrit). */
+  let serverWrite: ServerDataChoice = 'replace'
+  const shared = plan.sharedWith.length ? `, partagés aussi par ${plan.sharedWith.map((n) => `« ${n} »`).join(', ')}` : ''
+  if (plan.action === 'create') {
+    reg = { ...reg, servers: [...reg.servers, plan.server] }
+    if (plan.idConflict)
+      warnings.push(
+        `Le serveur « ${scope.server.name} » de la sauvegarde a le même identifiant que « ${plan.idConflict.name} » ici, mais pas le même nom : il est ajouté comme un serveur distinct. S’il s’agit du même serveur, rattachez-y vos profils puis supprimez l’autre (Réglages › Profils).`,
+      )
+  } else if (plan.action === 'adopt') {
+    reg = { ...reg, servers: reg.servers.map((x) => (x.id === serverId ? plan.server : x)) }
+    if (plan.local && slugify(plan.local.name) !== slugify(plan.server.name))
+      warnings.push(`Serveur « ${plan.local.name} » (vide, sans autre profil) renommé « ${plan.server.name} » d’après la sauvegarde.`)
+  } else if (plan.needsChoice) {
+    serverWrite = opts.serverData ?? 'keep'
+    if (serverWrite === 'keep') warnings.push(`Serveur « ${plan.server.name} » déjà présent avec ses propres prix : ceux de ce navigateur sont gardés (ceux de la sauvegarde ne sont pas importés).`)
+    if (serverWrite === 'replace') warnings.push(`Serveur « ${plan.server.name} » : prix et marché remplacés par ceux de la sauvegarde${shared}.`)
+    if (serverWrite === 'merge')
+      warnings.push(`Serveur « ${plan.server.name} » : prix de la sauvegarde ajoutés à ceux de ce navigateur (ceux de ce navigateur gardés en cas de doublon), marché le plus récent gardé${shared}.`)
+  } else if (plan.localData && !isServerDataEmpty(plan.localData)) serverWrite = 'keep'
+  if (backupHasData && serverWrite === 'replace' && (plan.action !== 'existing' || !plan.needsChoice))
+    warnings.push(`Prix et marché du serveur « ${plan.server.name} » repris de la sauvegarde.`)
 
   // Profil.
   let profileId = scope.profile.id
@@ -507,35 +958,39 @@ export function importProfileBackup(backup: BackupFile, opts: ImportOptions & { 
     name = `${scope.profile.name} (${i})`.slice(0, 40)
   }
   const entry: ProfileEntry = { ...scope.profile, id: profileId, name, serverId }
+  delete entry.serverToCheck
   reg = { ...reg, profiles: [...reg.profiles.filter((p) => p.id !== profileId), entry], activeProfileId: profileId }
 
   const entries: [string, string][] = []
+  const removed: string[] = []
   const pPrefix = profileKeyPrefix(scope.profile.id)
   const sPrefix = serverKeyPrefix(scope.server.id)
+  const targetServerPrefix = serverKeyPrefix(serverId)
   const all: [string, string][] = [...Object.entries(backup.stores).map(([k, val]): [string, string] => [k, JSON.stringify(val)]), ...Object.entries(backup.raw ?? {})]
   for (const [k, val] of all) {
     if (k.startsWith(pPrefix)) entries.push([profileStoreKey(profileId, k.slice(pPrefix.length)), val])
-    else if (k.startsWith(sPrefix) && writeServerData) entries.push([`${serverKeyPrefix(serverId)}${k.slice(sPrefix.length)}`, val])
+    else if (k.startsWith(sPrefix) && serverWrite !== 'keep') {
+      const target = `${targetServerPrefix}${k.slice(sPrefix.length)}`
+      if (serverWrite === 'replace') entries.push([target, val])
+      else {
+        const merged = mergeServerValue(target, storage.getItem(target), val, 'local')
+        if (merged !== null) entries.push([target, merged])
+      }
+    }
   }
   entries.push([PROFILES_KEY, JSON.stringify(reg)])
   const incoming = new Set(entries.map(([k]) => k))
-  const removed = mode === 'replace' ? keysWithPrefix(storage, profileKeyPrefix(profileId)).filter((k) => !incoming.has(k)) : []
+  if (mode === 'replace') removed.push(...keysWithPrefix(storage, profileKeyPrefix(profileId)).filter((k) => !incoming.has(k)))
+  // Serveur remplacé : son état devient celui de la sauvegarde (clés absentes du fichier effacées).
+  if (serverWrite === 'replace' && plan.action !== 'create' && backupHasData) removed.push(...keysWithPrefix(storage, targetServerPrefix).filter((k) => !incoming.has(k)))
   const w = writeAll(storage, { entries, removed })
   if (!w.ok) return w
   if (opts.reload ?? true) {
     freezeWrites()
-    reloadApp(`Profil « ${name} » importé et ouvert.`)
+    writeTabProfile(profileId)
+    reloadApp([`Profil « ${name} » importé et ouvert.`, ...warnings].join(' '))
   }
   return { ok: true, mode, written: [...incoming].sort(), removed, warnings, profileId }
-}
-
-function restoreSnapshot(storage: StorageLike, snapshot: Map<string, string | null>) {
-  try {
-    for (const k of appKeys(storage)) if (!snapshot.has(k)) storage.removeItem(k)
-    for (const [k, val] of snapshot) if (val !== null) storage.setItem(k, val)
-  } catch {
-    // Meilleur effort : si même la restauration échoue, il n'y a plus rien à faire ici.
-  }
 }
 
 /**
@@ -550,30 +1005,53 @@ export function resetAll(opts: { storage?: StorageLike | null; keep?: string[]; 
   for (const k of removed) storage.removeItem(k)
   if (opts.reload ?? true) {
     freezeWrites()
+    clearTabProfile()
     reloadApp('Toutes les données de l’application ont été effacées.')
   }
   return removed
 }
 
+/**
+ * Place occupée, en CARACTÈRES (longueur de la clé + longueur de la valeur) : l'unité du quota du
+ * localStorage dans Chrome, Edge et Firefox (≈ 5,2 millions de caractères par site, quels que soient les
+ * caractères). Safari compte des octets UTF-16 : sa limite vaut environ moitié moins de caractères
+ * (`storageQuotaChars`).
+ */
 export interface StorageUsage {
-  /** Taille approximative (octets, encodage UTF-16 du navigateur) des données de l'application. */
-  totalBytes: number
-  entries: { key: string; label: string; bytes: number }[]
+  /** Total des données de l'application (caractères). */
+  totalChars: number
+  entries: { key: string; label: string; chars: number; regenerable: boolean }[]
 }
 
 /** Place occupée par chaque clé de l'application (triée de la plus grosse à la plus petite). */
 export function storageUsage(storage?: StorageLike | null): StorageUsage {
   const s = resolveStorage(storage)
-  if (!s) return { totalBytes: 0, entries: [] }
+  if (!s) return { totalChars: 0, entries: [] }
   const reg = readRegistry(s)
   const names = reg ? scopeNamesOf(reg) : undefined
-  const entries = appKeys(s).map((key) => ({ key, label: storeLabel(key, names), bytes: 2 * (key.length + (s.getItem(key)?.length ?? 0)) }))
-  entries.sort((a, b) => b.bytes - a.bytes || a.key.localeCompare(b.key))
-  return { totalBytes: entries.reduce((t, e) => t + e.bytes, 0), entries }
+  const entries = appKeys(s).map((key) => ({ key, label: storeLabel(key, names), chars: key.length + (s.getItem(key)?.length ?? 0), regenerable: isRegenerableKey(key) }))
+  entries.sort((a, b) => b.chars - a.chars || a.key.localeCompare(b.key))
+  return { totalChars: entries.reduce((t, e) => t + e.chars, 0), entries }
 }
 
-/** Quota habituel du localStorage (≈ 5 Mo par site dans les navigateurs courants). */
-export const TYPICAL_STORAGE_QUOTA_BYTES = 5 * 1024 * 1024
+/** Limite du localStorage dans Chrome, Edge et Firefox : 5 Mi caractères (clés + valeurs) par site. */
+export const TYPICAL_STORAGE_QUOTA_CHARS = 5 * 1024 * 1024
+/** Limite (en caractères) des navigateurs WebKit (Safari, tous les navigateurs sur iPhone et iPad), qui comptent 2 octets par caractère. */
+export const WEBKIT_STORAGE_QUOTA_CHARS = TYPICAL_STORAGE_QUOTA_CHARS / 2
+
+/**
+ * Navigateur WebKit (Safari sur Mac, tout navigateur sur iPhone ou iPad) : quota compté en octets UTF-16,
+ * soit moitié moins de caractères. D'après l'identifiant du navigateur (`navigator.userAgent`).
+ */
+export function isWebKitStorage(userAgent: string): boolean {
+  if (/\b(iPhone|iPad|iPod)\b/.test(userAgent)) return true
+  return /AppleWebKit\//.test(userAgent) && /Safari\//.test(userAgent) && !/(Chrome|Chromium|Edg|OPR|Firefox)\//.test(userAgent)
+}
+
+/** Limite du localStorage (caractères) pour ce navigateur (défaut : `navigator.userAgent`). */
+export function storageQuotaChars(userAgent: string = typeof navigator !== 'undefined' ? navigator.userAgent : ''): number {
+  return isWebKitStorage(userAgent) ? WEBKIT_STORAGE_QUOTA_CHARS : TYPICAL_STORAGE_QUOTA_CHARS
+}
 
 export interface BackupSummaryLine {
   key: string
@@ -694,6 +1172,19 @@ const FLASH_KEY = 'elevagesimu-flash'
 export function setFlash(message: string): void {
   try {
     window.sessionStorage.setItem(FLASH_KEY, message)
+  } catch {
+    // Pas de sessionStorage : le message est simplement perdu.
+  }
+}
+
+/**
+ * Ajoute un message à celui qui sera affiché au prochain affichage de l'application (avant le premier
+ * rendu : message du chargement en cours ; sinon : après le prochain rechargement).
+ */
+export function appendFlash(message: string): void {
+  try {
+    const current = window.sessionStorage.getItem(FLASH_KEY)
+    window.sessionStorage.setItem(FLASH_KEY, current ? `${current} ${message}` : message)
   } catch {
     // Pas de sessionStorage : le message est simplement perdu.
   }

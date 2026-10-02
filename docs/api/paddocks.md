@@ -129,6 +129,10 @@ interface PaddockAssignment {
 
 ```ts
 refillAdvice(state: Pick<PaddockState, 'gauges'>, plan: RefillPlanInput, opts: RefillOptions): RefillAdvice
+// RefillItem : {fuelId, name, count, unitPrice, subtotal, complete, canCraft, craftLevel, durability,
+//   origin (votre prix, marché, défaut, craft…), market? (date, statistique, volume du marché importé)}
+// → la page affiche « (1 384 K l'unité, coût des ingrédients) » ou « (2 872 K l'unité, marché (02/10) ·
+//   ≈ 22 vendus/jour (30 j)) », et « volume HDV faible » au-delà de maxMarketShare des ventes quotidiennes.
 interface RefillPlanInput { consumed; tiers?; steps? }   // un FertilityPlan convient tel quel
 interface RefillOptions { ctx; rules; jobLevel; tier; serenityTier?; tierByGauge?; craftableOnly? }
 ```

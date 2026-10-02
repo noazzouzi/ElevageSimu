@@ -1,6 +1,6 @@
 // Tests du moteur de production (production.ts) et de son worker.
 import tylezia from '../data/market/tylezia-2026-10-02.json'
-import { FAMILIES, getSpecies } from '../data'
+import { FAMILIES, getSpecies, SPECIES } from '../data'
 import { bestNetKind, sessionsPerDayFor } from './advisor'
 import { buildSnapshot, marketSourceOf, parseHdvCsv, sanitizeSnapshot, type MarketSource } from './market'
 import type { PriceContext } from './pricing'
@@ -22,6 +22,11 @@ import {
   runProductionAsync,
   sessionsForHours,
   simulateProduction,
+  statisticalTie,
+  rankWithTies,
+  REFINE_SEED_OFFSET,
+  MAX_EXTENDED_DAYS,
+  productionPriceBook as productionPriceBookFor,
   steadyWindowStart,
   strategyLabel,
   type ProductionConfig,
@@ -31,6 +36,7 @@ import { handleProductionRequest, type ProductionWorkerMessage } from './product
 import { expectedEffort } from './breedingPath'
 import { runProgram } from './programSim'
 import { RULESETS } from './rules'
+import { formatNumber } from '../lib/format'
 
 const rules = RULESETS['3.6']
 const tyleziaMarket: MarketSource = marketSourceOf(sanitizeSnapshot(tylezia).snapshot!, 'auto', 'Tylezia')
@@ -331,7 +337,8 @@ describe('brisage et vente', () => {
   it('vente : ventes plafonnées par le volume de chaque monture, prix « HDV mixte » signalé', () => {
     const s = runProduction(base({ mode: 'vente', targetGeneration: 4, paddocks: 3, horizonDays: 40 }), { runs: 1 })
     expect(s.totals.mountsSold).toBeGreaterThan(0)
-    for (const m of s.market.filter((x) => x.kind === 'monture')) if (m.capPerDay !== null) expect(m.soldPerDay).toBeLessThanOrEqual(m.capPerDay + 0.05)
+    // Report de quota ≤ 1 unité sur la fenêtre du régime permanent.
+    for (const m of s.market.filter((x) => x.kind === 'monture')) if (m.capPerDay !== null) expect(m.soldPerDay).toBeLessThanOrEqual(m.capPerDay + 1 / s.steady.days + 1e-9)
     expect(s.warnings.some((w) => w.code === 'hdv-mixte')).toBe(true)
   })
 })
@@ -345,7 +352,14 @@ describe('optimiseur et comparaison des modes', () => {
     })
     expect(res.evaluated).toBe(4)
     expect(res.strategies).toHaveLength(4)
-    for (let i = 1; i < res.strategies.length; i++) expect(compareRanked(res.strategies[i - 1], res.strategies[i])).toBeLessThanOrEqual(0)
+    // Ordre du score, sauf égalité statistique (écart < 2 erreurs types) départagée par le capital.
+    for (let i = 1; i < res.strategies.length; i++) {
+      const [a, b] = [res.strategies[i - 1], res.strategies[i]]
+      if (compareRanked(a, b) > 0) {
+        expect(statisticalTie(a, b) || statisticalTie(res.strategies[0], b)).toBe(true)
+        expect(a.capital).toBeLessThanOrEqual(b.capital + 1)
+      }
+    }
     expect(res.best?.id).toBe(res.strategies[0].id)
     expect(res.best?.runs).toBe(2)
     expect(res.best?.summary).not.toBeNull()
@@ -460,5 +474,277 @@ describe('Web Worker (handleProductionRequest)', () => {
       expect(res.result.best).toBeNull()
       expect(res.result.notes[0]).toMatch(/brisage/i)
     }
+  })
+})
+
+// ---------- Revue économique v2 (ECO-V2-01 … 11) : chaque test reproduit un défaut corrigé ----------
+
+/** Profil de la revue : Tylezia, niveau 120, 4 enclos, 3 h, 1 personnage, parents 40, Opti auto, palier 2. */
+function lvl120(over: Partial<ProductionConfig> = {}): ProductionConfig {
+  return base({ paddocks: 4, targetGeneration: 10, parentLevel: 40, optimakina: 'auto', tier: 2, mateBeforeExtract: true, horizonDays: 60, ...over })
+}
+
+describe('ECO-V2-01 : régime permanent, étable saturée, raffinement indépendant, égalités statistiques', () => {
+  it('Rush Corne G10 sur 60 jours : la fenêtre est encore la montée en charge (régime non stabilisé, avertissement « montee »)', () => {
+    const s = runProduction(lvl120(), { runs: 3, seed: 1 })
+    expect(s.steady.stable).toBe(false)
+    expect(s.steady.instability.length).toBeGreaterThan(0)
+    expect(s.rampUpDays).toBeNull()
+    expect(s.warnings.map((w) => w.code)).toContain('montee')
+    // Un régime établi (G4, 120 jours) reste stable.
+    const g4 = runProduction(lvl120({ targetGeneration: 4, horizonDays: 120 }), { runs: 3, seed: 1 })
+    expect(g4.steady.stable).toBe(true)
+    expect(g4.rampUpDays).not.toBeNull()
+    expect(g4.warnings.map((w) => w.code)).not.toContain('montee')
+  })
+
+  it('G10 sur 180 jours : l’étable déborde (fécondes sorties) → avertissement « etable-saturee »', () => {
+    const s = runProduction(lvl120({ horizonDays: 180 }), { runs: 2, seed: 1 })
+    expect(s.steady.releasedPerDay).toBeGreaterThan(0)
+    expect(s.stableOverflow).toBe(false) // l'ancien avertissement « etable » ne se déclenchait pas
+    const w = s.warnings.find((x) => x.code === 'etable-saturee')
+    expect(w?.text).toMatch(/Étable saturée/)
+  })
+
+  it('le raffinement utilise d’autres graines que le tri, et réévalue plus longtemps une stratégie instable', () => {
+    const res = optimizeMode('extraction', lvl120(), { grid: { targetGeneration: [4, 10], tier: [2], parentLevel: [40], optimakina: ['auto'], mateBeforeExtract: [true] }, runs: 3, keep: 2, seed: 5 })
+    const g10 = res.strategies.find((x) => x.targetGeneration === 10)!
+    const g4 = res.strategies.find((x) => x.targetGeneration === 4)!
+    expect(g10.runs).toBe(3)
+    expect(g10.summary?.seed ?? res.best?.summary?.seed).not.toBe(5)
+    expect(res.best?.summary?.seed).toBe(5 + REFINE_SEED_OFFSET)
+    // G10 : pas de régime en 60 jours → réévaluée sur 180 jours, classée sur ce régime-là.
+    expect(g10.extendedDays).toBe(MAX_EXTENDED_DAYS)
+    expect(g4.scoreSe).toBeGreaterThan(0)
+    expect(res.notes.join(' ')).toMatch(/réévaluées sur une durée plus longue/)
+  })
+
+  it('choix de la génération stable d’une graine à l’autre (ou égalité déclarée)', () => {
+    const grid = { targetGeneration: [4, 6, 8, 10], tier: [2 as const], parentLevel: [40], optimakina: ['auto' as const], mateBeforeExtract: [true] }
+    const bests = [1, 2, 3, 4].map((seed) => optimizeMode('extraction', lvl120(), { grid, runs: 8, keep: 3, seed }))
+    const gens = bests.map((r) => r.best!.targetGeneration)
+    const majority = [...new Set(gens)].sort((a, b) => gens.filter((g) => g === b).length - gens.filter((g) => g === a).length)[0]
+    for (const r of bests) {
+      if (r.best!.targetGeneration === majority) continue
+      // Sinon, la génération majoritaire est à égalité statistique avec la première.
+      expect(r.strategies.find((x) => x.targetGeneration === majority)?.tieWithBest).toBe(true)
+    }
+    // Jamais G10 (montée en charge prise pour un régime : ancien défaut).
+    expect(gens).not.toContain(10)
+  })
+
+  it('égalité statistique : départagée par le capital, puis la montée', () => {
+    const mk = (score: number, se: number, capital: number) => ({ comparable: true, scoreBasis: 'kamas' as const, score, scoreSe: se, capital, rampUpDays: 20 })
+    expect(statisticalTie(mk(1000, 30, 0), mk(950, 30, 0))).toBe(true) // 50 < 2 × √(30² + 30²) ≈ 85
+    expect(statisticalTie(mk(1000, 10, 0), mk(950, 10, 0))).toBe(false)
+    const ranked = rankWithTies([mk(1000, 30, 5e6), mk(950, 30, 1e6), mk(600, 30, 0)], (x) => x, (a, b) => b.score - a.score)
+    expect(ranked.map((x) => x.capital)).toEqual([1e6, 5e6, 0])
+  })
+
+  it('génération « auto » : plusieurs tirages et règle de stabilité (jamais la G10 d’une montée en charge)', () => {
+    const t = productionPlan(lvl120({ targetGeneration: 'auto' })).targetGeneration
+    expect(t).toBeLessThan(10)
+  })
+})
+
+describe('ECO-V2-02 / 11 : vente de montures « HDV mixte »', () => {
+  const venteBase = (over: Partial<ProductionConfig> = {}) => base({ mode: 'vente', family: 'volkorne', targetGeneration: 4, paddocks: 1, jobLevel: 1, horizonDays: 40, prices: { ctx: { ...tyleziaCtx, jobLevel: 1 } }, ...over })
+
+  it('prix de décision plafonné à la valeur d’extraction + 50 % ; vente au prix du marché = spéculative', () => {
+    const cfg = normalizeProductionConfig(venteBase())
+    const plan = productionPlan(venteBase())
+    const s = runProduction(venteBase(), { runs: 1 })
+    expect(s.speculative).toBe(true)
+    expect(s.warnings.map((w) => w.code)).toContain('speculatif')
+    const corne = s.prices.find((l) => l.key === 'ressource')!.value as number
+    for (const sp of plan.targets) {
+      const info = productionPriceBookFor(cfg).mountSale(sp)
+      expect(info.speculative).toBe(true)
+      expect(info.decisionPrice!).toBeLessThanOrEqual(4 * corne * 1.5 + 1e-6)
+    }
+  })
+
+  it('compareModes (niveau 1 et 120) : jamais « Vente de montures » en mode automatique, ligne spéculative', () => {
+    for (const jobLevel of [1, 120]) {
+      const res = compareModes({
+        rules,
+        prices: { ctx: { ...tyleziaCtx, jobLevel }, mountPrices: { mountOverrides: {}, generationOverrides: {}, useDefaults: true, market: tyleziaMarket } },
+        jobLevel,
+        paddocks: jobLevel === 1 ? 1 : 4,
+        hoursPerDay: 3,
+        characters: 1,
+        horizonDays: 40,
+        runs: 2,
+        naturalLeveling: false,
+        modes: ['rush-corne', 'vente-montures'],
+        grid: { extraction: { targetGeneration: [2, 4], tier: [2], mateBeforeExtract: [true], parentLevel: [40] }, vente: { targetGeneration: [4], tier: [2], mateBeforeExtract: [true], parentLevel: [40] } },
+      })
+      const vente = res.rows.find((r) => r.modeId === 'vente-montures')!
+      expect(vente.speculative).toBe(true)
+      expect(res.bestMode).toBe('rush-corne')
+    }
+  })
+
+  it('avec le prix du joueur (bébé niv. 1 fécond), la vente n’est plus spéculative', () => {
+    const plan = productionPlan(venteBase())
+    const mountOverrides = Object.fromEntries(plan.targets.map((t) => [`${t}|1`, 150_000]))
+    const s = runProduction(venteBase({ prices: { ctx: { ...tyleziaCtx, jobLevel: 1 }, mountPrices: { mountOverrides, generationOverrides: {}, useDefaults: true, market: tyleziaMarket } } }), { runs: 1 })
+    expect(s.speculative).toBe(false)
+    expect(s.steady.mountsSoldPerDay).toBeGreaterThan(0)
+  })
+
+  it('ECO-V2-11 : même contexte de prix, prix de montures modifiés → espèces vendues recalculées (cache du plan)', () => {
+    const ctx = { ...tyleziaCtx, jobLevel: 1 }
+    const mp = { mountOverrides: {} as Record<string, number>, generationOverrides: {}, useDefaults: true, market: tyleziaMarket }
+    const before = productionPlan(venteBase({ prices: { ctx, mountPrices: mp } })).targets
+    // Le joueur saisit un prix très bas pour les espèces retenues : elles ne doivent plus être visées.
+    const low = Object.fromEntries(before.map((t) => [`${t}|1`, 1_000]))
+    const after = productionPlan(venteBase({ prices: { ctx, mountPrices: { ...mp, mountOverrides: low } } })).targets
+    expect(after).not.toEqual(before)
+    for (const t of before) expect(after).not.toContain(t)
+  })
+})
+
+describe('ECO-V2-03 : captures d’abord, achats seulement pour les places restantes', () => {
+  it('capacité de capture suffisante : aucun achat, mêmes captures et même bénéfice qu’à 0 achat', () => {
+    const cfg = lvl120({ targetGeneration: 6, paddocks: 6, jobLevel: 200, prices: { ctx: { ...tyleziaCtx, jobLevel: 200 } }, horizonDays: 60 })
+    const buy = runProduction({ ...cfg, buyG1PerDay: 216 }, { runs: 2, seed: 1 })
+    const none = runProduction({ ...cfg, buyG1PerDay: 0 }, { runs: 2, seed: 1 })
+    expect(buy.steady.boughtPerDay).toBeLessThan(0.5)
+    expect(buy.steady.capturesPerDay).toBeCloseTo(none.steady.capturesPerDay, 6)
+    expect(buy.steady.netPerDay.mean).toBeCloseTo(none.steady.netPerDay.mean, 0)
+  })
+
+  it('sans temps de capture : les achats remplissent les places', () => {
+    const s = runProduction(base({ targetGeneration: 2, captureHoursPerDay: 0, buyG1PerDay: 40, g1Price: 5_000 }), { runs: 1 })
+    expect(s.totals.captures).toBe(0)
+    expect(s.totals.bought).toBeGreaterThan(20)
+  })
+})
+
+describe('ECO-V2-05 / 06 / 07 / 09 : génétons, montée du métier, liquidité à l’achat, formats', () => {
+  it('génétons : part du bénéfice net exposée, valeur des Puissants Parchemins (échange reconfirmé)', () => {
+    const s = runProduction(lvl120({ targetGeneration: 6 }), { runs: 2 })
+    expect(s.steady.genetonShareOfNet).not.toBeNull()
+    expect(s.steady.genetonShareOfNet!).toBeCloseTo(s.steady.revenueByCategory.genetons / s.steady.netPerDay.mean, 10)
+    expect(s.prices.find((l) => l.key === 'geneton')?.label).toMatch(/Puissant Parchemin/)
+  })
+
+  it('montée du métier en route : le filet suit le niveau du jour (captures plafonnées par le filet universel avant le niveau 100)', () => {
+    const cfg = base({ targetGeneration: 2, paddocks: 1, jobLevel: 160, prices: { ctx: { ...tyleziaCtx, jobLevel: 160 } }, hoursPerDay: 1, horizonDays: 30 })
+    const schedule = [
+      { day: 1, jobLevel: 1 },
+      { day: 8, jobLevel: 100 },
+      { day: 11, jobLevel: 160 },
+    ]
+    const run = simulateProduction({ ...cfg, jobLevelSchedule: schedule }, 1)
+    const universel = capturesPerFight(1, 1, 'universel') * 12 * 0.5
+    for (const d of run.days.slice(0, 7)) {
+      expect(d.netKind).toBe('universel')
+      expect(d.captureCapacity).toBeCloseTo(universel, 6)
+      expect(d.captures).toBeLessThanOrEqual(universel + 1)
+    }
+    expect(run.days[8].netKind).toBe('multiplicateur')
+    expect(run.days[20].netKind).toBe('renforce')
+    // Coût d'une capture : celui du filet du jour.
+    const flat = simulateProduction(cfg, 1)
+    expect(flat.days[0].netKind).toBe('renforce')
+    expect(flat.days[0].captureCapacity).toBeGreaterThan(run.days[0].captureCapacity)
+  })
+
+  it('liquidité à l’achat : carburant de l’HDV au-delà de 15 % de son volume écarté (Grand Élixir d’Abreuvoir) ; Optimakinas signalées', () => {
+    const s = runProduction(lvl120({ targetGeneration: 6 }), { runs: 1 })
+    const abreuvoir = s.routine.fuel.find((f) => f.gauge === 'abreuvoir')
+    expect(abreuvoir?.fuelName).not.toBe('Grand Élixir d\'Abreuvoir')
+    const w = s.warnings.filter((x) => x.code === 'volume-achat')
+    // Revue UX2-02 : sa médiane 30 j (2 872, aucune vente en 24 h, moyenne 9 145) n'est plus retenue — il
+    // est chiffré à la moyenne et n'est plus le moins cher, donc plus « écarté » pour sa liquidité.
+    expect(w.some((x) => /Grand Élixir d'Abreuvoir/.test(x.text))).toBe(false)
+    expect(w.some((x) => /Optimakina .* par jour nécessaires/.test(x.text))).toBe(true)
+  })
+
+  it('avertissements de saturation : quantités sous 1 avec deux décimales, jamais « (0/jour) »', () => {
+    const s = runProduction(
+      base({ mode: 'vente', family: 'muldo', targetGeneration: 10, paddocks: 4, horizonDays: 60, prices: { ctx: tyleziaCtx, trustMixedMountPrices: true } }),
+      { runs: 1 },
+    )
+    const sat = s.warnings.filter((w) => w.code === 'saturation')
+    expect(sat.length).toBeGreaterThan(0)
+    for (const w of sat) expect(w.text).not.toMatch(/\(0\/jour/)
+    for (const mc of s.market.filter((m) => m.saturated && m.producedPerDay < 1)) {
+      const t = sat.find((w) => w.text.startsWith(mc.name))!.text
+      expect(t).toContain(`(${formatNumber(mc.producedPerDay, 2)}/jour)`)
+    }
+  })
+})
+
+describe('revue « marché » (MKT)', () => {
+  it('MKT-05 : export sans colonnes de ventes → Rush Corne vend ce qu’il produit (liquidité inconnue signalée), pas de saturation à 0', () => {
+    // Même export, colonnes de volume retirées (seulement gid;nom;median_30j;moyen_30j).
+    const csv = ['gid;nom;median_30j;moyen_30j', ...tyleziaCsvPrices()].join('\n')
+    const noVolume = marketSourceOf(buildSnapshot(parseHdvCsv(csv), { serverName: 'Tylezia', exportDate: '2026-10-02' }), 'auto', 'Tylezia')
+    expect(noVolume.volumeUnknown).toBe(true)
+    const s = runProduction(lvl120({ targetGeneration: 4, prices: { ctx: { overrides: {}, useDefaults: true, market: noVolume, jobLevel: 120 }, saleTax: 0.02, maxMarketShare: 0.15 } }), { runs: 1, seed: 1 })
+    const corne = s.market.find((m) => m.itemId === 19975)!
+    expect(corne.capPerDay).toBeNull()
+    expect(corne.saturated).toBe(false)
+    expect(corne.soldPerDay).toBeGreaterThan(0)
+    expect(s.steady.netPerDay.mean).toBeGreaterThan(0)
+    const codes = s.warnings.map((w) => w.code)
+    expect(codes).toContain('liquidite-inconnue')
+    expect(codes).not.toContain('saturation')
+    expect(codes).not.toContain('volume-achat')
+    expect(s.warnings.find((w) => w.code === 'liquidite-inconnue')?.text).toMatch(/export HDV sans colonnes de ventes/)
+  })
+})
+
+/** Lignes « gid;nom;median_30j;moyen_30j » de tout le préréglage de Tylezia (export sans volumes). */
+function tyleziaCsvPrices(): string[] {
+  return Object.entries(tyleziaMarket.rows).map(([id, t]) => `${id};objet ${id};${t[0]};${t[1]}`)
+}
+
+// ---------- Revue « parcours » v2 (UX2) : chaque test reproduit un défaut corrigé ----------
+
+describe('UX2-01 / 02 : prix prudent des montures, achats face au volume du serveur', () => {
+  it('UX2-01 : le prix prudent d’un objet-monture ne dépasse jamais la médiane 24 h, même sur peu de ventes (Muldo Azur et Doré)', () => {
+    const azur = SPECIES.find((s) => s.itemId === 33286)!
+    const p = conservativeMountMarketPrice(tyleziaMarket, azur.id)!
+    // 3 ventes à 1 200 000 en 24 h, médiane 30 j 1 640 898 : avant, 1 394 763 (> dernières ventes).
+    expect(p.price).toBeLessThanOrEqual(1_200_000 * 0.85 + 1e-6)
+    // Partout : ≤ min des statistiques non nulles × 0,85.
+    for (const sp of SPECIES) {
+      const row = sp.itemId ? tyleziaMarket.rows[String(sp.itemId)] : undefined
+      const q = conservativeMountMarketPrice(tyleziaMarket, sp.id)
+      if (!row || !q) continue
+      const vals = [row[0], row[1], row[2]].filter((v) => v > 0)
+      expect(q.price).toBeLessThanOrEqual(Math.min(...vals) * 0.85 + 1e-6)
+    }
+  })
+
+  it('UX2-02 : Optimakinas achetées au-delà de 15 % du volume du serveur → comptées au prix haut, contrôle d’achat et avertissement', () => {
+    const s = runProduction(lvl120({ targetGeneration: 10, horizonDays: 60 }), { runs: 1, seed: 1 })
+    const mk = s.purchases.filter((p) => p.kind === 'makina')
+    expect(mk.length).toBeGreaterThan(0)
+    const over = mk.filter((p) => p.overCap)
+    expect(over.length).toBeGreaterThan(0)
+    for (const p of over) {
+      expect(p.marketPerDay).not.toBeNull()
+      expect(p.buyPerDay).toBeGreaterThan(p.capPerDay!)
+      expect(p.highPrice!).toBeGreaterThanOrEqual(p.unitPrice!)
+      // Recettes G8+ (niv. 151+) hors de portée d'un Éleveur 120.
+      if ((p.craftLevel ?? 0) > 120) expect(p.canCraft).toBe(false)
+    }
+    // Même production sans plafond d'achat (part du volume 100 %) : les unités au-delà ne coûtent plus le prix haut.
+    const free = runProduction(lvl120({ targetGeneration: 10, horizonDays: 60, prices: { ctx: tyleziaCtx, maxMarketShare: 1 } }), { runs: 1, seed: 1 })
+    expect(free.steady.optimakinasPerDay).toBeCloseTo(s.steady.optimakinasPerDay, 9)
+    const surcharge = mk.reduce((t, p) => t + p.overVolumePerDay * ((p.highPrice ?? p.unitPrice ?? 0) - (p.unitPrice ?? 0)), 0)
+    expect(surcharge).toBeGreaterThan(0)
+    expect(s.steady.costByCategory.makina).toBeGreaterThan(free.steady.costByCategory.makina)
+    expect(s.steady.costByCategory.makina - free.steady.costByCategory.makina).toBeCloseTo(surcharge, 0)
+    const w = s.warnings.filter((x) => x.code === 'volume-achat' && /Optimakina/.test(x.text))
+    expect(w.length).toBeGreaterThan(0)
+    expect(w.some((x) => /hors de portée/.test(x.text))).toBe(true)
+    // Les carburants achetés figurent aussi dans les contrôles d'achat.
+    expect(s.purchases.some((p) => p.kind === 'carburant')).toBe(true)
   })
 })

@@ -43,8 +43,7 @@ import {
   type SterileFate,
 } from '../../domain/economy'
 import { defaultMangeoirePointCost } from '../../domain/fuel'
-import { PRICE_STAT_SHORT, frenchDay, type MarketSource } from '../../domain/market'
-import { snapshotFreshness } from '../../domain/marketInsights'
+import { frenchDay, marketWhere, type MarketSource } from '../../domain/market'
 import { effectiveFertility, FERTILITY_LABELS, mountName } from '../../domain/mounts'
 import { assignPaddocks } from '../../domain/paddockAssign'
 import { goalContext } from '../../domain/pairing'
@@ -57,9 +56,9 @@ import { usePriceContext, usePrices } from '../../store/prices'
 import { useRules, useSettings } from '../../store/settings'
 import { profileKey, useActiveServer } from '../../store/profiles'
 import { Badge, Callout, Card, Empty, NumberField, PageHeader, SelectField, Stat, Tabs } from '../components'
+import { MarketStatusCallouts, marketPriceTitle } from '../MarketStatus'
 import { href } from '../router'
 import { ConfidenceBadge, SpeciesName, SpeciesPicker } from '../species'
-import { useServerDay } from '../useServerDay'
 import './ProfitPage.css'
 
 type TabId = 'cycle' | 'classement' | 'inventaire' | 'hypotheses'
@@ -334,7 +333,7 @@ function marketTitle(id: number | null, market: MarketSource | null | undefined)
   const i = q.info
   return {
     short: `marché (${frenchDay(i.exportDate).slice(0, 5)})`,
-    title: `Prix du marché importé (HDV${i.serverName ? ` de ${i.serverName}` : ''} du ${frenchDay(i.exportDate)}, ${PRICE_STAT_SHORT[i.stat]}) : ${formatNumber(i.sold24)} vendus en 24 h, ≈ ${formatNumber(i.perDayAvg, i.perDayAvg < 10 ? 1 : 0)}/jour sur 30 jours.`,
+    title: marketPriceTitle(i),
   }
 }
 
@@ -1084,6 +1083,19 @@ function CycleResultView({ r, cfg, p, run }: { r: CycleResult; cfg: CycleConfig;
           <Stat label="Revenu attendu" value={rangeText(r.ranges.revenue)} hint="bébés, stériles, génétons (nets de taxe)" />
           <Stat label="Bénéfice attendu" tone={inconnu ? undefined : rangeTone(r.ranges.profit)} value={<ProfitValue r={r} range={r.ranges.profit} />} hint={profitHint} />
           <Stat label="Kamas par heure" tone={inconnu ? undefined : rangeTone(r.ranges.kamasPerHour)} value={<ProfitValue r={r} range={r.ranges.kamasPerHour} />} hint={`sur ${formatNumber(hours, 1)} h d’enclos`} />
+          {r.cappedSales.length > 0 && (
+            <>
+              <Stat
+                label="Bénéfice plafonné (cycle en continu)"
+                tone={inconnu ? undefined : rangeTone(r.ranges.profitCapped)}
+                value={<ProfitValue r={r} range={r.ranges.profitCapped} />}
+                hint={`ventes limitées à la part vendable du volume du serveur : ${r.cappedSales
+                  .map((c) => `${c.name} −${formatPercent(c.excessShare, 0)}`)
+                  .join(', ')}${r.cappedSales.some((c) => c.kind === 'monture') ? ' (montures en trop extraites)' : ''}`}
+              />
+              <Stat label="Kamas par heure plafonnés" tone={inconnu ? undefined : rangeTone(r.ranges.kamasPerHourCapped)} value={<ProfitValue r={r} range={r.ranges.kamasPerHourCapped} />} hint="si vous répétez ce cycle en continu" />
+            </>
+          )}
           <Stat label="Retour sur investissement" value={<ProfitValue r={r} range={r.ranges.roi} percent />} hint={`bénéfice / coûts (parents compris), socle non compté${r.complete ? '' : ' ; prix incomplets'}`} />
           <Stat label="Durée totale" value={formatDuration(r.seconds.total)} hint={`${r.rounds} tour${r.rounds > 1 ? 's' : ''} de ${formatDuration(r.seconds.perRound)} (${r.batch.label.toLowerCase()})`} />
           <Stat label={`Bébés G${b.targetGeneration} attendus`} value={formatNumber(r.expectedTargetBabies, 1)} hint={`chance cible ${formatPercent(b.targetChance)} par accouplement`} />
@@ -1156,7 +1168,11 @@ function CycleResultView({ r, cfg, p, run }: { r: CycleResult; cfg: CycleConfig;
           {r.liquidity.some((l) => l.exceeds) ? (
             <Callout tone="warn">
               À ce rythme, vos ventes dépassent ce que le marché de {cfg.ctx.market?.serverName ?? 'ce serveur'} absorbe ({formatPercent(cfg.maxMarketShare ?? 0.15, 0)} du volume quotidien moyen) : le prix baissera ou les ventes
-              s’étaleront. {r.liquidity.filter((l) => l.exceeds).map((l) => l.message).join(' ')}
+              s’étaleront. {r.liquidity.filter((l) => l.exceeds).map((l) => l.message).join(' ')} En continu, le bénéfice plafonné (part vendable seulement, montures en trop extraites) est de{' '}
+              <strong>
+                <ProfitValue r={r} range={r.ranges.profitCapped} />
+              </strong>{' '}
+              par cycle au lieu de <ProfitValue r={r} range={r.ranges.profit} />.
             </Callout>
           ) : (
             <Callout tone="ok">Le marché du serveur absorbe ces ventes ({formatPercent(cfg.maxMarketShare ?? 0.15, 0)} du volume quotidien moyen au plus).</Callout>
@@ -1664,7 +1680,7 @@ function AssumptionsTab({ result, rules, taxPct, ctx }: { result: CycleResult | 
             <li>
               Prix du marché :{' '}
               {ctx.market
-                ? `export HDV${ctx.market.serverName ? ` de ${ctx.market.serverName}` : ''} du ${frenchDay(ctx.market.exportDate)}, utilisé après vos prix et avant les défauts. Montures : le prix de l’objet-monture à l’HDV (mixte : niveaux, états et séniles mélangés) n’est qu’un plafond de vente — il ramène un défaut plus cher à son niveau et borne la valeur, sans être compté seul.`
+                ? `export ${marketWhere(ctx.market)}, utilisé après vos prix et avant les défauts. Montures : le prix de l’objet-monture à l’HDV (mixte : niveaux, états et séniles mélangés) n’est qu’un plafond de vente — il ramène un défaut plus cher à son niveau et borne la valeur, sans être compté seul.`
                 : 'aucun export HDV importé pour ce serveur.'}
             </li>
           </ul>
@@ -1847,7 +1863,7 @@ function AssumptionsTab({ result, rules, taxPct, ctx }: { result: CycleResult | 
 // ---------- Bandeau : prix du marché du serveur ----------
 
 /** Origine des prix de la page : export HDV du serveur (date, fraîcheur) ou prix saisis et défauts. */
-function MarketBanner({ market, serverName, today, genetonOrigin, genetonValue }: { market: MarketSource | null; serverName: string; today: string; genetonOrigin: string; genetonValue: number }) {
+function MarketBanner({ market, serverName, genetonOrigin, genetonValue }: { market: MarketSource | null; serverName: string; genetonOrigin: string; genetonValue: number }) {
   if (!market)
     return (
       <Callout>
@@ -1855,15 +1871,14 @@ function MarketBanner({ market, serverName, today, genetonOrigin, genetonValue }
         <a href={href('prix', { onglet: 'hdv' })}>Importer les prix du marché du serveur</a> pour chiffrer d’un coup carburants, makinas, filets et ressources.
       </Callout>
     )
-  const fr = snapshotFreshness(market.exportDate, today)
   return (
     <div className="stack" style={{ gap: 6, marginBottom: 12 }}>
       <small className="muted">
-        Prix du marché : export HDV de <strong>{market.serverName || serverName}</strong> du {frenchDay(market.exportDate)} (après vos prix, avant les défauts). Généton : {formatKamas(genetonValue)} (
+        Prix du marché : export <strong>{marketWhere(market)}</strong> (après vos prix, avant les défauts). Généton : {formatKamas(genetonValue)} (
         {genetonOrigin === 'marche' ? 'marché' : genetonOrigin === 'joueur' ? 'votre valeur' : 'défaut'}). Montures : le prix de l’HDV (mixte) n’est qu’un plafond de vente. ·{' '}
         <a href={href('prix', { onglet: 'marche' })}>Lecture du marché</a>
       </small>
-      {fr.level !== 'frais' && <Callout tone={fr.tone === 'ok' ? undefined : fr.tone}>{fr.message}</Callout>}
+      <MarketStatusCallouts context="montants" />
     </div>
   )
 }
@@ -1887,7 +1902,6 @@ export default function ProfitPage() {
   const genetonOverride = usePrices((s) => s.genetonValue)
   const inventory = useInventory((s) => s.mounts)
   const server = useActiveServer()
-  const today = useServerDay()
   // Marché du serveur : prix de l'objet-monture (HDV mixte) = plafond de vente prudent des décisions.
   const mctx = useMemo<MountPriceContext>(
     () => ({ mountOverrides: pMounts, generationOverrides: pGenerations, useDefaults: useDefaultPrices, market: ctx.market }),
@@ -2050,7 +2064,7 @@ export default function ProfitPage() {
           </>
         }
       />
-      <MarketBanner market={ctx.market ?? null} serverName={server.name} today={today} genetonOrigin={geneton.origin} genetonValue={geneton.value} />
+      <MarketBanner market={ctx.market ?? null} serverName={server.name} genetonOrigin={geneton.origin} genetonValue={geneton.value} />
       <Tabs tabs={TABS} value={tab} onChange={setTab} />
       {tab === 'cycle' && (
         <CycleTab

@@ -77,6 +77,8 @@ L'enregistrement du gestionnaire n'a lieu que dans un vrai `WorkerGlobalScope` :
 ## Coût en kamas
 
 `estimateProgramCost(summary, { ctx, rules, tier, jobLevel, netKind?, mountsPerCast?, genetonValue?, craftableOnly? }): ProgramCost`
+(page Optimiseur et Plan : `genetonValue` = `useGenetonValue().net`, valeur NETTE du généton du profil — marché du
+serveur sans valeur saisie —, affichée « nette de taxe »)
 
 - Lignes (`ProgramCostLine`) : une par jauge (`points moyens × bestFuel(g, maintainedTier(g, …, tier)).value` :
   Baffeur et Caresseur au palier 1, comme la page Enclos et Rentabilité), une par génération

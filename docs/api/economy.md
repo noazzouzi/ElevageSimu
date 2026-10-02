@@ -12,6 +12,8 @@ const mctx: MountPriceContext = {                              // prix des montu
 }
 const rules = useRules(); const jobLevel = useSettings((s) => s.jobLevel)
 const g = genetonKamasValue(usePrices((s) => s.genetonValue), { market: ctx.market, saleTax })  // g.value (brut), g.origin, g.net
+// Dans une page : useGenetonValue() (src/store/prices.ts) = la même valeur partout (Accouplement, Montures,
+// Optimiseur, Plan…), `net` toujours rempli ; genetonOriginLabel(g) → « votre valeur » | « marché (…) » | « valeur par défaut ».
 ```
 
 **Règle commune** : un prix inconnu n'est jamais 0. Les fonctions renvoient `complete: false`, une
@@ -43,7 +45,7 @@ Un montant dont des prix manquent s'affiche en **intervalle** (`Range {low, high
 | `fuelOption(fuel, ctx, {jobLevel, rules}): FuelOption` | Prix retenu (`resolvePrice` : joueur > défaut > craft), durabilité, `costPerPoint`, `market`, `craft`, `canCraft`, `craftPriceOnly`. `opts.jobLevel` est ajouté au contexte s'il n'y figure pas : une recette hors de portée prend le prix HDV (sinon craft signalé `craftPriceOnly`). |
 | `optimakinaHeuristicUse(targetGeneration, goalRelevant): boolean` | Heuristique unique de la recherche quand la règle de prix est indécidable (utilisée par `decideOptimakina` et `pairing.adviseOptimakina`). Constantes `OPTIMAKINA_HEURISTIC_GENERATION = 6`, `OPTIMAKINA_GOAL_STEP_GENERATION = 4`. |
 | `fuelOptions(gauge, tier, ctx, opts): FuelOption[]` | Les 5 tailles d'une jauge/palier. |
-| `bestFuel(gauge, tier, ctx, opts & {exactTier?, craftableOnly?}): GaugePointCost` | Carburant le moins cher au point pour entretenir ce palier (paliers ≥ acceptés). `complete` seulement si un carburant du palier est chiffré ; sinon `bound: 'max'` (palier supérieur) ou `'min'` (ingrédients partiels) et `toPrice` = carburant à chiffrer. Repli « estimation » (`estimated: true`) sur `valuation.fuelCostPerGaugePointDefaults` pour la **Mangeoire seulement**. |
+| `bestFuel(gauge, tier, ctx, opts & {exactTier?, craftableOnly?, liquidity?}): GaugePointCost` | Carburant le moins cher au point pour entretenir ce palier (paliers ≥ acceptés). `complete` seulement si un carburant du palier est chiffré ; sinon `bound: 'max'` (palier supérieur) ou `'min'` (ingrédients partiels) et `toPrice` = carburant à chiffrer. Repli « estimation » (`estimated: true`) sur `valuation.fuelCostPerGaugePointDefaults` pour la **Mangeoire seulement**. **`liquidity: {pointsPerDay, share}`** : un carburant **acheté à l'HDV** dont le besoin (points ÷ durabilité) dépasse `share` × ses ventes par jour est écarté au profit du suivant ou d'un craft (gardé s'il n'y a pas d'autre carburant chiffré au palier) ; `liquidityLimited: FuelLiquidityLimit[]` (`fuelId`, `name`, `itemsPerDay`, `perDayAvg`, `share`, `kept`) liste ceux qui auraient été moins chers. **Prix du marché peu fiable** (revue UX2-02, `FuelOption.unreliable` = `market.unreliableMedian`) : un carburant au prix de la médiane 30 j sans vente récente (< 5 ventes en 24 h) et dont la moyenne 30 j dépasse 2 × la médiane est choisi et chiffré **à la moyenne 30 j** (Tylezia : Grand Élixir d'Abreuvoir 2 872 → 9 145 K) ; `fuelOption` garde le prix affiché et expose `unreliable {prudentPrice, reason}`. |
 | `costPerGaugePoint(...)` | Alias de `bestFuel`. |
 | `defaultMangeoirePointCost(tier, rules)` | Coût au point par défaut de la recherche (÷ facteur de durabilité). |
 | `fillPlan(gauge, from, to, ctx, opts): FillPlan` | Plan de dépôts de `from` à `to` respectant les plafonds. **Chaque tranche est remplie avec la famille minimale** (`sliceTier(niveau, rules)` : Extrait sous le plafond du palier 1, Philtre jusqu'au palier 2…). Une famille supérieure n'entre dans une tranche que si elle est chiffrée **et** pas plus chère au point qu'un carburant chiffré de la famille de la tranche (à défaut, d'une famille inférieure) — jamais parce qu'elle serait la seule chiffrée. Si la famille de la tranche n'a pas de prix, le plan la garde (`complete: false`, objets « prix à saisir » dans `missing`, `cost` = borne basse ou `null`) et **`upperBound`** donne le même remplissage entièrement chiffré (souvent un Élixir estimé) : **borne haute**, à afficher « ≤ … », jamais comme le coût. Critères (Dijkstra lexicographique) : objets chiffrés, kamas, gaspillage, dépassement de l'objectif, nombre d'objets, coût partiel connu (départage). `craftableOnly` : un prix « craft » hors de portée du métier compte comme non chiffré (l'objet reste proposé). `steps` dans l'ordre, `items` agrégés, `cost`, `complete`, `waste`, `overshoot`, `upperBound`. |
@@ -64,8 +66,8 @@ Un montant dont des prix manquent s'affiche en **intervalle** (`Range {low, high
 | `extractionValue(speciesId, ctx, {senile?})` | `qty` (= génération ; G1 = 0 ; sénile = 1) × prix Neurone/Ambre/Corne (brut) : votre prix > **marché importé** (`ctx.market`, `market` = date, statistique, volume) > défaut. |
 | `brisageValue(family, level, ctx?)` | Rendements observés interpolés (45/53/100/200), extrapolés de 0 (niv. 35) à 45, mis à l'échelle de la rune Ga (Ga Pa 1557, Ga Pme 1558) : votre prix > **marché importé** > défaut ; `runePrice`, `runeOrigin`, `runeMarket` (avec `ctx`). Dragodindes : `possible: false`. `BRISAGE_RISK_NOTE`. |
 | `mountValuation(speciesId, level, {ctx, mountPrices, saleTax, state?, senile?}): MountValuation` | `sale`, `extraction`, `brisage` (nets de taxe), `best`, `bestKind`, `confidence`, `complete`, **`estimated`**. Vente sans prix de décision : `sale.net = null`, **`sale.reference`** `{net, kind, reason}` (jamais comptée) → `complete: false`, `best` = borne basse. À égalité : extraction > brisage > vente. **Marché (`mountPrices.market`) = plafond de vente prudent** : un défaut plafonné (`cappedFrom`) est compté au prix du marché ; le prix du marché **seul** n'est pas compté (`sale.reference.kind = 'marche'`, `sale.ceiling` net, `sale.market`) mais donne **`bestHigh`** = max(meilleure valeur connue, plafond) quand extraction et brisage sont chiffrés (bornes hautes de `cycleProfit` / `crossingRanking`) ; vos prix ne sont jamais plafonnés ; **`marketWarning`** si `possibleSenile` (G5+ < ½ extraction : jamais acheter pour extraire sans vérifier). |
-| `genetonKamasValue(override?, {market?, saleTax?})` | Valeur **brute** d'un généton : la vôtre, sinon **le marché du serveur** (`origin: 'marche'` : max(prix ÷ coût) sur la boutique d'Eugène Éton, Tourmaline 130 comprise ; `market` = détail, `basis` = « Petit Parchemin de Chance 5 079 K ÷ 10 (HDV de Tylezia du 02/10/2026…) »), sinon 375 K (plage 125-725). `net` = brute × (1 − `saleTax`) si fourni ; les calculs la comptent nette de la taxe (parchemin revendu). Tylezia 02/10 : 507,9 K brut. |
-| `genetonLiquidValue(market, genetonsPerDay, {share?, saleTax?})` | Valeur d'une production de génétons selon le volume de la boutique : meilleur échange d'abord (dans la limite de `share` de son volume moyen), puis le suivant ; `perGeneton`, `net`, `absorbed`, `surplus` (non valorisé), `lines`. |
+| `genetonKamasValue(override?, {market?, saleTax?})` | Valeur **brute** d'un généton : la vôtre, sinon **le marché du serveur** (`origin: 'marche'` : max(prix ÷ coût) sur les **échanges reconfirmés** de la boutique d'Eugène Éton — Puissants Parchemins, 160 génétons ; `market` = détail, `basis` = « Puissant Parchemin d'Agilité … ÷ 160 (HDV de Tylezia du 02/10/2026…) — échange reconfirmé après la 3.5 ; 508 K par généton avec Petit Parchemin de Chance (boutique de la bêta, non reconfirmée) »), sinon 375 K (plage 125-725). `net` = brute × (1 − `saleTax`) si fourni ; les calculs la comptent nette de la taxe (parchemin revendu). Tylezia 02/10 : ≈ 454 K brut (Puissant d'Agilité ; le Petit Parchemin de Chance, 508 K, n'est qu'une valeur optimiste). Pages : `useGenetonValue()` (prix saisi > marché du serveur > défaut, taxe du profil) ; montants affichés **nets** (Plan, Optimiseur, Accueil, Modes, Rentabilité), valeur brute seulement pour les fonctions qui appliquent la taxe elles-mêmes (`crossingRanking`, `matingEconomics`). |
+| `genetonLiquidValue(market, genetonsPerDay, {share?, saleTax?})` | Valeur d'une production de génétons selon le volume de la boutique (échanges reconfirmés) : meilleur échange d'abord (dans la limite de `share` de son volume moyen), puis le suivant ; `perGeneton`, `net`, `absorbed`, `surplus` (non valorisé), `lines`. |
 
 ## `economy.ts` — lots, coûts d'enclos, socle
 
@@ -80,7 +82,7 @@ Un montant dont des prix manquent s'affiche en **intervalle** (`Range {low, high
 | `levelingCost(from, to, {tier, batchSize, sage?, ctx, rules, jobLevel?})` | XP monture, points de Mangeoire du lot, coût, `costPerBatchHigh`, `estimated`, durée. |
 | `socleInvestment(consumed, tiers, paddocks, {ctx, rules, jobLevel, tier}): InitialInvestment` | Socle des paliers ≥ 2 par enclos (jauge vide → bas du palier), **même calcul que la page Enclos** (`refillAdvice`) : `lines[] {gauge, tier, pointsPerPaddock, paddocks, items, cost, complete, upperBound}`, `total`, `low`, `high`. Investissement unique : il reste dans les jauges. |
 | `captureCost(family, netKind, ctx, {mountsPerCast?, jobLevel?})` | Prix du filet / montures par lancer, `canEquip`, `craftLocked?`. `findNet`, `NET_KIND_LABELS`, `DEFAULT_MOUNTS_PER_CAST`. |
-| `makinaCost(kind, family, gen, ctx, rules?)` | Prix HDV ou craft (bêta 3.7) ; avec `ctx.jobLevel`, une makina hors de portée est payée au prix HDV (`craftLocked` sinon). |
+| `makinaCost(kind, family, gen, ctx, rules?)` | Prix HDV ou craft (bêta 3.7) ; avec `ctx.jobLevel`, une makina hors de portée est payée au prix HDV (`craftLocked` sinon). Origine `marche` : `market` (`MarketPriceInfo` : date, statistique, volume) pour l'étiquette « marché (02/10) · N vendus/24 h » (Accouplement, `PriceOriginNote`). |
 | `unlockedPaddockCount(jobLevel)` | Enclos débloqués (1 … 6). |
 
 ## `economy.ts` — Optimakina, accouplement, cycle, classement
@@ -128,7 +130,15 @@ selon leur meilleur devenir, génétons), **`liquidityExceeded`** et `matingsPer
 - **`liquidity: LiquidityCheck[]`** (vide sans marché) : ventes par jour du cycle répété en continu
   (ressources extraites, montures vendues, runes Ga en équivalent de valeur, génétons écoulés en
   parchemins) face au volume du serveur ; un dépassement ajoute un avertissement « Liquidité (cycle répété en
-  continu) — … » à `warnings` (le revenu n'est pas modifié) ;
+  continu) — … » à `warnings` ; le revenu d'**un** cycle n'est pas modifié (ses ventes peuvent s'étaler) ;
+- **ventes plafonnées** (cycle répété en continu, SPEC §3) : `profitCapped`, `kamasPerHourCapped`,
+  `ranges.profitCapped`, `ranges.kamasPerHourCapped` et `cappedSales: CappedSale[]` (`itemId`, `name`, `kind`,
+  `excessShare` = 1 − plafond ÷ ventes prévues, `removed`, `fallback`, `fallbackUnknown`) : la part au-delà de la
+  part vendable du volume ne se vend pas au prix prévu — une **monture** en trop est extraite (génération ×
+  ressource, taxe déduite ; une G1 ne rend rien ; ressource sans prix : repli non compté, borne haute = bénéfice
+  non plafonné), une **ressource**, une **rune** ou un **généton** au-delà du plafond ne rapporte rien. Égal au
+  bénéfice brut sans marché ou sans dépassement. La page Rentabilité affiche « Bénéfice plafonné (cycle en
+  continu) » et « Kamas par heure plafonnés » à côté des valeurs brutes ;
 - `revenue[].reference.kind` (`'marche'` : vente seulement plafonnée par l'HDV mixte).
 
 ## `economy.ts` — marché importé et liquidité
@@ -144,7 +154,7 @@ Le marché du serveur vient de `ctx.market` (`usePriceContext()`) ; aucune fonct
 | `absorbablePerDay(id, src, share?)` | `salesCap(...).perDay` ou null. |
 | `PlannedSale {itemId, perDay, kind?}`, `SaleKind`, `LiquidityCheck` | Ventes prévues et vérification (`cap`, `marketPerDay`, `marketShare`, `exceeds`, `message`). |
 | `checkPlannedSales(sales, src, share?)` | Regroupe par objet, compare au plafond ; objet absent → `cap: null` avec message « liquidité inconnue » ; dépassements en premier. Sans marché : `[]`. |
-| `genetonLiquidityCheck(genetonsPerDay, src, share?)` | Génétons face à toute la boutique (parchemins + Tourmaline, `share` du volume de chacun), en génétons. |
+| `genetonLiquidityCheck(genetonsPerDay, src, share?)` | Génétons face aux échanges reconfirmés de la boutique (Puissants Parchemins, `share` du volume de chacun), en génétons. |
 | `genetonLiquidValue(...)` | Voir ci-dessus. |
 
 ## `economy.ts` — saisie des prix
@@ -156,4 +166,5 @@ Le marché du serveur vient de `ctx.market` (`usePriceContext()`) ; aucune fonct
 | `parseKamas(s): number \| null` | « 12 000 », « 12.000 », « 12k », « 1,5 M », « 950 K » (symbole). |
 | `parseBulkPrices(text): {entries, errors}` | Collage « Nom;Prix » / « id;prix » / « Nom prix ». |
 | `buildPriceExport(snapshot, server, now?)`, `parsePriceExport(json)` | Export/import JSON des prix (format `elevagesimu-prix` v1, ou état brut du store). |
+| `priceFileServerMismatch(fileServer, activeServerName)` | Le fichier de prix vient d'un **autre serveur** que celui du profil ouvert (noms comparés sans casse ni accents ; fichier sans serveur : non signalé). Prix › masse › « Importer un fichier… » demande alors confirmation (les prix saisis sont partagés par tous les profils du serveur, nommés dans la question). |
 | `priceCoverage(ctx): CoverageStat[]` | Objets au prix complet : carburants, makinas, filets, ingrédients, ressources d'extraction. |

@@ -6,6 +6,7 @@
 import { useMemo } from 'react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { genetonKamasValue, type GenetonValue } from '../domain/economy'
 import type { PriceContext } from '../domain/pricing'
 import { useMarketSource } from './market'
 import { persistOptions, syncAcrossTabs } from './persistence'
@@ -80,4 +81,27 @@ export function usePriceContext(): PriceContext {
   const jobLevel = useSettings((s) => s.jobLevel)
   const market = useMarketSource()
   return useMemo(() => ({ overrides, useDefaults, jobLevel, market }), [overrides, useDefaults, jobLevel, market])
+}
+
+/**
+ * Valeur d'un généton pour le profil ouvert, la MÊME sur toutes les pages : votre valeur saisie, sinon
+ * celle du marché importé du serveur (meilleur échange reconfirmé de la boutique d'Eugène Éton), sinon le
+ * défaut de la recherche (375 K). `value` = brute, `net` = nette de la taxe de vente du profil ; `origin`
+ * (`joueur`, `marche`, `defaut`) et `basis` pour le libellé.
+ */
+export function useGenetonValue(): GenetonValue & { net: number } {
+  const override = usePrices((s) => s.genetonValue)
+  const saleTax = useSettings((s) => s.saleTax)
+  const market = useMarketSource()
+  return useMemo(() => {
+    const g = genetonKamasValue(override, { market, saleTax })
+    return { ...g, net: g.net ?? g.value * (1 - saleTax) }
+  }, [override, market, saleTax])
+}
+
+/** Libellé de l'origine d'une valeur de généton (« votre valeur », « marché (Puissant Parchemin…) », « valeur par défaut »). */
+export function genetonOriginLabel(g: Pick<GenetonValue, 'origin' | 'market'>): string {
+  if (g.origin === 'joueur') return 'votre valeur'
+  if (g.origin === 'marche') return `marché${g.market?.best ? ` (${g.market.best.name})` : ''}`
+  return 'valeur par défaut'
 }

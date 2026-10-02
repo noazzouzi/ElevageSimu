@@ -317,6 +317,12 @@ export interface MakinaAdvice {
   thresholdIsUpperBound: boolean
   basis: MakinaBasis
   reason: string
+  /**
+   * Critère de la décision en une phrase courte (« prix 54 814 K < seuil 57 501 K (C_eff × Δ / p) », « seuil
+   * seulement borné (≤ 897 438 K, …) ; systématique dès la cible G6 »), repris tel quel par l'accueil : la
+   * même justification sur toutes les pages (revue UX2-06). Absent : décision sans critère de prix.
+   */
+  decision?: string
 }
 
 export interface PairAnalysis {
@@ -499,11 +505,13 @@ export function adviseOptimakina(
   const formula = successBasis ? SUCCESS_BASIS_LABELS[successBasis] : ''
   const ceffNote = successBasis === 'c-eff' && cc ? ` ; C_eff ${thresholdIsUpperBound ? '≤ ' : ''}${formatKamas(Math.max(0, cc.value))}` : ''
   const heuristic = (why: string): MakinaAdvice => {
+    const lead = why.replace(/, $/, '')
     if (t >= OPTIMAKINA_SYSTEMATIC_GENERATION)
       return {
         ...common,
         use: true,
         basis: 'heuristique',
+        decision: `${lead ? `${lead} ; ` : ''}systématique dès la cible G${OPTIMAKINA_SYSTEMATIC_GENERATION} (recherche)`,
         reason: `Optimakina conseillée : ${why}cible G${t}${ctx.goalRelevant ? ', étape de votre objectif' : ''} — la recherche la recommande dès la cible G${OPTIMAKINA_SYSTEMATIC_GENERATION} (−40 à −65 % d'accouplements et de captures sur une chaîne G9). +${pct(gain)} de cible.`,
       }
     if (optimakinaHeuristicUse(t, ctx.goalRelevant))
@@ -511,12 +519,14 @@ export function adviseOptimakina(
         ...common,
         use: true,
         basis: 'heuristique',
+        decision: `${lead ? `${lead} ; ` : ''}étape G4–G5 de l’objectif, à défaut de prix décisif`,
         reason: `Optimakina conseillée à défaut de prix : ${why}cible G${t}, étape de votre objectif — la recherche la réserve aux étapes G4–G5 dont le prix reste sous le seuil ; saisissez son prix pour trancher. +${pct(gain)} de cible.`,
       }
     return {
       ...common,
       use: false,
       basis: 'heuristique',
+      decision: `${lead ? `${lead} ; ` : ''}réservée aux cibles ≥ G${OPTIMAKINA_SYSTEMATIC_GENERATION} sans prix décisif`,
       reason: `Pas d'Optimakina : ${why}cible G${t}${ctx.goalRelevant ? ', étape de votre objectif mais de génération basse' : ' sans enjeu particulier'} — sans prix sous le seuil, la recherche la réserve aux cibles G${OPTIMAKINA_SYSTEMATIC_GENERATION} et plus${ctx.goalRelevant ? ' (G4–G5 pour les étapes de l’objectif)' : ''}.`,
     }
   }
@@ -524,13 +534,26 @@ export function adviseOptimakina(
   if (threshold !== null && price !== null) {
     if (priceComplete && !thresholdIsUpperBound)
       return price < threshold
-        ? { ...common, use: true, basis: 'regle-prix', reason: `Optimakina rentable : prix ${formatKamas(price)} < seuil ${formatKamas(threshold)} (${formula}${ceffNote} ; +${pct(gain)} de cible).` }
-        : { ...common, use: false, basis: 'regle-prix', reason: `Optimakina non rentable ici : prix ${formatKamas(price)} ≥ seuil ${formatKamas(threshold)} (${formula}${ceffNote}).` }
+        ? {
+            ...common,
+            use: true,
+            basis: 'regle-prix',
+            decision: `prix ${formatKamas(price)} < seuil ${formatKamas(threshold)} (${formula})`,
+            reason: `Optimakina rentable : prix ${formatKamas(price)} < seuil ${formatKamas(threshold)} (${formula}${ceffNote} ; +${pct(gain)} de cible).`,
+          }
+        : {
+            ...common,
+            use: false,
+            basis: 'regle-prix',
+            decision: `prix ${formatKamas(price)} ≥ seuil ${formatKamas(threshold)} (${formula})`,
+            reason: `Optimakina non rentable ici : prix ${formatKamas(price)} ≥ seuil ${formatKamas(threshold)} (${formula}${ceffNote}).`,
+          }
     if (price >= threshold)
       return {
         ...common,
         use: false,
         basis: 'regle-prix',
+        decision: priceComplete ? `prix ${formatKamas(price)} ≥ seuil maximal ${formatKamas(threshold)} (${formula})` : `coût connu ≥ ${formatKamas(price)} déjà au-dessus du seuil ${formatKamas(threshold)}`,
         reason: priceComplete
           ? `Optimakina non rentable ici : prix ${formatKamas(price)} ≥ seuil maximal ${formatKamas(threshold)} (${formula}${ceffNote} ; une sortie des stériles n'est pas chiffrée, le vrai seuil est plus bas).`
           : `Optimakina non rentable ici : la partie connue de son coût (≥ ${formatKamas(price)}) dépasse déjà le seuil ${formatKamas(threshold)} (${formula}${ceffNote}).`,

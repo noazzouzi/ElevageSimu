@@ -82,6 +82,9 @@ const STORAGE_ISSUE_TITLES: Record<StorageIssueKind, string> = {
   version: 'Données d’une version plus récente.',
   illisible: 'Données illisibles.',
   corrige: 'Données corrigées.',
+  migration: 'Profils non activés (stockage plein).',
+  divergence: 'Données modifiées par l’ancienne version.',
+  onglet: 'Profil modifié dans un autre onglet.',
 }
 
 /**
@@ -107,7 +110,7 @@ export function StorageAlerts() {
       {issues.map((i) => {
         const id = `${i.key}|${i.kind}`
         return (
-          <div key={id} className={`callout ${i.kind === 'corrige' ? 'warn' : 'danger'}`}>
+          <div key={id} className={`callout ${i.kind === 'corrige' || i.kind === 'divergence' ? 'warn' : 'danger'}`}>
             <strong>{STORAGE_ISSUE_TITLES[i.kind]}</strong> {i.message}
             <div className="row" style={{ marginTop: 6 }}>
               {i.kind !== 'corrige' && (
@@ -129,7 +132,17 @@ export function StorageAlerts() {
                   </a>
                 </>
               )}
-              {i.kind === 'version' && (
+              {i.kind === 'migration' && (
+                <a className="btn small" href={href('reglages', { s: 'donnees' })}>
+                  Libérer de la place
+                </a>
+              )}
+              {i.kind === 'divergence' && (
+                <a className="btn small" href={href('reglages', { s: 'profils' })}>
+                  Reprendre ou ignorer (Réglages › Profils)
+                </a>
+              )}
+              {(i.kind === 'version' || i.kind === 'onglet') && (
                 <button type="button" className="btn small" onClick={() => window.location.reload()}>
                   Recharger la page
                 </button>

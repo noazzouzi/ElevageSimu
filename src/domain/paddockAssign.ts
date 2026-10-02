@@ -32,7 +32,7 @@ import { bestFuel, fillPlan, type FillPlan, type GaugePointCost } from './fuel'
 import { SERENITY_SMILEYS } from './mountFate'
 import { effectiveFertility } from './mounts'
 import { almanaxAtTime, canBenefit, formatDuration, gainMultiplier, isFecund, simulatePaddock, type SimMount, type SimulateResult } from './paddock'
-import type { PriceContext } from './pricing'
+import type { MarketPriceInfo, PriceContext, PriceOrigin } from './pricing'
 import { RULESETS, type Ruleset } from './rules'
 import type { FuelTier, GaugeId, Mount, MountLocation, PaddockState } from './types'
 import { mountXpBetween } from './xp'
@@ -1117,6 +1117,10 @@ export interface RefillItem {
   canCraft: boolean
   craftLevel: number
   durability: number
+  /** Origine du prix retenu (votre prix, marché importé, défaut, coût des ingrédients…). */
+  origin: PriceOrigin
+  /** Prix du marché importé (`origin: 'marche'`) : date de l'export, statistique, volume du serveur. */
+  market?: MarketPriceInfo
 }
 
 export interface RefillLine {
@@ -1224,6 +1228,8 @@ function sumPlans(parts: [FillPlan | null, number][]): CostSum {
           canCraft: o.canCraft,
           craftLevel: o.craftLevel,
           durability: o.durability,
+          origin: o.origin,
+          ...(o.origin === 'marche' && o.market.market ? { market: o.market.market } : {}),
         })
     }
   }

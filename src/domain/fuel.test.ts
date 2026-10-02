@@ -8,9 +8,11 @@ import {
   fillPlan,
   findFuel,
   fuelDurability,
+  fuelOption,
   fuelOptions,
   fuelsOf,
 } from './fuel'
+import { buildSnapshot, marketSourceOf, parseHdvCsv, unreliableMedian } from './market'
 import type { PriceContext } from './pricing'
 import { RULESETS } from './rules'
 
@@ -308,5 +310,31 @@ describe('ECO-12 — recette hors de portée du métier', () => {
     expect(high.canCraft).toBe(true)
     expect(high.origin).toBe('craft')
     expect(high.unitPrice!).toBeLessThan(low.unitPrice!)
+  })
+})
+
+// ---------- Revue « parcours » v2 (UX2) ----------
+
+describe('UX2-02 — prix du marché peu fiable pour un achat', () => {
+  // Lignes réelles du CSV de Tylezia (02/10/2026).
+  const csv = [
+    'gid;nom;niveau;type;categorie;vendus_24h;vendus_7j;vendus_30j;median_30j;moyen_30j;median_24h;kamas_par_jour',
+    "33493;Grand Élixir d'Abreuvoir;185;Carburant d'enclos;Ressource;0;30;664;2872;9145;0;63566",
+    "33319;Petit Extrait d'Abreuvoir;15;Carburant d'enclos;Ressource;261;4911;27353;1505;1522;1675;1372208",
+  ].join('\n')
+  const market = marketSourceOf(buildSnapshot(parseHdvCsv(csv), { serverName: 'Tylezia', exportDate: '2026-10-02' }), 'auto', 'Tylezia')
+  const ctx: PriceContext = { overrides: {}, useDefaults: false, market, jobLevel: 1 }
+
+  it('Grand Élixir d’Abreuvoir (0 vente en 24 h, moyenne 9 145 > 2 × médiane 2 872) : signalé et chiffré à la moyenne 30 j', () => {
+    expect(unreliableMedian(market, 33493)?.prudentPrice).toBe(9145)
+    expect(unreliableMedian(market, 33319)).toBeNull()
+    const o = fuelOption(findFuel('abreuvoir', 4, 'grand')!, ctx, { jobLevel: 1, rules: R36 })
+    expect(o.unitPrice).toBe(2872)
+    expect(o.unreliable?.prudentPrice).toBe(9145)
+    expect(o.unreliable?.reason).toMatch(/peu fiable/)
+    const best = bestFuel('abreuvoir', 4, ctx, { jobLevel: 1, rules: R36 })
+    const chosen = best.options.find((x) => x.fuel.id === 33493)!
+    expect(chosen.costPerPoint).toBeCloseTo(9145 / chosen.durability, 9)
+    if (best.fuel?.fuel.id === 33493) expect(best.value).toBeCloseTo(9145 / chosen.durability, 9)
   })
 })

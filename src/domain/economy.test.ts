@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { FUELS, NETS, PRICES_DEFAULT, SPECIES, findMakina } from '../data'
 import tylezia from '../data/market/tylezia-2026-10-02.json'
 import {
+  priceFileServerMismatch,
   BRISAGE_RUNE,
   MOUNT_MARKET_BADGE,
   REFERENCE_KIND_LABELS,
@@ -844,10 +845,12 @@ describe('marché importé du serveur (export HDV de Tylezia)', () => {
 
   it('généton : valeur du marché (boutique d’Eugène Éton), nette de taxe ; votre valeur prime', () => {
     const g = genetonKamasValue(null, { market, saleTax: 0.02 })
-    expect(g).toMatchObject({ origin: 'marche', value: 507.9 }) // Petit Parchemin de Chance 5 079 ÷ 10
-    expect(g.net).toBeCloseTo(507.9 * 0.98, 10)
-    expect(g.market?.best.name).toBe('Petit Parchemin de Chance')
+    // Échange reconfirmé seulement : Puissant Parchemin de Chance 70 298 ÷ 160 (le Petit, 5 079 ÷ 10, est optimiste).
+    expect(g).toMatchObject({ origin: 'marche', value: 70298 / 160 })
+    expect(g.net).toBeCloseTo((70298 / 160) * 0.98, 10)
+    expect(g.market?.best.name).toBe('Puissant Parchemin de Chance')
     expect(g.basis).toMatch(/Tylezia du 02\/10\/2026/)
+    expect(g.basis).toMatch(/non reconfirmée/)
     expect(genetonKamasValue(400, { market })).toMatchObject({ origin: 'joueur', value: 400 })
     expect(genetonKamasValue(null)).toMatchObject({ origin: 'defaut', value: 375 })
     expect(genetonKamasValue(null).net).toBeUndefined()
@@ -855,14 +858,14 @@ describe('marché importé du serveur (export HDV de Tylezia)', () => {
 
   it('génétons et liquidité : meilleur échange d’abord, dans la limite du volume, puis le suivant', () => {
     const small = genetonLiquidValue(market, 1_000)!
-    expect(small.perGeneton).toBeCloseTo(507.9, 10)
+    expect(small.perGeneton).toBeCloseTo(70298 / 160, 10)
     expect(small.surplus).toBe(0)
-    const big = genetonLiquidValue(market, 5_000)!
-    expect(big.lines[0].id).toBe(809)
-    expect(big.lines[0].genetons).toBeCloseTo((45_497 / 30) * 0.15 * 10, 6)
-    expect(big.lines[1].id).toBe(686) // Petit Parchemin d'Intelligence (506,2 / généton)
-    expect(big.perGeneton!).toBeLessThan(507.9)
-    expect(big.perGeneton!).toBeGreaterThan(485)
+    // Seuls les Puissants Parchemins (reconfirmés) écoulent les génétons : au-delà de leur volume, surplus.
+    const big = genetonLiquidValue(market, 30_000)!
+    expect(big.lines[0].id).toBe(814)
+    expect(big.lines[0].genetons).toBeCloseTo((32_905 / 30) * 0.15 * 160, 6)
+    expect(big.surplus).toBeGreaterThan(0)
+    expect(big.lines.every((l) => l.id !== 809)).toBe(true)
     const huge = genetonLiquidValue(market, 10_000_000)!
     expect(huge.surplus).toBeGreaterThan(0)
     expect(huge.absorbed + huge.surplus).toBeCloseTo(10_000_000, 3)
@@ -952,6 +955,36 @@ describe('marché importé du serveur (export HDV de Tylezia)', () => {
     expect(none.warnings.some((w) => w.startsWith('Liquidité'))).toBe(false)
   })
 
+  it('ECO-V2-13 : cycle en continu — ventes plafonnées par la liquidité (montures en trop extraites, génétons au-delà du plafond à 0)', () => {
+    const r = cycleProfit(cycle({ ...fullCtx(), market }))
+    const dore = r.cappedSales.find((c) => c.itemId === 33072)!
+    const chk = r.liquidity.find((l) => l.itemId === 33072)!
+    expect(dore.kind).toBe('monture')
+    expect(dore.excessShare).toBeCloseTo(1 - (chk.cap as number) / chk.perDay, 10)
+    // Muldos Dorés G1 en trop : extraits, mais une G1 ne rend aucune ressource (repli 0, jamais inconnu).
+    expect(dore.fallback).toBe(0)
+    expect(dore.fallbackUnknown).toBe(false)
+    expect(dore.removed).toBeGreaterThan(0)
+    const delta = r.cappedSales.reduce((t, c) => t + c.fallback - c.removed, 0)
+    expect(r.profitCapped).toBeCloseTo(r.profit + delta, 6)
+    expect(r.profitCapped).toBeLessThan(r.profit)
+    expect(r.kamasPerHourCapped!).toBeLessThan(r.kamasPerHour!)
+    expect(r.ranges.profitCapped.low).toBeCloseTo((r.ranges.profit.low as number) + delta, 6)
+    // Sans marché : rien à plafonner.
+    const none = cycleProfit(cycle(fullCtx()))
+    expect(none.cappedSales).toEqual([])
+    expect(none.profitCapped).toBe(none.profit)
+    // Génétons : la boutique (Puissants, 0,1 vente/jour) n'en écoule presque aucun → le surplus vaut 0.
+    const thin = HDV_FIXTURE.replace('814;Puissant Parchemin de Chance;1;Parchemin de caractéristique;Consommable;1245;8369;32905;', '814;Puissant Parchemin de Chance;1;Parchemin de caractéristique;Consommable;0;1;3;')
+    const thinMarket = marketSourceOf(buildSnapshot(parseHdvCsv(thin), { serverName: 'Tylezia', exportDate: '2026-10-02', importedAt: 0 }), 'auto', 'Tylezia')
+    const g = cycleProfit({ ...cycle({ ...fullCtx(), market: thinMarket }), pairs: 50 })
+    expect(g.liquidity.find((l) => l.kind === 'parchemin')?.exceeds).toBe(true)
+    const gen = g.cappedSales.find((c) => c.kind === 'parchemin')!
+    const genLine = g.revenue.find((l) => l.kind === 'genetons')!
+    expect(gen.removed).toBeCloseTo(gen.excessShare * (genLine.subtotal as number), 6)
+    expect(gen.fallback).toBe(0)
+  })
+
   it('classement : liquidité à plein régime (marché importé seulement)', () => {
     const opts = { tier: 1 as const, batchSize: 10, parentLevel: 40, optimakina: 'jamais' as const, saleTax: 0.02, mountPrices: mprices, rules: R36, jobLevel: 40, genetonValue: 375 }
     const rows = crossingRanking('muldo', { ...opts, ctx: { ...fullCtx(), market } })
@@ -981,5 +1014,16 @@ describe('marché importé du serveur (export HDV de Tylezia)', () => {
     // Les marges connues (bornes basses) ne comptent pas les prix de marché des montures.
     const byKey = new Map(without.map((r) => [r.key, r]))
     for (const r of withM) expect(r.margin).toBeCloseTo(byKey.get(r.key)!.margin, 6)
+  })
+})
+
+describe('fichier de prix d’un autre serveur (DI-08)', () => {
+  it('signalé si le serveur noté dans le fichier n’est pas celui du profil ouvert (casse et accents ignorés)', () => {
+    expect(priceFileServerMismatch('Jahash', 'Tylezia')).toBe(true)
+    expect(priceFileServerMismatch('tylézia', 'Tylezia')).toBe(false)
+    expect(priceFileServerMismatch('  TYLEZIA ', 'Tylezia')).toBe(false)
+    // Fichier sans serveur noté (ancien export, état brut) : rien à comparer.
+    expect(priceFileServerMismatch(null, 'Tylezia')).toBe(false)
+    expect(priceFileServerMismatch('', 'Tylezia')).toBe(false)
   })
 })

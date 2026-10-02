@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
 // Test de fumée de l'interface : chaque page s'affiche sans erreur (état vide et étable remplie),
 // avec son titre ; l'application route vers les pages chargées à la demande.
-import { act, cleanup, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import type { ComponentType } from 'react'
 import App from '../../App'
+import tylezia from '../../data/market/tylezia-2026-10-02.json'
+import { sanitizeSnapshot } from '../../domain/market'
+import { useMarket } from '../../store/market'
 import { useInventory } from '../../store/inventory'
 import { useJournal } from '../../store/journal'
 import { usePaddockPlans } from '../../store/paddockPlans'
@@ -168,5 +171,70 @@ describe('pages (test de fumée)', () => {
     // Chaque lien de la navigation pointe vers une page du registre.
     const nav = screen.getAllByRole('navigation').flatMap((n) => within(n).getAllByRole('link'))
     expect(nav.map((a) => a.getAttribute('href'))).toEqual(PAGES.map((p) => `#/${p.id}`))
+  })
+})
+
+describe('marché du serveur sur les pages de conseil (revue « marché »)', () => {
+  const preset = () => sanitizeSnapshot(tylezia).snapshot!
+  beforeEach(() => {
+    resetStores({ jobLevel: 60, goalSpeciesId: 121 }, STABLE)
+    useMarket.setState({ snapshot: preset() })
+  })
+  afterEach(() => useMarket.setState({ snapshot: null }))
+
+  it('MKT-04 / MKT-07 : Accouplement valorise le généton au marché du serveur (jamais 375 K par défaut)', () => {
+    goTo('#/accouplement?onglet=couples')
+    render(<BreedingPage />)
+    fireEvent.change(screen.getByLabelText('Objectif'), { target: { value: 'genetons' } })
+    const text = document.body.textContent ?? ''
+    expect(text).toMatch(/1 généton ≈ 454 K, marché \(Puissant Parchemin d'Agilité\)/)
+    expect(text).not.toMatch(/375 K/)
+  })
+
+  it('MKT-07 : une Optimakina au prix du marché est étiquetée « marché (02/10) » avec son volume, jamais « prix par défaut »', () => {
+    resetStores({ jobLevel: 60, family: 'volkorne' }, [])
+    useMarket.setState({ snapshot: preset() })
+    goTo('#/accouplement?a=227&b=226')
+    render(<BreedingPage />)
+    const text = document.body.textContent ?? ''
+    // Optimakina Volkorne G6 : 8 888 K au marché de Tylezia (0 vente en 24 h, 934 en 30 jours).
+    expect(text).toMatch(/Prix\s:\s8\s888\sKmarché \(02\/10\) de Tylezia · ≈\s31 vendus\/jour \(30 j\)/)
+    expect(text).not.toMatch(/prix par défaut/)
+  })
+
+  it('MKT-04 : Mes montures montre le prix « HDV mixte » (plafond, non compté) des montures sans prix', () => {
+    goTo('#/montures')
+    render(<MountsPage />)
+    expect(screen.getAllByText(/HDV mixte ≈ .* \(plafond, non compté\)/).length).toBeGreaterThan(0)
+  })
+
+  it('MKT-10 / MKT-11 / MKT-15 : prix d’un autre serveur et export périmé signalés ; pied de l’Accueil et génétons nets du Plan', () => {
+    useMarket.setState({ snapshot: { ...preset(), exportDate: '2026-05-01' } })
+    goTo('#/accueil')
+    render(<HomePage />)
+    let text = document.body.textContent ?? ''
+    expect(text).toMatch(/Prix périmés/)
+    expect(text).toMatch(/Prix de Tylezia \(chargés pour Mon serveur\)/)
+    expect(text).toMatch(/puis l’export HDV de Tylezia du 01\/05\/2026, chargés pour Mon serveur/)
+    expect(text).not.toMatch(/vos prix \(page Prix\) et les prix par défaut datés de la recherche\./)
+    cleanup()
+    goTo('#/plan')
+    render(<PlanPage />)
+    text = document.body.textContent ?? ''
+    expect(text).toMatch(/Prix périmés/)
+    expect(text).toMatch(/net de taxe\)/)
+    for (const [hash, Page] of [
+      ['#/enclos', PaddocksPage],
+      ['#/metier', JobPage],
+      ['#/accouplement', BreedingPage],
+      ['#/montures', MountsPage],
+      ['#/optimiseur', OptimizerPage],
+      ['#/investissement', InvestmentPage],
+    ] as [string, ComponentType][]) {
+      cleanup()
+      goTo(hash)
+      render(<Page />)
+      expect(document.body.textContent, hash).toMatch(/Prix périmés/)
+    }
   })
 })

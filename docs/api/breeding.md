@@ -130,3 +130,8 @@ votre objectif… » et « Attendez plutôt que X soit féconde » (objectif). L
   « Makina » de chaque couple ; badge « N tentative(s) possible(s) » (M-STACK-01) ; encart « En attente
   d'une partenaire de l'objectif » (`waitFor`) ; seuil Takeza `TAKEZA_PRIORITY_GENERATION` (et nombre de
   couples du plan concernés) ; clonages : nombre de paires au résultat certain (`clonePairSummary`).
+- Prix (revue « marché ») : `MountPriceContext` avec `market: ctx.market` (prix « HDV mixte » des montures =
+  plafond de vente, comme Rentabilité) ; généton = `useGenetonValue()` (vôtre > marché du serveur > défaut),
+  libellé « 1 généton ≈ 454 K, marché (Puissant Parchemin d'Agilité) » ; prix d'une makina étiqueté par son
+  origine (`PriceOriginNote` : « marché (02/10) · ≈ 31 vendus/jour (30 j) », « coût des ingrédients »,
+  « prix par défaut (recherche) »). Bandeaux `MarketStatusCallouts` sous le titre.

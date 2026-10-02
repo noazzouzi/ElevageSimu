@@ -47,10 +47,11 @@ par `schema.ts`) en donne les clés. Nouveau store : déclarer sa base dans `STO
 | `persistOptions(cfg)` | Options de `persist` ci-dessus (`name`, `version?` = `PERSISTED_STORES`, `sanitize`, `migrate?`, `partialize?`). |
 | `safeStorage` | `PersistStorage` qui ne lève jamais d'exception. |
 | `syncAcrossTabs(store)` | Synchronisation entre onglets (sans effet hors navigateur). |
-| `useStorageHealth` | Store non persisté : `issues: StorageIssue[]` (`key, kind: 'ecriture' \| 'version' \| 'illisible' \| 'corrige', label, message, quota?, at`), `dismiss(key, kind)`. |
+| `useStorageHealth` | Store non persisté : `issues: StorageIssue[]` (`key, kind, label, message, quota?, at`), `dismiss(key, kind)`. `kind` : `ecriture` (enregistrement refusé), `version`, `illisible`, `corrige`, `migration` (profils non activés faute de place : sauvegarde + « Libérer de la place », pas de « Réessayer »), `divergence` (copie d'avant les profils modifiée par un onglet resté sur l'ancienne version : lien vers Réglages › Profils), `onglet` (profil supprimé ou changé de serveur dans un autre onglet alors que des modifications ne sont pas enregistrées ici : sauvegarde + recharger). Un seul message par couple clé + sorte. Le message de quota propose d'abord les résultats recalculables des modes, puis le journal ancien. |
 | `retryPendingWrites()`, `pendingWrites()`, `writeBlockReason(key)`, `overwriteBlocked(key)` | Réessai, valeurs non enregistrées, blocage d'une clé, levée du blocage (écrase la donnée stockée). |
 | `freezeWrites()`, `writesFrozen()` | Bloque toute écriture des stores jusqu'au rechargement (changement / suppression de profil, import, remise à zéro) : un store ne peut plus réécrire les données d'un profil supprimé. |
-| `safeWriteText(key, text)` | Écriture sûre hors store (registre des profils, marché d'un autre serveur) : échec signalé, renvoie `false`. |
+| `safeWriteText(key, text)` | Écriture sûre hors store (registre des profils, historique d'un autre serveur) : échec signalé, renvoie `false`. |
+| `tryWriteText(key, text)` | Écriture **sans alerte** (`{ok} \| {ok: false, reason: 'gel' \| 'bloque' \| 'quota' \| 'indisponible'}`) pour une écriture que l'appelant annule et explique lui-même (import du marché HDV, copie de secours du registre) ; refusée si les écritures sont gelées ou la clé bloquée. |
 | `reportStorageIssue({key, kind, message, label?})` | Signale un problème de stockage (bandeau) pour une donnée hors store zustand. |
 
 Les alertes s'affichent en haut de chaque page via `PageHeader` (`StorageAlerts`). Le message laissé avant

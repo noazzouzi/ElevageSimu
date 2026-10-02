@@ -5,86 +5,59 @@
 // pourquoi, routine quotidienne précise, revenus et coûts, sensibilité au prix du produit, liquidité.
 // « Activer ce mode » règle `settings.mode` (conseiller, accueil, plan) ; les résultats sont enregistrés
 // pour le profil (src/store/modeResults.ts) et relus par l'accueil et le plan.
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { FAMILIES, getSpecies, itemName } from '../../data'
-import { frenchDay, PRICE_STAT_SHORT } from '../../domain/market'
-import { snapshotFreshness } from '../../domain/marketInsights'
+import { frenchDay, marketOriginMismatch, PRICE_STAT_SHORT } from '../../domain/market'
 import {
   dailyRoutine,
+  familySwitchText,
   liquidityCheck,
   LIQUIDITY_STATUS_LABELS,
   mainRevenueCategory,
   mergedSessions,
   MODE_HORIZON_DAYS,
-  modeConfig,
   modeDef,
-  modeProfileContext,
   modeSensitivity,
   MODES,
   pluralItemName,
-  outcomeFromSummary,
   profilePaddocks,
   rankModes,
   revenueCostBreakdown,
-  storeModeResults,
   strategyParamLines,
   strategyWhy,
   type LiquidityStatus,
   type ModeId,
-  type ModeOutcome,
   type ModeProfile,
   type ModeRanking,
   type ModeRoutine,
   type StoredModeResults,
 } from '../../domain/modes'
-import { compareModesAsync, netKindForJobLevel, runProductionAsync, sessionsForHours, strategyLabel, type ModeComparison, type ProductionSummary } from '../../domain/production'
-import type { ProductionWorkerMessage, ProductionWorkerRequest } from '../../domain/production.worker'
+import { bandLabel, netKindForJobLevel, sessionsForHours, type PurchaseCheck } from '../../domain/production'
 import { NET_KIND_LABELS } from '../../domain/economy'
 import { formatDate, formatKamas, formatKamasRange, formatNumber, formatPercent } from '../../lib/format'
-import { useModeResults } from '../../store/modeResults'
-import { profileKey, useActiveProfile, useActiveServer } from '../../store/profiles'
+import { useModePlan, useModeResults } from '../../store/modeResults'
+import { useInventory } from '../../store/inventory'
+import { journalJobXp, useJournal } from '../../store/journal'
+import { jobLevelFromXp, jobXpForLevel } from '../../domain/xp'
+import { useActiveProfile, useActiveServer } from '../../store/profiles'
 import { usePlanProgress } from '../../store/planProgress'
 import { useSettings } from '../../store/settings'
 import { Badge, Callout, Card, Empty, PageHeader, Progress, SelectField, Stat } from '../components'
+import { MarketStatusCallouts } from '../MarketStatus'
 import { href, navigate, useRoute } from '../router'
-import { useModeContextKey, useModeProfile } from '../useModes'
+import { saveModesUiPrefs, useActiveMode, useModeContextKey, useModeProfile, useModesUiPrefs, type ModesPrecision } from '../useModes'
 import { useServerDay } from '../useServerDay'
+import { cancelModesRun, MODES_RUNS, startModesRun, useModesRun } from '../useModesRun'
 import './ModesPage.css'
 
-type Precision = 'rapide' | 'fine'
-type Engine = 'worker' | 'main'
-
-interface RunProgress {
-  done: number
-  total: number
-  label: string
-  engine: Engine
-}
+type Precision = ModesPrecision
 
 const PRECISION_OPTIONS: { value: Precision; label: string }[] = [
-  { value: 'rapide', label: 'Rapide (≈ 5 s, grilles réduites)' },
-  { value: 'fine', label: 'Fine (≈ 40 s, grilles complètes)' },
+  { value: 'rapide', label: 'Rapide (≈ 15 s, grilles réduites, 8 tirages)' },
+  { value: 'fine', label: 'Fine (≈ 1 à 2 min, grilles complètes, 12 tirages)' },
 ]
 
-const UI_KEY = 'modes-ui'
-
-function loadPrecision(): Precision {
-  try {
-    const raw = localStorage.getItem(profileKey(UI_KEY))
-    const v = raw ? (JSON.parse(raw) as { precision?: unknown }).precision : null
-    return v === 'fine' ? 'fine' : 'rapide'
-  } catch {
-    return 'rapide'
-  }
-}
-
-function savePrecision(p: Precision) {
-  try {
-    localStorage.setItem(profileKey(UI_KEY), JSON.stringify({ precision: p }))
-  } catch {
-    // préférence non enregistrée : sans conséquence
-  }
-}
+const RUNS = MODES_RUNS
 
 const SENS_TITLE: Record<ReturnType<typeof mainRevenueCategory>, string> = { ressources: 'de la ressource', runes: 'des runes', montures: 'des montures', genetons: 'des génétons' }
 
@@ -92,140 +65,39 @@ const LIQ_TONE: Record<LiquidityStatus, 'ok' | 'warn' | 'danger' | 'info'> = { o
 
 const kamas = (v: number | null | undefined) => formatKamas(v ?? null, true)
 
-/** Configuration de la progression (objectif du profil) simulée à côté de la comparaison. */
-function progressionConfig(profile: ModeProfile) {
-  return modeConfig('progression', profile)
-}
-
-function progressionOutcome(summary: ProductionSummary): ModeOutcome {
-  const c = summary.config
-  const label = strategyLabel('progression', { targetGeneration: summary.plan.targetGeneration, parentLevel: c.parentLevel, optimakina: c.optimakina, tier: c.tier, mateBeforeExtract: true })
-  return outcomeFromSummary('progression', summary, label)
-}
-
 export default function ModesPage() {
   const route = useRoute()
   const profile = useModeProfile()
+  // Niveau estimé d'après le journal (comme l'accueil et l'estimateur) : signalé s'il dépasse le niveau saisi.
+  const journal = useJournal((st) => st.entries)
+  const jobLevelUpdatedAt = useSettings((st) => st.jobLevelUpdatedAt)
+  const estimatedJobLevel = useMemo(
+    () => Math.min(200, Math.max(profile.jobLevel, jobLevelFromXp(jobXpForLevel(profile.jobLevel) + journalJobXp(journal, jobLevelUpdatedAt).xp))),
+    [profile.jobLevel, journal, jobLevelUpdatedAt],
+  )
   const contextKey = useModeContextKey(profile)
   const activeProfile = useActiveProfile()
   const server = useActiveServer()
   const stored = useModeResults((s) => s.results)
-  const save = useModeResults((s) => s.save)
   const activeModeId = useSettings((s) => s.mode)
   const update = useSettings((s) => s.update)
   const market = profile.prices.ctx.market ?? null
-  const [precision, setPrecisionState] = useState<Precision>(loadPrecision)
-  const setPrecision = (p: Precision) => {
-    setPrecisionState(p)
-    savePrecision(p)
-  }
+  const prefs = useModesUiPrefs()
+  const precision = prefs.precision
+  const setPrecision = (p: Precision) => saveModesUiPrefs({ precision: p })
 
-  // ---- Calcul (Web Worker, repli sur le fil principal)
-  const [progress, setProgress] = useState<RunProgress | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [saveFailed, setSaveFailed] = useState(false)
-  const workerRef = useRef<Worker | null>(null)
-  const requestRef = useRef(0)
-  const stopWorker = () => {
-    workerRef.current?.terminate()
-    workerRef.current = null
-  }
-  useEffect(
-    () => () => {
-      requestRef.current += 1
-      workerRef.current?.terminate()
-      workerRef.current = null
-    },
-    [],
-  )
+  // ---- Calcul : contrôleur du module (src/ui/useModesRun.ts), indépendant de la page — quitter la page
+  // ne l'interrompt pas, ses résultats sont enregistrés à la fin (revue UX2-18).
+  const progress = useModesRun((s) => s.progress)
+  const error = useModesRun((s) => s.error)
+  const saveFailed = useModesRun((s) => s.saveFailed)
+  const run = () => startModesRun(profile, { precision, serverId: server.id })
+  const cancel = cancelModesRun
 
-  const run = () => {
-    stopWorker()
-    const requestId = ++requestRef.current
-    const quick = precision === 'rapide'
-    const context = modeProfileContext(profile, { quick, runs: quick ? 3 : 4 })
-    const progCfg = progressionConfig(profile)
-    const serverId = server.id
-    setError(null)
-    setSaveFailed(false)
-    setProgress({ done: 0, total: 1, label: 'Préparation', engine: 'worker' })
-    const finish = (cmp: ModeComparison, prog: ProductionSummary | null) => {
-      if (requestRef.current !== requestId) return
-      const extra = prog ? [progressionOutcome(prog)] : []
-      const rec = storeModeResults(cmp, profile, { computedAt: Date.now(), quick, serverId, extra })
-      setSaveFailed(!save(rec))
-      setProgress(null)
-    }
-    const fail = (message: string) => {
-      if (requestRef.current !== requestId) return
-      setError(message)
-      setProgress(null)
-    }
-    const fallback = () => {
-      setProgress({ done: 0, total: 1, label: 'Préparation', engine: 'main' })
-      const stop = () => requestRef.current !== requestId
-      compareModesAsync(context, { onProgress: (p) => !stop() && setProgress({ ...p, engine: 'main' }), shouldStop: stop })
-        .then(async (cmp) => {
-          if (!cmp) return
-          const prog = progCfg ? await runProductionAsync(progCfg, { runs: 3, shouldStop: stop }).catch(() => null) : null
-          finish(cmp, prog)
-        })
-        .catch((e: unknown) => fail(e instanceof Error ? e.message : String(e)))
-    }
-    let worker: Worker | null = null
-    try {
-      if (typeof Worker !== 'undefined') worker = new Worker(new URL('../../domain/production.worker.ts', import.meta.url), { type: 'module' })
-    } catch {
-      worker = null
-    }
-    if (!worker) {
-      fallback()
-      return
-    }
-    workerRef.current = worker
-    let comparison: ModeComparison | null = null
-    worker.onmessage = (e: MessageEvent<ProductionWorkerMessage>) => {
-      const msg = e.data
-      if (msg.requestId !== requestId) return
-      if (msg.type === 'progress') setProgress({ done: msg.done, total: msg.total, label: msg.label, engine: 'worker' })
-      else if (msg.type === 'comparison') {
-        comparison = msg.result
-        if (progCfg) {
-          setProgress({ done: 0, total: 3, label: 'Progression (objectif du profil)', engine: 'worker' })
-          worker?.postMessage({ type: 'simulate', requestId, config: progCfg, runs: 3 } satisfies ProductionWorkerRequest)
-        } else {
-          stopWorker()
-          finish(comparison, null)
-        }
-      } else if (msg.type === 'summary') {
-        stopWorker()
-        if (comparison) finish(comparison, msg.summary)
-      } else if (msg.type === 'error') {
-        stopWorker()
-        // La progression est facultative : la comparaison reste valable si elle échoue.
-        if (comparison) finish(comparison, null)
-        else fail(msg.message)
-      }
-    }
-    worker.onerror = (ev) => {
-      // Worker non pris en charge (module workers, CSP…) : on recommence sur le fil principal.
-      ev.preventDefault()
-      stopWorker()
-      if (requestRef.current === requestId) fallback()
-    }
-    worker.postMessage({ type: 'compare', requestId, context } satisfies ProductionWorkerRequest)
-  }
-
-  const cancel = () => {
-    requestRef.current += 1
-    stopWorker()
-    setProgress(null)
-  }
-
-  // Premier passage sans résultat enregistré : calcul automatique (≈ 5 s).
+  // Premier passage sans résultat enregistré : calcul automatique (≈ 15 s).
   const autoStarted = useRef(false)
   useEffect(() => {
-    if (autoStarted.current || stored) return
+    if (autoStarted.current || stored || useModesRun.getState().progress) return
     // Minuterie annulée au démontage (double montage du mode strict) : un seul calcul démarre.
     const t = window.setTimeout(() => {
       autoStarted.current = true
@@ -236,6 +108,29 @@ export default function ModesPage() {
   }, [])
 
   const ranking = useMemo(() => (stored ? rankModes(stored.outcomes) : null), [stored])
+  const family = useSettings((s) => s.family)
+  const mounts = useInventory((s) => s.mounts)
+  const pinned = useModePlan((s) => s.plan)
+  const unpin = useModePlan((s) => s.unpin)
+  const active = useActiveMode()
+  /**
+   * Activer un mode (ou le mode automatique) : s'il travaille une autre famille que celle du profil, le
+   * dire et demander confirmation (revue UX2-01) ; un plan d'investissement suivi cède la place au choix
+   * fait ici.
+   */
+  const activate = (id: ModeId) => {
+    const target = id === 'auto' ? (stored?.bestModeId ?? null) : id
+    const tdef = target ? modeDef(target) : null
+    const row = target ? ranking?.rows.find((r) => r.modeId === target) : undefined
+    const fam = tdef ? (tdef.family ?? (tdef.kind === 'vente' ? (row?.family ?? null) : null)) : null
+    if (tdef && fam && fam !== family) {
+      const owned = mounts.filter((m) => getSpecies(m.speciesId)?.family === family).length
+      const who = id === 'auto' ? `Le mode automatique (aujourd’hui ${tdef.label})` : `Le mode ${tdef.label}`
+      if (!window.confirm(`${familySwitchText(who, family, fam, owned)}\n\nActiver quand même ?`)) return
+    }
+    if (pinned) unpin()
+    update({ mode: id })
+  }
   const stale = !!stored && stored.contextKey !== contextKey
   const paramMode = route.params.get('mode')
   const best = stored?.bestModeId ?? null
@@ -243,8 +138,6 @@ export default function ModesPage() {
     paramMode && MODES.some((m) => m.id === paramMode) ? (paramMode as ModeId) : activeModeId !== 'auto' ? activeModeId : (best ?? 'rush-corne')
   const select = (id: ModeId) => navigate('modes', { mode: id })
 
-  const today = useServerDay()
-  const freshness = market ? snapshotFreshness(market.exportDate, today) : null
   const paddocks = profilePaddocks(profile)
   const sessions = sessionsForHours(profile.hoursPerDay)
   const net = netKindForJobLevel(profile.jobLevel)
@@ -258,7 +151,8 @@ export default function ModesPage() {
             Profil <strong>{activeProfile.name}</strong> — serveur <strong>{server.name || 'sans nom'}</strong> ·{' '}
             {market ? (
               <>
-                prix HDV du <strong>{frenchDay(market.exportDate)}</strong> ({market.stat === 'auto' ? 'statistique auto' : PRICE_STAT_SHORT[market.stat]})
+                prix HDV{marketOriginMismatch(market) ? ` de ${marketOriginMismatch(market)}` : ''} du <strong>{frenchDay(market.exportDate)}</strong> (
+                {market.stat === 'auto' ? 'statistique auto' : PRICE_STAT_SHORT[market.stat]})
               </>
             ) : (
               <span className="md-warn-text">aucun export HDV importé (prix par défaut de la recherche)</span>
@@ -285,7 +179,7 @@ export default function ModesPage() {
           <a href={href('prix', { onglet: 'hdv' })}>Prix › Marché HDV</a> pour des montants fiables.
         </Callout>
       )}
-      {freshness && freshness.level !== 'frais' && <Callout tone={freshness.tone === 'danger' ? 'danger' : 'warn'}>{freshness.message}</Callout>}
+      <MarketStatusCallouts context="classements et routines" />
 
       <Card
         title="Hypothèses du profil"
@@ -296,16 +190,53 @@ export default function ModesPage() {
         }
       >
         <div className="md-assumptions">
-          <Stat label="Niveau d’Éleveur" value={`niv. ${profile.jobLevel}`} hint={`${paddocks} enclos de 10 places`} />
+          <Stat
+            label="Niveau d’Éleveur"
+            value={`niv. ${profile.jobLevel}`}
+            hint={
+              <>
+                {paddocks} enclos de 10 places au départ{profile.jobLevel < 200 ? ', puis ceux que l’XP d’élevage débloque' : ''}
+                {estimatedJobLevel > profile.jobLevel && (
+                  <>
+                    {' '}
+                    · niveau saisi ; ≈ {estimatedJobLevel} d’après le journal : <a href={href('reglages')}>mettez-le à jour</a>
+                  </>
+                )}
+              </>
+            }
+          />
           <Stat label="Temps de jeu" value={`${formatNumber(profile.hoursPerDay, 1)} h/jour`} hint={`${sessions} passage${sessions > 1 ? 's' : ''} aux enclos par jour`} />
           <Stat label="Captures" value={`${profile.characters} personnage${profile.characters > 1 ? 's' : ''}`} hint={NET_KIND_LABELS[net]} />
           <Stat label="Ventes" value={`≤ ${formatPercent(profile.prices.maxMarketShare ?? 0.15, 0)} du volume`} hint={`taxe ${formatPercent(profile.prices.saleTax ?? 0.02, 1)}`} />
           <Stat label="Durée simulée" value={`${MODE_HORIZON_DAYS} jours`} hint={`règles ${profile.rules.label}`} />
           <SelectField<Precision> label="Précision du calcul" value={precision} onChange={setPrecision} options={PRECISION_OPTIONS} />
         </div>
+        <label className="check md-trust">
+          <input type="checkbox" checked={prefs.trustMixed} onChange={(e) => saveModesUiPrefs({ trustMixed: e.target.checked })} />
+          Compter les prix « HDV mixte » des montures dans le classement
+          <small className="muted">
+            {' '}
+            — sinon la vente de montures chiffrée au prix de l’objet-monture du marché (niveaux, états et séniles mélangés) est affichée à part, jamais choisie par le mode
+            automatique. Mieux : saisissez le prix d’un bébé niveau 1 fécond sur la page <a href={href('prix', { onglet: 'montures' })}>Prix</a>.
+          </small>
+        </label>
+        <label className="check md-trust">
+          <input type="checkbox" checked={prefs.includeGenetons} onChange={(e) => saveModesUiPrefs({ includeGenetons: e.target.checked })} />
+          Compter les génétons dans le bénéfice
+          <small className="muted">
+            {' '}
+            — valeur estimée (Puissants Parchemins revendus, liés au compte selon DPLN) ; décochez pour classer les modes et les générations sans eux.
+          </small>
+        </label>
         <p className="muted md-note">
           Chaque mode est optimisé (génération, niveau des parents, Optimakina, palier, accoupler avant d’extraire ; brisage : niveau et palier) par simulation session
-          par session, puis classé par bénéfice net par jour en régime permanent. Joueur parfait : comptez ×1,5 sur les durées pour un joueur réel.
+          par session, puis classé par bénéfice net par jour en régime permanent : les meilleures stratégies sont recalculées sur {RUNS[precision]} tirages indépendants,
+          et sur une durée plus longue (jusqu’à 180 jours) si leur régime n’est pas stabilisé en {MODE_HORIZON_DAYS} jours. Deux stratégies dont l’écart tient dans le
+          bruit des tirages sont à égalité : la moins gourmande en capital passe devant. Enclos et filets débloqués en route par l’XP d’élevage (sans crafts).
+          Joueur parfait : comptez ×1,5 sur les durées pour un joueur réel. Simulation depuis un élevage vide : votre étable actuelle n’est pas prise en compte (montée
+          en charge plus courte en réalité si vous avez déjà des montures ; l’estimateur d’investissement peut partir de votre étable). Classement sur le bénéfice du
+          régime permanent : l’estimateur d’investissement, lui, classe sur le bénéfice cumulé de son horizon (montée comprise) et retient souvent une génération plus
+          basse, qui rapporte plus tôt.
         </p>
       </Card>
 
@@ -337,14 +268,34 @@ export default function ModesPage() {
               </button>
             </Callout>
           )}
-          <BestBanner stored={stored} ranking={ranking.rows} activeModeId={activeModeId} onActivate={(id) => update({ mode: id })} />
+          <BestBanner stored={stored} ranking={ranking.rows} activeModeId={activeModeId} onActivate={activate} />
+          {active.familySwitch && (
+            <Callout tone="warn">
+              {familySwitchText(
+                activeModeId === 'auto' ? `Le mode automatique (${active.def.label})` : `Le mode ${active.def.label}`,
+                active.familySwitch.from,
+                active.familySwitch.to,
+                mounts.filter((m) => getSpecies(m.speciesId)?.family === active.familySwitch?.from).length,
+              )}{' '}
+              Choisissez un mode de vos {FAMILIES[active.familySwitch.from]?.plural ?? active.familySwitch.from} pour qu’ils servent la stratégie.
+            </Callout>
+          )}
+          {pinned && (
+            <Callout>
+              Plan d’investissement suivi : <strong>{pinned.label}</strong>
+              {pinned.budget !== null ? ` (budget ${formatKamas(pinned.budget, true)})` : ''} — l’accueil et le plan appliquent sa stratégie tant que le mode {modeDef(pinned.modeId).label} est actif.{' '}
+              <button className="btn small" type="button" onClick={unpin}>
+                Ne plus suivre ce plan
+              </button>
+            </Callout>
+          )}
           <ComparisonTable rows={ranking.rows} selected={selectedId} activeModeId={activeModeId} onSelect={select} stored={stored} />
           <ModeDetail
             id={selectedId}
             stored={stored}
             ranking={ranking.rows}
             activeModeId={activeModeId}
-            onActivate={(id) => update({ mode: id })}
+            onActivate={activate}
             profile={profile}
           />
         </>
@@ -354,7 +305,7 @@ export default function ModesPage() {
             <Empty>
               <p>Aucune comparaison calculée pour ce profil.</p>
               <button className="btn primary" onClick={run}>
-                Comparer les modes (≈ 5 s)
+                Comparer les modes (≈ 15 s)
               </button>
             </Empty>
           </Card>
@@ -470,6 +421,16 @@ function ComparisonTable({
                     {r.family && r.def.families.length > 1 && r.def.kind === 'vente' && <small className="md-cell-sub">{FAMILIES[r.family]?.plural ?? r.family}</small>}
                     <span className="md-badges">
                       {r.rank !== null && <Badge tone={r.best ? 'gold' : undefined}>{r.best ? '1er' : `${r.rank}e`}</Badge>}
+                      {r.tieWithBest && (
+                        <Badge tone="info" title="Écart avec le premier dans le bruit des tirages (moins de 2 erreurs types) : départagé par le capital engagé, puis la montée en charge.">
+                          à égalité
+                        </Badge>
+                      )}
+                      {r.speculative && (
+                        <Badge tone="danger" title="Ventes chiffrées au prix « HDV mixte » des objets-montures (niveaux, états, séniles mélangés) : saisissez le prix d’un bébé niveau 1 fécond (page Prix) pour classer ce mode.">
+                          spéculatif · hors classement
+                        </Badge>
+                      )}
                       {isActive && <Badge tone="accent">actif</Badge>}
                     </span>
                     {r.outcome.strategy && <small className="md-cell-sub md-strategy">{r.outcome.strategy.label}</small>}
@@ -480,8 +441,23 @@ function ComparisonTable({
                         <strong className={r.netMean < 0 ? 'neg' : undefined}>{r.scoreBasis === 'quantite' ? `${formatKamasRange(r.net, true)}` : formatKamasRange(r.net, true)}</strong>
                         {r.scoreBasis === 'quantite' && <small className="md-cell-sub">prix du produit inconnu</small>}
                         {r.outcome.digest && Math.abs(r.outcome.digest.steady.netPerDay.max - r.outcome.digest.steady.netPerDay.min) > 1 && (
-                          <small className="md-cell-sub">
-                            {kamas(r.outcome.digest.steady.netPerDay.min)} à {kamas(r.outcome.digest.steady.netPerDay.max)}
+                          <small className="md-cell-sub" title={`Bénéfice par jour de chaque tirage (${bandLabel(r.runs)}) ; erreur type de la moyenne ≈ ${kamas(r.netSe)}.`}>
+                            {kamas(r.outcome.digest.steady.netPerDay.min)} à {kamas(r.outcome.digest.steady.netPerDay.max)} ({bandLabel(r.runs)})
+                          </small>
+                        )}
+                        {r.genetonShareOfNet !== null && r.genetonShareOfNet >= 0.05 && (
+                          <small className={`md-cell-sub${r.genetonShareOfNet > 0.25 ? ' md-warn-text' : ''}`} title="Valeur estimée des génétons (Puissants Parchemins revendus) : voir « Pourquoi » et la sensibilité « Sans génétons » du mode.">
+                            dont génétons {kamas(r.genetonsPerDay)} ({formatPercent(r.genetonShareOfNet, 0)} du net)
+                          </small>
+                        )}
+                        {r.outcome.strategy?.extendedDays && (
+                          <small className="md-cell-sub" title="Régime non stabilisé ou montée longue en 60 jours : stratégie réévaluée sur une durée plus longue, bénéfice de ce régime-là.">
+                            régime sur {r.outcome.strategy.extendedDays} j
+                          </small>
+                        )}
+                        {r.speculative && (
+                          <small className="md-cell-sub md-warn-text">
+                            potentiel spéculatif (HDV mixte) — <a href={href('prix', { onglet: 'montures' })}>saisissez le prix d’un bébé niv. 1 fécond</a>
                           </small>
                         )}
                       </>
@@ -622,6 +598,25 @@ function ModeDetail({
     <Card title={title} actions={actions} className="md-detail">
       <p>{def.description}</p>
       {def.risk && <Callout tone="warn">{def.risk}</Callout>}
+      {(s.speculative || d.speculative) && (
+        <Callout tone="danger">
+          <strong>Spéculatif (HDV mixte)</strong> : les montures vendues sont chiffrées au prix de leur objet-monture sur le marché (niveaux, états fertile/stérile et
+          montures séniles mélangés), pas au prix d’un bébé niveau 1 fécond. Ce mode reste hors classement et n’est jamais choisi par le mode automatique : saisissez le
+          prix d’un bébé niveau 1 fécond des espèces vendues sur la page <a href={href('prix', { onglet: 'montures' })}>Prix</a>.
+        </Callout>
+      )}
+      {st.stable === false && (
+        <Callout tone="warn">
+          <strong>Régime non stabilisé</strong>{s.extendedDays ? ` (simulé sur ${s.extendedDays} jours)` : ''} : {st.instability.join(' ; ')}. Le bénéfice affiché est celui de la fin de
+          la simulation, pas forcément celui du long terme.
+        </Callout>
+      )}
+      {s.extendedDays && st.stable !== false && (
+        <p className="muted md-note">
+          Montée longue en {MODE_HORIZON_DAYS} jours : stratégie réévaluée sur {s.extendedDays} jours (enclos et filets d’ici le jour {MODE_HORIZON_DAYS}), régime permanent des jours{' '}
+          {st.fromDay}–{st.toDay}.
+        </p>
+      )}
       {!s.complete && (
         <Callout tone="warn">
           Des prix manquent : les montants sont des minimums. À chiffrer :{' '}
@@ -639,12 +634,14 @@ function ModeDetail({
           label="Bénéfice net / jour"
           value={formatKamasRange(st.net, true)}
           tone={st.netPerDay.mean < 0 ? 'neg' : 'pos'}
-          hint={Math.abs(st.netPerDay.max - st.netPerDay.min) > 1 ? `${kamas(st.netPerDay.min)} à ${kamas(st.netPerDay.max)} selon les tirages (${d.runs})` : `régime permanent (jours ${st.fromDay}–${st.toDay})`}
+          hint={`${Math.abs(st.netPerDay.max - st.netPerDay.min) > 1 ? `${kamas(st.netPerDay.min)} à ${kamas(st.netPerDay.max)} (${bandLabel(d.runs)})` : `régime permanent (jours ${st.fromDay}–${st.toDay})`}${
+            st.genetonShareOfNet !== null && st.genetonShareOfNet >= 0.05 ? ` · dont génétons ${kamas(st.revenueByCategory.genetons)} (${formatPercent(st.genetonShareOfNet, 0)} du net)` : ''
+          }`}
         />
         <Stat label="Revenus / coûts par jour" value={`${kamas(st.revenueKnown)} / ${kamas(st.costKnown)}`} hint={`statut : ${st.status === 'exact' ? 'exact' : st.status}`} />
         <Stat
           label="Montée en charge"
-          value={s.rampUpDays !== null ? `${formatNumber(s.rampUpDays)} jours` : `> ${d.config.horizonDays} jours`}
+          value={s.rampUpDays !== null ? `${formatNumber(s.rampUpDays)} jours` : st.stable === false ? 'non stabilisé' : `> ${d.config.horizonDays} jours`}
           hint={d.firstTargetDay !== null && def.kind !== 'brisage' ? `1re G${d.config.targetGeneration} vers le jour ${formatNumber(d.firstTargetDay)}` : '90 % du régime permanent'}
         />
         <Stat
@@ -744,34 +741,50 @@ function ModeDetail({
           <table className="table md-sens">
             <thead>
               <tr>
-                <th>Prix</th>
+                <th>Scénario</th>
                 <th className="num">Bénéfice net / jour</th>
                 <th className="num">Écart</th>
               </tr>
             </thead>
             <tbody>
-              {sens[0] && (
-                <tr>
-                  <td>{sens[0].label}</td>
-                  <td className="num">{formatKamasRange(sens[0].net, true)}</td>
-                  <td className="num neg">{kamas(sens[0].delta)}</td>
-                </tr>
-              )}
+              {sens
+                .filter((x) => x.factor < 1 && x.id.startsWith('prix-0'))
+                .map((x) => (
+                  <tr key={x.id}>
+                    <td>Prix {x.label}</td>
+                    <td className="num">{formatKamasRange(x.net, true)}</td>
+                    <td className="num neg">{kamas(x.delta)}</td>
+                  </tr>
+                ))}
               <tr className="md-total">
                 <td>Prix actuels</td>
                 <td className="num">{formatKamasRange(st.net, true)}</td>
                 <td className="num">—</td>
               </tr>
-              {sens[1] && (
-                <tr>
-                  <td>{sens[1].label}</td>
-                  <td className="num">{formatKamasRange(sens[1].net, true)}</td>
-                  <td className="num pos">+{kamas(sens[1].delta)}</td>
-                </tr>
-              )}
+              {sens
+                .filter((x) => x.factor > 1)
+                .map((x) => (
+                  <tr key={x.id}>
+                    <td>Prix {x.label}</td>
+                    <td className="num">{formatKamasRange(x.net, true)}</td>
+                    <td className="num pos">+{kamas(x.delta)}</td>
+                  </tr>
+                ))}
+              {sens
+                .filter((x) => !x.id.startsWith('prix-0') && !x.id.startsWith('prix-1'))
+                .map((x) => (
+                  <tr key={x.id}>
+                    <td>{x.label}</td>
+                    <td className="num">{formatKamasRange(x.net, true)}</td>
+                    <td className="num neg">{kamas(x.delta)}</td>
+                  </tr>
+                ))}
             </tbody>
           </table>
-          <p className="muted md-note">À stratégie et quantités vendues inchangées (plafond de volume).</p>
+          <p className="muted md-note">
+            À stratégie et quantités vendues inchangées (plafond de volume). « Sans génétons » : leur valeur est estimée (Puissants Parchemins revendus) et ils sont liés
+            au compte ; « prix des montures −50 % » : prix « HDV mixte » incertain.
+          </p>
         </section>
       </div>
 
@@ -815,6 +828,7 @@ function ModeDetail({
           Plafond = {formatPercent(profile.prices.maxMarketShare ?? 0.15, 0)} des ventes quotidiennes moyennes (30 jours) de l’objet sur votre serveur (réglage du serveur) ; le
           reste est reporté au lendemain.
         </p>
+        <PurchasesTable purchases={d.purchases ?? null} share={profile.prices.maxMarketShare ?? 0.15} />
       </section>
 
       {d.warnings.length > 0 && (
@@ -860,6 +874,69 @@ function ModeDetail({
         </div>
       </details>
     </Card>
+  )
+}
+
+// ---------- Achats face au marché ----------
+
+/** Achats au marché par jour (carburants, Optimakinas, filets) face aux ventes du serveur (revue UX2-02). */
+function PurchasesTable({ purchases, share }: { purchases: PurchaseCheck[] | null; share: number }) {
+  if (purchases === null) return <p className="muted md-note">Achats face au volume du marché : recalculez la comparaison pour les voir.</p>
+  if (!purchases.length) return null
+  const KIND: Record<string, string> = { carburant: 'Carburant', makina: 'Optimakina', filet: 'Filet' }
+  const q = (v: number | null) => (v === null ? '?' : formatNumber(v, v < 10 ? 1 : 0))
+  return (
+    <>
+      <h4>Achats / jour face aux ventes du marché</h4>
+      <div className="table-wrap">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Achat</th>
+              <th className="num">Acheté / jour</th>
+              <th className="num">Plafond / jour</th>
+              <th className="num">Ventes du marché / jour</th>
+              <th className="num">Part</th>
+              <th>État</th>
+            </tr>
+          </thead>
+          <tbody>
+            {purchases.map((p) => (
+              <tr key={`${p.kind}-${p.itemId}`}>
+                <td>
+                  <a href={href('prix', { q: itemName(p.itemId) })}>{p.name}</a> <small className="muted">{KIND[p.kind] ?? p.kind}</small>
+                </td>
+                <td className="num">{q(p.buyPerDay)}</td>
+                <td className="num">{q(p.capPerDay)}</td>
+                <td className="num">
+                  {q(p.marketPerDay)}
+                  {p.recentPerDay !== null && p.marketPerDay !== null && p.recentPerDay < 0.5 * p.marketPerDay && <small className="md-cell-sub">7 derniers jours : {q(p.recentPerDay)}/jour</small>}
+                </td>
+                <td className="num">{p.shareOfMarket !== null ? formatPercent(p.shareOfMarket, 0) : '?'}</td>
+                <td>
+                  {p.marketPerDay === null ? (
+                    <Badge tone="warn">volume inconnu</Badge>
+                  ) : p.overCap ? (
+                    <Badge
+                      tone={p.marketPerDay > 0 && p.buyPerDay > p.marketPerDay ? 'danger' : 'warn'}
+                      title={`${p.overVolumePerDay > 0.005 && p.highPrice !== null ? `≈ ${q(p.overVolumePerDay)}/jour au-delà du plafond comptées au prix haut (${formatKamas(p.highPrice)}). ` : ''}${p.craftLevel !== null ? (p.canCraft ? `Fabricable à votre niveau (recette niv. ${p.craftLevel}).` : `Recette niv. ${p.craftLevel}, hors de portée.`) : ''}`}
+                    >
+                      Achats &gt; volume
+                    </Badge>
+                  ) : (
+                    <Badge tone="ok">absorbé</Badge>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="muted md-note">
+        Au-delà de {formatPercent(share, 0)} des ventes quotidiennes d’un objet, vos achats font monter son prix : les Optimakinas au-delà sont comptées au prix haut du marché
+        (stock d’avance de 14 jours), un carburant au-delà est remplacé par le suivant le moins cher (ou fabriqué).
+      </p>
+    </>
   )
 }
 

@@ -13,6 +13,7 @@
 //   de la recette. Un prix « craft » sans le niveau requis n'est qu'une estimation du prix HDV.
 import { FUELS, PRICES_DEFAULT, type FuelRecipe } from '../data'
 import { DUST_SHOP_PRICES, FUEL_SIZES, FUEL_TIER_NAMES } from './constants'
+import { marketDepth, unreliableMedian } from './market'
 import { craftCost, marketPrice, resolvePrice, type CraftCost, type PriceContext, type PriceOrigin, type ResolvedPrice } from './pricing'
 import type { Ruleset } from './rules'
 import type { FuelSize, FuelTier, GaugeId } from './types'
@@ -106,6 +107,11 @@ export interface FuelOption {
   canCraft: boolean
   /** Le prix retenu est un coût de craft alors que le joueur ne peut pas fabriquer l'objet. */
   craftPriceOnly: boolean
+  /**
+   * Prix du marché peu fiable pour un achat (médiane 30 j sans vente récente, moyenne > 2 × médiane) :
+   * `bestFuel` le chiffre au prix prudent (moyenne 30 j) — revue UX2-02.
+   */
+  unreliable?: { prudentPrice: number; reason: string }
 }
 
 export function fuelOption(fuel: FuelRecipe, ctx: PriceContext, opts: FuelOpts): FuelOption {
@@ -133,7 +139,21 @@ export function fuelOption(fuel: FuelRecipe, ctx: PriceContext, opts: FuelOpts):
     craftLevel: fuel.level,
     canCraft,
     craftPriceOnly: resolved.origin === 'craft' && !canCraft,
+    ...unreliableOf(fuel.id, resolved, ctx),
   }
+}
+
+/** Prix du marché (médiane 30 j) peu fiable pour un achat : prix prudent et raison. */
+function unreliableOf(id: number, resolved: ResolvedPrice, ctx: PriceContext): { unreliable?: FuelOption['unreliable'] } {
+  if (resolved.origin !== 'marche' || resolved.price === null || resolved.market?.stat !== 'median30') return {}
+  const u = unreliableMedian(ctx.market ?? null, id)
+  return u && u.prudentPrice > resolved.price ? { unreliable: { prudentPrice: u.prudentPrice, reason: u.reason } } : {}
+}
+
+/** Option chiffrée au prix prudent si son prix du marché est peu fiable (choix et coût du carburant). */
+function prudentOption(o: FuelOption): FuelOption {
+  if (!o.unreliable) return o
+  return { ...o, unitPrice: o.unreliable.prudentPrice, costPerPoint: o.unreliable.prudentPrice / o.durability }
 }
 
 /** Les 5 tailles d'une jauge et d'un palier, avec prix, durabilité et coût au point. */
@@ -167,6 +187,25 @@ export interface GaugePointCost {
   note?: string
   /** Toutes les options considérées (paliers ≥ palier demandé, sauf exactTier). */
   options: FuelOption[]
+  /**
+   * Carburants achetés à l'HDV écartés (ou gardés faute d'autre option) parce que le besoin quotidien
+   * dépasse la part vendable de leur volume (`BestFuelOpts.liquidity`).
+   */
+  liquidityLimited?: FuelLiquidityLimit[]
+}
+
+/** Carburant du marché dont le besoin quotidien dépasse ce que le serveur vend. */
+export interface FuelLiquidityLimit {
+  fuelId: number
+  name: string
+  /** Objets nécessaires par jour. */
+  itemsPerDay: number
+  /** Ventes moyennes du marché par jour (30 j). */
+  perDayAvg: number
+  /** Part du volume quotidien qu'on s'autorise à acheter. */
+  share: number
+  /** Gardé faute d'autre carburant chiffré (sinon écarté). */
+  kept: boolean
 }
 
 export interface BestFuelOpts extends FuelOpts {
@@ -174,6 +213,12 @@ export interface BestFuelOpts extends FuelOpts {
   exactTier?: boolean
   /** Exclure les prix « craft » des carburants que le joueur ne peut pas fabriquer. */
   craftableOnly?: boolean
+  /**
+   * Besoin quotidien (points de jauge par jour) : un carburant acheté à l'HDV dont le besoin dépasse
+   * `share` × ses ventes moyennes par jour est écarté au profit du suivant (ou d'un craft) ; gardé et
+   * signalé s'il n'y a pas d'autre carburant chiffré.
+   */
+  liquidity?: { pointsPerDay: number; share: number }
 }
 
 interface PointCostDefault {
@@ -213,12 +258,36 @@ const missingOf = (o: FuelOption | null): number[] => (o ? [...new Set(o.missing
  */
 export function bestFuel(gauge: GaugeId, tier: FuelTier, ctx: PriceContext, opts: BestFuelOpts): GaugePointCost {
   const tiers = opts.exactTier ? [tier] : FUEL_TIERS.filter((t) => t >= tier)
-  const options = tiers.flatMap((t) => fuelOptions(gauge, t, ctx, opts))
-  const usable = options.filter((o) => !(opts.craftableOnly && o.craftPriceOnly))
+  // Un prix du marché peu fiable (médiane sans vente récente) est chiffré à la moyenne 30 j (UX2-02).
+  const options = tiers.flatMap((t) => fuelOptions(gauge, t, ctx, opts)).map(prudentOption)
+  let usable = options.filter((o) => !(opts.craftableOnly && o.craftPriceOnly))
+  // Liquidité à l'achat : un carburant acheté à l'HDV au-delà de la part vendable de son volume.
+  const limited: FuelLiquidityLimit[] = []
+  const liq = opts.liquidity
+  if (liq && liq.pointsPerDay > 0 && liq.share > 0 && ctx.market) {
+    const over = new Set<FuelOption>()
+    for (const o of usable) {
+      if (o.origin !== 'marche' || !o.complete || o.durability <= 0) continue
+      const depth = marketDepth(ctx.market, o.fuel.id)
+      if (!depth) continue
+      const itemsPerDay = liq.pointsPerDay / o.durability
+      if (itemsPerDay > liq.share * depth.perDayAvg) {
+        over.add(o)
+        limited.push({ fuelId: o.fuel.id, name: o.fuel.name, itemsPerDay, perDayAvg: depth.perDayAvg, share: liq.share, kept: false })
+      }
+    }
+    const rest = usable.filter((o) => !over.has(o))
+    // Écartés seulement s'il reste un carburant chiffré au palier demandé (sinon gardés, signalés).
+    if (over.size && rest.some((o) => o.complete && o.costPerPoint !== null && o.tier === tier)) usable = rest
+    else for (const l of limited) l.kept = true
+  }
   const exact = usable.filter((o) => o.tier === tier)
   const complete = usable.filter((o) => o.complete && o.costPerPoint !== null).sort(byCostPerPoint)
   const best = complete[0] ?? null
-  const base = { gauge, tier, options }
+  // Seuls comptent les carburants écartés qui auraient été moins chers que celui retenu (ou gardés).
+  const bestCost = best?.costPerPoint ?? Infinity
+  const relevant = limited.filter((l) => l.kept || (options.find((o) => o.fuel.id === l.fuelId)?.costPerPoint ?? Infinity) < bestCost)
+  const base = { gauge, tier, options, ...(relevant.length ? { liquidityLimited: relevant } : {}) }
 
   if (best && complete.some((o) => o.tier === tier)) {
     const cheaperUnknown = exact.some((o) => !o.complete && (o.costPerPoint ?? 0) < (best.costPerPoint ?? 0))

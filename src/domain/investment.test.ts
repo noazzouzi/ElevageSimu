@@ -12,15 +12,21 @@ import {
   jobTimeline,
   planInvestment,
   planInvestmentAsync,
+  pickRecommended,
+  PROFIT_TIE_SHARE,
   resaleSchedule,
+  roiIsSignificant,
+  stockFromInventory,
   UNAVAILABLE_PRICE,
+  type InvestmentEvaluation,
   type InvestmentInput,
 } from './investment'
 import { handleInvestmentRequest, type InvestmentWorkerMessage } from './investment.worker'
 import { levelingPlan, paddocksAt } from './job'
 import { buildSnapshot, marketSourceOf, parseHdvCsv, sanitizeSnapshot, type MarketSource } from './market'
 import type { PriceContext } from './pricing'
-import { runProduction } from './production'
+import { capturesPerFight, cheapestOfGeneration, runProduction, type ProductionConfig } from './production'
+import type { Mount } from './types'
 import { RULESETS } from './rules'
 import { jobXpForLevel } from './xp'
 
@@ -221,10 +227,27 @@ describe('planInvestment — Tylezia 02/10/2026', () => {
     expect(sens.couts.delta).toBeLessThan(0)
     expect(sens.duree.delta).toBeLessThan(0)
     expect(sens.liquidite.delta).toBeLessThanOrEqual(1)
+    // Bruit des tirages : seuls les scénarios qui décalent la chronologie (durées, crafts) se comparent au bruit ;
+    // prix, coûts et liquidité gardent les tirages de la référence (écart = effet du scénario).
+    for (const id of ['reference', 'prix-bas', 'prix-haut', 'couts', 'liquidite']) expect(sens[id].withinNoise).toBe(false)
+    if (sens.crafts && Math.abs(sens.crafts.delta) < 0.05 * Math.abs(sens.reference.profitAtHorizon)) expect(sens.crafts.withinNoise).toBe(true)
     expect(r.risks.some((x) => x.code === 'prix-dates')).toBe(true)
     expect(r.risks.some((x) => x.code === 'volume' && /Corne de volkorne/.test(x.text))).toBe(true)
     expect(r.marketDate).toBe('2026-10-02')
     expect(r.assumptions.some((a) => /crafts\/jour/.test(a))).toBe(true)
+  })
+
+  it('MKT-11 / MKT-10 : prix périmés (123 jours) → risque « danger » ; prix d’un autre serveur signalés', () => {
+    const other = marketSourceOf(sanitizeSnapshot(tylezia).snapshot!, 'auto', 'Mon serveur')
+    const r = planInvestment(input({ today: '2027-02-02', prices: { ctx: { ...ctxAt(1, other) }, saleTax: 0.02, maxMarketShare: 0.15 } }, { runs: 1 }))
+    const dated = r.risks.find((x) => x.code === 'prix-dates')
+    expect(dated).toMatchObject({ tone: 'danger' })
+    expect(dated?.text).toMatch(/il y a 123 jours\) : prix périmés/)
+    expect(dated?.text).toMatch(/HDV de Tylezia du 02\/10\/2026, chargés pour Mon serveur/)
+    expect(r.risks.find((x) => x.code === 'prix-autre-serveur')).toMatchObject({ tone: 'warn' })
+    const fresh = planInvestment(input({ today: '2026-10-22' }, { runs: 1 }))
+    expect(fresh.risks.find((x) => x.code === 'prix-dates')).toMatchObject({ tone: 'warn' })
+    expect(fresh.risks.some((x) => x.code === 'prix-autre-serveur')).toBe(false)
   })
 
   it('le budget n’est jamais dépassé, quel que soit le budget', () => {
@@ -268,11 +291,19 @@ describe('planInvestment — Tylezia 02/10/2026', () => {
     expect(p.summary.steady.costKnown).toBeLessThan(10_000_000)
   })
 
-  it('« auto » compare les modes et retient le plus rentable dans le budget', () => {
+  it('« auto » compare les modes et retient le plus rentable dans le budget (à 5 % près : le moins gourmand), jamais une vente spéculative', () => {
     const r = planInvestment(input({ mode: 'auto' }, { runs: 1 }))
     expect(r.plan!.feasible).toBe(true)
-    const others = r.alternatives.filter((a) => !a.chosen && a.feasible)
-    for (const a of others) expect(a.profitAtHorizon).toBeLessThanOrEqual(r.plan!.profitAtHorizon + 1)
+    // ECO-V2-02 : la vente de montures au prix « HDV mixte » n'est jamais retenue en mode automatique.
+    expect(r.plan!.allocation.modeId).not.toBe('vente-montures')
+    expect(r.plan!.speculative).toBe(false)
+    const others = r.alternatives.filter((a) => !a.chosen && a.feasible && !a.speculative)
+    // ECO-V2-12 : un plan plus rentable n'est écarté que s'il est à égalité (≤ 5 %) et engage plus de trésorerie.
+    for (const a of others)
+      if (a.profitAtHorizon > r.plan!.profitAtHorizon + 1) {
+        expect(a.profitAtHorizon).toBeLessThanOrEqual(r.plan!.profitAtHorizon * (1 + PROFIT_TIE_SHARE) + 1)
+        expect(a.peakOutlay).toBeGreaterThanOrEqual(r.plan!.peakOutlay)
+      }
   })
 
   it('un prix inconnu n’est jamais compté 0 : sans marché ni défauts, montants incomplets et niveaux écartés', () => {
@@ -318,3 +349,159 @@ describe('worker', () => {
     expect(errs).toEqual([{ type: 'error', requestId: 8, message: expect.stringMatching(/invalide/) }])
   })
 })
+
+// ---------- Revue économique v2 ----------
+
+describe('ECO-V2 : estimateur d’investissement', () => {
+  it('ECO-V2-03 : Rush Ambre à 20 M — capacité de capture suffisante, pas d’achat quotidien de G1', () => {
+    const r = planInvestment(input({ mode: 'rush-ambre' }, { runs: 2 }))
+    const p = r.plan!
+    expect(p.allocation.g1PerDay).toBe(0)
+    expect(p.summary.steady.boughtPerDay).toBeLessThan(0.5)
+    expect(r.actions.some((a) => /Acheter jusqu’à .* G1 par jour/.test(a.title))).toBe(false)
+  })
+
+  it('ECO-V2-04 : bande de trésorerie min–max sous 10 tirages (la moyenne y reste), libellé honnête', () => {
+    const r = planInvestment(input({}, { runs: 3 }))
+    const p = r.plan!
+    expect(p.runs).toBe(3)
+    expect(p.bandLabel).toBe('min–max des 3 tirages')
+    for (const pt of p.cashflow) {
+      expect(pt.cumulativeLow).toBeLessThanOrEqual(pt.cumulative + 1e-6)
+      expect(pt.cumulative).toBeLessThanOrEqual(pt.cumulativeHigh + 1e-6)
+    }
+    expect(p.steadyNetP10).toBeLessThanOrEqual(p.steadyNetPerDay + 1e-6)
+    expect(p.steadyNetPerDay).toBeLessThanOrEqual(p.steadyNetP90 + 1e-6)
+    const end = r.actions.find((a) => /Fin de l’horizon/.test(a.title))!
+    expect(end.details.join(' ')).toMatch(/min–max des 3 tirages/)
+    expect(end.details.join(' ')).not.toMatch(/8 tirages sur 10/)
+  })
+
+  it('ECO-V2-04 / 05 / 06 : sensibilité « sans génétons », « crafts deux fois plus lents » et pire scénario', () => {
+    const r = planInvestment(input({}, { runs: 2, sensitivity: true }))
+    const ids = r.sensitivity.map((x) => x.id)
+    expect(ids).toEqual(expect.arrayContaining(['sans-genetons', 'crafts']))
+    expect(r.sensitivity.find((x) => x.id === 'sans-genetons')!.delta).toBeLessThan(0)
+    expect(r.worstCase).not.toBeNull()
+    const pool = r.sensitivity.filter((x) => ['prix-bas', 'duree', 'liquidite', 'sans-genetons', 'prix-montures'].includes(x.id))
+    expect(r.worstCase!.profitAtHorizon).toBeCloseTo(Math.min(...pool.map((x) => x.profitAtHorizon)), 6)
+    expect(r.worstCase!.cumulative.length).toBe(r.plan!.cashflow.length)
+    expect(r.worstCase!.at60).toBeCloseTo(r.worstCase!.cumulative[60], 6)
+  })
+
+  it('ECO-V2-02 : vente de montures (mode choisi) — scénario « prix des montures −50 % » et risque spéculatif', () => {
+    const r = planInvestment(input({ mode: 'vente-montures', levers: { levelJob: false, buyG1: false } }, { runs: 1, sensitivity: true }))
+    if (r.plan!.summary.totals.mountsSold > 0) {
+      expect(r.sensitivity.map((x) => x.id)).toContain('prix-montures')
+      expect(r.sensitivity.find((x) => x.id === 'prix-montures')!.delta).toBeLessThan(0)
+    }
+    if (r.plan!.speculative) expect(r.risks.some((x) => x.code === 'speculatif')).toBe(true)
+  })
+
+  it('ECO-V2-06 : 1 h/jour depuis le niveau 1 — filet universel tant que le niveau 100 n’est pas atteint, temps de capture réduit pendant les crafts', () => {
+    const r = planInvestment(input({ profile: { jobLevel: 1, hoursPerDay: 1, characters: 1, rules, family: 'volkorne' }, levers: { buyG1: false } }, { runs: 2 }))
+    const p = r.plan!
+    expect(p.leveling).not.toBeNull()
+    const day100 = p.levelDays.find((l) => l.level >= 100)?.day ?? Infinity
+    const universel = capturesPerFight(1, 1, 'universel') * 12 * 0.5
+    for (const d of p.summary.daily.filter((x) => x.day <= Math.min(day100, p.summary.daily.length))) {
+      expect(d.netKind).toBe('universel')
+      expect(d.captureCapacity).toBeLessThanOrEqual(universel + 1e-9)
+      expect(d.captures).toBeLessThanOrEqual(universel + 1)
+    }
+    // Bénéfice entre « filet universel tout du long » et « filet du niveau visé dès le jour 1 » (ancien modèle).
+    const c = p.summary.config
+    const cfg: ProductionConfig = {
+      ...(c as unknown as ProductionConfig),
+      rules,
+      prices: { ctx: { ...ctxAt(1), jobLevel: p.allocation.jobTo }, saleTax: 0.02, maxMarketShare: 0.15 },
+      initialStock: [],
+      netKind: undefined,
+      mountsPerCast: undefined,
+      captureRate: undefined,
+    }
+    const same = runProduction(cfg, { runs: 2, seed: 1 })
+    expect(same.totals.netKnown.mean).toBeCloseTo(p.summary.totals.netKnown.mean, 0)
+    const targetNet = runProduction({ ...cfg, jobLevelSchedule: [], captureHoursSchedule: [] }, { runs: 2, seed: 1 })
+    const universelNet = runProduction({ ...cfg, jobLevelSchedule: [], netKind: 'universel' }, { runs: 2, seed: 1 })
+    // Les naissances varient avec les captures (tirages différents) : tolérance de 3 %.
+    const tol = 0.03 * Math.abs(targetNet.totals.netKnown.mean)
+    expect(universelNet.totals.netKnown.mean).toBeLessThan(targetNet.totals.netKnown.mean)
+    expect(p.summary.totals.netKnown.mean).toBeLessThanOrEqual(targetNet.totals.netKnown.mean + tol)
+    expect(p.summary.totals.netKnown.mean).toBeGreaterThanOrEqual(universelNet.totals.netKnown.mean - tol)
+  })
+
+  it('ECO-V2-10 : enclos ouverts le même jour = une seule action ; Σ socle des actions = socle total', () => {
+    const r = planInvestment(input({}, { runs: 1 }))
+    const p = r.plan!
+    const socleActions = r.actions.filter((a) => (a.kind === 'enclos' || (a.kind === 'achat' && /socle/.test(a.title))) && a.kamas !== null)
+    const total = socleActions.reduce((t, a) => t + (a.kamas ?? 0), 0)
+    expect(total).toBeCloseTo(-p.socleTotal, 0)
+    const enclosDays = r.actions.filter((a) => a.kind === 'enclos').map((a) => a.day)
+    expect(new Set(enclosDays).size).toBe(enclosDays.length)
+  })
+
+  it('ECO-V2-12 : bénéfices à 3 % l’un de l’autre → le plan qui engage moitié moins de trésorerie', () => {
+    const ev = (profit: number, peak: number) => ({ eval: { profitAtHorizon: profit, profitSe: 0, peakOutlay: peak, breakEvenDay: 20, feasible: true, profitStatus: 'exact' } as unknown as InvestmentEvaluation })
+    const big = ev(10_300_000, 16_000_000)
+    const small = ev(10_000_000, 8_000_000)
+    expect(pickRecommended([big, small])).toBe(small)
+    // Écart de 10 % hors du bruit : le plus rentable reste retenu.
+    expect(pickRecommended([ev(11_000_000, 16_000_000), small])?.eval.profitAtHorizon).toBe(11_000_000)
+  })
+})
+
+// ---------- Revue « parcours » v2 (UX2) : chaque test reproduit un défaut corrigé ----------
+
+describe('UX2 : estimateur d’investissement', () => {
+  it('UX2-09 : sans export HDV, montée du métier écartée faute de prix → pas de « n’améliore pas le bénéfice », note et risque explicites ; ROI non significatif', () => {
+    const ctx: PriceContext = { overrides: {}, useDefaults: true, market: null, jobLevel: 1 }
+    const r = planInvestment(input({ mode: 'brisage-pa', prices: { ctx, saleTax: 0.02, maxMarketShare: 0.15 } }, { runs: 1 }))
+    expect(r.notes.some((x) => /écarté : \d+ ingrédient\(s\) sans prix/.test(x))).toBe(true)
+    expect(r.unusedBudget).toBeGreaterThan(1_000_000)
+    expect(r.notes.some((x) => /n’améliore pas le bénéfice/.test(x))).toBe(false)
+    expect(r.notes.some((x) => x.startsWith('Montée du métier non chiffrée') && /importez l’export HDV/.test(x))).toBe(true)
+    expect(r.risks[0]).toMatchObject({ code: 'prix-manquants-metier', tone: 'warn' })
+    expect(roiIsSignificant(93_200, 20_000_000)).toBe(false)
+    expect(roiIsSignificant(5_000_000, 20_000_000)).toBe(true)
+  })
+
+  it('UX2-10 : socle « à fabriquer » — ingrédients de la recette dans la liste de courses et dans le texte copié', () => {
+    const r = planInvestment(input({ profile: { jobLevel: 120, hoursPerDay: 3, characters: 1, rules, family: 'volkorne' }, prices: { ctx: ctxAt(120), saleTax: 0.02, maxMarketShare: 0.15 }, levers: { levelJob: false, buyG1: false } }, { runs: 1 }))
+    const crafted = r.shopping.filter((x) => x.category === 'socle' && x.origin === 'craft')
+    expect(crafted.length).toBeGreaterThan(0)
+    const text = investmentShoppingText(r.shopping)
+    for (const it of crafted) {
+      expect(it.ingredients?.length).toBeGreaterThan(0)
+      expect(it.ingredients!.every((g) => g.qty > 0 && g.name.length > 0)).toBe(true)
+      expect(text).toContain(`${it.name} × ${it.qty} (à fabriquer : `)
+    }
+  })
+
+  it('UX2-16 : partir de l’étable actuelle (Volkornes G4–G5 fécondes) → premières ventes et point mort plus tôt, hypothèse affichée', () => {
+    const base = { jobLevel: 120, hoursPerDay: 3, characters: 1, rules, family: 'volkorne' as const }
+    const opts = { levers: { levelJob: false, buyG1: false }, prices: { ctx: ctxAt(120), saleTax: 0.02, maxMarketShare: 0.15 } }
+    const g4 = cheapestOfGeneration('volkorne', 4) as number
+    const g5 = cheapestOfGeneration('volkorne', 5) as number
+    const owned = stockFromInventory([
+      ...Array.from({ length: 10 }, (_, i) => mount(g4, i % 2 ? 'male' : 'femelle', 'feconde')),
+      ...Array.from({ length: 10 }, (_, i) => mount(g5, i % 2 ? 'male' : 'femelle', 'feconde')),
+      mount(g5, 'male', 'senile'),
+    ])
+    expect(owned.reduce((t, l) => t + l.count, 0)).toBe(20)
+    const empty = planInvestment(input({ profile: base, ...opts }, { runs: 2 }))
+    const stable = planInvestment(input({ profile: { ...base, initialStock: owned }, ...opts }, { runs: 2 }))
+    // Les fécondes possédées sont accouplées puis extraites dès les premiers jours : revenus et point mort avancés.
+    const firstDays = (r: typeof empty) => r.plan!.cashflow.slice(0, 4).reduce((t, p) => t + p.revenue, 0)
+    expect(firstDays(stable)).toBeGreaterThan(firstDays(empty))
+    expect(stable.plan!.breakEvenDay ?? Infinity).toBeLessThan(empty.plan!.breakEvenDay ?? Infinity)
+    expect(stable.assumptions.some((a) => /Étable actuelle prise en compte : 20 montures/.test(a))).toBe(true)
+    expect(empty.assumptions.some((a) => /Étable actuelle non prise en compte/.test(a))).toBe(true)
+  })
+})
+
+let mountSeq = 0
+function mount(speciesId: number, gender: 'male' | 'femelle', state: 'fertile' | 'feconde' | 'senile'): Mount {
+  const g = state === 'feconde' ? 20_000 : 0
+  return { id: `m${speciesId}-${++mountSeq}`, speciesId, gender, level: 40, ability: null, fertility: state === 'senile' ? 'senile' : 'fertile', parents: [], location: { kind: 'etable' }, serenity: 0, endurance: g, maturity: g, love: g, createdAt: 0, updatedAt: 0 }
+}

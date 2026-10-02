@@ -18,9 +18,14 @@ import { isPlainObject, persistedStoreInfo, type Sanitized } from './schema'
  * - `ecriture` : l'enregistrement a échoué (quota plein…) : les modifications sont visibles mais pas enregistrées ;
  * - `version` : données écrites par une version plus récente de l'application : conservées, non modifiées ici ;
  * - `illisible` : données corrompues : conservées telles quelles, non modifiées ici ;
- * - `corrige` : données corrigées au chargement (entrées invalides écartées, valeurs bornées).
+ * - `corrige` : données corrigées au chargement (entrées invalides écartées, valeurs bornées) ;
+ * - `migration` : profils non activés (reprise des données d'avant les profils impossible, stockage plein) ;
+ * - `divergence` : la copie des données d'avant les profils a été modifiée après la reprise (onglet resté
+ *   ouvert sur l'ancienne version) : à reprendre ou ignorer dans Réglages › Profils ;
+ * - `onglet` : le profil ouvert a changé dans un autre onglet alors que des modifications ne sont pas
+ *   enregistrées ici : sauvegarde puis rechargement.
  */
-export type StorageIssueKind = 'ecriture' | 'version' | 'illisible' | 'corrige'
+export type StorageIssueKind = 'ecriture' | 'version' | 'illisible' | 'corrige' | 'migration' | 'divergence' | 'onglet'
 
 export interface StorageIssue {
   key: string
@@ -144,7 +149,7 @@ function reportWriteFailure(key: string, e: unknown) {
     kind: 'ecriture',
     quota,
     message: quota
-      ? `Enregistrement impossible : l’espace de stockage du navigateur est plein. Vos dernières modifications (« ${label} ») sont visibles mais ne sont PAS enregistrées : elles seront perdues à la fermeture de la page. Téléchargez une sauvegarde maintenant (elle les contient), puis allégez le journal dans les Réglages.`
+      ? `Enregistrement impossible : l’espace de stockage du navigateur est plein. Vos dernières modifications (« ${label} ») sont visibles mais ne sont PAS enregistrées : elles seront perdues à la fermeture de la page. Téléchargez une sauvegarde maintenant (elle les contient), puis libérez de la place (Réglages › Données : d’abord les résultats recalculables des modes, puis le journal ancien).`
       : `Enregistrement impossible dans ce navigateur (« ${label} » ; stockage indisponible ou bloqué, par exemple en navigation privée) : vos dernières modifications sont visibles mais ne sont PAS enregistrées et seront perdues à la fermeture de la page.`,
   })
 }
@@ -220,6 +225,25 @@ export const safeStorage: PersistStorage<unknown> = {
       // Rien à faire : la clé sera réécrite au prochain enregistrement.
     }
   },
+}
+
+/**
+ * Écrit un texte sous une clé SANS signaler d'échec (pas de bandeau) : pour une écriture que l'appelant
+ * annule et explique lui-même en cas d'échec (import du marché…). Refusée si les écritures sont gelées
+ * (`freezeWrites`) ou si la clé est bloquée (donnée d'une version plus récente ou illisible, à préserver).
+ */
+export function tryWriteText(key: string, text: string): { ok: true } | { ok: false; reason: 'gel' | 'bloque' | 'quota' | 'indisponible' } {
+  if (frozen) return { ok: false, reason: 'gel' }
+  if (blocked.has(key)) return { ok: false, reason: 'bloque' }
+  const ls = localStorageOrNull()
+  if (!ls) return { ok: false, reason: 'indisponible' }
+  try {
+    ls.setItem(key, text)
+  } catch (e) {
+    return { ok: false, reason: isQuotaError(e) ? 'quota' : 'indisponible' }
+  }
+  if (pending.delete(key)) clearIssues(key, ['ecriture'])
+  return { ok: true }
 }
 
 /**

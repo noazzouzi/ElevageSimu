@@ -637,3 +637,9 @@ table.table {
     overflow-wrap: anywhere;
   }
 }
+
+/* Origine des prix sous le titre d'une page de coûts (MarketStatusCallouts showSource). */
+.market-source {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+}

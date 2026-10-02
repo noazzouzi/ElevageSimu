@@ -62,6 +62,17 @@ export function formatDuration(seconds: number, opts: { long?: boolean } = {}): 
   return `${s} s`
 }
 
+/**
+ * Taille d'une donnée enregistrée, en caractères (l'unité du quota du localStorage) : « 850 caractères »,
+ * « 88,9 k caractères », « 1,25 M caractères ».
+ */
+export function formatChars(n: number): string {
+  if (!Number.isFinite(n)) return '—'
+  if (Math.abs(n) < 1000) return `${nf0.format(n)} ${Math.abs(n) >= 2 ? 'caractères' : 'caractère'}`
+  if (Math.abs(n) < 1_000_000) return `${nf1.format(n / 1000)} k caractères`
+  return `${nf2.format(n / 1_000_000)} M caractères`
+}
+
 /** Accord en nombre (règle française : pluriel à partir de 2) : `pluralWord(3, 'monture')` → « montures ». */
 export function pluralWord(n: number, one: string, many = `${one}s`): string {
   return Math.abs(n) >= 2 ? many : one

@@ -7,7 +7,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { FAMILIES, FAMILY_IDS } from '../data'
 import { GAUGE_IDS, GAUGE_LABELS } from '../domain/constants'
 import { BRISAGE_RISK_NOTE, MOUNT_MARKET_BADGE, SENILE_PRICE_RATIO, genetonKamasValue } from '../domain/economy'
-import { MOUNT_MARKET_NOTE, PRICE_STAT_LABELS, PRICE_STAT_SHORT, frenchDay, marketSourceOf, type MarketSource } from '../domain/market'
+import { MOUNT_MARKET_NOTE, PRICE_STATS, PRICE_STAT_LABELS, PRICE_STAT_SHORT, frenchDay, marketSourceOf, type MarketSource, type PriceStat } from '../domain/market'
 import {
   CRAFT_KIND_LABELS,
   compareServers,
@@ -221,9 +221,12 @@ function KeyPricesSection({ ins, ctx }: { ins: ReturnType<typeof marketInsights>
       </Card>
       <Card title="Génétons : boutique d’Eugène Éton">
         <p className="muted">
-          Valeur d’un généton sur ce serveur = meilleur prix ÷ coût :{' '}
+          Valeur d’un généton sur ce serveur = meilleur prix ÷ coût parmi les échanges reconfirmés après la 3.5 :{' '}
           <strong>{k.genetons.value === null ? 'inconnue' : `${formatKamas(k.genetons.value)} brut, ${formatKamas(k.genetons.net)} net`}</strong>
           {k.genetons.best ? ` (${k.genetons.best.name})` : ''}. Retenu dans les calculs : {formatKamas(retained.value)} ({retained.origin === 'joueur' ? 'votre valeur' : retained.origin === 'marche' ? 'marché du serveur' : 'défaut de la recherche'}).
+          {k.genetons.optimistic && k.genetons.optimistic.perGeneton !== null && (
+            <> Valeur optimiste : {formatKamas(k.genetons.optimistic.perGeneton)} avec {k.genetons.optimistic.name} (boutique de la bêta 3.5, échange non reconfirmé : non comptée).</>
+          )}
           {genetonOverride !== null && k.genetons.value !== null && Math.round(k.genetons.value) !== genetonOverride && (
             <>
               {' '}
@@ -251,6 +254,11 @@ function KeyPricesSection({ ins, ctx }: { ins: ReturnType<typeof marketInsights>
                 <tr key={l.id} className={k.genetons.best?.id === l.id ? 'mkt-best' : undefined}>
                   <td>
                     {l.name} <ConfBadge l={l} />
+                    {!l.confirmed && (
+                      <span className="badge" title="Échange relevé sur une capture de la bêta 3.5, pas reconfirmé depuis la sortie : non compté dans la valeur du généton.">
+                        non reconfirmé
+                      </span>
+                    )}
                   </td>
                   <td className="num">{l.cost}</td>
                   <td className="num">
@@ -703,6 +711,9 @@ function readServerMarket(server: ServerEntry): MarketSource | null {
 function ServersSection({ market, today, onImport }: { market: MarketSource; today: string; onImport: () => void }) {
   const servers = useProfiles((s) => s.registry.servers)
   const saleTax = useSettings((s) => s.saleTax)
+  // Même statistique pour tous les serveurs (sinon l'écart mêle serveur et statistique) : celle du
+  // serveur ouvert par défaut.
+  const [stat, setStat] = useState<PriceStat>(market.stat)
   const list = useMemo<ServerMarket[]>(() => {
     const out: ServerMarket[] = []
     for (const s of servers) {
@@ -711,7 +722,7 @@ function ServersSection({ market, today, onImport }: { market: MarketSource; tod
     }
     return out
   }, [servers, market])
-  const cmp = useMemo(() => compareServers(list, { today, saleTax }), [list, today, saleTax])
+  const cmp = useMemo(() => compareServers(list, { today, saleTax, stat }), [list, today, saleTax, stat])
   if (!cmp)
     return (
       <Card>
@@ -724,8 +735,27 @@ function ServersSection({ market, today, onImport }: { market: MarketSource; tod
       </Card>
     )
   const groups = [...new Set(cmp.rows.map((r) => r.group))]
+  const ownStats = cmp.serverStats.some((x) => x !== cmp.stat)
   return (
-    <Card title={`Comparaison de ${cmp.servers.length} serveurs`}>
+    <Card
+      title={`Comparaison de ${cmp.servers.length} serveurs`}
+      actions={
+        <label className="field">
+          Statistique comparée
+          <select value={stat} onChange={(e) => setStat(e.target.value as PriceStat)}>
+            {PRICE_STATS.map((x) => (
+              <option key={x} value={x}>
+                {PRICE_STAT_LABELS[x]}
+              </option>
+            ))}
+          </select>
+        </label>
+      }
+    >
+      <small className="muted" style={{ display: 'block', marginBottom: 6 }}>
+        Tous les serveurs sont comparés avec la même statistique : {PRICE_STAT_LABELS[cmp.stat].toLowerCase()}
+        {ownStats ? '. Certains serveurs utilisent une autre statistique dans leurs propres calculs.' : '.'}
+      </small>
       {cmp.warnings.map((w) => (
         <Callout key={w} tone="warn">
           {w}

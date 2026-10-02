@@ -41,8 +41,8 @@ import {
   type LevelingPlan,
 } from './job'
 import { inventorySummary, recommendFates, unlockedPaddocks, type InventorySummary, type LevelCostFn, type MountFate, type ValuationFn } from './mountFate'
-import { marketItemName, sellablePerDay } from './market'
-import { activeModeKey, pluralItemName, type ActiveMode, type RoutineItem } from './modes'
+import { frenchDay, marketItemName, sellablePerDay } from './market'
+import { activeModeKey, modeTimeline, pluralItemName, timelineBasis, type ActiveMode, type RoutineItem } from './modes'
 import { effectiveFertility, matingBlockers, mountName, toBreedingParent } from './mounts'
 import { canBenefit, gaugeTier, simulatePaddock, validateActiveGauges, type SimMount } from './paddock'
 import { PADDOCK_ROLE_LABELS, assignPaddocks, gaugeSwitch, toSimMount, type AssignResult, type PlanSchedule } from './paddockAssign'
@@ -235,6 +235,8 @@ export interface AdvisorInput {
   mode?: ActiveMode | null
   /** Part du volume quotidien vendable (serveur, défaut 0,15) : plafond des ventes conseillées. */
   maxMarketShare?: number
+  /** Nom du serveur du profil (premiers pas : « Importer l'export HDV de <serveur> »). */
+  serverName?: string
 }
 
 // ---------- Utilitaires ----------
@@ -1251,7 +1253,7 @@ function modeOverlay(input: Pick<AdvisorInput, 'mode' | 'settings'>): ModeBase |
 }
 
 /** Couleurs G1 à capturer pour le mode : routine de la stratégie calculée, sinon plan de production. */
-function modeCaptureShares(input: AdvisorInput, base: ModeBase): { speciesId: number; share: number }[] {
+function modeCaptureShares(input: Pick<AdvisorInput, 'settings' | 'rules' | 'priceCtx' | 'mountPrices'>, base: ModeBase): { speciesId: number; share: number }[] {
   const digest = base.active.outcome?.digest
   if (digest && digest.family === base.family) {
     const caps = digest.routine.capturesPerDay
@@ -1302,8 +1304,9 @@ function applyModeFates(
   mounts: readonly Mount[],
   base: ModeBase,
   o: { valuation: ValuationFn; levelCost: LevelCostFn; plannedPartners: Map<string, string>; ctx: PriceContext; saleTax: number },
-): { fates: Map<string, MountFate>; overridden: number } {
+): { fates: Map<string, MountFate>; overridden: number; ids: Set<string> } {
   const out = new Map(fates)
+  const ids = new Set<string>()
   const m = base.active
   const label = m.def.short
   const p = m.params
@@ -1324,6 +1327,7 @@ function applyModeFates(
       ...f,
     })
     overridden++
+    ids.add(mt.id)
   }
   const val = (mt: Mount, level = mt.level, state?: 'fertile' | 'feconde' | 'sterile') => {
     const f = effectiveFertility(mt)
@@ -1447,7 +1451,7 @@ function applyModeFates(
         ...(e.kind === 'vente' && !e.complete ? { hint: 'Prix « HDV mixte » (niveaux, états et séniles mélangés) : vérifiez le prix des montures comparables avant de vendre.' } : {}),
       })
     }
-    return { fates: out, overridden }
+    return { fates: out, overridden, ids }
   }
 
   if (m.kind === 'brisage') {
@@ -1499,47 +1503,42 @@ function applyModeFates(
       })
     }
   }
-  return { fates: out, overridden }
+  return { fates: out, overridden, ids }
 }
 
-/**
- * Calculs lourds de l'aide (plan d'accouplement, sort des montures, répartition en enclos, objectif,
- * métier, prix manquants). Ne dépend de `now` que par le jour (Almanax) : la page le mémorise
- * (`analyzeStateCached`) et rappelle `adviseNow` toutes les 30 s avec le même résultat. Une section qui
- * échoue est notée dans `errors` (et affichée), les autres restent calculées.
- */
-export function analyzeState(input: AdvisorInput): AdvisorAnalysis {
+/** Sorts des montures du conseiller : plan d'accouplement, `recommendFates`, puis sorts pilotés par le mode actif. */
+export interface ModeAwareFates {
+  /** Valeur brute du généton retenue (la vôtre, sinon le marché, sinon la recherche). */
+  genetonValue: number
+  pairs: PairSuggestion[]
+  pairCandidates: number
+  waiting: WaitingPartner[]
+  /** Monture → partenaire du plan d'accouplement. */
+  plannedPartners: Map<string, string>
+  fates: Map<string, MountFate>
+  /** Mode appliqué (null en progression ou sans mode). */
+  mode: ModeAnalysis | null
+  /** Montures dont le sort vient du mode (badge « mode … » de Mes montures). */
+  modeFateIds: Set<string>
+  errors: AdvisorSectionError[]
+}
+
+function fatesFor(
+  input: Pick<AdvisorInput, 'now' | 'settings' | 'rules' | 'mounts' | 'priceCtx' | 'mountPrices' | 'genetonValue' | 'mode'>,
+  o: { settings: AdvisorSettings; modeBase: ModeBase | null; almanax: ReturnType<typeof almanaxOn>; fecundCount: number; fail: (section: AdvisorSection, e: unknown) => void },
+): Omit<ModeAwareFates, 'errors'> {
   const { rules, mounts, priceCtx: ctx } = input
-  const errors: AdvisorSectionError[] = []
-  const fail = (section: AdvisorSection, e: unknown) => {
-    console.error('[conseiller]', section, e)
-    errors.push({ section, label: ADVISOR_SECTION_LABELS[section], message: errorMessage(e) })
-  }
-  const day = serverDay(input.now) // jour de jeu (Paris) : Almanax, Takeza
-  const almanax = almanaxOn(day)
-  // Mode de rentabilité (rush, brisage, vente) : famille, espèce visée, palier et niveau des parents de la
-  // stratégie remplacent ceux des réglages pour l'appariement, le sort des montures et la répartition.
-  const modeBase = modeOverlay(input)
-  const settings = modeBase?.settings ?? input.settings
-  const unlocked = unlockedPaddocks(settings.jobLevel)
-  let summary: InventorySummary
-  try {
-    summary = inventorySummary(mounts)
-  } catch (e) {
-    fail('summary', e)
-    summary = emptySummary(mounts.length)
-  }
+  const { settings, modeBase, almanax, fail } = o
   // Valeur du généton : la vôtre, sinon le marché du serveur (boutique d'Eugène Éton), sinon la recherche.
   const genetonValue = genetonKamasValue(input.genetonValue ?? null, { market: ctx.market ?? null }).value
   const kit = economyKit({ ...input, settings })
-  const missing = new MissingCollector()
 
   // 1. Plan d'accouplement d'abord : le sort des montures en dépend (une monture prévue au plan
   //    n'est jamais conseillée en sortie avant l'accouplement).
   let pairs: PairSuggestion[] = []
   let pairCandidates = 0
   let waiting: WaitingPartner[] = []
-  if (summary.byStatus.feconde >= 2)
+  if (o.fecundCount >= 2)
     try {
       const ranked = rankPairs(mounts, {
         rules,
@@ -1583,15 +1582,77 @@ export function analyzeState(input: AdvisorInput): AdvisorAnalysis {
     }
   // 2 bis. Mode de rentabilité : extraire / vendre / briser au lieu de garder (sorties pilotées par le mode).
   let mode: ModeAnalysis | null = null
+  const modeFateIds = new Set<string>()
   if (modeBase)
     try {
       const r = applyModeFates(fates, mounts, modeBase, { valuation: kit.valuation, levelCost: kit.levelCost, plannedPartners, ctx, saleTax: settings.saleTax })
       fates = r.fates
+      for (const id of r.ids) modeFateIds.add(id)
       mode = { active: modeBase.active, family: modeBase.family, goalSpeciesId: modeBase.goalSpeciesId, captureShares: modeCaptureShares(input, modeBase), overridden: r.overridden }
     } catch (e) {
       fail('mode', e)
       mode = { active: modeBase.active, family: modeBase.family, goalSpeciesId: modeBase.goalSpeciesId, captureShares: [], overridden: 0 }
     }
+
+  return { genetonValue, pairs, pairCandidates, waiting, plannedPartners, fates, mode, modeFateIds }
+}
+
+/**
+ * Sorts des montures EXACTEMENT comme le conseiller (accueil) : plan d'accouplement, sort conseillé, puis
+ * sorts pilotés par le mode actif (rush : extraire au lieu de garder…). Utilisé par Mes montures pour que
+ * la page et l'accueil donnent le même sort (revue UX2-05). Plus léger que `analyzeState` (ni répartition
+ * en enclos, ni objectif, ni métier).
+ */
+export function modeAwareFates(input: Pick<AdvisorInput, 'now' | 'settings' | 'rules' | 'mounts' | 'priceCtx' | 'mountPrices' | 'genetonValue' | 'mode'>): ModeAwareFates {
+  const errors: AdvisorSectionError[] = []
+  const fail = (section: AdvisorSection, e: unknown) => {
+    console.error('[conseiller]', section, e)
+    errors.push({ section, label: ADVISOR_SECTION_LABELS[section], message: errorMessage(e) })
+  }
+  const modeBase = modeOverlay(input)
+  const settings = modeBase?.settings ?? input.settings
+  let fecundCount = 0
+  try {
+    fecundCount = inventorySummary(input.mounts).byStatus.feconde
+  } catch (e) {
+    fail('summary', e)
+  }
+  const r = fatesFor(input, { settings, modeBase, almanax: almanaxOn(serverDay(input.now)), fecundCount, fail })
+  return { ...r, errors }
+}
+
+/**
+ * Calculs lourds de l'aide (plan d'accouplement, sort des montures, répartition en enclos, objectif,
+ * métier, prix manquants). Ne dépend de `now` que par le jour (Almanax) : la page le mémorise
+ * (`analyzeStateCached`) et rappelle `adviseNow` toutes les 30 s avec le même résultat. Une section qui
+ * échoue est notée dans `errors` (et affichée), les autres restent calculées.
+ */
+export function analyzeState(input: AdvisorInput): AdvisorAnalysis {
+  const { rules, mounts, priceCtx: ctx } = input
+  const errors: AdvisorSectionError[] = []
+  const fail = (section: AdvisorSection, e: unknown) => {
+    console.error('[conseiller]', section, e)
+    errors.push({ section, label: ADVISOR_SECTION_LABELS[section], message: errorMessage(e) })
+  }
+  const day = serverDay(input.now) // jour de jeu (Paris) : Almanax, Takeza
+  const almanax = almanaxOn(day)
+  // Mode de rentabilité (rush, brisage, vente) : famille, espèce visée, palier et niveau des parents de la
+  // stratégie remplacent ceux des réglages pour l'appariement, le sort des montures et la répartition.
+  const modeBase = modeOverlay(input)
+  const settings = modeBase?.settings ?? input.settings
+  const unlocked = unlockedPaddocks(settings.jobLevel)
+  let summary: InventorySummary
+  try {
+    summary = inventorySummary(mounts)
+  } catch (e) {
+    fail('summary', e)
+    summary = emptySummary(mounts.length)
+  }
+  const missing = new MissingCollector()
+  // 1–2 bis. Plan d'accouplement, sort des montures et sorts pilotés par le mode (partagé avec Mes montures).
+  const ff = fatesFor(input, { settings, modeBase, almanax, fecundCount: summary.byStatus.feconde, fail })
+  const { genetonValue, pairs, pairCandidates, waiting, mode } = ff
+  const fates = ff.fates
 
   // 3. Répartition en enclos (mêmes options que la page Enclos).
   const xpTargets: Record<string, number> = {}
@@ -1794,10 +1855,12 @@ function onboardingAdvice({ input }: Ctx): Advice[] {
           },
           {
             id: 'prix',
-            text: 'Saisir quelques prix HDV (carburants, filets, makinas)',
-            hint: 'Sans prix, les coûts restent « incomplets » : ils ne sont jamais comptés comme nuls.',
-            link: { page: 'prix', label: 'Prix' },
-            done: (input.pricedItems ?? 0) > 0,
+            text: `Importer l'export HDV de ${input.serverName || input.priceCtx.market?.serverName || 'votre serveur'} (CSV) — ou saisir quelques prix`,
+            hint: input.priceCtx.market
+              ? `Export du ${frenchDay(input.priceCtx.market.exportDate)} importé : carburants, filets, makinas, ressources et montures sont chiffrés au prix de votre serveur.`
+              : "L'export HDV de votre serveur chiffre ≈ 1 000 objets d'un coup (carburants, filets, makinas, ressources d'extraction, montures). Sans prix, les coûts restent « incomplets » : ils ne sont jamais comptés comme nuls.",
+            link: { page: 'prix', params: { onglet: 'hdv' }, label: 'Marché HDV' },
+            done: (input.pricedItems ?? 0) > 0 || !!input.priceCtx.market,
           },
         ],
       },
@@ -2270,7 +2333,7 @@ function almanaxAdvice({ input, a, now }: Ctx): Advice[] {
         priority: days <= 3 ? 2 : 3,
         category: 'almanax',
         title: `Takeza ${when} : préparez vos couples`,
-        detail: `Ce jour-là, +20 % de génération cible sur tous les accouplements. Préparez un maximum de couples féconds de haute génération : ${takezaPrepTiming(a, input, dueAt, now)} Gardez pour ce jour les couples dont la cible est ≥ G${TAKEZA_PRIORITY_GENERATION}.`,
+        detail: `Ce jour-là, +20 % de génération cible sur tous les accouplements. Préparez un maximum de couples féconds de haute génération : ${takezaPrepTiming(a, input, dueAt, now)} ${takezaKeepText(a, days)}`,
         dueAt,
         allDay: true,
         horizon: days <= 3 ? 'aujourdhui' : 'semaine',
@@ -2310,6 +2373,21 @@ function almanaxAdvice({ input, a, now }: Ctx): Advice[] {
 }
 
 /**
+ * Couples à garder pour le Takeza (revue UX2-15) : seulement dans les 3 derniers jours (au-delà, un cycle
+ * d'enclos perdu coûte plus que +20 % de génération cible) ; en mode de rentabilité, les accouplements
+ * « avant d'extraire » (bébé gratuit) n'attendent jamais. Phrase reprise par la carte « Accoupler ».
+ */
+function takezaKeepText(a: AdvisorAnalysis, days: number): string {
+  const modeNote = a.mode && a.mode.active.kind !== 'progression' ? ` En mode ${a.mode.active.def.label}, les accouplements « avant d'extraire » (bébé gratuit avant la sortie) n'attendent pas le Takeza.` : ''
+  if (days <= TAKEZA_KEEP_DAYS)
+    return `Gardez pour ce jour les couples dont la cible est ≥ G${TAKEZA_PRIORITY_GENERATION} (ils sont marqués « réservé Takeza » dans « Accoupler ») ; accouplez les autres maintenant.${modeNote}`
+  return `D'ici là, accouplez vos couples prêts sans attendre (dans ${nb(days, 'jour')}, un cycle perdu coûte plus que +20 %) ; dans les ${TAKEZA_KEEP_DAYS} derniers jours, gardez pour ce jour les couples dont la cible est ≥ G${TAKEZA_PRIORITY_GENERATION}.${modeNote}`
+}
+
+/** Jours avant le Takeza à partir desquels on garde les couples de haute génération pour ce jour. */
+export const TAKEZA_KEEP_DAYS = 3
+
+/**
  * Préparation du Takeza : durée du plus long lot planifié par la répartition (sinon un lot typique du
  * planificateur au palier préféré) et heure limite de démarrage pour que le lot soit fécond au début
  * du jour Takeza (minuit à Paris).
@@ -2345,13 +2423,16 @@ function makinaHint(p: PairSuggestion): string | null {
   const complete = p.makinaPrice?.complete ?? ad.priceComplete
   const priceTxt = price !== null && price !== undefined ? `${formatKamas(price)}${complete ? '' : ', minimum'}` : 'prix inconnu'
   const seuil = ad.threshold !== null ? `${ad.thresholdIsUpperBound ? 'maximal ' : ''}${formatKamas(ad.threshold)}` : null
+  // Même critère que la page Accouplement (`makinaAdvice.decision`, revue UX2-06).
   if (p.makina === 'optimakina') {
+    if (ad.decision) return `Optimakina G${ad.generation} conseillée (${priceTxt}) : ${ad.decision}`
     if (ad.basis === 'regle-prix' && seuil) return `Optimakina G${ad.generation} conseillée (${priceTxt} < seuil ${seuil} = C_eff × Δ / p)`
     const why = ad.generation >= OPTIMAKINA_SYSTEMATIC_GENERATION ? `systématique dès la G${OPTIMAKINA_SYSTEMATIC_GENERATION}` : `étape G${OPTIMAKINA_GOAL_STEP_GENERATION}–G5 de l'objectif`
     return `Optimakina G${ad.generation} conseillée (${priceTxt} ; ${why}, faute de prix décisif)`
   }
   if (ad.gain <= 0) return null
   if (ad.basis === 'jamais') return 'sans makina (désactivée dans vos réglages)'
+  if (ad.decision) return `sans makina (Optimakina ${priceTxt}) : ${ad.decision}`
   if (ad.basis === 'regle-prix' && seuil) return `sans makina (Optimakina ${priceTxt} ≥ seuil ${seuil})`
   return `sans makina (cible G${ad.generation}, prix ou C_eff non décisifs : la recherche la réserve aux cibles ≥ G${OPTIMAKINA_SYSTEMATIC_GENERATION})`
 }
@@ -2377,10 +2458,14 @@ function matingAdvice({ input, a, byId }: Ctx): Advice[] {
   if (a.pairs.length) {
     const sorted = [...a.pairs].sort((x, y) => x.result.targetGeneration - y.result.targetGeneration || y.score - x.score)
     const items: AdviceItem[] = []
-    if (takeza && takeza.days > 0 && takeza.days <= 3 && sorted.some((p) => p.result.targetGeneration >= TAKEZA_PRIORITY_GENERATION))
+    // Takeza dans les 3 jours : les couples de haute génération lui sont réservés (même règle que la carte
+    // Almanax) ; au-delà, on accouple tout de suite.
+    const takezaSoon = !!takeza && takeza.days > 0 && takeza.days <= TAKEZA_KEEP_DAYS
+    const reserved = new Set(takezaSoon ? sorted.filter((p) => p.result.targetGeneration >= TAKEZA_PRIORITY_GENERATION).map((p) => p.key) : [])
+    if (takeza && reserved.size)
       items.push({
         id: 'takeza',
-        text: `Takeza dans ${nb(takeza.days, 'jour')} : gardez pour ce jour les couples dont la cible est ≥ G${TAKEZA_PRIORITY_GENERATION} (+20 %)`,
+        text: `Takeza dans ${nb(takeza.days, 'jour')} : ${nb(reserved.size, 'couple')} de cible ≥ G${TAKEZA_PRIORITY_GENERATION} ${plural(reserved.size, 'réservé')} pour ce jour (+20 %) — accouplez les autres maintenant`,
         tone: 'info',
       })
     if (a.summary.fecundInPaddock > 0)
@@ -2393,6 +2478,10 @@ function matingAdvice({ input, a, byId }: Ctx): Advice[] {
     for (const p of sorted) {
       const hints: string[] = []
       let tone: AdviceItem['tone']
+      if (reserved.has(p.key) && takeza) {
+        hints.push(`réservé Takeza : accouplez-le le ${formatIsoDay(takeza.date)} (+20 % de génération cible)`)
+        tone = 'info'
+      }
       const mk = makinaHint(p)
       if (mk) hints.push(mk)
       // `result.expectedGenetons` compte déjà les bébés (Reproducteur compris).
@@ -2434,12 +2523,29 @@ function matingAdvice({ input, a, byId }: Ctx): Advice[] {
         hint: speciesSummary(idle),
       })
     const opti = sorted.filter((p) => p.makina === 'optimakina').length
+    const nowCount = a.pairs.length - reserved.size
+    // Mode : ne nommer sa chaîne que pour les couples de sa famille (un éleveur de Volkornes passé en Rush
+    // Muldo ne voit pas « chaîne vers Muldo … » au-dessus de couples de Volkornes — revue UX2-01).
+    const famOf = (p: PairSuggestion) => getSpecies(p.a.speciesId)?.family
+    const inMode = a.mode ? a.pairs.filter((p) => famOf(p) === a.mode?.family).length : 0
+    const modeFam = a.mode ? (FAMILIES[a.mode.family]?.plural ?? a.mode.family) : ''
+    const pairFams = [...new Set(a.pairs.map(famOf).filter((f): f is FamilyId => !!f))].map((f) => FAMILIES[f]?.plural ?? f).join(' et ')
+    const planFor = !a.mode
+      ? `l'objectif « ${objectiveLabel(input.settings.goal)} »`
+      : inMode === a.pairs.length
+        ? `le mode « ${a.mode.active.def.label} » (chaîne vers ${a.mode.goalSpeciesId !== null ? nameOf(a.mode.goalSpeciesId) : 'la génération visée'})`
+        : inMode === 0
+          ? `vos ${pairFams}, hors stratégie du mode « ${a.mode.active.def.label} » (qui travaille les ${modeFam})`
+          : `le mode « ${a.mode.active.def.label} » (chaîne vers ${a.mode.goalSpeciesId !== null ? nameOf(a.mode.goalSpeciesId) : 'la génération visée'}) et, hors stratégie, vos couples d'autres familles`
     out.push({
       id: `accouplement:${hashKey(a.pairs.map((p) => p.key).sort().join(','))}`,
       priority: 2,
       category: 'accouplement',
-      title: `Accoupler ${nb(a.pairs.length, 'couple')} ${plural(a.pairs.length, 'fécond')}`,
-      detail: `Plan d'appariement pour ${a.mode ? `le mode « ${a.mode.active.def.label} » (chaîne vers ${a.mode.goalSpeciesId !== null ? nameOf(a.mode.goalSpeciesId) : 'la génération visée'})` : `l'objectif « ${objectiveLabel(input.settings.goal)} »`} : chaque monture n'est utilisée qu'une fois, sur ${nb(a.pairCandidates, 'couple')} possible${a.pairCandidates > 1 ? 's' : ''}. Accouplez depuis l'étable, par génération croissante, puis clonez ou sortez les stériles (indiqué « ensuite »). ${
+      title:
+        nowCount > 0
+          ? `Accoupler ${nb(nowCount, 'couple')} ${plural(nowCount, 'fécond')}${reserved.size ? ` (+ ${nb(reserved.size, 'couple')} ${plural(reserved.size, 'réservé')} Takeza)` : ''}`
+          : `Garder ${nb(reserved.size, 'couple')} ${plural(reserved.size, 'fécond')} pour le Takeza${takeza ? ` (${formatIsoDay(takeza.date)})` : ''}`,
+      detail: `Plan d'appariement pour ${planFor} : chaque monture n'est utilisée qu'une fois, sur ${nb(a.pairCandidates, 'couple')} possible${a.pairCandidates > 1 ? 's' : ''}. Accouplez depuis l'étable, par génération croissante, puis clonez ou sortez les stériles (indiqué « ensuite »). ${
         opti
           ? `Optimakina sur ${nb(opti, 'couple')} : règle de prix (prix < C_eff × Δ / p) dès que le prix et le coût du couple sont connus ; sinon systématique dès la cible G${OPTIMAKINA_SYSTEMATIC_GENERATION} (G${OPTIMAKINA_GOAL_STEP_GENERATION}–G5 pour les étapes de l'objectif).`
           : ''
@@ -2804,14 +2910,14 @@ function jobAdvice({ a }: Ctx): Advice[] {
 
 function priceAdvice({ input, a, missing }: Ctx): Advice[] {
   const out: Advice[] = []
-  if (!input.settings.useDefaultPrices && (input.pricedItems ?? 0) === 0 && input.mounts.length > 0)
+  if (!input.settings.useDefaultPrices && (input.pricedItems ?? 0) === 0 && !input.priceCtx.market && input.mounts.length > 0)
     out.push({
       id: 'prix:aucun',
       priority: 3,
       category: 'prix',
       title: 'Aucun prix disponible',
-      detail: "Les prix par défaut sont désactivés et vous n'avez saisi aucun prix : coûts et rentabilités sont tous incomplets. Activez les prix par défaut (réglages) ou saisissez vos prix HDV.",
-      link: { page: 'prix', label: 'Saisir des prix' },
+      detail: "Les prix par défaut sont désactivés, aucun export HDV n'est importé et vous n'avez saisi aucun prix : coûts et rentabilités sont tous incomplets. Importez l'export HDV de votre serveur (≈ 1 000 objets d'un coup), activez les prix par défaut (réglages) ou saisissez vos prix.",
+      link: { page: 'prix', params: { onglet: 'hdv' }, label: 'Importer l’export HDV' },
     })
   const list = missing.list().slice(0, 6)
   const items: AdviceItem[] = list.map((m) => ({ id: `item-${m.id}`, text: m.name, hint: `sert à : ${m.uses.join(', ')}`, link: { page: 'prix', params: { q: m.name }, label: 'Saisir' } }))
@@ -2862,7 +2968,7 @@ function modeAdvice({ input, a }: Ctx): Advice[] {
   if (act.source === 'defaut')
     items.push({
       id: 'calculer',
-      text: 'Calculer la stratégie de ce mode pour votre profil (≈ 5 s, page Modes de rentabilité)',
+      text: 'Calculer la stratégie de ce mode pour votre profil (≈ 15 s, page Modes de rentabilité)',
       hint: `En attendant, stratégie par défaut : ${act.strategyLabel}.`,
       tone: 'warn',
       link: { page: 'modes', params: { mode: act.id }, label: 'Calculer' },
@@ -2874,10 +2980,18 @@ function modeAdvice({ input, a }: Ctx): Advice[] {
       tone: 'warn',
       link: { page: 'modes', params: { mode: act.id }, label: 'Recalculer' },
     })
-  if (routine)
-    for (const it of routine.daily)
-      items.push({ id: `routine-${it.id}`, text: it.text, hint: it.hint, tone: it.tone ?? ROUTINE_ICON_TONE[it.kind], link: it.kind === 'carburant' || it.kind === 'makina' ? { page: 'prix', label: 'Prix' } : undefined })
-  else if (act.itemId !== null && input.priceCtx.market) {
+  // Aujourd'hui (revue UX2-03) : d'après votre étable, pas les quantités du régime permanent.
+  items.push(...modeTodayItems({ input, a } as Ctx))
+  const outcome = act.outcome
+  const timeline = outcome ? modeTimeline(outcome, { freeSlots: a.freeSlots }) : []
+  if (timeline.length)
+    items.push({
+      id: 'calendrier',
+      text: `Montée en charge (${timelineBasis(outcome)}) : ${timeline.filter((t) => t.id !== 'remplir').map((t) => t.text).join(' · ')}`,
+      hint: 'Les quantités « par jour » de la routine du mode sont celles du régime permanent : elles s’appliquent une fois la montée en charge faite.',
+      tone: 'info',
+    })
+  if (!routine && act.itemId !== null && input.priceCtx.market) {
     const cap = sellablePerDay(input.priceCtx.market, act.itemId, input.maxMarketShare ?? 0.15)
     const name = marketItemName(act.itemId, input.priceCtx.market?.names)
     if (cap !== null)
@@ -2906,6 +3020,106 @@ function modeAdvice({ input, a }: Ctx): Advice[] {
     amount: kamasDay !== null && net ? { label: 'Bénéfice net attendu par jour (régime permanent)', value: kamasDay, complete: net.high !== null && Math.abs(net.high - (net.low ?? 0)) < 0.5 } : undefined,
     confidence: act.source === 'defaut' ? 'low' : 'medium',
   })
+  // Régime permanent (quantités moyennes par jour une fois la montée faite) : carte à part, cette semaine.
+  if (routine) {
+    const regime = timeline.find((t) => t.id === 'regime')
+    out.push({
+      id: `mode:${act.id}:regime:${act.source}:${act.computedAt ?? 0}`,
+      priority: 4,
+      category: 'objectif',
+      horizon: 'semaine',
+      title: `Mode ${act.def.label} : routine du régime permanent${regime?.day ? ` (≈ jour ${regime.day})` : ''}`,
+      detail: `Quantités moyennes par jour une fois la montée en charge faite (simulation, joueur parfait) — pas la liste d'aujourd'hui. ${routine.summary}.`,
+      link: { page: 'plan', params: { onglet: 'routines' }, label: 'Routine du mode' },
+      items: routine.daily.map((it) => ({ id: `routine-${it.id}`, text: it.text, hint: it.hint, tone: it.tone ?? ROUTINE_ICON_TONE[it.kind], link: it.kind === 'carburant' || it.kind === 'makina' ? { page: 'prix', label: 'Prix' } : undefined })),
+      confidence: act.source === 'defaut' ? 'low' : 'medium',
+    })
+  }
+  return out
+}
+
+/**
+ * Ce que le mode demande AUJOURD'HUI, d'après l'étable (revue UX2-03) : carburant des lots à lancer,
+ * Optimakinas des couples prévus, sorties et ventes des montures que vous avez (sinon : date des premières
+ * ventes de la simulation). Jamais les quantités du régime permanent présentées comme un « à faire ».
+ */
+function modeTodayItems({ input, a }: Ctx): AdviceItem[] {
+  const mode = a.mode
+  if (!mode) return []
+  const act = mode.active
+  const d = act.outcome?.digest
+  const out: AdviceItem[] = []
+  // Carburant : lots à lancer aujourd'hui (enclos où des montures sont à poser) × carburant d'un lot.
+  const lots = (a.assignment?.paddocks ?? []).filter((p) => p.plan !== null && p.addedIds.length > 0).length
+  const batches = d?.routine.batchesPerDay ?? 0
+  if (lots > 0 && d && batches > 0) {
+    const fuels = d.routine.fuel
+      .filter((f) => f.itemsPerDay !== null && f.itemsPerDay > 0)
+      .map((f) => `${f.fuelName} ≈ ${formatNumber(Math.ceil(((f.itemsPerDay as number) / batches) * lots))}`)
+    if (fuels.length)
+      out.push({
+        id: 'jour-carburant',
+        text: `Carburant pour ${nb(lots, 'lot')} à lancer aujourd'hui : ${fuels.join(', ')}`,
+        hint: 'Quantités d’un lot typique de la stratégie (palier et jauges), multipliées par les lots à poser ; les enclos déjà lancés ont leurs recharges dans « Enclos ».',
+        link: { page: 'enclos', params: { onglet: 'repartition' }, label: 'Enclos' },
+      })
+  } else
+    out.push({ id: 'jour-carburant', text: "Aucun lot à lancer aujourd'hui : pas de carburant à acheter (hors recharges des enclos en cours)", tone: 'ok' })
+  // Optimakinas : seulement pour les couples d'aujourd'hui qui en prennent une.
+  const opti = new Map<number, number>()
+  for (const p of a.pairs) if (p.makina === 'optimakina') opti.set(p.makinaAdvice.generation, (opti.get(p.makinaAdvice.generation) ?? 0) + 1)
+  const optiCount = [...opti.values()].reduce((t, n) => t + n, 0)
+  if (optiCount > 0)
+    out.push({
+      id: 'jour-optimakinas',
+      text: `Optimakinas pour les accouplements d'aujourd'hui : ${[...opti.entries()]
+        .sort((x, y) => y[0] - x[0])
+        .map(([g, n]) => `${n} × G${g}`)
+        .join(', ')}`,
+      hint: 'Une par couple qui en prend une (règle de prix, carte « Accoupler »).',
+      link: { page: 'accouplement', params: { onglet: 'couples' }, label: 'Plan d’accouplement' },
+    })
+  // Sorties et ventes du jour : montures dont le sort (mode compris) est « extraire » / « vendre » / « briser »
+  // — ressources comptées par famille (une Volkorne extraite donne des Cornes, même sous un mode Muldo).
+  let extract = 0
+  let sell = 0
+  let broken = 0
+  const resByFamily = new Map<FamilyId, number>()
+  for (const m of input.mounts) {
+    const f = a.fates.get(m.id)
+    const sp = getSpecies(m.speciesId)
+    if (!f || !sp) continue
+    if (f.action === 'extraction') {
+      extract++
+      resByFamily.set(sp.family, (resByFamily.get(sp.family) ?? 0) + (sp.generation >= 2 ? sp.generation : 0))
+    } else if (f.action === 'vente' && sp.family === mode.family) sell++
+    else if (f.action === 'brisage' && sp.family === mode.family) broken++
+  }
+  const cap = act.sellCapPerDay
+  if (extract > 0) {
+    const parts = [...resByFamily.entries()]
+      .filter(([, n]) => n > 0)
+      .sort(([fa], [fb]) => (fa === mode.family ? -1 : fb === mode.family ? 1 : 0))
+      .map(([fam, n]) => {
+        const name = FAMILIES[fam]?.extractionItemName ?? 'ressources'
+        return `≈ ${formatNumber(n)} ${pluralItemName(name, n)}${fam === mode.family && cap !== null ? ` (au plus ${formatNumber(Math.floor(cap))} vendues par jour)` : ''}`
+      })
+    // Aucune monture de la famille du mode à extraire : on précise que ces sorties sont hors du mode.
+    const outside = !resByFamily.has(mode.family) ? ` hors de la famille du mode (${[...resByFamily.keys()].map((f) => FAMILIES[f]?.plural ?? f).join(', ')})` : ''
+    out.push({
+      id: 'jour-extraire',
+      text: `Extraire ${nb(extract, 'monture')}${outside} aujourd'hui${parts.length ? ` → ${parts.join(' et ')} à vendre` : ''}`,
+      link: { page: 'montures', params: { sort: 'extraction' }, label: 'Mes montures' },
+    })
+  }
+  if (extract + sell + broken === 0) {
+    const first = act.outcome ? modeTimeline(act.outcome).find((t) => t.id === 'premieres-ventes' || t.id === 'premiere-cible') : undefined
+    out.push({
+      id: 'jour-ventes',
+      text: `Rien à vendre aujourd'hui${first?.day ? ` : ${first.text.charAt(0).toLowerCase()}${first.text.slice(1)} (${timelineBasis(act.outcome)})` : ' : la production démarre'}`,
+      tone: 'info',
+    })
+  }
   return out
 }
 

@@ -9,6 +9,7 @@ import {
   LEGACY_STORE_KEYS,
   PROFILES_CORRUPT_KEY,
   PROFILES_KEY,
+  PROFILES_SHADOW_KEY,
   STORAGE_PREFIX,
   isPlainObject,
   isValidScopeId,
@@ -47,6 +48,17 @@ export interface ProfileEntry {
   serverId: string
   createdAt: number
   color?: ProfileColor
+  /**
+   * Serveur deviné lors d'une reconstruction du registre (registre perdu ou illisible) : à confirmer par le
+   * joueur (badge « serveur à vérifier » dans Réglages › Profils ; effacé dès que son serveur est choisi).
+   */
+  serverToCheck?: true
+}
+
+/** Empreinte d'une valeur (longueur + FNV-1a 32 bits) : détecte une modification sans garder de copie. */
+export interface LegacyFingerprint {
+  len: number
+  hash: number
 }
 
 /** Copie des données d'avant les profils, gardée après la migration jusqu'à confirmation. */
@@ -58,6 +70,12 @@ export interface LegacyCopyInfo {
   moved: string[]
   /** Instant où la copie a été supprimée (0 = encore présente). */
   removedAt: number
+  /**
+   * Empreinte de chaque ancienne clé copiée, au moment de la reprise : une valeur qui ne correspond plus a
+   * été réécrite par un onglet resté sur l'ancienne version (`legacyDivergence`). Absent pour une reprise
+   * faite avant l'ajout des empreintes.
+   */
+  fingerprints?: Record<string, LegacyFingerprint>
 }
 
 export interface ProfilesRegistry {
@@ -157,6 +175,7 @@ export function sanitizeRegistry(raw: unknown): { registry: ProfilesRegistry | n
     const name = typeof p.name === 'string' && p.name.trim() ? p.name.trim().slice(0, NAME_MAX) : `Profil ${p.id}`
     const entry: ProfileEntry = { id: p.id, name, serverId, createdAt: finite(p.createdAt) ? p.createdAt : 0 }
     if ((PROFILE_COLORS as readonly unknown[]).includes(p.color)) entry.color = p.color as ProfileColor
+    if (p.serverToCheck === true) entry.serverToCheck = true
     profiles.push(entry)
   }
   if (!profiles.length) return { registry: null, issues: [...issues, 'aucun profil lisible'], newer }
@@ -167,6 +186,12 @@ export function sanitizeRegistry(raw: unknown): { registry: ProfilesRegistry | n
   if (isPlainObject(l) && finite(l.migratedAt)) {
     const strs = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && x.startsWith(STORAGE_PREFIX)) : [])
     registry.legacy = { migratedAt: l.migratedAt, keys: strs(l.keys), moved: strs(l.moved), removedAt: finite(l.removedAt) ? l.removedAt : 0 }
+    if (isPlainObject(l.fingerprints)) {
+      const fingerprints: Record<string, LegacyFingerprint> = {}
+      for (const [k, v] of Object.entries(l.fingerprints))
+        if (k.startsWith(STORAGE_PREFIX) && isPlainObject(v) && finite(v.len) && finite(v.hash)) fingerprints[k] = { len: v.len, hash: v.hash }
+      registry.legacy.fingerprints = fingerprints
+    }
   }
   return { registry, issues, newer }
 }
@@ -228,10 +253,16 @@ export function renameProfile(r: ProfilesRegistry, id: string, name: string): Re
   return { ok: true, registry: { ...r, profiles: r.profiles.map((p) => (p.id === id ? { ...p, name: n.name } : p)) }, id }
 }
 
+/** Change le serveur d'un profil (le même serveur confirme un serveur deviné : `serverToCheck` effacé). */
 export function setProfileServer(r: ProfilesRegistry, id: string, serverId: string): RegistryResult {
   if (!profileById(r, id)) return err('Profil introuvable.')
   if (!serverById(r, serverId)) return err('Serveur introuvable.')
-  return { ok: true, registry: { ...r, profiles: r.profiles.map((p) => (p.id === id ? { ...p, serverId } : p)) }, id }
+  const move = (p: ProfileEntry): ProfileEntry => {
+    const next: ProfileEntry = { ...p, serverId }
+    delete next.serverToCheck
+    return next
+  }
+  return { ok: true, registry: { ...r, profiles: r.profiles.map((p) => (p.id === id ? move(p) : p)) }, id }
 }
 
 export function setProfileColor(r: ProfilesRegistry, id: string, color: ProfileColor | null): RegistryResult {
@@ -311,7 +342,7 @@ export function copyProfileData(storage: StorageLike, fromId: string, toId: stri
     }
   } catch (e) {
     for (const k of written) storage.removeItem(k)
-    return { ok: false, error: isQuota(e) ? 'Espace de stockage du navigateur insuffisant pour dupliquer ce profil (allégez le journal ou supprimez un profil).' : 'Écriture impossible dans le stockage du navigateur.' }
+    return { ok: false, error: isQuota(e) ? 'Espace de stockage du navigateur insuffisant pour dupliquer ce profil : libérez de la place (Réglages › Données : résultats recalculables des modes, journal ancien) ou supprimez un profil.' : 'Écriture impossible dans le stockage du navigateur.' }
   }
   return { ok: true, copied: written }
 }
@@ -330,8 +361,11 @@ export function removeServerData(storage: StorageLike, id: string): string[] {
   return keys
 }
 
-/** Contenu d'un profil dans le stockage (pour les listes de profils). */
-export function profileDataSummary(storage: StorageLike, id: string): { mounts: number | null; journal: number | null; jobLevel: number | null; bytes: number } {
+/**
+ * Contenu d'un profil dans le stockage (pour les listes de profils). `chars` : place occupée, en caractères
+ * (clés + valeurs), l'unité du quota du localStorage (voir `storageUsage`, src/lib/backup.ts).
+ */
+export function profileDataSummary(storage: StorageLike, id: string): { mounts: number | null; journal: number | null; jobLevel: number | null; chars: number } {
   const read = (base: string): Record<string, unknown> | null => {
     try {
       const v = JSON.parse(storage.getItem(profileStoreKey(id, base)) ?? 'null') as unknown
@@ -343,13 +377,13 @@ export function profileDataSummary(storage: StorageLike, id: string): { mounts: 
   const inv = read('inventory')
   const journal = read('journal')
   const settings = read('settings')
-  let bytes = 0
-  for (const k of keysWithPrefix(storage, profileKeyPrefix(id))) bytes += 2 * (k.length + (storage.getItem(k)?.length ?? 0))
+  let chars = 0
+  for (const k of keysWithPrefix(storage, profileKeyPrefix(id))) chars += k.length + (storage.getItem(k)?.length ?? 0)
   return {
     mounts: inv && Array.isArray(inv.mounts) ? inv.mounts.length : null,
     journal: journal && Array.isArray(journal.entries) ? journal.entries.length : null,
     jobLevel: settings && finite(settings.jobLevel) ? settings.jobLevel : null,
-    bytes,
+    chars,
   }
 }
 
@@ -408,6 +442,37 @@ export function defaultRegistry(now: number, serverName = DEFAULT_SERVER_NAME): 
   }
 }
 
+/** Hachage FNV-1a 32 bits d'un texte (unités UTF-16). */
+export function hashText(text: string): number {
+  let h = 0x811c9dc5
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i)
+    h = Math.imul(h, 0x01000193) >>> 0
+  }
+  return h >>> 0
+}
+
+/** Empreinte d'une valeur stockée. */
+export function fingerprintOf(value: string): LegacyFingerprint {
+  return { len: value.length, hash: hashText(value) }
+}
+
+/** Registre existant complété d'un profil « Principal » (et de son serveur, d'après les anciens réglages). */
+function registryWithPrincipal(storage: StorageLike, base: ProfilesRegistry, now: number): ProfilesRegistry {
+  if (profileById(base, DEFAULT_PROFILE_ID)) return { ...base, profiles: [...base.profiles], servers: [...base.servers] }
+  const serverName = legacyServerName(storage)
+  let reg: ProfilesRegistry = { ...base, profiles: [...base.profiles], servers: [...base.servers] }
+  let server = serverByName(reg, serverName)
+  if (!server) {
+    const id = freeId(serverName, [...reg.servers.map((s) => s.id), ...idsWithData(storage).servers], 'serveur')
+    server = { id, name: serverName, createdAt: now, priceStat: 'auto', maxMarketShare: DEFAULT_MAX_MARKET_SHARE }
+    reg = { ...reg, servers: [...reg.servers, server] }
+  }
+  let name = DEFAULT_PROFILE_NAME
+  for (let i = 2; reg.profiles.some((p) => normName(p.name) === normName(name)); i++) name = `${DEFAULT_PROFILE_NAME} (${i})`
+  return { ...reg, profiles: [...reg.profiles, { id: DEFAULT_PROFILE_ID, name, serverId: server.id, createdAt: now }] }
+}
+
 export type MigrationResult =
   | { ok: true; registry: ProfilesRegistry; copied: string[]; moved: string[] }
   | { ok: false; error: string }
@@ -415,16 +480,23 @@ export type MigrationResult =
 /**
  * Première ouverture de la v2 : les anciennes clés deviennent le profil « Principal » sur un serveur nommé
  * d'après les anciens réglages (« Mon serveur » sinon) ; les anciens prix vont à ce serveur. Les anciennes
- * clés sont COPIÉES (gardées telles quelles comme sauvegarde, à supprimer plus tard dans les Réglages).
- * Faute de place pour une copie, la clé est déplacée (sa valeur n'existe alors qu'une fois). Idempotent :
- * une clé déjà migrée n'est pas réécrite. Le registre est écrit en dernier ; si une écriture échoue
- * malgré tout, tout est annulé (clés déplacées remises en place) et `ok: false`.
+ * clés sont COPIÉES (gardées telles quelles comme sauvegarde, à supprimer plus tard dans les Réglages), avec
+ * leur empreinte (`LegacyCopyInfo.fingerprints`, pour repérer une écriture ultérieure d'un onglet resté sur
+ * l'ancienne version). Faute de place pour une copie, la clé est déplacée (sa valeur n'existe alors qu'une
+ * fois) ; si même un déplacement ne tient pas (la nouvelle clé est plus longue), des copies déjà faites
+ * deviennent des déplacements pour libérer de la place (idem pour le registre, écrit en dernier).
+ * Idempotente : une clé déjà migrée n'est pas réécrite. Si une écriture échoue malgré tout, tout est
+ * annulé (clés déplacées remises en place) et `ok: false`.
+ * `base` : registre existant à compléter (registre reconstruit) au lieu d'un registre neuf.
  */
-export function migrateLegacyStorage(storage: StorageLike, now: number): MigrationResult {
+export function migrateLegacyStorage(storage: StorageLike, now: number, base?: ProfilesRegistry): MigrationResult {
   const keys = legacyKeys(storage)
-  const registry = defaultRegistry(now, legacyServerName(storage))
-  const serverId = registry.servers[0].id
+  const registry = base ? registryWithPrincipal(storage, base, now) : defaultRegistry(now, legacyServerName(storage))
+  const serverId = (profileById(registry, DEFAULT_PROFILE_ID) ?? registry.profiles[0]).serverId
+  /** Anciennes clés gardées (copiées, ou déjà reprises lors d'une migration précédente). */
   const copied: string[] = []
+  /** Anciennes clés copiées PAR CETTE migration (valeur identique à la nouvelle clé) : convertibles en déplacements. */
+  const ownCopies: string[] = []
   const moved: string[] = []
   const written: string[] = []
   const movedValues = new Map<string, string>()
@@ -434,6 +506,30 @@ export function migrateLegacyStorage(storage: StorageLike, now: number): Migrati
       // Valeur gardée en mémoire au moment du déplacement : on la remet à sa place.
       const v = movedValues.get(k)
       if (v !== undefined) storage.setItem(k, v)
+    }
+  }
+  /** Libère de la place : une copie faite ici devient un déplacement (sa copie existe). false s'il n'y en a plus. */
+  const convertOneCopy = (): boolean => {
+    const k = ownCopies.shift()
+    if (k === undefined) return false
+    copied.splice(copied.indexOf(k), 1)
+    const v = storage.getItem(k)
+    if (v !== null) {
+      movedValues.set(k, v)
+      storage.removeItem(k)
+    }
+    moved.push(k)
+    return true
+  }
+  /** Écrit ; en cas de quota, convertit des copies en déplacements jusqu'à ce que l'écriture tienne. */
+  const writeFreeing = (write: () => void) => {
+    for (;;) {
+      try {
+        write()
+        return
+      } catch (e) {
+        if (!isQuota(e) || !convertOneCopy()) throw e
+      }
     }
   }
   try {
@@ -449,45 +545,28 @@ export function migrateLegacyStorage(storage: StorageLike, now: number): Migrati
         storage.setItem(target, value)
         written.push(target)
         copied.push(k)
+        ownCopies.push(k)
       } catch (e) {
         if (!isQuota(e)) throw e
         // Plus de place pour une copie : on déplace (libère l'ancienne clé, puis écrit la nouvelle).
         storage.removeItem(k)
         movedValues.set(k, value)
         moved.push(k)
-        storage.setItem(target, value)
+        writeFreeing(() => storage.setItem(target, value))
         written.push(target)
       }
     }
     const writeRegistry = () => {
-      registry.legacy = { migratedAt: now, keys: copied.concat(moved).sort(), moved: [...moved].sort(), removedAt: 0 }
+      const fingerprints: Record<string, LegacyFingerprint> = {}
+      for (const k of copied) {
+        const v = storage.getItem(k)
+        if (v !== null) fingerprints[k] = fingerprintOf(v)
+      }
+      registry.legacy = { migratedAt: now, keys: copied.concat(moved).sort(), moved: [...moved].sort(), removedAt: 0, fingerprints }
       if (!keys.length) delete registry.legacy
       storage.setItem(PROFILES_KEY, JSON.stringify(registry))
     }
-    try {
-      writeRegistry()
-    } catch (e) {
-      if (!isQuota(e)) throw e
-      // Plus de place pour le registre : les anciennes clés déjà copiées deviennent des déplacements
-      // (leur copie existe), une à une, jusqu'à ce que le registre tienne.
-      let saved = false
-      while (!saved && copied.length) {
-        const k = copied.shift() as string
-        const v = storage.getItem(k)
-        if (v !== null) {
-          movedValues.set(k, v)
-          storage.removeItem(k)
-        }
-        moved.push(k)
-        try {
-          writeRegistry()
-          saved = true
-        } catch (e2) {
-          if (!isQuota(e2)) throw e2
-        }
-      }
-      if (!saved) throw e
-    }
+    writeFreeing(writeRegistry)
   } catch (e) {
     try {
       rollback()
@@ -496,38 +575,165 @@ export function migrateLegacyStorage(storage: StorageLike, now: number): Migrati
     }
     return { ok: false, error: isQuota(e) ? 'Espace de stockage plein : migration vers les profils impossible.' : 'Écriture impossible : migration vers les profils impossible.' }
   }
+  writeShadow(storage, JSON.stringify(registry))
   return { ok: true, registry, copied, moved }
 }
 
 /**
- * Registre reconstruit à partir des clés présentes (registre illisible) : un profil par identifiant
- * « p:<id>: » trouvé, un serveur par « s:<id>: », rattachés d'après le serveur noté dans les réglages.
+ * Anciennes clés modifiées APRÈS la reprise dans le profil « Principal » (onglet resté ouvert sur
+ * l'ancienne version) : valeur qui ne correspond plus à son empreinte, clé déplacée puis réécrite, ou
+ * ancienne clé apparue depuis. Vide si la copie a été supprimée ou s'il n'y a pas eu de reprise.
  */
-export function rebuildRegistry(storage: StorageLike, now: number): ProfilesRegistry | null {
-  const { profiles, servers } = idsWithData(storage)
-  if (!profiles.size) return null
-  const reg: ProfilesRegistry = { version: REGISTRY_VERSION, activeProfileId: [...profiles][0], profiles: [], servers: [] }
-  for (const id of [...servers].sort()) reg.servers.push({ id, name: `Serveur ${id}`, createdAt: now, priceStat: 'auto', maxMarketShare: DEFAULT_MAX_MARKET_SHARE })
-  for (const id of [...profiles].sort()) {
-    let label = ''
-    try {
-      const v = JSON.parse(storage.getItem(profileStoreKey(id, 'settings')) ?? 'null') as unknown
-      if (isPlainObject(v) && isPlainObject(v.state) && typeof v.state.server === 'string') label = v.state.server.trim()
-    } catch {
-      label = ''
+export function legacyDivergence(storage: StorageLike, registry: ProfilesRegistry): string[] {
+  const l = registry.legacy
+  if (!l || l.removedAt) return []
+  const known = new Set(l.keys)
+  const moved = new Set(l.moved)
+  const out: string[] = []
+  for (const k of legacyKeys(storage)) {
+    const v = storage.getItem(k)
+    if (v === null) continue
+    if (!known.has(k) || moved.has(k)) {
+      out.push(k)
+      continue
     }
+    const f = l.fingerprints?.[k]
+    if (f && (f.len !== v.length || f.hash !== hashText(v))) out.push(k)
+  }
+  return out
+}
+
+/**
+ * Registre où les anciennes clés `keys` sont tenues pour à jour (valeur actuelle = nouvelle empreinte) :
+ * après « Reprendre ces changements » ou « Ignorer ».
+ */
+export function acknowledgeLegacyKeys(storage: StorageLike, registry: ProfilesRegistry, keys: string[]): ProfilesRegistry {
+  const l = registry.legacy
+  if (!l) return registry
+  const fingerprints: Record<string, LegacyFingerprint> = { ...l.fingerprints }
+  const known = new Set(l.keys)
+  const moved = new Set(l.moved)
+  for (const k of keys) {
+    const v = storage.getItem(k)
+    if (v === null) continue
+    fingerprints[k] = fingerprintOf(v)
+    known.add(k)
+    moved.delete(k)
+  }
+  return { ...registry, legacy: { ...l, keys: [...known].sort(), moved: [...moved].sort(), fingerprints } }
+}
+
+// ---------- Reconstruction d'un registre perdu ou illisible ----------
+
+function writeShadow(storage: StorageLike, text: string): void {
+  try {
+    if (storage.getItem(PROFILES_SHADOW_KEY) !== text) storage.setItem(PROFILES_SHADOW_KEY, text)
+  } catch {
+    // Copie de secours facultative (stockage plein) : rien à faire.
+  }
+}
+
+/** Registre lu « au mieux » (version manquante tolérée) ; null s'il est inutilisable ou plus récent. */
+function lenientRegistry(raw: string | null | undefined): ProfilesRegistry | null {
+  if (!raw) return null
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    return null
+  }
+  if (!isPlainObject(parsed)) return null
+  const version = finite(parsed.version) && Number.isInteger(parsed.version) && parsed.version >= 1 ? parsed.version : REGISTRY_VERSION
+  if (version > REGISTRY_VERSION) return null
+  return sanitizeRegistry({ ...parsed, version }).registry
+}
+
+/** Libellé du serveur noté dans les réglages d'un profil (« » si absent). */
+function settingsServerLabel(storage: StorageLike, profileId: string): string {
+  try {
+    const v = JSON.parse(storage.getItem(profileStoreKey(profileId, 'settings')) ?? 'null') as unknown
+    return isPlainObject(v) && isPlainObject(v.state) && typeof v.state.server === 'string' ? v.state.server.replace(/\s+/g, ' ').trim().slice(0, NAME_MAX) : ''
+  } catch {
+    return ''
+  }
+}
+
+export interface RebuildResult {
+  registry: ProfilesRegistry
+  /** Profils rattachés à un serveur deviné (marqués `serverToCheck`). */
+  toCheck: string[]
+  /** Noms, serveurs et options repris d'une copie (registre illisible lu au mieux, ou copie de secours). */
+  recovered: boolean
+}
+
+/**
+ * Registre reconstruit (registre perdu ou illisible) : d'abord d'après le registre illisible lu au mieux
+ * (`corruptRaw`) ou la copie de secours (« elevagesimu:profiles-precedent ») — noms, serveurs, couleurs,
+ * options des serveurs, copie d'avant les profils —, puis complété des profils (« p:<id>: ») et serveurs
+ * (« s:<id>: ») trouvés seulement dans les données. Un profil sans entrée est rattaché au serveur noté dans
+ * ses réglages ; sinon au seul serveur qui a des données, ou au premier par ordre alphabétique, et marqué
+ * « serveur à vérifier » s'il y avait plusieurs serveurs possibles. null si aucun profil n'est trouvé.
+ */
+export function rebuildRegistry(storage: StorageLike, now: number, corruptRaw?: string | null): RebuildResult | null {
+  const data = idsWithData(storage)
+  const hints = [lenientRegistry(corruptRaw), lenientRegistry(storage.getItem(PROFILES_SHADOW_KEY))].filter((r): r is ProfilesRegistry => r !== null)
+  const base = hints[0]
+  if (!data.profiles.size && !base) return null
+  const reg: ProfilesRegistry = base
+    ? { ...base, profiles: base.profiles.map((p) => ({ ...p })), servers: base.servers.map((s) => ({ ...s })) }
+    : { version: REGISTRY_VERSION, activeProfileId: '', profiles: [], servers: [] }
+  const uniqueProfileName = (name: string) => {
+    let n = name.slice(0, NAME_MAX)
+    for (let i = 2; reg.profiles.some((p) => normName(p.name) === normName(n)); i++) n = `${name} (${i})`.slice(0, NAME_MAX)
+    return n
+  }
+  // Profils (avec données) connus seulement de l'autre copie.
+  for (const h of hints.slice(1))
+    for (const p of h.profiles) {
+      if (!data.profiles.has(p.id) || profileById(reg, p.id)) continue
+      const hs = serverById(h, p.serverId)
+      let server = serverById(reg, p.serverId) ?? (hs ? serverByName(reg, hs.name) : undefined)
+      if (!server && hs) {
+        server = { ...hs }
+        reg.servers.push(server)
+      }
+      if (server) reg.profiles.push({ ...p, name: uniqueProfileName(p.name), serverId: server.id })
+    }
+  // Serveurs qui n'existent que par leurs données.
+  for (const id of [...data.servers].sort())
+    if (!serverById(reg, id)) reg.servers.push({ id, name: `Serveur ${id}`, createdAt: now, priceStat: 'auto', maxMarketShare: DEFAULT_MAX_MARKET_SHARE })
+  // Profils qui n'existent que par leurs données.
+  const toCheck: string[] = []
+  for (const id of [...data.profiles].sort()) {
+    if (profileById(reg, id)) continue
+    const label = settingsServerLabel(storage, id)
     let server = label ? reg.servers.find((s) => s.id === slugify(label) || normName(s.name) === normName(label)) : undefined
-    if (server && label && server.name.startsWith('Serveur ')) server.name = label.slice(0, NAME_MAX)
-    if (!server) server = reg.servers[0]
+    if (server && server.name === `Serveur ${server.id}`) server.name = label
+    let guessed = false
+    if (!server && reg.servers.length) {
+      const withData = reg.servers.filter((s) => data.servers.has(s.id))
+      server = withData.length === 1 ? withData[0] : [...reg.servers].sort((a, b) => a.id.localeCompare(b.id))[0]
+      guessed = reg.servers.length > 1
+    }
     if (!server) {
-      const sid = freeId(label || DEFAULT_SERVER_NAME, [], 'serveur')
-      server = { id: sid, name: (label || DEFAULT_SERVER_NAME).slice(0, NAME_MAX), createdAt: now, priceStat: 'auto', maxMarketShare: DEFAULT_MAX_MARKET_SHARE }
+      const name = label || DEFAULT_SERVER_NAME
+      server = { id: freeId(name, [], 'serveur'), name, createdAt: now, priceStat: 'auto', maxMarketShare: DEFAULT_MAX_MARKET_SHARE }
       reg.servers.push(server)
     }
-    reg.profiles.push({ id, name: id === DEFAULT_PROFILE_ID ? DEFAULT_PROFILE_NAME : `Profil ${id}`, serverId: server.id, createdAt: now })
+    const entry: ProfileEntry = { id, name: uniqueProfileName(id === DEFAULT_PROFILE_ID ? DEFAULT_PROFILE_NAME : `Profil ${id}`), serverId: server.id, createdAt: now }
+    if (guessed) {
+      entry.serverToCheck = true
+      toCheck.push(id)
+    }
+    reg.profiles.push(entry)
   }
-  if (profiles.has(DEFAULT_PROFILE_ID)) reg.activeProfileId = DEFAULT_PROFILE_ID
-  return reg
+  if (!reg.profiles.length) return null
+  if (!profileById(reg, reg.activeProfileId)) reg.activeProfileId = profileById(reg, DEFAULT_PROFILE_ID) ? DEFAULT_PROFILE_ID : reg.profiles[0].id
+  // Copie d'avant les profils encore présente, sans trace dans une copie du registre : on la signale.
+  const old = legacyKeys(storage)
+  if (!reg.legacy && old.length && profileById(reg, DEFAULT_PROFILE_ID) && keysWithPrefix(storage, profileKeyPrefix(DEFAULT_PROFILE_ID)).length)
+    reg.legacy = { migratedAt: now, keys: old, moved: [], removedAt: 0 }
+  return { registry: reg, toCheck, recovered: base !== undefined }
 }
 
 // ---------- Démarrage ----------
@@ -546,15 +752,42 @@ export interface BootResult {
   readOnly: boolean
   /** Migration des anciennes données faite à ce démarrage. */
   migrated: boolean
-  /** Problèmes à signaler (français). */
-  issues: { kind: 'corrige' | 'version' | 'ecriture'; message: string }[]
+  /** Problèmes à signaler (français) ; `migration` : profils non activés faute de place. */
+  issues: { kind: 'corrige' | 'version' | 'ecriture' | 'migration'; message: string }[]
+}
+
+/** Message d'une reconstruction du registre (un seul par sorte : un même bandeau ne garde qu'un message). */
+function rebuildIssues(r: RebuildResult, why: 'illisible' | 'absent', written: boolean): BootResult['issues'] {
+  const n = r.registry.profiles.length
+  const from = r.recovered ? 'd’après la copie de secours du registre et les données présentes' : 'd’après les données présentes (noms à vérifier dans les Réglages)'
+  const parts = [`Le registre des profils était ${why} : ${n} profil${n > 1 ? 's' : ''} reconstruit${n > 1 ? 's' : ''} ${from}.`]
+  if (why === 'illisible') parts.push('L’original est gardé dans la sauvegarde (« profiles-corrompu »).')
+  if (r.toCheck.length) {
+    const names = r.toCheck.map((id) => {
+      const p = profileById(r.registry, id)
+      const s = p ? serverById(r.registry, p.serverId) : undefined
+      return `« ${p?.name ?? id} » → ${s?.name ?? '?'}`
+    })
+    parts.push(`Serveur deviné pour ${names.join(', ')} : vérifiez-le dans Réglages › Profils (badge « serveur à vérifier »).`)
+  }
+  if (!written) parts.push('Le registre reconstruit n’a pas pu être enregistré (stockage plein ?).')
+  return [{ kind: written ? 'corrige' : 'ecriture', message: parts.join(' ') }]
+}
+
+/** Profil à ouvrir dans un onglet : celui choisi dans l'onglet s'il existe encore, sinon le profil par défaut du registre. */
+export function resolveOpenProfile(r: ProfilesRegistry, preferred: string | null | undefined): { profile: ProfileEntry; missing: string | null } {
+  const fallback = activeProfileOf(r)
+  if (!preferred || preferred === fallback.id) return { profile: fallback, missing: null }
+  const p = profileById(r, preferred)
+  return p ? { profile: p, missing: null } : { profile: fallback, missing: preferred }
 }
 
 /**
  * Registre au démarrage de l'application (synchrone, avant la création des stores) :
- * registre présent → lu et normalisé (réécrit s'il a été corrigé) ; illisible → copie gardée
- * (« elevagesimu:profiles-corrompu ») et registre reconstruit d'après les clés ; absent → migration des
- * anciennes clés, ou registre neuf (profil « Principal » sur « Mon serveur »).
+ * registre présent → lu et normalisé (réécrit s'il a été corrigé ; copie de secours tenue à jour) ;
+ * illisible → copie gardée (« elevagesimu:profiles-corrompu ») et registre reconstruit (`rebuildRegistry`) ;
+ * absent mais des profils (ou une copie de secours) présents → reconstruit aussi, au lieu de les ignorer ;
+ * absent sinon → migration des anciennes clés, ou registre neuf (profil « Principal » sur « Mon serveur »).
  */
 export function bootProfiles(storage: StorageLike | null, now: number): BootResult {
   if (!storage) return { registry: defaultRegistry(now), mode: 'memory', readOnly: false, migrated: false, issues: [] }
@@ -566,7 +799,9 @@ export function bootProfiles(storage: StorageLike | null, now: number): BootResu
   }
   const write = (reg: ProfilesRegistry): boolean => {
     try {
-      storage.setItem(PROFILES_KEY, JSON.stringify(reg))
+      const text = JSON.stringify(reg)
+      storage.setItem(PROFILES_KEY, text)
+      writeShadow(storage, text)
       return true
     } catch {
       return false
@@ -593,30 +828,34 @@ export function bootProfiles(storage: StorageLike | null, now: number): BootResu
       if (s.issues.length) {
         issues.push({ kind: 'corrige', message: `Registre des profils corrigé au chargement : ${s.issues.join(' ; ')}.` })
         if (!write(s.registry)) issues.push({ kind: 'ecriture', message: 'Le registre des profils corrigé n’a pas pu être enregistré (stockage plein ?).' })
-      }
+      } else writeShadow(storage, raw)
       return { registry: s.registry, mode: 'profiles', readOnly: false, migrated: false, issues }
     }
-    // Illisible : copie de sécurité puis reconstruction d'après les clés présentes.
+    // Illisible : copie de sécurité puis reconstruction (copie de secours, données présentes).
     try {
       if (storage.getItem(PROFILES_CORRUPT_KEY) === null) storage.setItem(PROFILES_CORRUPT_KEY, raw)
     } catch {
       // La reconstruction ne détruit rien : on continue sans copie.
     }
+    const rebuilt = rebuildRegistry(storage, now, raw)
+    if (rebuilt) return { registry: rebuilt.registry, mode: 'profiles', readOnly: false, migrated: false, issues: rebuildIssues(rebuilt, 'illisible', write(rebuilt.registry)) }
+  } else {
+    // Registre absent alors que des profils existent (registre effacé, import d'une sauvegarde au registre
+    // illisible…) : on les reconstruit au lieu de repartir d'un registre neuf qui les rendrait invisibles.
     const rebuilt = rebuildRegistry(storage, now)
     if (rebuilt) {
-      const ok = write(rebuilt)
-      return {
-        registry: rebuilt,
-        mode: 'profiles',
-        readOnly: false,
-        migrated: false,
-        issues: [
-          {
-            kind: ok ? 'corrige' : 'ecriture',
-            message: `Le registre des profils était illisible : ${rebuilt.profiles.length} profil(s) reconstruit(s) d’après les données présentes (noms à vérifier dans les Réglages). L’original est gardé dans la sauvegarde (« profiles-corrompu »).`,
-          },
-        ],
+      let registry = rebuilt.registry
+      let migrated = false
+      // Anciennes données jamais reprises (le profil « Principal » n'a aucune donnée) : reprise maintenant.
+      if (legacyKeys(storage).length && keysWithPrefix(storage, profileKeyPrefix(DEFAULT_PROFILE_ID)).length === 0) {
+        const m = migrateLegacyStorage(storage, now, registry)
+        if (m.ok) {
+          registry = m.registry
+          migrated = true
+        }
       }
+      const ok = migrated || write(registry)
+      return { registry, mode: 'profiles', readOnly: false, migrated, issues: rebuildIssues({ ...rebuilt, registry }, 'absent', ok) }
     }
   }
   if (legacyKeys(storage).length) {
@@ -627,7 +866,12 @@ export function bootProfiles(storage: StorageLike | null, now: number): BootResu
       mode: 'legacy',
       readOnly: true,
       migrated: false,
-      issues: [{ kind: 'ecriture', message: `${m.error} Vos données restent lisibles (ancien format), mais les profils sont désactivés : téléchargez une sauvegarde puis libérez de la place (Réglages › Données).` }],
+      issues: [
+        {
+          kind: 'migration',
+          message: `${m.error} Vos données restent lisibles et modifiables (ancien format), mais les profils sont désactivés : téléchargez une sauvegarde, libérez de la place (Réglages › Données), puis rechargez la page.`,
+        },
+      ],
     }
   }
   const reg = defaultRegistry(now)

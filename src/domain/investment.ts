@@ -14,19 +14,24 @@
 //   prix de craft et filet au niveau visé ;
 // - trésorerie : jour 0 = ingrédients du métier + G1 achetées + socle des jauges des enclos ouverts ;
 //   socle d'un nouvel enclos payé le jour où il ouvre ; revente des objets fabriqués plafonnée par le
-//   volume du marché ; la trésorerie maximale engagée est lue sur le 10e centile des tirages (prudent) ;
+//   volume du marché ; la trésorerie maximale engagée est lue sur le bas de la bande des tirages (min sous 10 tirages : prudent) ;
 // - un prix inconnu n'est jamais compté 0 : `complete` / `missing`, montants connus = bornes.
 //
 // Module pur : aucun React, aucun store.
-import { FAMILIES, FUELS, MAKINAS, NETS, getSpecies, itemName } from '../data'
+import { FAMILIES, FUELS, MAKINAS, NETS, getRecipe, getSpecies, itemName } from '../data'
 import { formatKamas, formatNumber } from '../lib/format'
 import { FUEL_TIER_UNLOCK_LEVEL, PADDOCK_SLOTS, PADDOCK_UNLOCK_LEVELS } from './constants'
 import { BRISAGE_RISK_NOTE } from './economy'
 import { jobMilestones, levelingPlan, paddocksAt, recipeCraftCost, type JobRecipe, type LevelingPlan, type PlanSegment } from './job'
-import { exportAgeDays, frenchDay, marketDepth, MARKET_STALE_DAYS, MOUNT_MARKET_NOTE } from './market'
+import { exportAgeDays, marketDepth, marketOriginMismatch, marketWhere, MARKET_OLD_DAYS, MARKET_STALE_DAYS, MOUNT_MARKET_NOTE } from './market'
 import { marketPrice, resolvePrice, type PriceContext } from './pricing'
 import {
+  bandLabel,
+  bandOf,
   COMPARED_MODES,
+  DEFAULT_CAPTURE_SHARE,
+  DEFAULT_MOUNT_SALE_FACTOR,
+  sessionsForHours,
   normalizeProductionConfig,
   productionPlan,
   productionPriceBook,
@@ -34,7 +39,9 @@ import {
   runProduction,
   simulateProduction,
   strategyLabel,
+  type CaptureHoursStep,
   type InitialStockLine,
+  type JobLevelStep,
   type PaddockStep,
   type ProductionConfig,
   type ProductionMode,
@@ -45,7 +52,8 @@ import {
   type StrategyParams,
 } from './production'
 import type { Ruleset } from './rules'
-import type { FamilyId, FuelTier } from './types'
+import type { FamilyId, FuelTier, Mount } from './types'
+import { effectiveFertility } from './mounts'
 import { jobLevelFromXp, jobXpForLevel } from './xp'
 
 // ---------- Constantes ----------
@@ -72,6 +80,10 @@ export const UNAVAILABLE_PRICE = 1e15
 /** Tirages de l'évaluation finale (Monte-Carlo) et de la sensibilité. */
 export const DEFAULT_INVESTMENT_RUNS = 3
 export const SENSITIVITY_RUNS = 2
+/** Temps d'un passage aux enclos (h, ESTIMATION) : pris sur le temps de capture pendant les jours de craft. */
+export const SESSION_HOURS = 0.25
+/** Deux plans dont les bénéfices à l'horizon diffèrent de moins de 5 % (ou du bruit des tirages) sont à égalité. */
+export const PROFIT_TIE_SHARE = 0.05
 
 export interface InvestmentLevers {
   /** Monter le métier d'Éleveur en achetant les ingrédients (enclos, paliers, filets). */
@@ -84,9 +96,14 @@ export interface InvestmentLevers {
   buyGear: boolean
   /** Revendre à l'HDV les objets fabriqués en montant le métier (plafonné par le volume du marché). */
   resellCrafts: boolean
+  /**
+   * Compter les prix « HDV mixte » des objets-montures comme fiables (défaut faux) : sinon une vente de
+   * montures chiffrée au prix du marché est spéculative et jamais retenue en mode automatique.
+   */
+  countMixedMountPrices: boolean
 }
 
-export const DEFAULT_INVESTMENT_LEVERS: InvestmentLevers = { levelJob: true, buyG1: true, buyFuels: true, buyGear: true, resellCrafts: true }
+export const DEFAULT_INVESTMENT_LEVERS: InvestmentLevers = { levelJob: true, buyG1: true, buyFuels: true, buyGear: true, resellCrafts: true, countMixedMountPrices: false }
 
 export const LEVER_LABELS: Record<keyof InvestmentLevers, { label: string; hint: string }> = {
   levelJob: { label: 'Monter le métier d’Éleveur en achetant les ingrédients', hint: 'Plus d’enclos (40/80/120/160/200), carburants de palier supérieur, filets multiplicateurs.' },
@@ -94,6 +111,10 @@ export const LEVER_LABELS: Record<keyof InvestmentLevers, { label: string; hint:
   buyFuels: { label: 'Acheter les carburants à l’HDV', hint: 'Sinon : carburants fabriqués seulement (paliers à portée de votre niveau d’Éleveur).' },
   buyGear: { label: 'Acheter filets et makinas à l’HDV', hint: 'Sinon : fabriqués seulement (Optimakina abandonnée si hors de portée).' },
   resellCrafts: { label: 'Revendre les objets fabriqués en montant le métier', hint: 'Carburants, filets, makinas revendus à l’HDV, au plus la part du volume quotidien réglée pour le serveur.' },
+  countMixedMountPrices: {
+    label: 'Compter les prix « HDV mixte » des montures',
+    hint: 'Sinon, une vente de montures chiffrée au prix de l’objet-monture du marché (niveaux, états et séniles mélangés) est spéculative : jamais retenue en mode automatique. Saisissez plutôt le prix d’un bébé niveau 1 fécond (page Prix).',
+  },
 }
 
 /** Modes proposés par l'estimateur (« auto » + modes comparés). */
@@ -117,6 +138,30 @@ export interface InvestmentProfile {
   sessionsPerDay?: number
   captureHoursPerDay?: number
   fightsPerHour?: number
+  /**
+   * Montures déjà possédées (« Partir de mon étable actuelle », revue UX2-16 ; `stockFromInventory`) :
+   * stock de départ de la production, en plus des G1 achetées (filtré par famille).
+   */
+  initialStock?: InitialStockLine[]
+}
+
+/**
+ * Étable actuelle → stock de départ de la production (`InitialStockLine` par espèce, état et niveau).
+ * Les séniles (ni accouplement ni clonage) et les espèces non reproductibles sont ignorées.
+ */
+export function stockFromInventory(mounts: readonly Mount[]): InitialStockLine[] {
+  const acc = new Map<string, InitialStockLine>()
+  for (const m of mounts) {
+    const sp = getSpecies(m.speciesId)
+    const f = effectiveFertility(m)
+    if (!sp?.breedable || f === 'senile') continue
+    const level = Math.max(1, Math.min(200, Math.round(m.level || 1)))
+    const k = `${m.speciesId}|${f}|${level}`
+    const cur = acc.get(k)
+    if (cur) cur.count += 1
+    else acc.set(k, { speciesId: m.speciesId, count: 1, state: f, level })
+  }
+  return [...acc.values()]
 }
 
 export interface InvestmentOptions {
@@ -195,6 +240,13 @@ export interface ShoppingItem {
   /** Quantité ÷ ventes moyennes par jour : jours de volume du serveur. */
   daysOfVolume: number | null
   note?: string
+  /**
+   * Objet à fabriquer (origine `craft`) : ingrédients de la recette pour la quantité de la ligne (revue
+   * UX2-10 : « à fabriquer » sans ses ingrédients n'était pas une liste de courses).
+   */
+  ingredients?: { id: number; name: string; qty: number; unitPrice: number | null; origin: string }[]
+  /** Niveau d'Éleveur de la recette, si l'objet est à fabriquer. */
+  craftLevel?: number
 }
 
 export interface CashFlowPoint {
@@ -210,7 +262,10 @@ export interface CashFlowPoint {
   resale: number
   net: number
   cumulative: number
-  /** Cumul au 10e / 90e centile des tirages de production. */
+  /**
+   * Bande du cumul : 10e / 90e centiles des tirages de production à partir de 10 tirages, sinon min–max
+   * des tirages (`InvestmentEvaluation.bandLabel`).
+   */
   cumulativeLow: number
   cumulativeHigh: number
 }
@@ -277,7 +332,7 @@ export interface InvestmentEvaluation {
   day0: number
   /** Toutes les dépenses d'investissement sont chiffrées (sinon `day0`, `socleTotal` : bornes basses « ≥ »). */
   day0Complete: boolean
-  /** Trésorerie maximale engagée (10e centile) : jour 0 + fonds de roulement. */
+  /** Trésorerie maximale engagée (bas de la bande des tirages) : jour 0 + fonds de roulement. */
   peakOutlay: number
   /** Fonds de roulement = trésorerie engagée au-delà du jour 0. */
   workingCapital: number
@@ -289,8 +344,18 @@ export interface InvestmentEvaluation {
   /** Point mort extrapolé au-delà de la durée simulée (régime permanent). */
   breakEvenEstimated: boolean
   steadyNetPerDay: number
+  /** Bande du bénéfice par jour en régime permanent (même convention que `bandLabel`). */
   steadyNetP10: number
   steadyNetP90: number
+  /** Tirages de l'évaluation et libellé de la bande (« min–max des 3 tirages », « 8 tirages sur 10 »). */
+  runs: number
+  bandLabel: string
+  /** Erreur type du bénéfice à l'horizon (écart-type entre tirages ÷ √tirages). */
+  profitSe: number
+  /** Régime réellement permanent (`SteadyState.stable`). */
+  stable: boolean
+  /** Vente chiffrée au prix « HDV mixte » sans prix du joueur : jamais retenue en mode automatique. */
+  speculative: boolean
   roi: number | null
   leveling: LevelingSummary | null
   levelDays: LevelDay[]
@@ -329,6 +394,7 @@ export interface AlternativeRow {
   breakEvenEstimated: boolean
   steadyNetPerDay: number
   roi: number | null
+  speculative: boolean
 }
 
 export interface SensitivityRow {
@@ -341,6 +407,27 @@ export interface SensitivityRow {
   steadyNetPerDay: number
   peakOutlay: number
   feasible: boolean
+  /**
+   * Scénario qui change la chronologie (durées, rythme des crafts) et dont l'écart avec la référence tient
+   * dans le bruit des tirages (`profitTie` : sous 5 % ou sous 2 erreurs types) : mêmes graines, mais les
+   * lots décalés font diverger les tirages — pas un effet démontré du scénario.
+   */
+  withinNoise: boolean
+}
+
+/** Pire scénario de la sensibilité (prix −20 %, durées × 1,5, liquidité ÷ 2, sans génétons, prix des montures −50 %). */
+export interface WorstCase {
+  id: string
+  label: string
+  /** Cumul moyen par jour (jour 0 … durée simulée) de ce scénario. */
+  cumulative: number[]
+  profitAtHorizon: number
+  /** Cumul au jour 60 (null si la simulation est plus courte). */
+  at60: number | null
+  breakEvenDay: number | null
+  breakEvenEstimated: boolean
+  /** Tirages du scénario (mêmes graines que la référence de la sensibilité). */
+  runs: number
 }
 
 export type InvestmentActionKind = 'achat' | 'craft' | 'enclos' | 'production' | 'vente' | 'jalon' | 'reserve'
@@ -386,6 +473,8 @@ export interface InvestmentResult {
   plan: InvestmentEvaluation | null
   alternatives: AlternativeRow[]
   sensitivity: SensitivityRow[]
+  /** Pire scénario de la sensibilité (courbe affichée à côté du plan retenu), null sans sensibilité. */
+  worstCase: WorstCase | null
   shopping: ShoppingItem[]
   actions: InvestmentAction[]
   roadmap: RoadmapMilestone[]
@@ -443,6 +532,8 @@ interface Norm {
   sessionsPerDay?: number
   captureHoursPerDay?: number
   fightsPerHour?: number
+  /** Montures possédées (stock de départ, toutes familles). */
+  initialStock: InitialStockLine[]
   levers: InvestmentLevers
   prices: ProductionPrices
   ctx: PriceContext
@@ -488,6 +579,7 @@ function normalize(input: InvestmentInput): Norm {
     sessionsPerDay: p.sessionsPerDay,
     captureHoursPerDay: p.captureHoursPerDay,
     fightsPerHour: p.fightsPerHour,
+    initialStock: (p.initialStock ?? []).filter((l) => l && Number.isFinite(l.count) && l.count > 0 && !!getSpecies(l.speciesId)),
     levers,
     prices: input.prices,
     ctx: input.prices.ctx,
@@ -735,11 +827,18 @@ interface CashResult {
   peakOutlay: number
   breakEvenDay: number | null
   breakEvenEstimated: boolean
+  /** Libellé de la bande (`cumulativeLow` / `cumulativeHigh`) : « min–max des N tirages » sous 10 tirages. */
+  bandLabel: string
 }
 
-/** Courbe de trésorerie (jour 0 … durée simulée) d'un résumé de production et des achats d'investissement. */
+/**
+ * Courbe de trésorerie (jour 0 … durée simulée) d'un résumé de production et des achats d'investissement.
+ * Bande : 10e–90e centiles des tirages à partir de 10 tirages, sinon min–max (avec 3 tirages, un
+ * « 10e centile » ne serait que le minimum et le « 90e » la médiane : la moyenne sortirait de la bande).
+ */
 export function cashFlowOf(summary: ProductionSummary, extras: CashExtras): CashResult {
   const S = summary.daily.length
+  const runs = summary.runs
   const inv = Array.from({ length: S + 1 }, () => 0)
   inv[0] += extras.day0Fixed
   for (const s of extras.socle) inv[clamp(Math.round(s.day), 0, S)] += s.amount
@@ -748,7 +847,7 @@ export function cashFlowOf(summary: ProductionSummary, extras: CashExtras): Cash
   let resaleCum = 0
   let cum = 0
   // Dans une journée, les dépenses (achats, filets, carburant) précèdent les ventes du soir : la
-  // trésorerie engagée compte le creux avant les ventes du jour (10e centile).
+  // trésorerie engagée compte le creux avant les ventes du jour (bas de la bande).
   let preSalesMin = 0
   for (let d = 0; d <= S; d++) {
     const ds = d >= 1 ? summary.daily[d - 1] : null
@@ -771,8 +870,8 @@ export function cashFlowOf(summary: ProductionSummary, extras: CashExtras): Cash
       resale,
       net,
       cumulative: cum,
-      cumulativeLow: base + (ds?.cumulative.p10 ?? 0),
-      cumulativeHigh: base + (ds?.cumulative.p90 ?? 0),
+      cumulativeLow: base + (ds ? bandOf(ds.cumulative, runs).low : 0),
+      cumulativeHigh: base + (ds ? bandOf(ds.cumulative, runs).high : 0),
     })
   }
   const peakOutlay = Math.max(0, -preSalesMin, ...points.map((p) => -Math.min(p.cumulative, p.cumulativeLow)))
@@ -795,7 +894,7 @@ export function cashFlowOf(summary: ProductionSummary, extras: CashExtras): Cash
       }
     }
   }
-  return { points, day0: inv[0], peakOutlay, breakEvenDay, breakEvenEstimated }
+  return { points, day0: inv[0], peakOutlay, breakEvenDay, breakEvenEstimated, bandLabel: bandLabel(runs) }
 }
 
 // ---------- Recherche ----------
@@ -813,10 +912,13 @@ interface Setting {
 
 interface G1Plan {
   stock: InitialStockLine[]
+  /** Achats quotidiens autorisés (places que les captures ne remplissent pas), 0 = stock de départ seulement. */
   perDay: number
+  /** Achats possibles par jour d'après le volume des objets-montures (null = liquidité inconnue). */
+  perDayCap: number | null
 }
 
-const NO_G1: G1Plan = { stock: [], perDay: 0 }
+const NO_G1: G1Plan = { stock: [], perDay: 0, perDayCap: null }
 
 interface Variation {
   id: string
@@ -826,6 +928,12 @@ interface Variation {
   durationFactor?: number
   shareFactor?: number
   resale?: boolean
+  /** Génétons comptés (défaut : oui). */
+  includeGenetons?: boolean
+  /** Facteur du prix de vente des montures (« HDV mixte »). */
+  mountSaleFactor?: number
+  /** Facteur du rythme de craft (0,5 = deux fois plus lent). */
+  craftFactor?: number
 }
 
 const BASE_VARIATION: Variation = { id: 'base', label: 'Plan retenu' }
@@ -883,8 +991,10 @@ function allocationOf(c: Candidate, n: Norm): InvestmentAllocation {
   const s = c.setting
   const stratLabel = strategyLabel(s.mf.mode, c.params)
   const g1Stock = c.g1.stock.reduce((t, l) => t + l.count, 0)
+  // Achats quotidiens réellement possibles : plafond du volume des objets-montures.
+  const g1PerDay = g1DailyCap(c.g1)
   const parts = [s.target > n.cur ? `Métier ${n.cur} → ${s.target}` : `Métier niv. ${n.cur} (sans montée)`, modeLabel(s.mf), stratLabel]
-  if (g1Stock || c.g1.perDay) parts.push(`G1 achetées (${g1Stock} au départ${c.g1.perDay ? `, ≤ ${c.g1.perDay}/jour` : ''})`)
+  if (g1Stock || g1PerDay) parts.push(`G1 achetées (${g1Stock} au départ${g1PerDay ? `, ≤ ${fmtN(g1PerDay, g1PerDay < 10 ? 1 : 0)}/jour` : ''})`)
   return {
     id: c.key,
     modeId: s.mf.modeId,
@@ -897,18 +1007,49 @@ function allocationOf(c: Candidate, n: Norm): InvestmentAllocation {
     strategyLabel: stratLabel,
     tier: (c.params.tier ?? 2) as FuelTier,
     g1Stock,
-    g1PerDay: c.g1.perDay,
+    g1PerDay,
     summary: parts.join(' · '),
   }
 }
 
-function configFor(n: Norm, s: Setting, timeline: Timeline, params: StrategyParams, g1: G1Plan, days: number, v: Variation = BASE_VARIATION): ProductionConfig {
+/** Achats quotidiens de G1 possibles : demande du plan plafonnée par le volume des objets-montures. */
+function g1DailyCap(g1: G1Plan): number {
+  if (!g1.perDay) return 0
+  return g1.perDayCap === null ? g1.perDay : Math.min(g1.perDay, g1.perDayCap)
+}
+
+/**
+ * Calendriers de la montée du métier pour le moteur : niveau d'Éleveur du jour (le filet équipé suit
+ * le niveau atteint la veille au soir) et temps de capture pendant les jours de craft (temps de jeu −
+ * crafts − passages aux enclos, ESTIMATION `SESSION_HOURS` par passage).
+ */
+function levelingSchedules(n: Norm, timeline: Timeline, craftDays: number): { jobLevelSchedule: JobLevelStep[]; captureHoursSchedule: CaptureHoursStep[] } {
+  const jobLevelSchedule: JobLevelStep[] = []
+  for (let day = 1; day < timeline.levels.length; day++) {
+    const lvl = timeline.levels[day - 1]
+    if (!jobLevelSchedule.length || jobLevelSchedule[jobLevelSchedule.length - 1].jobLevel !== lvl) jobLevelSchedule.push({ day, jobLevel: lvl })
+  }
+  const captureHoursSchedule: CaptureHoursStep[] = []
+  // Jours de craft : jours 0 … craftDays − 1 ; le jour de production d chevauche les crafts si d ≤ craftDays − 1.
+  if (craftDays > 1) {
+    const sessions = n.sessionsPerDay ?? sessionsForHours(n.hoursPerDay)
+    const normal = n.captureHoursPerDay ?? n.hoursPerDay * DEFAULT_CAPTURE_SHARE
+    const during = Math.max(0, Math.min(normal, n.hoursPerDay - n.craftHoursPerDay - sessions * SESSION_HOURS))
+    captureHoursSchedule.push({ day: 1, hours: during }, { day: craftDays, hours: normal })
+  }
+  return { jobLevelSchedule, captureHoursSchedule }
+}
+
+function configFor(n: Norm, s: Setting, timeline: Timeline, params: StrategyParams, g1: G1Plan, days: number, v: Variation = BASE_VARIATION, craftDays = 0): ProductionConfig {
+  const sched = levelingSchedules(n, timeline, craftDays)
   return {
     family: s.mf.family,
     mode: s.mf.mode,
     ...params,
     paddocks: timeline.initialPaddocks,
     paddockSchedule: timeline.schedule,
+    jobLevelSchedule: sched.jobLevelSchedule,
+    captureHoursSchedule: sched.captureHoursSchedule,
     hoursPerDay: n.hoursPerDay,
     sessionsPerDay: n.sessionsPerDay,
     captureHoursPerDay: n.captureHoursPerDay,
@@ -922,20 +1063,29 @@ function configFor(n: Norm, s: Setting, timeline: Timeline, params: StrategyPara
       revenueFactor: (n.prices.revenueFactor ?? 1) * (v.revenueFactor ?? 1),
       costFactor: (n.prices.costFactor ?? 1) * (v.costFactor ?? 1),
       maxMarketShare: n.share * (v.shareFactor ?? 1),
+      includeGenetons: v.includeGenetons ?? n.prices.includeGenetons,
+      mountSaleFactor: (n.prices.mountSaleFactor ?? DEFAULT_MOUNT_SALE_FACTOR) * (v.mountSaleFactor ?? 1),
+      trustMixedMountPrices: n.levers.countMixedMountPrices || n.prices.trustMixedMountPrices === true,
     },
     horizonDays: days,
     buyG1PerDay: g1.perDay,
-    initialStock: g1.stock,
+    initialStock: [...n.initialStock, ...g1.stock],
     durationFactor: v.durationFactor ?? 1,
   }
 }
 
-/** G1 achetées : stock de départ pour remplir les enclos ouverts au jour 1 + achats quotidiens. */
-function g1PlanFor(n: Norm, s: Setting, params: StrategyParams): G1Plan {
-  const cfg = configFor(n, s, s.timeline, params, NO_G1, n.horizon)
+/**
+ * G1 achetées : stock de départ pour remplir les enclos ouverts au jour 1 + achats quotidiens SEULEMENT
+ * pour les places que les captures ne peuvent pas remplir (besoin de places d'un tirage témoin aux
+ * captures illimitées − capacité de capture du jour) ; le plus souvent 0 : le stock de départ suffit.
+ */
+function g1PlanFor(n: Norm, s: Setting, params: StrategyParams, craftDays = 0): G1Plan {
+  const cfg = configFor(n, s, s.timeline, params, NO_G1, n.horizon, BASE_VARIATION, craftDays)
   const info = productionPlan(cfg)
   const norm = normalizeProductionConfig(cfg)
-  const slots = s.timeline.initialPaddocks * norm.slotsPerPaddock
+  // Places à remplir par des achats : celles que vos montures de la famille n'occupent pas déjà.
+  const owned = n.initialStock.filter((l) => getSpecies(l.speciesId)?.family === s.mf.family).reduce((t, l) => t + l.count, 0)
+  const slots = Math.max(0, s.timeline.initialPaddocks * norm.slotsPerPaddock - owned)
   const shares = info.captureShares.filter((x) => x.share > 0)
   const total = shares.reduce((t, x) => t + x.share, 0) || 1
   const stock: InitialStockLine[] = []
@@ -947,14 +1097,31 @@ function g1PlanFor(n: Norm, s: Setting, params: StrategyParams): G1Plan {
     const count = Math.min(cap, Math.round((slots * sh.share) / total))
     if (count > 0) stock.push({ speciesId: sh.speciesId, count })
   }
-  const capacity = norm.captureRate * norm.captureHoursPerDay
-  return { stock, perDay: Math.max(1, Math.ceil(capacity)) }
+  // Besoin de places par jour (captures illimitées) face à la capacité de capture du jour (tirage normal).
+  const unlimited = simulateProduction({ ...cfg, initialStock: stock, captureRate: 1e5, captureHoursPerDay: 1, captureHoursSchedule: [] }, n.seed)
+  const normal = simulateProduction({ ...cfg, initialStock: stock }, n.seed)
+  let short = 0
+  let count = 0
+  for (let i = 1; i < unlimited.days.length; i++) {
+    short += Math.max(0, unlimited.days[i].captures - (normal.days[i]?.captureCapacity ?? 0))
+    count += 1
+  }
+  const perDay = count ? Math.max(0, Math.ceil(short / count - 1e-9)) : 0
+  const book = productionPriceBook(norm)
+  const caps = info.captureShares.map((x) => book.mountSale(x.speciesId).perDayCap)
+  const perDayCap = caps.length && caps.every((c) => c !== null) ? caps.reduce((a, c) => a + (c ?? 0), 0) : null
+  return { stock, perDay, perDayCap }
+}
+
+/** Variante qui décale les lots ou les crafts (les tirages ne suivent plus ceux de la référence). */
+function changesChronology(v: Variation): boolean {
+  return (v.durationFactor !== undefined && v.durationFactor !== 1) || (v.craftFactor !== undefined && v.craftFactor !== 1)
 }
 
 function evaluate(n: Norm, s: Setting, params: StrategyParams, g1: G1Plan, days: number, runs: number, v: Variation = BASE_VARIATION): InvestmentEvaluation {
-  const craftsPerDay = Math.max(1, Math.floor(n.craftsPerDay / (v.durationFactor ?? 1)))
+  const craftsPerDay = Math.max(1, Math.floor((n.craftsPerDay * (v.craftFactor ?? 1)) / (v.durationFactor ?? 1)))
   const timeline =
-    v.durationFactor && v.durationFactor !== 1
+    (v.durationFactor && v.durationFactor !== 1) || (v.craftFactor && v.craftFactor !== 1)
       ? jobTimeline({
           from: n.cur,
           startXp: n.startXp,
@@ -966,7 +1133,8 @@ function evaluate(n: Norm, s: Setting, params: StrategyParams, g1: G1Plan, days:
           days: Math.max(days, s.naturalXp.length - 1),
         })
       : s.timeline
-  const cfg = configFor(n, s, timeline, params, g1, days, v)
+  const craftDays = s.leveling ? craftDaysFor(s.leveling.crafts, craftsPerDay) : 0
+  const cfg = configFor(n, s, timeline, params, g1, days, v, craftDays)
   const summary = runProduction(cfg, { runs, seed: n.seed })
   const costFactor = (n.prices.costFactor ?? 1) * (v.costFactor ?? 1)
   // G1 du stock de départ (prix d'achat prudent du livre de prix).
@@ -1001,6 +1169,9 @@ function evaluate(n: Norm, s: Setting, params: StrategyParams, g1: G1Plan, days:
   const cash = cashFlowOf(summary, { day0Fixed: levelingCost + g1StockCost, socle, resale: resale?.byDay ?? null })
   const H = Math.min(n.horizon, days)
   const at = (d: number) => cash.points[Math.min(d, cash.points.length - 1)]
+  const steadyBand = bandOf(summary.steady.netPerDay, summary.runs)
+  const hDay = summary.daily[Math.min(H, summary.daily.length) - 1]
+  const profitSe = summary.runs > 1 && hDay ? hDay.cumulative.sd / Math.sqrt(summary.runs) : 0
   const roiOf = (v2: number) => (cash.peakOutlay > 0 ? v2 / cash.peakOutlay : null)
   const projections: ProjectionPoint[] = [...new Set([...PROJECTION_DAYS, n.horizon])]
     .filter((d) => d <= days)
@@ -1029,8 +1200,13 @@ function evaluate(n: Norm, s: Setting, params: StrategyParams, g1: G1Plan, days:
     breakEvenDay: cash.breakEvenDay,
     breakEvenEstimated: cash.breakEvenEstimated,
     steadyNetPerDay: summary.steady.netPerDay.mean,
-    steadyNetP10: summary.steady.netPerDay.p10,
-    steadyNetP90: summary.steady.netPerDay.p90,
+    steadyNetP10: steadyBand.low,
+    steadyNetP90: steadyBand.high,
+    runs: summary.runs,
+    bandLabel: cash.bandLabel,
+    profitSe,
+    stable: summary.steady.stable,
+    speculative: summary.speculative,
     roi: roiOf(at(H).cumulative),
     leveling: s.leveling
       ? {
@@ -1041,7 +1217,7 @@ function evaluate(n: Norm, s: Setting, params: StrategyParams, g1: G1Plan, days:
           missing: s.leveling.missing,
           crafts: s.leveling.crafts,
           craftsPerDay,
-          craftDays: craftDaysFor(s.leveling.crafts, craftsPerDay),
+          craftDays,
           segments: s.leveling.plan.segments,
           productValue: s.leveling.plan.totals.productValue,
           resale,
@@ -1062,7 +1238,7 @@ function evaluate(n: Norm, s: Setting, params: StrategyParams, g1: G1Plan, days:
   }
 }
 
-/** Classement : dans le budget d'abord, puis bénéfice à l'horizon, puis point mort le plus tôt. */
+/** Tri des candidats : dans le budget d'abord, puis bénéfice à l'horizon, puis point mort le plus tôt. */
 function better(a: InvestmentEvaluation, b: InvestmentEvaluation): number {
   if (a.feasible !== b.feasible) return a.feasible ? -1 : 1
   // Un coût non chiffré rend le bénéfice incertain (borne haute) : ces plans passent après les autres.
@@ -1071,6 +1247,30 @@ function better(a: InvestmentEvaluation, b: InvestmentEvaluation): number {
   if (ca !== cb) return ca ? -1 : 1
   if (Math.abs(b.profitAtHorizon - a.profitAtHorizon) > 1) return b.profitAtHorizon - a.profitAtHorizon
   return (a.breakEvenDay ?? Infinity) - (b.breakEvenDay ?? Infinity)
+}
+
+/**
+ * Bénéfices à égalité : écart sous 5 % du meilleur, ou sous 2 erreurs types combinées des tirages
+ * (le hasard des naissances ne doit pas faire engager plus de trésorerie).
+ */
+export function profitTie(a: Pick<InvestmentEvaluation, 'profitAtHorizon' | 'profitSe'>, b: Pick<InvestmentEvaluation, 'profitAtHorizon' | 'profitSe'>): boolean {
+  const gap = Math.abs(a.profitAtHorizon - b.profitAtHorizon)
+  const top = Math.max(Math.abs(a.profitAtHorizon), Math.abs(b.profitAtHorizon))
+  return gap <= Math.max(PROFIT_TIE_SHARE * top, 2 * Math.sqrt(a.profitSe ** 2 + b.profitSe ** 2))
+}
+
+/**
+ * Plan recommandé parmi des évaluations classées par `better` : le premier, sauf si un autre lui est à
+ * égalité de bénéfice (`profitTie`, même catégorie : dans le budget, coûts chiffrés) — alors celui qui
+ * engage le moins de trésorerie, puis le point mort le plus tôt.
+ */
+export function pickRecommended<T extends { eval: InvestmentEvaluation }>(ranked: readonly T[]): T | null {
+  const top = ranked[0]
+  if (!top) return null
+  const known = (e: InvestmentEvaluation) => e.profitStatus === 'exact' || e.profitStatus === 'borne-basse'
+  const tied = ranked.filter((x) => x.eval.feasible === top.eval.feasible && known(x.eval) === known(top.eval) && profitTie(x.eval, top.eval))
+  tied.sort((a, b) => a.eval.peakOutlay - b.eval.peakOutlay || (a.eval.breakEvenDay ?? Infinity) - (b.eval.breakEvenDay ?? Infinity) || b.eval.profitAtHorizon - a.eval.profitAtHorizon)
+  return tied[0] ?? top
 }
 
 /** Utilise un objet indisponible (prix sentinelle) : stratégie impossible avec ces leviers. */
@@ -1101,6 +1301,8 @@ function* investmentGen(input: InvestmentInput): Generator<ProgressInfo, Investm
   label.value = 'Montée du métier'
   const levelings = new Map<number, LevelingInfo | null>()
   const affordable: number[] = [n.cur]
+  /** Niveaux visés écartés faute de prix (coût de la montée inconnu) : ingrédients sans prix. */
+  const unpriced: { level: number; missing: number }[] = []
   for (const t of n.targets) {
     const lv = levelingInfo(n, t)
     levelings.set(t, lv)
@@ -1111,6 +1313,7 @@ function* investmentGen(input: InvestmentInput): Generator<ProgressInfo, Investm
     const days = craftDaysFor(lv.crafts, n.craftsPerDay)
     if (!lv.complete) {
       notes.push(`Niveau ${t} écarté : ${lv.missing.length} ingrédient(s) sans prix, coût de la montée inconnu (≥ ${fmtK(lv.cost)}) — renseignez-les (page Prix) ou importez l’export HDV.`)
+      if (n.levers.levelJob) unpriced.push({ level: t, missing: lv.missing.length })
       continue
     }
     if (lv.cost > n.available) continue
@@ -1160,7 +1363,7 @@ function* investmentGen(input: InvestmentInput): Generator<ProgressInfo, Investm
     const t0 = jobTimeline({ ...craftOnly, naturalXp: [] })
     const probeSetting: Setting = { key, mf, target, ctx, leveling, tiers, naturalXp: [], timeline: t0 }
     // Tirage témoin : XP d'Éleveur gagnée en élevant (captures, accouplements), sans les enclos qu'elle débloque (prudent).
-    const probe = simulateProduction(configFor(n, probeSetting, t0, defaultParams(mf.mode, tiers), NO_G1, n.simDays), n.seed)
+    const probe = simulateProduction(configFor(n, probeSetting, t0, defaultParams(mf.mode, tiers), NO_G1, n.simDays, BASE_VARIATION, leveling ? craftDaysFor(leveling.crafts, n.craftsPerDay) : 0), n.seed)
     evaluated += 1
     const naturalXp = [0, ...probe.days.map((d) => d.jobXp)]
     const setting: Setting = { ...probeSetting, naturalXp, timeline: jobTimeline({ ...craftOnly, naturalXp }) }
@@ -1169,6 +1372,11 @@ function* investmentGen(input: InvestmentInput): Generator<ProgressInfo, Investm
   }
 
   const all: Scored[] = []
+  // Mode « auto » : une vente de montures chiffrée au prix « HDV mixte » (sans prix du joueur) est
+  // spéculative — jamais retenue ni préférée tant qu'un autre plan existe (levier `countMixedMountPrices`).
+  const excludeSpeculative = n.modeId === 'auto' && !n.levers.countMixedMountPrices
+  const eligible = (e: InvestmentEvaluation) => !(excludeSpeculative && e.speculative)
+  const craftDaysOf = (s: Setting) => (s.leveling ? craftDaysFor(s.leveling.crafts, n.craftsPerDay) : 0)
   const quickEval = (s: Setting, params: StrategyParams, g1: G1Plan): Scored | null => {
     const cand: Candidate = { key: `${s.key}|${paramsKey(params)}|${g1.stock.length ? 'g1' : '-'}`, setting: s, params, g1 }
     try {
@@ -1199,7 +1407,7 @@ function* investmentGen(input: InvestmentInput): Generator<ProgressInfo, Investm
           yield tick()
           if (!sc) continue
           const k = `${mf.modeId}|${mf.family}`
-          const v = sc.eval.feasible ? sc.eval.profitAtHorizon : sc.eval.profitAtHorizon - 1e15
+          const v = (sc.eval.feasible ? sc.eval.profitAtHorizon : sc.eval.profitAtHorizon - 1e15) - (eligible(sc.eval) ? 0 : 1e16)
           best.set(k, Math.max(best.get(k) ?? -Infinity, v))
         }
       }
@@ -1236,7 +1444,7 @@ function* investmentGen(input: InvestmentInput): Generator<ProgressInfo, Investm
       bestBySetting.set(s.key, top)
       if (n.levers.buyG1 && (t === n.cur || !n.quick)) {
         try {
-          const g1 = g1PlanFor(n, s, top.cand.params)
+          const g1 = g1PlanFor(n, s, top.cand.params, craftDaysOf(s))
           const sc = quickEval(s, top.cand.params, g1)
           yield tick()
           if (sc) g1BySetting.set(s.key, sc)
@@ -1251,7 +1459,7 @@ function* investmentGen(input: InvestmentInput): Generator<ProgressInfo, Investm
 
   // Finalistes : meilleurs candidats + allocations nommées, réévalués (Monte-Carlo, durée complète).
   label.value = 'Évaluation finale'
-  const pool = [...bestBySetting.values(), ...g1BySetting.values()].sort((a, b) => better(a.eval, b.eval))
+  const pool = [...bestBySetting.values(), ...g1BySetting.values()].sort((a, b) => Number(!eligible(a.eval)) - Number(!eligible(b.eval)) || better(a.eval, b.eval))
   const finalsIn = new Map<string, Candidate>()
   for (const sc of pool.slice(0, 3)) finalsIn.set(sc.cand.key, sc.cand)
   const lead = pool[0]
@@ -1280,19 +1488,25 @@ function* investmentGen(input: InvestmentInput): Generator<ProgressInfo, Investm
     finals.set(cand.key, ev)
     yield tick(n.runs)
   }
-  const ranked = [...finals.entries()].sort((a, b) => better(a[1], b[1]))
-  const feasibleRanked = ranked.filter(([, e]) => e.feasible)
+  const ranked = [...finals.entries()].sort((a, b) => Number(!eligible(a[1])) - Number(!eligible(b[1])) || better(a[1], b[1]))
+  const feasibleAll = ranked.filter(([, e]) => e.feasible)
+  // Spéculatif : écarté du choix s'il reste un plan fiable dans le budget.
+  const feasibleRanked = feasibleAll.some(([, e]) => eligible(e)) ? feasibleAll.filter(([, e]) => eligible(e)) : feasibleAll
   // Budget minimum utile : plan rentable sur l'horizon le moins gourmand (évaluation finale).
-  const profitable = [...finals.values()].filter((e) => e.profitAtHorizon > 0).map((e) => e.peakOutlay)
+  const profitableAll = [...finals.values()].filter((e) => e.profitAtHorizon > 0)
+  const profitable = (profitableAll.some(eligible) ? profitableAll.filter(eligible) : profitableAll).map((e) => e.peakOutlay)
   const minOutlay = profitable.length ? Math.min(...profitable) : null
   const minimumBudget = minOutlay === null ? null : roundUp(minOutlay * 1.05 + n.reserve, 100_000)
   let chosenKey: string
   let feasible = true
-  if (feasibleRanked.length) chosenKey = feasibleRanked[0][0]
-  else {
+  if (feasibleRanked.length) {
+    // Bénéfices à égalité (5 % ou bruit des tirages) : le plan qui engage le moins de trésorerie.
+    const rec = pickRecommended(feasibleRanked.map(([key, e]) => ({ key, eval: e })))
+    chosenKey = (rec ?? { key: feasibleRanked[0][0] }).key
+  } else {
     feasible = false
     // Hors budget : le plan rentable le moins gourmand (référence pour le budget minimum).
-    const byOutlay = [...finals.entries()].filter(([, e]) => e.profitAtHorizon > 0).sort((a, b) => a[1].peakOutlay - b[1].peakOutlay)
+    const byOutlay = [...finals.entries()].filter(([, e]) => e.profitAtHorizon > 0).sort((a, b) => Number(!eligible(a[1])) - Number(!eligible(b[1])) || a[1].peakOutlay - b[1].peakOutlay)
     chosenKey = (byOutlay[0] ?? ranked[0])[0]
   }
   const plan = finals.get(chosenKey) as InvestmentEvaluation
@@ -1329,9 +1543,17 @@ function* investmentGen(input: InvestmentInput): Generator<ProgressInfo, Investm
       breakEvenEstimated: e.breakEvenEstimated,
       steadyNetPerDay: e.steadyNetPerDay,
       roi: e.roi,
+      speculative: e.speculative,
     })
   }
-  pushAlt('retenu', chosenKey, feasible ? 'Recommandé (équilibré)' : 'Plan minimal', feasible ? 'Le meilleur bénéfice sur l’horizon dans le budget.' : 'Le plan rentable le moins gourmand (hors budget).')
+  pushAlt(
+    'retenu',
+    chosenKey,
+    feasible ? 'Recommandé' : 'Plan minimal',
+    feasible
+      ? 'Le meilleur bénéfice sur l’horizon dans le budget ; à bénéfice comparable (écart sous 5 % ou dans le bruit des tirages), celui qui engage le moins de trésorerie, puis le point mort le plus tôt.'
+      : 'Le plan rentable le moins gourmand (hors budget).',
+  )
   for (const nm of named) {
     const l = NAMED_LABELS[nm.id]
     pushAlt(nm.id, nm.cand.key, nm.id === 'autre-mode' ? `Autre mode : ${nm.cand.setting.mf.label}` : l.label, l.description)
@@ -1340,6 +1562,7 @@ function* investmentGen(input: InvestmentInput): Generator<ProgressInfo, Investm
 
   // Sensibilité.
   const sensitivity: SensitivityRow[] = []
+  let worstCase: WorstCase | null = null
   if (n.sensitivity) {
     label.value = 'Sensibilité'
     const variations: Variation[] = [
@@ -1349,14 +1572,35 @@ function* investmentGen(input: InvestmentInput): Generator<ProgressInfo, Investm
       { id: 'duree', label: 'Durées réelles × 1,5 (lots et crafts)', durationFactor: 1.5 },
       { id: 'liquidite', label: 'Liquidité ÷ 2 (part du volume vendable)', shareFactor: 0.5 },
     ]
+    if (plan.summary.totals.genetons > 0) variations.push({ id: 'sans-genetons', label: 'Sans génétons (valeur estimée, liés au compte)', includeGenetons: false })
+    if (plan.summary.steady.revenueByCategory.montures > 0 || plan.summary.totals.mountsSold > 0)
+      variations.push({ id: 'prix-montures', label: 'Prix des montures −50 % (« HDV mixte »)', mountSaleFactor: 0.5 })
+    if (plan.leveling && plan.leveling.crafts > 0) variations.push({ id: 'crafts', label: 'Crafts deux fois plus lents (montée du métier)', craftFactor: 0.5 })
     if (plan.leveling?.resale && plan.leveling.resale.total > 0) variations.push({ id: 'sans-revente', label: 'Sans revente des objets fabriqués', resale: false })
+    // Pire scénario : le plus bas de ces scénarios défavorables (courbe affichée à côté du plan).
+    const WORST_IDS = new Set(['prix-bas', 'duree', 'liquidite', 'sans-genetons', 'prix-montures'])
     // Mêmes graines pour la référence et les variantes : l'écart vient de la variante, pas du hasard.
     let refProfit = plan.profitAtHorizon
+    let refEval: InvestmentEvaluation | null = null
     for (const v of [{ ...BASE_VARIATION, id: 'reference', label: `Référence (mêmes ${SENSITIVITY_RUNS} tirages)` }, ...variations]) {
       try {
         const e = evaluate(n, chosenCand.setting, chosenCand.params, chosenCand.g1, n.simDays, SENSITIVITY_RUNS, v)
         evaluated += SENSITIVITY_RUNS
-        if (v.id === 'reference') refProfit = e.profitAtHorizon
+        if (v.id === 'reference') {
+          refProfit = e.profitAtHorizon
+          refEval = e
+        }
+        if (WORST_IDS.has(v.id) && (!worstCase || e.profitAtHorizon < worstCase.profitAtHorizon))
+          worstCase = {
+            id: v.id,
+            label: v.label,
+            cumulative: e.cashflow.map((pt) => pt.cumulative),
+            profitAtHorizon: e.profitAtHorizon,
+            at60: e.cashflow.length > 60 ? e.cashflow[60].cumulative : null,
+            breakEvenDay: e.breakEvenDay,
+            breakEvenEstimated: e.breakEvenEstimated,
+            runs: SENSITIVITY_RUNS,
+          }
         sensitivity.push({
           id: v.id,
           label: v.label,
@@ -1367,6 +1611,10 @@ function* investmentGen(input: InvestmentInput): Generator<ProgressInfo, Investm
           steadyNetPerDay: e.steadyNetPerDay,
           peakOutlay: e.peakOutlay,
           feasible: e.feasible,
+          // Mêmes graines : un scénario de prix, de coûts ou de liquidité garde la chronologie de la référence
+          // (écart = effet du scénario) ; durées ou crafts décalent les lots, et les tirages ne se correspondent
+          // plus : l'écart se compare alors au bruit des tirages.
+          withinNoise: v.id !== 'reference' && refEval !== null && changesChronology(v) && profitTie(refEval, e),
         })
       } catch (e) {
         notes.push(`Sensibilité « ${v.label} » : ${e instanceof Error ? e.message : String(e)}`)
@@ -1388,6 +1636,7 @@ function* investmentGen(input: InvestmentInput): Generator<ProgressInfo, Investm
     plan,
     alternatives,
     sensitivity,
+    worstCase,
     shopping: shoppingOf(plan, n),
     actions: actionsOf(plan, n),
     roadmap: roadmapOf(plan, n),
@@ -1407,10 +1656,19 @@ function* investmentGen(input: InvestmentInput): Generator<ProgressInfo, Investm
         ? `Budget insuffisant : aucun plan ne tient dans ${fmtK(n.available)} engageables (budget − réserve). Minimum utile ≈ ${fmtK(minimumBudget)} (réserve comprise).`
         : `Budget insuffisant et aucun plan rentable sur ${n.horizon} jours avec ces contraintes.`,
     )
-  else if (result.unusedBudget > Math.max(1_000_000, 0.2 * n.available))
-    result.notes.push(
-      `${fmtK(result.unusedBudget)} du budget restent disponibles : les investir n’améliore pas le bénéfice sur ${n.horizon} jours (limites : enclos et niveau du métier, temps de jeu, volume du marché).`,
-    )
+  else if (result.unusedBudget > Math.max(1_000_000, 0.2 * n.available)) {
+    // Montée du métier écartée faute de prix : on ne sait pas si le budget restant améliorerait le bénéfice
+    // (revue UX2-09 : « n'améliore pas » contredisait « Niveau 40 écarté : ingrédients sans prix »).
+    if (unpriced.length) {
+      const most = Math.max(...unpriced.map((u) => u.missing))
+      const text = `Montée du métier non chiffrée (niveaux ${unpriced.map((u) => u.level).join(', ')} : jusqu’à ${most} ingrédient${most > 1 ? 's' : ''} sans prix) : l’usage des ${fmtK(result.unusedBudget)} restants est inconnu — importez l’export HDV de ${market?.serverName ?? 'votre serveur'} (Prix › Marché HDV) pour chiffrer la montée du métier.`
+      result.notes.push(text)
+      result.risks.unshift({ code: 'prix-manquants-metier', tone: 'warn', text })
+    } else
+      result.notes.push(
+        `${fmtK(result.unusedBudget)} du budget restent disponibles : les investir n’améliore pas le bénéfice sur ${n.horizon} jours (limites : enclos et niveau du métier, temps de jeu, volume du marché).`,
+      )
+  }
   label.value = 'Terminé'
   yield { done: total, total, label: label.value }
   return result
@@ -1463,6 +1721,19 @@ function depthInfo(ctx: PriceContext, id: number | null, qty: number | null): Pi
   }
 }
 
+/** Ingrédients d'une recette pour `qty` objets fabriqués (prix et origine de chaque ingrédient). */
+function craftIngredients(id: number, qty: number, ctx: PriceContext): { level: number; ingredients: NonNullable<ShoppingItem['ingredients']> } | null {
+  const recipe = getRecipe(id)
+  if (!recipe || !recipe.ingredients.length) return null
+  return {
+    level: recipe.level,
+    ingredients: recipe.ingredients.map((ing) => {
+      const p = resolvePrice(ing.id, ctx)
+      return { id: ing.id, name: itemName(ing.id), qty: ing.qty * qty, unitPrice: p.price, origin: p.origin }
+    }),
+  }
+}
+
 function shoppingOf(plan: InvestmentEvaluation, n: Norm): ShoppingItem[] {
   const out: ShoppingItem[] = []
   const cf = n.prices.costFactor ?? 1
@@ -1511,6 +1782,8 @@ function shoppingOf(plan: InvestmentEvaluation, n: Norm): ShoppingItem[] {
     for (const [id, it] of items) {
       const qty = Math.ceil(it.count - 1e-9)
       const rp = resolvePrice(id, { ...n.ctx, jobLevel: plan.allocation.jobTo })
+      const craft = rp.origin === 'craft' ? craftIngredients(id, qty, { ...n.ctx, jobLevel: plan.allocation.jobTo }) : null
+      const hdv = craft ? marketPrice(id, n.ctx) : null
       out.push({
         category: 'socle',
         id,
@@ -1521,7 +1794,12 @@ function shoppingOf(plan: InvestmentEvaluation, n: Norm): ShoppingItem[] {
         origin: rp.origin,
         missing: !it.complete || it.unit === null,
         ...depthInfo(n.ctx, id, qty),
-        note: `Socle de ${plan.initialPaddocks} enclos (palier ${plan.allocation.tier}) : reste dans les jauges.`,
+        note: `Socle de ${plan.initialPaddocks} enclos (palier ${plan.allocation.tier}) : reste dans les jauges.${
+          craft
+            ? ` À fabriquer (recette niv. ${craft.level}${craft.level > plan.allocation.jobFrom ? `, après la montée du métier — sinon à l’HDV${hdv?.price !== null && hdv?.price !== undefined ? ` ≈ ${fmtK(hdv.price)} l’unité` : ''}` : ''}) : ingrédients ci-dessous.`
+            : ''
+        }`,
+        ...(craft ? { ingredients: craft.ingredients, craftLevel: craft.level } : {}),
       })
     }
   }
@@ -1538,7 +1816,7 @@ function shoppingOf(plan: InvestmentEvaluation, n: Norm): ShoppingItem[] {
       sold24: null,
       perDayAvg: null,
       daysOfVolume: null,
-      note: 'Trésorerie maximale engagée après le jour 0 (10e centile des tirages).',
+      note: 'Trésorerie maximale engagée après le jour 0 (bas de la bande des tirages).',
     })
   return out
 }
@@ -1703,22 +1981,31 @@ function actionsOf(plan: InvestmentEvaluation, n: Norm): InvestmentAction[] {
       })
     }
   }
-  // Jalons du métier.
+  // Jalons du métier : les enclos ouverts le même jour forment une seule action (le socle de ce jour-là
+  // n'est compté qu'une fois).
+  const enclosByDay = new Map<number, LevelDay[]>()
+  for (const ld of plan.levelDays) if (ld.kind === 'enclos') enclosByDay.set(ld.day, [...(enclosByDay.get(ld.day) ?? []), ld])
+  for (const [day, lds] of enclosByDay) {
+    const usable = day + 1
+    const socleDay = plan.socle.filter((x) => x.day === usable).reduce((t, x) => t + x.amount, 0)
+    const levels = lds.map((l) => l.level)
+    const pads = lds.map((l) => `${l.paddocks}e`)
+    const and = (xs: (string | number)[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} et ${xs[xs.length - 1]}` : String(xs[0]))
+    const sources = new Set(lds.map((l) => l.source))
+    out.push({
+      day,
+      kind: 'enclos',
+      title: `Niveau${levels.length > 1 ? 'x' : ''} ${and(levels)} atteint${levels.length > 1 ? 's' : ''} → ${and(pads)} enclos (utilisable${pads.length > 1 ? 's' : ''} dès le jour ${usable})`,
+      details: [
+        sources.size > 1 ? 'Grâce aux crafts de la montée du métier et à l’XP d’élevage.' : sources.has('craft') ? 'Grâce aux crafts de la montée du métier.' : 'Grâce à l’XP d’élevage (captures, accouplements).',
+        ...(socleDay > 0 ? [`Remplir ${lds.length > 1 ? 'leur' : 'son'} socle (palier ${a.tier}) : ≈ ${fmtK(socleDay)}.`] : []),
+      ],
+      kamas: socleDay > 0 ? -socleDay : null,
+    })
+  }
   for (const ld of plan.levelDays) {
-    if (ld.kind === 'enclos') {
-      const usable = ld.day + 1
-      const soclePer = plan.socle.filter((x) => x.day === usable).reduce((t, x) => t + x.amount, 0)
-      out.push({
-        day: ld.day,
-        kind: 'enclos',
-        title: `Niveau ${ld.level} atteint → ${ld.paddocks}e enclos (utilisable dès le jour ${usable})`,
-        details: [
-          ld.source === 'craft' ? 'Grâce aux crafts de la montée du métier.' : 'Grâce à l’XP d’élevage (captures, accouplements).',
-          ...(soclePer > 0 ? [`Remplir son socle (palier ${a.tier}) : ≈ ${fmtK(soclePer)}.`] : []),
-        ],
-        kamas: soclePer > 0 ? -soclePer : null,
-      })
-    } else if (ld.source === 'elevage' && ld.kind !== 'carburant')
+    if (ld.kind === 'enclos') continue
+    if (ld.source === 'elevage' && ld.kind !== 'carburant')
       out.push({
         day: ld.day,
         kind: 'jalon',
@@ -1730,13 +2017,15 @@ function actionsOf(plan: InvestmentEvaluation, n: Norm): InvestmentAction[] {
   // Démarrage de l'élevage.
   const first = s.daily.slice(0, 7)
   const capFirst = first.length ? first.reduce((t, x) => t + x.captures, 0) / first.length : 0
+  // Capacité de la semaine 1 (filet et temps de capture du moment : montée du métier, jours de craft).
+  const capacityFirst = first.length ? first.reduce((t, x) => t + x.captureCapacity, 0) / first.length : s.captureCapacityPerDay
   out.push({
     day: 1,
     kind: 'production',
     title: `Lancer l’élevage : ${a.modeLabel}, ${plan.initialPaddocks} enclos au départ`,
     details: [
       `Stratégie : ${a.strategyLabel}.`,
-      `Semaine 1 : ≈ ${fmtN(capFirst, 1)} captures/jour (capacité ≈ ${fmtN(s.captureCapacityPerDay, 0)}/jour) pour remplir les enclos ; lots de ${PADDOCK_SLOTS} montures au palier ${a.tier}.`,
+      `Semaine 1 : ≈ ${fmtN(capFirst, 1)} captures/jour (capacité ≈ ${fmtN(capacityFirst, 0)}/jour) pour remplir les enclos ; lots de ${PADDOCK_SLOTS} montures au palier ${a.tier}.`,
       ...(s.plan.captureShares.length ? [`Couleurs à capturer : ${s.plan.captureShares.map((c) => `${speciesName(c.speciesId)} ${Math.round(c.share * 100)} %`).join(', ')}.`] : []),
     ],
     kamas: null,
@@ -1746,9 +2035,9 @@ function actionsOf(plan: InvestmentEvaluation, n: Norm): InvestmentAction[] {
       day: 1,
       toDay: plan.simDays,
       kind: 'achat',
-      title: `Acheter jusqu’à ${a.g1PerDay} G1 par jour à l’HDV (≈ ${fmtN(s.totals.bought / plan.simDays, 1)}/jour en moyenne)`,
+      title: `Acheter jusqu’à ${fmtN(a.g1PerDay, a.g1PerDay < 10 ? 1 : 0)} G1 par jour à l’HDV (≈ ${fmtN(s.totals.bought / plan.simDays, 1)}/jour en moyenne)`,
       details: [
-        'Seulement pour remplir les places libres que les captures ne remplissent pas ; au plus la part du volume quotidien des objets-montures.',
+        'Capturez d’abord : n’achetez que pour les places libres que les captures du passage ne remplissent pas, au plus la part du volume quotidien des objets-montures.',
         `Régime permanent : ≈ ${fmtN(s.steady.boughtPerDay, 1)} G1/jour, ≈ ${fmtK(s.steady.costByCategory.achat)}/jour.`,
       ],
       kamas: null,
@@ -1756,9 +2045,10 @@ function actionsOf(plan: InvestmentEvaluation, n: Norm): InvestmentAction[] {
   const ftd = s.firstTargetDay ? Math.max(1, Math.round(s.firstTargetDay.mean)) : null
   if (ftd !== null && a.mode !== 'brisage')
   {
-    const lo = Math.round(s.firstTargetDay?.p10 ?? ftd)
-    const hi = Math.round(s.firstTargetDay?.p90 ?? ftd)
-    out.push({ day: ftd, kind: 'jalon', title: `Premier bébé G${s.plan.targetGeneration} (génération visée)`, details: [lo !== hi ? `Moyenne des tirages (8 sur 10 entre le jour ${lo} et le jour ${hi}).` : 'Moyenne des tirages.'], kamas: null })
+    const fb = s.firstTargetDay ? bandOf(s.firstTargetDay, plan.runs) : null
+    const lo = Math.round(fb?.low ?? ftd)
+    const hi = Math.round(fb?.high ?? ftd)
+    out.push({ day: ftd, kind: 'jalon', title: `Premier bébé G${s.plan.targetGeneration} (génération visée)`, details: [lo !== hi ? `Moyenne des tirages (${plan.runs >= 10 ? '8 sur 10' : `${plan.runs} tirages`} entre le jour ${lo} et le jour ${hi}).` : 'Moyenne des tirages.'], kamas: null })
   }
   const firstSale = firstProductSale(plan)
   if (firstSale)
@@ -1793,7 +2083,7 @@ function actionsOf(plan: InvestmentEvaluation, n: Norm): InvestmentAction[] {
       day: n.horizon,
       kind: 'jalon',
       title: `Fin de l’horizon (${n.horizon} jours) : bénéfice cumulé ≈ ${fmtK(h.cumulative)}${plan.roi !== null ? ` (ROI ${fmtN(plan.roi * 100)} %)` : ''}`,
-      details: [`8 tirages sur 10 au-dessus de ${fmtK(h.cumulativeLow)}.`],
+      details: [plan.runs >= 10 ? `8 tirages sur 10 au-dessus de ${fmtK(h.cumulativeLow)}.` : `Entre ${fmtK(h.cumulativeLow)} et ${fmtK(h.cumulativeHigh)} selon les tirages (${plan.bandLabel}).`],
       kamas: null,
     })
   return out.sort((x, y) => x.day - y.day || ACTION_ORDER[x.kind] - ACTION_ORDER[y.kind])
@@ -1844,9 +2134,16 @@ function risksOf(plan: InvestmentEvaluation, n: Norm, sensitivity: SensitivityRo
   if (!market) out.push({ code: 'pas-de-marche', tone: 'danger', text: 'Aucun export HDV importé pour ce serveur : prix par défaut de la recherche (autre serveur, datés) et liquidité inconnue. Importez l’export de votre serveur (Prix › Marché HDV).' })
   else {
     const age = n.today ? exportAgeDays(market.exportDate, n.today) : null
-    const when = `Prix de l’HDV${market.serverName ? ` de ${market.serverName}` : ''} du ${frenchDay(market.exportDate)}`
-    if (age !== null && age > MARKET_STALE_DAYS) out.push({ code: 'prix-dates', tone: 'warn', text: `${when} (il y a ${age} jours) : les prix ont pu changer, réimportez un export récent.` })
+    const when = `Prix de l’${marketWhere(market)}`
+    if (age !== null && age > MARKET_OLD_DAYS)
+      out.push({ code: 'prix-dates', tone: 'danger', text: `${when} (il y a ${age} jours) : prix périmés (plus de ${MARKET_OLD_DAYS} jours) — le plan, le point mort et le bénéfice par jour peuvent être faux. Réimportez un export récent avant d’investir.` })
+    else if (age !== null && age > MARKET_STALE_DAYS) out.push({ code: 'prix-dates', tone: 'warn', text: `${when} (il y a ${age} jours) : les prix ont pu changer, réimportez un export récent.` })
     else out.push({ code: 'prix-dates', tone: 'info', text: `${when}${age !== null ? ` (${age === 0 ? 'aujourd’hui' : `il y a ${age} jour${age > 1 ? 's' : ''}`})` : ''} : un plan sur ${n.horizon} jours suppose des prix stables.` })
+  }
+  if (market) {
+    const origin = marketOriginMismatch(market)
+    if (origin) out.push({ code: 'prix-autre-serveur', tone: 'warn', text: `Prix de l’HDV de ${origin} chargés pour ${market.serverName} : chaque serveur a son économie, importez l’export de votre serveur.` })
+    if (market.volumeUnknown) out.push({ code: 'liquidite-inconnue', tone: 'warn', text: 'Export HDV sans colonnes de ventes (vendus_24h/7j/30j) : liquidité inconnue, les ventes ne sont pas plafonnées par le volume du serveur.' })
   }
   // Saturation du marché.
   const satMounts = s.market.filter((mc) => mc.kind === 'monture' && mc.saturated).sort((x, y) => y.producedPerDay - x.producedPerDay)
@@ -1897,10 +2194,29 @@ function risksOf(plan: InvestmentEvaluation, n: Norm, sensitivity: SensitivityRo
   }
   if (a.mode === 'brisage') out.push({ code: 'brisage', tone: 'warn', text: BRISAGE_RISK_NOTE })
   if (a.mode === 'vente') out.push({ code: 'hdv-mixte', tone: 'warn', text: `${MOUNT_MARKET_NOTE} Les ventes sont comptées à un prix prudent et plafonnées par le volume.` })
+  if (plan.speculative)
+    out.push({
+      code: 'speculatif',
+      tone: 'danger',
+      text: `Projection spéculative : les montures vendues sont chiffrées au prix « HDV mixte » de leur objet (niveaux, états et séniles mélangés), pas au prix d’un bébé niveau 1 fécond. Saisissez ce prix (page Prix) avant d’engager le budget${n.modeId === 'auto' ? '' : ' ; le mode automatique ne retient jamais ce plan'}.`,
+    })
   if (s.totals.bought > 0 || a.g1Stock > 0) out.push({ code: 'senile', tone: 'warn', text: 'Montures achetées à l’HDV : vérifiez qu’elles ne sont pas séniles (d’avant la 3.5 : ni accouplement ni clonage).' })
-  const revenue = s.steady.revenueKnown
-  if (revenue > 0 && s.steady.revenueByCategory.genetons / revenue > 0.2)
-    out.push({ code: 'genetons', tone: 'info', text: `${fmtN((100 * s.steady.revenueByCategory.genetons) / revenue)} % des revenus viennent des génétons (valeur estimée d’après la boutique d’Eugène Éton, liés au compte : revente des parchemins).` })
+  // Génétons : rapportés au bénéfice net (ce qui disparaîtrait si leur valeur s'effondrait).
+  const gShare = s.steady.genetonShareOfNet
+  if (gShare !== null && gShare > 0.2) {
+    const sans = sensitivity.find((x) => x.id === 'sans-genetons')
+    out.push({
+      code: 'genetons',
+      tone: gShare > 0.4 ? 'warn' : 'info',
+      text: `Les génétons font ${fmtN(gShare * 100)} % du bénéfice net par jour en régime permanent (valeur estimée d’après les Puissants Parchemins d’Eugène Éton, liés au compte : revente des parchemins)${sans ? ` ; sans eux : ${fmtK(sans.profitAtHorizon)} à ${n.horizon} jours` : ''}.`,
+    })
+  }
+  if (!plan.stable)
+    out.push({
+      code: 'non-stabilise',
+      tone: 'warn',
+      text: `Régime non stabilisé à la fin des ${plan.simDays} jours simulés : ${s.steady.instability.join(' ; ')}. Le bénéfice par jour affiché n’est pas celui du long terme.`,
+    })
   // Temps de jeu.
   const slow = sensitivity.find((x) => x.id === 'duree')
   out.push({
@@ -1909,30 +2225,53 @@ function risksOf(plan: InvestmentEvaluation, n: Norm, sensitivity: SensitivityRo
     text: `Joueur parfait supposé (${fmtN(n.hoursPerDay, 1)} h/jour, ${s.sessionsPerDay} passages aux enclos, aucune session manquée)${slow ? ` ; avec des durées × 1,5 : ${fmtK(slow.profitAtHorizon)} à ${n.horizon} jours${slow.breakEvenDay !== null ? `, point mort jour ${slow.breakEvenDay}${slow.breakEvenEstimated ? ' (extrapolé)' : ''}` : ''}` : ''}.`,
   })
   if (!plan.complete) out.push({ code: 'prix-manquants', tone: 'warn', text: `${plan.missing.length} prix manquant(s) : montants « ≥ » / « ≤ », jamais comptés 0. Renseignez-les (page Prix).` })
-  for (const w of s.warnings) if (['etable', 'cible-non-atteinte', 'liquidite-inconnue', 'achat-limite'].includes(w.code) && !out.some((o) => o.text === w.text)) out.push({ code: w.code, tone: w.tone, text: w.text })
+  for (const w of s.warnings)
+    if (['etable', 'etable-saturee', 'cible-non-atteinte', 'liquidite-inconnue', 'achat-limite', 'volume-achat'].includes(w.code) && !out.some((o) => o.text === w.text)) out.push({ code: w.code, tone: w.tone, text: w.text })
   return out
 }
 
 function assumptionsOf(plan: InvestmentEvaluation, n: Norm): string[] {
   const out = [
     `Crafts : ${fmtN(n.craftsPerHour)} par heure (ESTIMATION : fabrication en série et achats des ingrédients compris), ${fmtN(n.craftHoursPerDay, 1)} h de craft par jour pendant la montée du métier, soit ${fmtN(n.craftsPerDay)} crafts/jour ; les crafts commencent le jour 0.`,
-    'Un niveau d’Éleveur atteint en fin de journée débloque son enclos le lendemain ; l’XP d’élevage (captures, accouplements) d’un tirage témoin fait aussi monter le niveau.',
-    `Pendant toute la simulation, prix de craft et filet du niveau visé (${plan.allocation.jobTo}) ; le métier monte en quelques jours.`,
+    `Pendant les jours de craft, le temps de capture est ce qui reste du temps de jeu après les crafts et les passages aux enclos (${fmtN(SESSION_HOURS * 60)} min par passage, ESTIMATION).`,
+    'Un niveau d’Éleveur atteint en fin de journée débloque son enclos et son filet le lendemain ; l’XP d’élevage (captures, accouplements) d’un tirage témoin fait aussi monter le niveau.',
+    `Filet du jour selon le niveau atteint ; prix de craft (carburants, makinas) du niveau visé (${plan.allocation.jobTo}) dès le jour 1 : le métier monte en quelques jours.`,
     'Socle des jauges (paliers ≥ 2) acheté à l’ouverture de chaque enclos et compté dans l’investissement à rembourser (il reste dans les jauges).',
-    `Trésorerie maximale engagée lue sur le 10e centile des ${n.runs} tirages (prudent), dépenses de chaque jour payées avant ses ventes ; le budget n’est jamais dépassé : jour 0 + fonds de roulement ≤ budget − réserve.`,
+    `Trésorerie maximale engagée lue sur le bas de la bande des tirages (${plan.bandLabel} : prudent), dépenses de chaque jour payées avant ses ventes ; le budget n’est jamais dépassé : jour 0 + fonds de roulement ≤ budget − réserve.`,
     `Projections : ${plan.simDays} jours simulés ; régime permanent = moyenne du dernier tiers.`,
   ]
   if (n.levers.resellCrafts && plan.leveling) out.push(`Objets fabriqués revendus à partir du lendemain, au plus ${Math.round(n.share * 100)} % des ventes quotidiennes moyennes de chaque objet, taxe ${fmtN(n.saleTax * 100, 1)} % déduite.`)
   if (!n.levers.buyFuels) out.push('Carburants fabriqués seulement : coût des ingrédients ; temps de craft et XP de ces crafts non comptés.')
   if (!n.levers.buyGear) out.push('Filets et makinas fabriqués seulement : une Optimakina hors de portée du métier n’est pas utilisée.')
+  const owned = n.initialStock.filter((l) => getSpecies(l.speciesId)?.family === plan.allocation.family).reduce((t, l) => t + l.count, 0)
+  out.push(
+    n.initialStock.length
+      ? `Étable actuelle prise en compte : ${fmtN(owned)} monture${owned > 1 ? 's' : ''} de la famille du plan (${FAMILIES[plan.allocation.family]?.plural ?? plan.allocation.family}) au départ, avec leur génération, leur état et leur niveau.`
+      : 'Étable actuelle non prise en compte : le plan part d’un élevage vide (premières ventes et point mort plus tôt si vous avez déjà des montures).',
+  )
   return [...out, ...plan.summary.assumptions]
+}
+
+/** Trésorerie engagée sous laquelle un ROI en % n'a pas de sens (« non significatif »). */
+export const ROI_MIN_OUTLAY = 500_000
+
+/**
+ * ROI affichable (revue UX2-09) : faux si la trésorerie engagée est infime face au budget (< 1 % du budget
+ * ou < 500 000 K) — « ROI 10 546 % » sur ≈ 93 k engagés ne dit rien du budget.
+ */
+export function roiIsSignificant(peakOutlay: number, budget: number): boolean {
+  return peakOutlay >= ROI_MIN_OUTLAY && peakOutlay >= 0.01 * budget
 }
 
 /** Texte de la liste de courses (copier-coller : « Nom × quantité »). */
 export function investmentShoppingText(items: ShoppingItem[]): string {
   return items
     .filter((i) => i.qty !== null && i.id !== null)
-    .map((i) => `${i.name} × ${i.qty}`)
+    .map((i) =>
+      i.ingredients?.length
+        ? `${i.name} × ${i.qty} (à fabriquer : ${i.ingredients.map((g) => `${g.name} × ${formatNumber(Math.ceil(g.qty - 1e-9))}`).join(', ')})`
+        : `${i.name} × ${i.qty}`,
+    )
     .join('\n')
 }
 

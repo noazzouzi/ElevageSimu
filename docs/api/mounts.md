@@ -103,6 +103,11 @@ const plannedPartners = new Map(plan.flatMap((p) => [[p.a.id, p.b.id], [p.b.id, 
 const fates = recommendFates({ inventory: mounts, goalSpeciesId, rules, valuation, levelCost, genetonValue, plannedPartners, goal: settings.goal })
 ```
 
+Page Mes montures : `mctx` porte le marché du serveur (`market: ctx.market`, prix « HDV mixte » = plafond de
+vente) et `genetonValue = useGenetonValue().value` (marché du serveur sans valeur saisie). Sous chaque sort
+conseillé : « HDV mixte ≈ X (plafond, non compté) » pour une vente sans prix utilisable, badge « sénile
+probable » (`marketWarning`) ; le résumé des options du sort le mentionne aussi.
+
 ## Inventaire
 
 | Signature | Rôle |

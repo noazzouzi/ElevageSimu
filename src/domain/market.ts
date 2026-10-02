@@ -18,7 +18,7 @@ export const PRICE_STATS: PriceStat[] = ['auto', 'median30', 'median24', 'mean30
 export const PRICE_STAT_LABELS: Record<PriceStat, string> = {
   auto: 'Automatique (médiane 24 h si ≥ 5 ventes, sinon 30 j)',
   median30: 'Médiane 30 jours',
-  median24: 'Médiane 24 heures',
+  median24: 'Médiane 24 heures (si ≥ 5 ventes en 24 h, sinon 30 j)',
   mean30: 'Moyenne 30 jours',
 }
 
@@ -65,7 +65,10 @@ function asTuple(row: RowLike): MarketTuple {
  * Prix d'une ligne selon la statistique, avec la statistique réellement utilisée :
  *  - `auto` : médiane 24 h si ≥ 5 ventes en 24 h, sinon médiane 30 j, sinon moyenne 30 j ;
  *  - statistique choisie (`median24`, `median30`, `mean30`) : sa valeur, et si elle vaut 0 (pas de vente
- *    sur la période) la médiane 30 j puis la moyenne 30 j (repli signalé par `stat`).
+ *    sur la période) la médiane 30 j puis la moyenne 30 j (repli signalé par `stat`) ;
+ *  - `median24` : seulement avec ≥ 5 ventes en 24 h (`AUTO_MIN_SOLD_24H`, comme `auto`) — une médiane de
+ *    1 à 4 ventes s'écarte souvent de plus de 50 % du prix réel (montures : 61 033 → 495 000 sur 2 ventes) ;
+ *    sinon repli médiane 30 j puis moyenne 30 j (signalé par `stat`).
  * Un prix 0 n'est jamais un prix : null si aucune valeur n'est positive.
  */
 export function priceDetail(row: RowLike, stat: PriceStat = 'auto'): { price: number; stat: ConcretePriceStat } | null {
@@ -75,7 +78,8 @@ export function priceDetail(row: RowLike, stat: PriceStat = 'auto'): { price: nu
     return Number.isFinite(v) && v > 0 ? v : null
   }
   let order: ConcretePriceStat[]
-  if (stat === 'auto') order = t[TUPLE.sold24] >= AUTO_MIN_SOLD_24H ? ['median24', 'median30', 'mean30'] : ['median30', 'mean30']
+  const enough24 = t[TUPLE.sold24] >= AUTO_MIN_SOLD_24H
+  if (stat === 'auto' || stat === 'median24') order = enough24 ? ['median24', 'median30', 'mean30'] : ['median30', 'mean30']
   else order = [stat, ...(['median30', 'mean30'] as ConcretePriceStat[]).filter((s) => s !== stat)]
   for (const s of order) {
     const v = val(s)
@@ -363,12 +367,24 @@ export interface GenetonShopItem {
   name: string
   /** Coût en génétons chez Eugène Éton. */
   cost: number
+  /**
+   * Échange reconfirmé après la sortie de la 3.5 (research/README.md §4.3 n° 18 : seuls les Puissants
+   * Parchemins à 160 génétons) ; les autres lignes viennent d'une capture de la bêta.
+   */
+  confirmed: boolean
 }
+
+/** Coût des Puissants Parchemins, seul échange reconfirmé de la boutique d'Eugène Éton. */
+export const CONFIRMED_GENETON_COST = 160
 
 /** Objets échangeables de la boutique de génétons (parchemins de caractéristique ×24, Tourmaline). */
 export const GENETON_SHOP: GenetonShopItem[] = (PRICES_DEFAULT.genetons.shop as { reward?: string; itemId?: number | null; costGenetons?: number | null; priceType?: string }[])
   .filter((s) => typeof s.itemId === 'number' && typeof s.costGenetons === 'number' && s.costGenetons > 0 && s.priceType !== 'non-tradable')
-  .map((s) => ({ id: s.itemId as number, name: s.reward ?? itemName(s.itemId as number), cost: s.costGenetons as number }))
+  .map((s) => {
+    const name = s.reward ?? itemName(s.itemId as number)
+    const cost = s.costGenetons as number
+    return { id: s.itemId as number, name, cost, confirmed: cost === CONFIRMED_GENETON_COST && /^Puissant/i.test(name) }
+  })
 
 let categoryIds: Record<MarketCategory, number[]> | null = null
 
@@ -475,6 +491,28 @@ export interface MarketSnapshot {
   /** Noms du fichier pour les objets inconnus des données de l'application (parchemins, runes…). */
   names: Record<string, string>
   stats: MarketSnapshotStats
+  /**
+   * Colonnes de volume ou de prix absentes du fichier importé (`CsvParseResult.missingColumns`, hors
+   * `name`). Sans `sold30`, la liquidité est INCONNUE (`marketDepth` → null), jamais « 0 vente ».
+   * Absent : export complet (préréglages, imports d'avant ce champ).
+   */
+  missingColumns?: MarketColumn[]
+}
+
+/** Colonnes numériques d'un export (volumes et prix). */
+export type MarketColumn = 'sold24' | 'sold7' | 'sold30' | 'median30' | 'mean30' | 'median24' | 'kamasPerDay'
+
+const MARKET_COLUMNS: MarketColumn[] = ['sold24', 'sold7', 'sold30', 'median30', 'mean30', 'median24', 'kamasPerDay']
+
+/** Libellés des colonnes (aperçu d'import). */
+export const MARKET_COLUMN_LABELS: Record<MarketColumn, string> = {
+  sold24: 'vendus_24h',
+  sold7: 'vendus_7j',
+  sold30: 'vendus_30j',
+  median30: 'median_30j',
+  mean30: 'moyen_30j',
+  median24: 'median_24h',
+  kamasPerDay: 'kamas_par_jour',
 }
 
 export interface BuildSnapshotOptions {
@@ -484,6 +522,8 @@ export interface BuildSnapshotOptions {
   importedAt?: number
   /** Objets à garder (défaut : `relevantItemIds()`). */
   ids?: Set<number>
+  /** Colonnes absentes du fichier (défaut : celles de `CsvParseResult.missingColumns`). */
+  missingColumns?: MarketColumn[]
 }
 
 const MISSING_SAMPLE = 40
@@ -495,10 +535,18 @@ export function marketItemName(id: number, names?: Record<string, string> | null
   return names?.[String(id)] ?? KNOWN_NAMES.get(id) ?? n
 }
 
-/** Noms connus hors recettes : ressources d'extraction, objets à prix par défaut, boutique de génétons. */
+/**
+ * Noms connus hors recettes : ressources d'extraction, objets à prix par défaut, boutique de génétons
+ * (Puissants Parchemins, Tourmaline…), Parchemin d'Éleveur — pour qu'un prix clé ne s'affiche jamais
+ * « Objet #… » quand on n'a pas les noms de l'export (historique, aperçu d'import, comparaison).
+ */
 const KNOWN_NAMES = new Map<number, string>([
   ...PRICES_DEFAULT.items.filter((i) => i.id !== null).map((i): [number, string] => [i.id as number, i.name]),
   ...FAMILY_IDS.map((f): [number, string] => [FAMILIES[f].extractionItemId, FAMILIES[f].extractionItemName]),
+  ...GENETON_SHOP.map((g): [number, string] => [g.id, g.name]),
+  [TOURMALINE, 'Tourmaline'],
+  [PARCHEMIN_ELEVEUR, "Parchemin d'Éleveur"],
+  [PEPITE, 'Pépite'],
 ])
 
 /**
@@ -534,6 +582,7 @@ export function buildSnapshot(input: CsvParseResult | HdvRow[], opts: BuildSnaps
   })
   const missingAll = [...keep].filter((id) => !rows[String(id)] || priceFromRow(rows[String(id)]) === null)
   const missing = missingAll.slice(0, MISSING_SAMPLE).map((id) => ({ id, name: marketItemName(id, names), category: relevantMap.get(id) ?? 'autre' }))
+  const absentColumns = (opts.missingColumns ?? (Array.isArray(input) ? [] : input.missingColumns)).filter((c): c is MarketColumn => (MARKET_COLUMNS as string[]).includes(c))
   return {
     format: MARKET_FORMAT,
     version: MARKET_SNAPSHOT_VERSION,
@@ -556,7 +605,16 @@ export function buildSnapshot(input: CsvParseResult | HdvRow[], opts: BuildSnaps
       missing,
       missingCount: missingAll.length,
     },
+    ...(absentColumns.length ? { missingColumns: absentColumns } : {}),
   }
+}
+
+/** Les volumes (ventes sur 30 jours) sont-ils connus ? Faux pour un export sans colonne `vendus_30j`. */
+export function volumeKnown(src: MarketSnapshot | MarketSource | null | undefined): boolean {
+  if (!src) return false
+  if ('volumeUnknown' in src && src.volumeUnknown) return false
+  if ('missingColumns' in src && Array.isArray(src.missingColumns) && src.missingColumns.includes('sold30')) return false
+  return true
 }
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/
@@ -608,6 +666,7 @@ export function sanitizeSnapshot(raw: unknown): { snapshot: MarketSnapshot | nul
         .filter((m): m is { id: number; name: string; category: MarketCategory } => isObj(m) && typeof m.id === 'number' && typeof m.name === 'string' && (MARKET_CATEGORIES as string[]).includes(m.category as string))
         .map((m) => ({ id: m.id, name: m.name, category: m.category }))
     : []
+  const missingColumns = Array.isArray(raw.missingColumns) ? [...new Set(raw.missingColumns.filter((c): c is MarketColumn => typeof c === 'string' && (MARKET_COLUMNS as string[]).includes(c)))] : []
   const snapshot: MarketSnapshot = {
     format: MARKET_FORMAT,
     version: MARKET_SNAPSHOT_VERSION,
@@ -630,6 +689,7 @@ export function sanitizeSnapshot(raw: unknown): { snapshot: MarketSnapshot | nul
       missing,
       missingCount: num(statsRaw.missingCount),
     },
+    ...(missingColumns.length ? { missingColumns } : {}),
   }
   return { snapshot, issues }
 }
@@ -647,11 +707,50 @@ export interface MarketSource {
   serverName?: string
   /** Noms des objets inconnus des données de l'application. */
   names?: Record<string, string>
+  /**
+   * Serveur de l'EXPORT (`snapshot.serverName`) : diffère de `serverName` quand on a chargé les prix
+   * d'un autre serveur (préréglage de Tylezia pour « Mon serveur »…) — à afficher (`marketOriginMismatch`).
+   */
+  originServer?: string
+  /** Instant de l'import (ms) : un nouvel import du même jour change les prix (clé des résultats). */
+  importedAt?: number
+  /** Export sans colonne de ventes : liquidité inconnue (`marketDepth` → null), jamais « 0 vente ». */
+  volumeUnknown?: boolean
 }
 
 /** Source de prix d'un instantané. */
 export function marketSourceOf(snapshot: MarketSnapshot, stat: PriceStat = 'auto', serverName?: string): MarketSource {
-  return { rows: snapshot.rows, stat, exportDate: snapshot.exportDate, serverName: serverName ?? snapshot.serverName, names: snapshot.names }
+  return {
+    rows: snapshot.rows,
+    stat,
+    exportDate: snapshot.exportDate,
+    serverName: serverName || snapshot.serverName,
+    names: snapshot.names,
+    originServer: snapshot.serverName,
+    importedAt: snapshot.importedAt,
+    ...(volumeKnown(snapshot) ? {} : { volumeUnknown: true }),
+  }
+}
+
+/**
+ * Où vient un prix du marché, pour un libellé : « HDV de Tylezia du 02/10/2026 », et quand ce sont les prix
+ * d'un autre serveur : « HDV de Tylezia du 02/10/2026, chargés pour Mon serveur ».
+ */
+export function marketWhere(src: Pick<MarketSource, 'serverName' | 'originServer' | 'exportDate'>): string {
+  const origin = marketOriginMismatch(src)
+  const name = origin ?? src.serverName
+  return `HDV${name ? ` de ${name}` : ''} du ${frenchDay(src.exportDate)}${origin ? `, chargés pour ${src.serverName}` : ''}`
+}
+
+/**
+ * Prix d'un autre serveur chargés pour celui-ci (export de « Tylezia » utilisé par « Mon serveur ») :
+ * le nom du serveur de l'export, sinon null (même serveur, ou origine inconnue).
+ */
+export function marketOriginMismatch(src: Pick<MarketSource, 'serverName' | 'originServer'> | null | undefined): string | null {
+  const origin = src?.originServer?.trim()
+  const name = src?.serverName?.trim()
+  if (!origin || !name) return null
+  return slugify(origin) === slugify(name) ? null : origin
 }
 
 type SourceLike = MarketSource | MarketSnapshot | null | undefined
@@ -681,11 +780,36 @@ export interface MarketDepth {
   kamasPerDay: number
 }
 
-/** Liquidité d'un objet sur ce serveur (null = absent de l'export). */
+/** Liquidité d'un objet sur ce serveur (null = absent de l'export, ou export sans volumes : inconnue). */
 export function marketDepth(src: SourceLike, id: number): MarketDepth | null {
   const t = rowsOf(src)?.[String(id)]
-  if (!t) return null
+  if (!t || !volumeKnown(src)) return null
   return { sold24: t[TUPLE.sold24], sold7: t[TUPLE.sold7], sold30: t[TUPLE.sold30], perDayAvg: t[TUPLE.sold30] / 30, kamasPerDay: t[TUPLE.kamasPerDay] }
+}
+
+/** Rapport moyenne 30 j ÷ médiane 30 j au-delà duquel une médiane sans vente récente est peu fiable. */
+export const UNRELIABLE_MEAN_RATIO = 2
+
+/**
+ * Médiane 30 j peu fiable pour un ACHAT (revue UX2-02) : moins de 5 ventes en 24 h (le prix retenu est la
+ * médiane 30 j) et moyenne 30 j plus de 2 fois la médiane — l'offre bon marché du mois s'est tarie
+ * (Tylezia, Grand Élixir d'Abreuvoir : 0 vente en 24 h, médiane 2 872, moyenne 9 145). Rend le prix prudent
+ * (moyenne 30 j) et la raison, sinon null.
+ */
+export function unreliableMedian(src: SourceLike, id: number): { prudentPrice: number; median30: number; mean30: number; sold24: number; sold7: number; reason: string } | null {
+  const t = rowsOf(src)?.[String(id)]
+  if (!t) return null
+  const median30 = t[TUPLE.median30]
+  const mean30 = t[TUPLE.mean30]
+  if (!(median30 > 0) || !(mean30 > UNRELIABLE_MEAN_RATIO * median30) || t[TUPLE.sold24] >= AUTO_MIN_SOLD_24H) return null
+  return {
+    prudentPrice: mean30,
+    median30,
+    mean30,
+    sold24: t[TUPLE.sold24],
+    sold7: t[TUPLE.sold7],
+    reason: `médiane 30 j peu fiable (${t[TUPLE.sold24]} vente${t[TUPLE.sold24] > 1 ? 's' : ''} en 24 h, moyenne 30 j ${Math.round(mean30).toLocaleString('fr-FR')} > ${UNRELIABLE_MEAN_RATIO} × médiane ${Math.round(median30).toLocaleString('fr-FR')}) : chiffré à la moyenne 30 j`,
+  }
 }
 
 /** Part du volume quotidien moyen qu'une production peut écouler sans saturer le marché (défaut 15 %). */
@@ -726,29 +850,42 @@ export interface GenetonMarketLine extends GenetonShopItem {
 }
 
 export interface GenetonMarketValue {
-  /** Valeur brute d'un généton (kamas) : meilleur prix ÷ coût de la boutique. */
+  /** Valeur brute d'un généton (kamas) : meilleur prix ÷ coût parmi les échanges retenus. */
   value: number
   /** Valeur nette de la taxe de vente. */
   net: number
   best: GenetonMarketLine
-  /** Toutes les lignes de la boutique, de la meilleure à la moins bonne (sans prix en dernier). */
+  /** Lignes retenues (échanges reconfirmés par défaut), de la meilleure à la moins bonne (sans prix en dernier). */
   lines: GenetonMarketLine[]
+  /** Échanges reconfirmés seulement (Puissants Parchemins, 160 génétons). */
+  confirmedOnly: boolean
+  /**
+   * Valeur optimiste : meilleur échange de TOUTE la boutique (capture de la bêta, non reconfirmée), si
+   * elle est plus haute — affichée en alternative, jamais comptée par défaut.
+   */
+  optimistic: { value: number; net: number; best: GenetonMarketLine } | null
 }
 
 /**
- * Valeur du généton sur ce serveur : max(prix ÷ coût) sur la boutique d'Eugène Éton (parchemins de
- * caractéristique Petits 10, normaux 50, Grands 100, Puissants 160 ; Tourmaline 130), brute et nette de
- * taxe. null si aucun objet de la boutique n'a de prix.
+ * Valeur du généton sur ce serveur : max(prix ÷ coût) sur la boutique d'Eugène Éton, brute et nette de
+ * taxe. Par défaut (`confirmedOnly`) seulement les échanges reconfirmés après la 3.5 (Puissants
+ * Parchemins, 160 génétons) ; la meilleure valeur de toute la boutique (Petits 10, normaux 50, Grands
+ * 100, Tourmaline 130 : capture de la bêta) est rendue à part (`optimistic`). null si aucun objet retenu
+ * n'a de prix.
  */
-export function genetonValueFromMarket(src: SourceLike, saleTax = 0.02, stat?: PriceStat): GenetonMarketValue | null {
-  const lines: GenetonMarketLine[] = GENETON_SHOP.map((g) => {
+export function genetonValueFromMarket(src: SourceLike, saleTax = 0.02, stat?: PriceStat, opts: { confirmedOnly?: boolean } = {}): GenetonMarketValue | null {
+  const confirmedOnly = opts.confirmedOnly ?? true
+  const all: GenetonMarketLine[] = GENETON_SHOP.map((g) => {
     const price = snapshotPrice(src, g.id, stat)
     return { ...g, price, perGeneton: price === null ? null : price / g.cost, sold24: marketDepth(src, g.id)?.sold24 ?? 0 }
   })
-  lines.sort((a, b) => (b.perGeneton ?? -1) - (a.perGeneton ?? -1) || a.cost - b.cost)
+  all.sort((a, b) => (b.perGeneton ?? -1) - (a.perGeneton ?? -1) || a.cost - b.cost)
+  const lines = confirmedOnly ? all.filter((l) => l.confirmed) : all
   const best = lines[0]
   if (!best || best.perGeneton === null) return null
-  return { value: best.perGeneton, net: best.perGeneton * (1 - saleTax), best, lines }
+  const top = all[0]
+  const optimistic = confirmedOnly && top && top.perGeneton !== null && top.perGeneton > best.perGeneton + 1e-9 ? { value: top.perGeneton, net: top.perGeneton * (1 - saleTax), best: top } : null
+  return { value: best.perGeneton, net: best.perGeneton * (1 - saleTax), best, lines, confirmedOnly, optimistic }
 }
 
 // ---------- Évolution entre deux imports ----------
@@ -874,6 +1011,105 @@ export function sanitizeHistory(raw: unknown): { entries: MarketHistoryEntry[]; 
   return { entries: entries.slice(-MARKET_HISTORY_MAX), dropped }
 }
 
+/**
+ * Prix clés avant → après un import (aperçu de la page Prix) comparés À STATISTIQUE ÉGALE : avec
+ * l'instantané courant du serveur, sa statistique (`stat`) des deux côtés ; sinon les prix clés du dernier
+ * import de l'historique, enregistrés en statistique automatique, donc comparés en `auto` (comparer
+ * l'historique `auto` au nouvel export en médiane 30 j inventerait des variations, ex. Corne +14 %).
+ * Noms : ceux des deux exports, puis les noms connus (jamais « Objet #… » pour un prix clé).
+ */
+export function importPriceChanges(
+  preview: MarketSnapshot,
+  previous: { snapshot?: MarketSnapshot | null; history?: MarketHistoryEntry | null },
+  stat: PriceStat,
+): { changes: PriceChange[]; stat: PriceStat; previousDate: string | null } {
+  if (previous.snapshot) {
+    const names = { ...previous.snapshot.names, ...preview.names }
+    return { changes: diffPrices(keyPrices(previous.snapshot, stat), preview, { stat, names }), stat, previousDate: previous.snapshot.exportDate || null }
+  }
+  if (previous.history) return { changes: diffPrices(previous.history.keyPrices, preview, { stat: 'auto', names: preview.names }), stat: 'auto', previousDate: previous.history.exportDate || null }
+  return { changes: [], stat, previousDate: null }
+}
+
+// ---------- Remplacer ou compléter un instantané ----------
+
+/** Part minimale d'objets avec un prix (par rapport aux prix actuels) sous laquelle un remplacement est confirmé. */
+export const IMPORT_COVERAGE_MIN_RATIO = 0.5
+
+/**
+ * Un import couvre-t-il nettement moins d'objets que les prix actuels du serveur ? (fichier partiel :
+ * le remplacement effacerait les prix des objets absents — proposer de compléter, confirmer.)
+ */
+export function importCoverageDrop(current: MarketSnapshot | null | undefined, incoming: MarketSnapshot): { drop: boolean; currentUseful: number; incomingUseful: number; ratio: number | null } {
+  const currentUseful = current?.stats.useful ?? 0
+  const incomingUseful = incoming.stats.useful
+  const ratio = currentUseful > 0 ? incomingUseful / currentUseful : null
+  return { drop: ratio !== null && ratio < IMPORT_COVERAGE_MIN_RATIO, currentUseful, incomingUseful, ratio }
+}
+
+/**
+ * Complète un instantané par un nouvel export (« fusionner ») : les objets du nouvel export remplacent
+ * ceux de l'ancien, les objets absents du nouveau fichier gardent leur ligne précédente. Serveur du nouvel
+ * export ; date = la PLUS ANCIENNE des deux tant que des objets de l'ancien export restent (la fraîcheur
+ * affichée ne doit pas rajeunir des prix qui ne l'ont pas été) ; origine notée « complété ». Colonnes
+ * absentes : celles des deux (prudent).
+ */
+export function mergeSnapshots(base: MarketSnapshot, incoming: MarketSnapshot, opts: { importedAt?: number } = {}): MarketSnapshot {
+  const rows: Record<string, MarketTuple> = { ...base.rows, ...incoming.rows }
+  const names = { ...base.names, ...incoming.names }
+  const hdv: HdvRow[] = Object.entries(rows).map(([id, t]) => ({
+    id: Number(id),
+    name: names[id] ?? '',
+    level: null,
+    type: '',
+    category: '',
+    median30: t[TUPLE.median30],
+    mean30: t[TUPLE.mean30],
+    median24: t[TUPLE.median24],
+    sold24: t[TUPLE.sold24],
+    sold7: t[TUPLE.sold7],
+    sold30: t[TUPLE.sold30],
+    kamasPerDay: t[TUPLE.kamasPerDay],
+  }))
+  const kept = Object.keys(base.rows).filter((id) => !(id in incoming.rows)).length
+  const missingColumns = [...new Set([...(base.missingColumns ?? []), ...(incoming.missingColumns ?? [])])]
+  const oldest = kept > 0 && isIsoDay(base.exportDate) && (!isIsoDay(incoming.exportDate) || base.exportDate < incoming.exportDate) ? base.exportDate : incoming.exportDate
+  const merged = buildSnapshot(hdv, {
+    serverName: incoming.serverName,
+    exportDate: oldest,
+    source: `${incoming.source || 'export'} (${frenchDay(incoming.exportDate)}) — complété par ${kept.toLocaleString('fr-FR')} objet${kept > 1 ? 's' : ''} de l’export du ${frenchDay(base.exportDate)}`.slice(0, 200),
+    importedAt: opts.importedAt ?? incoming.importedAt,
+    missingColumns,
+  })
+  return { ...merged, names }
+}
+
+/**
+ * Serveur évoqué par le nom d'un fichier d'export (« tylezia-2026-10-02.csv » → « Tylezia ») parmi des
+ * noms connus (serveurs du registre, préréglages) : le plus long nom trouvé comme suite de mots du nom
+ * du fichier, sinon null.
+ */
+export function serverNameInFileName(fileName: string, names: string[]): string | null {
+  const words = slugify(fileName.replace(/\.[a-z0-9]+$/i, '')).split('-').filter(Boolean)
+  let best: string | null = null
+  let bestLen = 0
+  for (const n of names) {
+    const target = slugify(n).split('-').filter(Boolean)
+    if (!target.length) continue
+    for (let i = 0; i + target.length <= words.length; i++) {
+      if (target.every((w, j) => words[i + j] === w)) {
+        const len = target.join('-').length
+        if (len > bestLen) {
+          best = n
+          bestLen = len
+        }
+        break
+      }
+    }
+  }
+  return best
+}
+
 // ---------- Divers ----------
 
 /** Identifiant de fichier : « Tylezia » → « tylezia ». */
@@ -902,3 +1138,6 @@ export function frenchDay(iso: string): string {
 
 /** Export de plus de 14 jours : prix à rafraîchir. */
 export const MARKET_STALE_DAYS = 14
+
+/** Au-delà de ce nombre de jours, l'export est jugé périmé (au-delà de `MARKET_STALE_DAYS` : à rafraîchir). */
+export const MARKET_OLD_DAYS = 30

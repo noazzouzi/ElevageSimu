@@ -17,3 +17,14 @@
 .gs-new-profile h4 {
   margin: 0;
 }
+
+/* Petit écran : les tableaux des profils et des serveurs défilent à l'horizontale (.table-wrap)
+   plutôt que d'écraser leurs colonnes en un mot par ligne. */
+@media (max-width: 720px) {
+  .gs-profiles-table {
+    min-width: 640px;
+  }
+  .gs-servers-table {
+    min-width: 760px;
+  }
+}

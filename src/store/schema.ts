@@ -34,10 +34,16 @@ export const STORAGE_PREFIX = 'elevagesimu:'
 export const PROFILES_KEY = 'elevagesimu:profiles'
 /** Copie d'un registre illisible, gardée telle quelle avant reconstruction. */
 export const PROFILES_CORRUPT_KEY = 'elevagesimu:profiles-corrompu'
+/**
+ * Copie de secours du dernier registre lisible (réécrite après chaque enregistrement réussi du registre et
+ * à chaque démarrage) : sert à reconstruire noms, serveurs et couleurs si le registre devient illisible ou
+ * disparaît.
+ */
+export const PROFILES_SHADOW_KEY = 'elevagesimu:profiles-precedent'
 /** Réglage de l'appareil (notifications du navigateur), commun à tous les profils. */
 export const NOTIFICATIONS_KEY = 'elevagesimu:enclos-notifications'
 /** Clés globales (ni profil ni serveur, jamais migrées). */
-export const GLOBAL_KEYS: readonly string[] = [PROFILES_KEY, PROFILES_CORRUPT_KEY, NOTIFICATIONS_KEY]
+export const GLOBAL_KEYS: readonly string[] = [PROFILES_KEY, PROFILES_CORRUPT_KEY, PROFILES_SHADOW_KEY, NOTIFICATIONS_KEY]
 
 /** Sous-ensemble de l'API Web Storage utilisé (localStorage ou faux stockage de test). */
 export interface StorageLike {
@@ -46,6 +52,21 @@ export interface StorageLike {
   getItem(key: string): string | null
   setItem(key: string, value: string): void
   removeItem(key: string): void
+}
+
+/** Stockage en mémoire (tests, calculs sur un état hypothétique : contenu d'une sauvegarde…). */
+export function createMemoryStorage(init: Iterable<[string, string]> = []): StorageLike & { entries(): [string, string][] } {
+  const map = new Map<string, string>(init)
+  return {
+    get length() {
+      return map.size
+    },
+    key: (i) => [...map.keys()][i] ?? null,
+    getItem: (k) => map.get(k) ?? null,
+    setItem: (k, v) => void map.set(k, String(v)),
+    removeItem: (k) => void map.delete(k),
+    entries: () => [...map.entries()],
+  }
 }
 
 export type StoreScope = 'profile' | 'server'

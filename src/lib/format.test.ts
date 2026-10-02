@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { describe, expect, it } from 'vitest'
-import { capitalize, formatDuration, formatInDays, formatIsoDay, formatKamas, formatKamasRange, plural, pluralWord } from './format'
+import { capitalize, formatChars, formatDuration, formatInDays, formatIsoDay, formatKamas, formatKamasRange, plural, pluralWord } from './format'
 
 describe('formatDuration (helper unique)', () => {
   it('format court par défaut', () => {
@@ -60,5 +60,14 @@ describe('formatKamasRange (bornes, jamais « ≈ »)', () => {
     expect(formatKamasRange({ low: null, high: 5_000 })).toBe(`≤ ${k(5_000)}`)
     expect(formatKamasRange({ low: 7_000, high: null })).toBe(`≥ ${k(7_000)}`)
     expect(formatKamasRange({ low: null, high: null })).toBe('inconnu')
+  })
+})
+
+describe('formatChars (place occupée, unité du quota du navigateur)', () => {
+  it('caractères, k caractères, M caractères', () => {
+    expect(formatChars(1)).toBe('1 caractère')
+    expect(formatChars(850)).toBe('850 caractères')
+    expect(formatChars(88_885)).toBe('88,9 k caractères')
+    expect(formatChars(5 * 1024 * 1024)).toBe('5,24 M caractères')
   })
 })
