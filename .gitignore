@@ -40,3 +40,6 @@ research/raw/strategy-evidence/gestion-enclos.html
 research/raw/strategy-evidence/forum-rentabilite.html
 research/raw/strategy-evidence/reddit-elevage.json
 **/__pycache__/
+
+# Exports HDV complets (volumineux, fournis par le joueur) : seul un extrait utile est versionné
+research/raw/hdv/*.csv
