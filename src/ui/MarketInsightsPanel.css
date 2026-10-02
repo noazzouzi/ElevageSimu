@@ -1,0 +1,161 @@
+/* Prix › « Marché » : lecture du marché du serveur (src/ui/MarketInsightsPanel.tsx). */
+.mkt-panel .kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.mkt-panel .kpis .stat small {
+  display: block;
+  line-height: 1.3;
+}
+.mkt-panel .mkt-notes {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+}
+.mkt-panel .table td small,
+.mkt-panel .table th small {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: normal;
+}
+.mkt-panel .table tr.mkt-best td {
+  background: var(--accent-soft);
+}
+.mkt-panel .table tr.mkt-group td {
+  background: var(--bg-sunken);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.mkt-panel .pos {
+  color: var(--ok);
+}
+.mkt-panel .neg {
+  color: var(--danger);
+}
+.mkt-panel .filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 10px;
+}
+.mkt-panel label.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+}
+
+/* Volume : barre proportionnelle + valeur. */
+.mkt-vol {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 110px;
+  font-variant-numeric: tabular-nums;
+}
+.mkt-vol-track {
+  flex: 1;
+  min-width: 50px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-sunken);
+  overflow: hidden;
+}
+.mkt-vol-track > span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+/* Graphique des prix par génération. */
+.mkt-chart {
+  margin: 0;
+}
+.mkt-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 280px;
+}
+.mkt-chart .mkt-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.mkt-chart .mkt-axis {
+  fill: var(--text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.mkt-chart .mkt-hit {
+  fill: transparent;
+}
+.mkt-chart .mkt-band {
+  cursor: default;
+  outline: none;
+}
+.mkt-chart .mkt-band.active .mkt-hit {
+  fill: var(--bg-sunken);
+}
+.mkt-chart .mkt-band:focus-visible .mkt-hit {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.mkt-chart .mkt-bar {
+  fill: var(--accent);
+}
+.mkt-chart .mkt-whisker {
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+}
+.mkt-chart .mkt-tick {
+  stroke: var(--gold);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.mkt-chart figcaption {
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+.mkt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.mkt-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.mkt-sw {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+}
+.mkt-sw.bar {
+  background: var(--accent);
+  border-radius: 2px;
+}
+.mkt-sw.tick {
+  height: 3px;
+  background: var(--gold);
+  border-radius: 2px;
+}
+.mkt-sw.whisker {
+  width: 2px;
+  height: 12px;
+  background: var(--text-muted);
+}
+.mkt-tip {
+  min-height: 1.4em;
+  font-size: 0.84rem;
+  margin-bottom: 4px;
+}
+.mkt-fuels td strong {
+  font-variant-numeric: tabular-nums;
+}

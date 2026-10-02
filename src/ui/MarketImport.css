@@ -1,0 +1,44 @@
+/* Prix › Marché HDV (CSV). */
+.market-import .mi-coverage {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px 16px;
+  margin-top: 12px;
+}
+.market-import .mi-coverage .label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  margin-bottom: 3px;
+}
+.market-import .mi-file {
+  position: relative;
+  overflow: hidden;
+}
+.market-import .mi-file input[type='file'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 0;
+}
+.market-import .mi-file:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.market-import .mi-list {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 0.85rem;
+  max-height: 260px;
+  overflow: auto;
+}
+.market-import .mi-up {
+  color: var(--ok);
+}
+.market-import .mi-down {
+  color: var(--danger);
+}
+.market-import details summary {
+  cursor: pointer;
+}

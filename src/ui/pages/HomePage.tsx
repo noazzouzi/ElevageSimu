@@ -2,7 +2,8 @@
 // avec les indicateurs clés de l'élevage, l'Almanax du jour et le suivi « fait ».
 // L'analyse lourde est mémorisée (`analyzeStateCached`) : revenir sur l'accueil ne la recalcule pas tant
 // que les données et le jour n'ont pas changé. La simulation de l'objectif (captures calibrées) est
-// partagée avec le Plan d'élevage (`useGoalSimulation`).
+// partagée avec le Plan d'élevage (`useGoalSimulation`). Le mode de rentabilité actif (settings.mode, stratégie
+// de la dernière comparaison enregistrée) oriente les conseils et s'affiche avec la routine du jour.
 import { useEffect, useMemo, useState } from 'react'
 import { FAMILIES, getSpecies, itemName } from '../../data'
 import {
@@ -27,9 +28,10 @@ import {
 import { almanaxOn, serverDay, serverDayStart, upcomingAlmanax } from '../../domain/almanax'
 import { PADDOCK_SLOTS } from '../../domain/constants'
 import type { MountPriceContext } from '../../domain/economy'
+import { dailyRoutine, mergedSessions, type ActiveMode } from '../../domain/modes'
 import { validateActiveGauges } from '../../domain/paddock'
 import { downloadBackup } from '../../lib/backup'
-import { formatClock, formatKamas, formatNumber } from '../../lib/format'
+import { formatClock, formatDate, formatKamas, formatKamasRange, formatNumber } from '../../lib/format'
 import { useInventory } from '../../store/inventory'
 import { journalJobXp, useJournal } from '../../store/journal'
 import { nextAlarm, usePaddockPlans } from '../../store/paddockPlans'
@@ -40,7 +42,10 @@ import { useRules, useSettings } from '../../store/settings'
 import { Badge, Callout, Card, Empty, PageHeader, Progress, Stat } from '../components'
 import { href } from '../router'
 import { useGoalSimulation } from '../useGoalSimulation'
+import { useActiveMode } from '../useModes'
+import { useActiveServer } from '../../store/profiles'
 import './HomePage.css'
+import './HomeMode.css'
 
 const REFRESH_MS = 30_000
 
@@ -122,14 +127,21 @@ function useAdvisorStores() {
   const generationOverrides = usePrices((s) => s.generations)
   const genetonValue = usePrices((s) => s.genetonValue)
   const pricedItems = Object.keys(usePrices((s) => s.items)).length
-  const mountPrices: MountPriceContext = useMemo(() => ({ mountOverrides, generationOverrides, useDefaults: useDefaultPrices }), [mountOverrides, generationOverrides, useDefaultPrices])
-  return { settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp }
+  // Prix de l'objet-monture du marché du serveur (« HDV mixte ») : plafond de vente prudent seulement.
+  const mountPrices: MountPriceContext = useMemo(
+    () => ({ mountOverrides, generationOverrides, useDefaults: useDefaultPrices, market: priceCtx.market }),
+    [mountOverrides, generationOverrides, useDefaultPrices, priceCtx.market],
+  )
+  // Mode de rentabilité actif (stratégie de la dernière comparaison enregistrée pour ce profil).
+  const mode = useActiveMode()
+  const maxMarketShare = useActiveServer().maxMarketShare
+  return { settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp, mode, maxMarketShare }
 }
 
 export default function HomePage() {
   const [now, refresh] = useNow()
   const st = useAdvisorStores()
-  const { settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp } = st
+  const { settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp, mode, maxMarketShare } = st
   const advance = usePaddockPlans((s) => s.advance)
   const setActive = usePaddocks((s) => s.setActive)
   const done = usePlanProgress((s) => s.done)
@@ -146,16 +158,16 @@ export default function HomePage() {
   // Ancre : midi du jour de jeu (Paris), pour que l'analyse change de jour avec l'Almanax et le Takeza.
   const dayAnchor = serverDayStart(serverDay(now)) + 12 * 3_600_000
   const analysis = useMemo(
-    () => analyzeStateCached({ now: dayAnchor, settings, rules, mounts, paddocks: [], paddockPlans: {}, priceCtx, mountPrices, genetonValue, journalXp }),
-    [dayAnchor, settings, rules, mounts, priceCtx, mountPrices, genetonValue, journalXp],
+    () => analyzeStateCached({ now: dayAnchor, settings, rules, mounts, paddocks: [], paddockPlans: {}, priceCtx, mountPrices, genetonValue, journalXp, mode, maxMarketShare }),
+    [dayAnchor, settings, rules, mounts, priceCtx, mountPrices, genetonValue, journalXp, mode, maxMarketShare],
   )
   // Simulation Monte-Carlo de l'objectif (partagée avec le Plan) : captures calibrées.
   const simConfig = useMemo(() => (analysis.goal && !analysis.goal.reached && analysis.goal.tree ? goalProgramConfig(settings, rules) : null), [analysis.goal, settings, rules])
   const sim = useGoalSimulation(simConfig)
   const goalView = useMemo(() => withGoalSimulation(analysis.goal, mounts, sim.summary, rules), [analysis.goal, mounts, sim.summary, rules])
   const advice = useMemo(
-    () => adviseNow({ now, settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp, goalSim: sim.summary }, analysis),
-    [now, settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp, sim.summary, analysis],
+    () => adviseNow({ now, settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp, goalSim: sim.summary, mode, maxMarketShare }, analysis),
+    [now, settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp, sim.summary, analysis, mode, maxMarketShare],
   )
   // Sections indisponibles : regroupées dans un encadré en haut (et non mêlées aux actions).
   const failures = advice.filter((a) => a.category === 'erreur')
@@ -203,6 +215,8 @@ export default function HomePage() {
       {failures.length > 0 && <SectionFailures failures={failures} />}
 
       {onboarding ? <OnboardingCard advice={onboarding} /> : <Kpis analysis={analysis} goal={goalView} now={now} alarm={alarm} finishedPlans={finishedPlans} settings={settings} />}
+
+      {!onboarding && <ModeCard mode={mode} analysis={analysis} accounts={settings.accounts ?? 1} maxMarketShare={maxMarketShare} />}
 
       {groups.length === 0 && !onboarding && (
         <Card>
@@ -347,7 +361,8 @@ function Kpis({
   ]
     .filter(Boolean)
     .join(' · ')
-  const goal = settings.goalSpeciesId !== null ? getSpecies(settings.goalSpeciesId) : undefined
+  // En mode de rentabilité (rush, brisage, vente), l'objectif de génération est remplacé par le mode (carte « Mode »).
+  const goal = settings.goalSpeciesId !== null && !analysis.mode ? getSpecies(settings.goalSpeciesId) : undefined
   return (
     <div className="hp-kpis grid grid-3">
       <a className="hp-kpi" href={href('montures')}>
@@ -420,6 +435,94 @@ function Kpis({
         </p>
       )}
     </div>
+  )
+}
+
+// ---------- Mode de rentabilité ----------
+
+/**
+ * Mode actif : stratégie suivie, bénéfice net attendu par jour et routine du jour (premier passage avec
+ * les places libres d'aujourd'hui, ventes dans la limite du volume). Progression : rappel discret.
+ */
+function ModeCard({ mode, analysis, accounts, maxMarketShare }: { mode: ActiveMode; analysis: AdvisorAnalysis; accounts: number; maxMarketShare: number }) {
+  const routine = useMemo(
+    () => (mode.outcome && mode.kind !== 'progression' ? dailyRoutine(mode.id, mode.outcome, { freeSlots: analysis.freeSlots, characters: accounts, maxMarketShare }) : null),
+    [mode, analysis.freeSlots, accounts, maxMarketShare],
+  )
+  const def = mode.def
+  if (mode.kind === 'progression')
+    return (
+      <div className="hp-mode-strip">
+        <span>
+          Mode de rentabilité : <strong>{def.label}</strong>
+          {mode.requested === 'auto' ? ' (automatique, modes non comparés)' : ''} — les conseils suivent votre objectif de génération.
+        </span>
+        <a className="btn small ghost" href={href('modes')}>
+          Comparer les modes
+        </a>
+      </div>
+    )
+  const net = mode.outcome?.strategy?.net ?? null
+  const first = routine ? mergedSessions(routine)[0] : null
+  const sales = routine?.daily.filter((it) => it.kind === 'vente') ?? []
+  return (
+    <Card
+      className="hp-mode"
+      title={
+        <h2>
+          <span aria-hidden>{def.icon}</span> Mode {def.label}
+          {mode.requested === 'auto' ? ' (automatique)' : ''}
+        </h2>
+      }
+      actions={
+        <>
+          <a className="btn small" href={href('plan', { onglet: 'routines' })}>
+            Routine complète
+          </a>
+          <a className="btn small ghost" href={href('modes', { mode: mode.id })}>
+            Modes de rentabilité
+          </a>
+        </>
+      }
+    >
+      <div className="hp-mode-kpis">
+        <Stat
+          label="Bénéfice net attendu / jour"
+          value={net ? formatKamasRange(net, true) : '—'}
+          hint={mode.source === 'calcul' ? 'régime permanent (simulation, joueur parfait)' : 'stratégie non calculée'}
+        />
+        <div className="hp-mode-strategy">
+          <span className="muted">Stratégie</span>
+          <strong>{mode.strategyLabel}</strong>
+          {routine && <small className="muted">{routine.summary}</small>}
+        </div>
+      </div>
+      {mode.source === 'defaut' && (
+        <Callout tone="warn">
+          Stratégie par défaut : la comparaison des modes n’a pas encore été calculée pour ce profil.{' '}
+          <a href={href('modes', { mode: mode.id })}>Calculer (≈ 5 s)</a>
+        </Callout>
+      )}
+      {mode.stale && (
+        <Callout tone="warn">
+          Calcul du {mode.computedAt ? formatDate(mode.computedAt) : '?'} fait avec d’autres réglages ou d’autres prix : <a href={href('modes', { mode: mode.id })}>recalculer</a>.
+        </Callout>
+      )}
+      {first && (
+        <div className="hp-mode-today">
+          <h3>Routine du mode — {first.label.toLowerCase()}</h3>
+          <p className="muted hp-mode-note">Quantités moyennes du régime permanent ; vos actions concrètes du moment sont dans les conseils ci-dessous.</p>
+          <ul>
+            {first.items.map((it) => (
+              <li key={it.id}>{it.text}</li>
+            ))}
+            {sales.map((it) => (
+              <li key={it.id}>{it.text}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </Card>
   )
 }
 

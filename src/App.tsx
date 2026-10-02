@@ -1,6 +1,8 @@
 import { Component, Suspense, useState, type ErrorInfo, type ReactNode } from 'react'
+import { takeFlash } from './lib/backup'
 import { DueSwitchBanner, PlanAlarms } from './ui/alarms'
 import { DataRecoveryActions } from './ui/components'
+import ProfileSwitcher from './ui/ProfileSwitcher'
 import { PAGES } from './ui/pages/registry'
 import { href, useRoute } from './ui/router'
 
@@ -18,6 +20,7 @@ export default function App() {
           <img src="./favicon.svg" alt="" />
           <span>ElevageSimu</span>
         </a>
+        <ProfileSwitcher />
         {SECTIONS.map((section) => (
           <nav key={section} aria-label={section}>
             <div className="nav-section">{section}</div>
@@ -47,6 +50,7 @@ export default function App() {
         </div>
         <main className="main">
           {/* Alarmes des plans d'enclos : actives quelle que soit la page affichée. */}
+          <FlashBanner />
           <AlarmBoundary>
             <PlanAlarms />
             <DueSwitchBanner pageId={page.id} />
@@ -58,6 +62,29 @@ export default function App() {
           </PageBoundary>
         </main>
       </div>
+    </div>
+  )
+}
+
+/**
+ * Message laissé avant un rechargement (import d'une sauvegarde, remise à zéro, changement ou création de
+ * profil) : lu une seule fois par chargement (le double rendu du mode strict ne le perd pas).
+ */
+let flashOnce: string | null | undefined
+function readFlashOnce(): string | null {
+  if (flashOnce === undefined) flashOnce = takeFlash()
+  return flashOnce
+}
+
+function FlashBanner() {
+  const [message, setMessage] = useState(readFlashOnce)
+  if (!message) return null
+  return (
+    <div className="callout ok row" role="status" style={{ justifyContent: 'space-between' }}>
+      <span>{message}</span>
+      <button className="btn small ghost" type="button" onClick={() => setMessage(null)}>
+        Fermer
+      </button>
     </div>
   )
 }

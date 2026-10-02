@@ -32,6 +32,7 @@ import {
   type CycleConfig,
   type CycleResult,
   type FateKind,
+  type LiquidityCheck,
   type MaterialLine,
   type MountPriceContext,
   type MountState,
@@ -42,19 +43,23 @@ import {
   type SterileFate,
 } from '../../domain/economy'
 import { defaultMangeoirePointCost } from '../../domain/fuel'
+import { PRICE_STAT_SHORT, frenchDay, type MarketSource } from '../../domain/market'
+import { snapshotFreshness } from '../../domain/marketInsights'
 import { effectiveFertility, FERTILITY_LABELS, mountName } from '../../domain/mounts'
 import { assignPaddocks } from '../../domain/paddockAssign'
 import { goalContext } from '../../domain/pairing'
-import type { PriceContext } from '../../domain/pricing'
+import { marketQuote, type PriceContext } from '../../domain/pricing'
 import type { Ruleset } from '../../domain/rules'
 import type { FamilyId, FuelTier, Mount } from '../../domain/types'
 import { formatDuration, formatKamas, formatNumber, formatPercent } from '../../lib/format'
 import { useInventory } from '../../store/inventory'
 import { usePriceContext, usePrices } from '../../store/prices'
 import { useRules, useSettings } from '../../store/settings'
+import { profileKey, useActiveServer } from '../../store/profiles'
 import { Badge, Callout, Card, Empty, NumberField, PageHeader, SelectField, Stat, Tabs } from '../components'
 import { href } from '../router'
 import { ConfidenceBadge, SpeciesName, SpeciesPicker } from '../species'
+import { useServerDay } from '../useServerDay'
 import './ProfitPage.css'
 
 type TabId = 'cycle' | 'classement' | 'inventaire' | 'hypotheses'
@@ -67,7 +72,7 @@ const TABS: { id: TabId; label: string }[] = [
 ]
 
 const TIERS: FuelTier[] = [1, 2, 3, 4]
-const STORAGE_KEY = 'elevagesimu:rentabilite'
+const STORAGE_KEY = profileKey('rentabilite')
 const OPTI_MODES: OptimakinaMode[] = ['auto', 'toujours', 'jamais']
 
 // ---------- Paramètres : réglages (en direct) + écarts propres à la page ----------
@@ -315,13 +320,25 @@ const sumLines = (ls: { low: number; high: number | null }[]): Range => {
 
 const ORIGIN_LABELS: Record<string, { label: string; tone: 'accent' | 'info' | 'ok' | 'warn' | 'danger' }> = {
   joueur: { label: 'votre prix', tone: 'accent' },
+  marche: { label: 'marché', tone: 'info' },
   defaut: { label: 'défaut', tone: 'info' },
   craft: { label: 'craft', tone: 'ok' },
   estimation: { label: 'estimation', tone: 'warn' },
   manquant: { label: 'prix à saisir', tone: 'danger' },
 }
 
-function OriginBadge({ line }: { line: MaterialLine }) {
+/** « marché (02/10) » + volume d'un objet chiffré au marché importé du serveur. */
+function marketTitle(id: number | null, market: MarketSource | null | undefined): { short: string; title: string } | null {
+  const q = id === null ? null : marketQuote(id, market)
+  if (!q) return null
+  const i = q.info
+  return {
+    short: `marché (${frenchDay(i.exportDate).slice(0, 5)})`,
+    title: `Prix du marché importé (HDV${i.serverName ? ` de ${i.serverName}` : ''} du ${frenchDay(i.exportDate)}, ${PRICE_STAT_SHORT[i.stat]}) : ${formatNumber(i.sold24)} vendus en 24 h, ≈ ${formatNumber(i.perDayAvg, i.perDayAvg < 10 ? 1 : 0)}/jour sur 30 jours.`,
+  }
+}
+
+function OriginBadge({ line, market }: { line: MaterialLine; market?: MarketSource | null }) {
   if (line.category === 'parents')
     return (
       <Badge tone={line.complete ? 'info' : 'warn'} title={line.note}>
@@ -346,11 +363,53 @@ function OriginBadge({ line }: { line: MaterialLine }) {
         craft · niv. {line.craftLocked} requis
       </Badge>
     )
+  const mt = line.origin === 'marche' ? marketTitle(line.itemId, market) : null
+  if (mt)
+    return (
+      <Badge tone="info" title={[mt.title, line.note].filter(Boolean).join('\n')}>
+        {mt.short}
+      </Badge>
+    )
   const o = ORIGIN_LABELS[line.origin] ?? { label: line.origin, tone: 'info' as const }
   return (
     <Badge tone={line.estimated ? 'warn' : o.tone} title={line.note}>
       {line.estimated && line.origin !== 'estimation' ? `${o.label} · estimation` : o.label}
     </Badge>
+  )
+}
+
+/** Ventes du cycle répété en continu face au volume du marché du serveur (economy.cycleProfit → liquidity). */
+function LiquidityTable({ lines }: { lines: LiquidityCheck[] }) {
+  return (
+    <div className="table-wrap">
+      <table className="table">
+        <thead>
+          <tr>
+            <th>Objet vendu</th>
+            <th className="num">Prévu / jour</th>
+            <th className="num">Absorbable / jour</th>
+            <th className="num">Vendus / jour (marché)</th>
+            <th className="num">Part du marché</th>
+            <th>Volume</th>
+          </tr>
+        </thead>
+        <tbody>
+          {lines.map((l) => (
+            <tr key={`${l.kind}-${l.itemId}`}>
+              <td>
+                {l.name}
+                <small className="muted">{l.kind === 'parchemin' ? 'en génétons' : l.kind === 'rune' ? 'runes Ga (équivalent en valeur)' : l.kind}</small>
+              </td>
+              <td className="num">{formatNumber(l.perDay, l.perDay < 10 ? 1 : 0)}</td>
+              <td className="num">{l.cap === null ? '—' : formatNumber(l.cap, l.cap < 10 ? 1 : 0)}</td>
+              <td className="num">{l.marketPerDay === null ? '—' : formatNumber(l.marketPerDay, l.marketPerDay < 10 ? 1 : 0)}</td>
+              <td className="num">{l.marketShare === null ? '—' : formatPercent(l.marketShare, 1)}</td>
+              <td>{l.cap === null ? <Badge tone="warn">inconnu</Badge> : l.exceeds ? <Badge tone="warn" title={l.message ?? undefined}>dépasse</Badge> : <Badge tone="ok">absorbé</Badge>}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
@@ -689,7 +748,7 @@ function MissingPricesCallout({ r }: { r: CycleResult }) {
   )
 }
 
-function MaterialsTable({ r }: { r: CycleResult }) {
+function MaterialsTable({ r, market }: { r: CycleResult; market?: MarketSource | null }) {
   const cats: CostCategory[] = ['fecondite', 'xp', 'makina', 'capture', 'parents']
   return (
     <div className="table-wrap">
@@ -757,7 +816,7 @@ function MaterialsTable({ r }: { r: CycleResult }) {
                     )}
                   </td>
                   <td>
-                    <OriginBadge line={l} />
+                    <OriginBadge line={l} market={market} />
                   </td>
                 </tr>
               )),
@@ -879,7 +938,9 @@ function RevenueTable({ r, taxPct }: { r: CycleResult; taxPct: number }) {
                 {l.unitValue === null ? <Badge tone="danger">à saisir</Badge> : `${l.complete ? '' : '≥ '}${formatKamas(l.unitValue)}`}
                 {!l.complete && l.reference && (
                   <small className="muted" title={l.reference.reason}>
-                    vente : à saisir (référence ≈ {formatKamas(l.reference.net)}, non comptée)
+                    {l.reference.kind === 'marche'
+                      ? `vente : HDV mixte ≈ ${formatKamas(l.reference.net)} net (plafond, non compté)`
+                      : `vente : à saisir (référence ≈ ${formatKamas(l.reference.net)}, non comptée)`}
                   </small>
                 )}
               </td>
@@ -1058,7 +1119,7 @@ function CycleResultView({ r, cfg, p, run }: { r: CycleResult; cfg: CycleConfig;
           </Callout>
         )}
         {r.warnings
-          .filter((w) => !w.startsWith('Coût incomplet') && !w.startsWith('Revenu incomplet'))
+          .filter((w) => !w.startsWith('Coût incomplet') && !w.startsWith('Revenu incomplet') && !w.startsWith('Liquidité'))
           .map((w) => (
             <Callout key={w} tone="warn">
               {w}
@@ -1079,7 +1140,7 @@ function CycleResultView({ r, cfg, p, run }: { r: CycleResult; cfg: CycleConfig;
           Carburant le moins cher au point pour chaque jauge, au palier qu’elle entretient (sérénité au palier 1, comme la page Enclos), quantités arrondies à l’objet entier. {r.batches} lot{r.batches > 1 ? 's' : ''} de{' '}
           {cfg.batchSize} : la consommation d’une jauge ne dépend pas du nombre de montures, remplissez les enclos.
         </p>
-        <MaterialsTable r={r} />
+        <MaterialsTable r={r} market={cfg.ctx.market} />
       </Card>
 
       <Card title="Investissement initial — socle (reste dans la jauge)">
@@ -1089,6 +1150,24 @@ function CycleResultView({ r, cfg, p, run }: { r: CycleResult; cfg: CycleConfig;
         </p>
         <SocleTable r={r} />
       </Card>
+
+      {r.liquidity.length > 0 && (
+        <Card title="Ventes et volume du marché (cycle répété en continu)">
+          {r.liquidity.some((l) => l.exceeds) ? (
+            <Callout tone="warn">
+              À ce rythme, vos ventes dépassent ce que le marché de {cfg.ctx.market?.serverName ?? 'ce serveur'} absorbe ({formatPercent(cfg.maxMarketShare ?? 0.15, 0)} du volume quotidien moyen) : le prix baissera ou les ventes
+              s’étaleront. {r.liquidity.filter((l) => l.exceeds).map((l) => l.message).join(' ')}
+            </Callout>
+          ) : (
+            <Callout tone="ok">Le marché du serveur absorbe ces ventes ({formatPercent(cfg.maxMarketShare ?? 0.15, 0)} du volume quotidien moyen au plus).</Callout>
+          )}
+          <LiquidityTable lines={r.liquidity} />
+          <small className="muted">
+            Quantités vendues par jour si ce cycle tourne en continu ({formatNumber(86_400 / Math.max(1, r.seconds.total), 2)} cycle par jour) : ressources extraites, montures vendues, runes de brisage (équivalent en valeur),
+            génétons écoulés en parchemins. Part du marché réglable par serveur (Réglages › Profils et serveurs).
+          </small>
+        </Card>
+      )}
 
       <Card title="Revenus attendus">
         <p className="muted">
@@ -1168,6 +1247,7 @@ function RankingTab({
   genetonValue,
   goalPath,
   profile,
+  maxMarketShare,
 }: {
   p: Params
   onSimulate: (key: string) => void
@@ -1179,6 +1259,7 @@ function RankingTab({
   genetonValue: number
   goalPath: number[]
   profile: BatchProfile | null
+  maxMarketShare: number
 }) {
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'margin', dir: -1 })
   const [genFilter, setGenFilter] = useState<number | 'toutes'>('toutes')
@@ -1204,9 +1285,12 @@ function RankingTab({
         rules,
         jobLevel,
         genetonValue,
+        maxMarketShare,
       }),
-    [p, ctx, mctx, rules, jobLevel, genetonValue, goalPath, profile],
+    [p, ctx, mctx, rules, jobLevel, genetonValue, goalPath, profile, maxMarketShare],
   )
+  const saturating = rows.filter((r) => r.liquidityExceeded).length
+  const rate = rows.find((r) => r.matingsPerDay !== undefined)?.matingsPerDay
   const value = (r: CrossingRank): number => {
     switch (sort.key) {
       case 'chance':
@@ -1266,6 +1350,12 @@ function RankingTab({
             Compter la valeur ajoutée aux parents (stériles − valeur de départ)
           </label>
         </div>
+        {rate !== undefined && (
+          <Callout tone={saturating > 0 ? 'warn' : undefined}>
+            Volume du marché : à plein régime (≈ {formatNumber(rate, 1)} accouplements par jour avec vos {unlockedPaddockCount(jobLevel)} enclos), {saturating > 0 ? `${saturating} croisement${saturating > 1 ? 's' : ''} dépasse${saturating > 1 ? 'nt' : ''}` : 'aucun croisement ne dépasse'}{' '}
+            ce que le serveur absorbe ({formatPercent(maxMarketShare, 0)} du volume quotidien moyen des ressources, montures et parchemins vendus) — badge « volume » dans le tableau.
+          </Callout>
+        )}
         {completeCount < rows.length && (
           <Callout tone="warn">
             {rows.length - completeCount} croisement{rows.length - completeCount > 1 ? 's ont' : ' a'} des prix manquants (carburants de fécondité, makinas ou montures) : leur marge est une fourchette, une borne (« ≤ » = au plus,
@@ -1333,6 +1423,13 @@ function RankingTab({
                             <Badge tone="warn">incomplet</Badge>
                           </small>
                         )}
+                        {r.liquidityExceeded && (
+                          <small>
+                            <Badge tone="warn" title={(r.liquidity ?? []).filter((l) => l.exceeds).map((l) => l.message).join('\n')}>
+                              volume
+                            </Badge>
+                          </small>
+                        )}
                       </td>
                       <td>
                         <button className="btn small" onClick={() => onSimulate(r.key)}>
@@ -1384,6 +1481,7 @@ function InventoryTab({ ctx, mctx, saleTax }: { ctx: PriceContext; mctx: MountPr
     )
   const shown = rows.filter((r) => (family === 'toutes' || getSpecies(r.m.speciesId)?.family === family) && (!onlySterile || r.st.state === 'sterile'))
   const total = shown.reduce((s, r) => s + (r.v.best ?? 0), 0)
+  const senileWarnings = shown.filter((r) => r.v.marketWarning && !r.st.senile).length
   const incomplete = shown.filter((r) => !r.v.complete).length
   const byKind = (k: FateKind) => shown.filter((r) => r.v.bestKind === k)
   return (
@@ -1402,6 +1500,13 @@ function InventoryTab({ ctx, mctx, saleTax }: { ctx: PriceContext; mctx: MountPr
         {incomplete > 0 && (
           <Callout tone="warn">
             {incomplete} monture{incomplete > 1 ? 's ont' : ' a'} une option sans prix (souvent la vente) : la valeur affichée est un minimum. <a href={href('prix', { onglet: 'montures' })}>Saisir les prix des montures</a>.
+            {ctx.market ? ' Le prix de l’HDV du serveur (mixte : niveaux, états et séniles mélangés) borne seulement la vente (« ≤ »).' : ''}
+          </Callout>
+        )}
+        {senileWarnings > 0 && (
+          <Callout tone="warn">
+            {senileWarnings} couleur{senileWarnings > 1 ? 's se vendent' : ' se vend'} à l’HDV sous la moitié de sa valeur d’extraction : des montures séniles tirent probablement les prix vers le bas. N’achetez pas de montures pour les
+            extraire sans vérifier leur état.
           </Callout>
         )}
         <div className="filters">
@@ -1446,12 +1551,23 @@ function InventoryTab({ ctx, mctx, saleTax }: { ctx: PriceContext; mctx: MountPr
                     </td>
                     <td className="num">{m.level}</td>
                     <td>{FERTILITY_LABELS[effectiveFertility(m)]}</td>
-                    <td className="num" title={v.sale.note ?? v.sale.origin}>
+                    <td className="num" title={[v.sale.note ?? v.sale.origin, v.marketWarning].filter(Boolean).join('\n')}>
                       {v.sale.net === null ? <Badge tone="danger">à saisir</Badge> : formatKamas(v.sale.net)}
                       <small className="muted">
-                        {v.sale.net === null && v.sale.reference ? `référence ≈ ${formatKamas(v.sale.reference.net)} (non comptée)` : v.sale.origin}
+                        {v.sale.net === null && v.sale.reference
+                          ? v.sale.reference.kind === 'marche'
+                            ? `HDV mixte ≈ ${formatKamas(v.sale.reference.net)} (plafond, non compté)`
+                            : `référence ≈ ${formatKamas(v.sale.reference.net)} (non comptée)`
+                          : v.sale.origin}
                         {v.sale.estimated ? ' · estimation' : ''}
                       </small>
+                      {v.marketWarning && (
+                        <small>
+                          <Badge tone="warn" title={v.marketWarning}>
+                            sénile probable à l’HDV
+                          </Badge>
+                        </small>
+                      )}
                     </td>
                     <td className="num" title={v.extraction.origin}>
                       {!v.extraction.possible ? <span className="muted">—</span> : v.extraction.net === null ? <Badge tone="danger">sans prix</Badge> : formatKamas(v.extraction.net)}
@@ -1468,6 +1584,11 @@ function InventoryTab({ ctx, mctx, saleTax }: { ctx: PriceContext; mctx: MountPr
                           {v.complete ? '' : '≥ '}
                           {formatKamas(v.best)}
                         </strong>
+                      )}
+                      {!v.complete && v.bestHigh !== null && v.bestHigh !== undefined && v.bestHigh > (v.best ?? 0) + 0.5 && (
+                        <small className="muted" title="Borne haute : vente au plafond de l’HDV du serveur (HDV mixte), non comptée">
+                          ≤ {formatKamas(v.bestHigh)}
+                        </small>
                       )}
                       {v.bestKind && (v.complete || (v.best ?? 0) > 0) && (
                         <small>
@@ -1501,7 +1622,7 @@ interface ObservedYield {
 function AssumptionsTab({ result, rules, taxPct, ctx }: { result: CycleResult | null; rules: Ruleset; taxPct: number; ctx: PriceContext }) {
   const settings = useSettings()
   const genetonOverride = usePrices((s) => s.genetonValue)
-  const g = genetonKamasValue(genetonOverride)
+  const g = genetonKamasValue(genetonOverride, { market: ctx.market, saleTax: settings.saleTax })
   const brisage = PRICES_DEFAULT.valuation.brisage as { observedYields?: ObservedYield[]; defaultValuePerMountByLevel?: Record<string, Record<string, number> | null>; defaultValueBasis?: string } | undefined
   const fees = PRICES_DEFAULT.marketFees
   const keyItems = [17864, 33515, 19975, 1558, 1557, 33331, 32521, 14635]
@@ -1537,7 +1658,14 @@ function AssumptionsTab({ result, rules, taxPct, ctx }: { result: CycleResult | 
               d’Éleveur : {settings.jobLevel} (une recette de niveau supérieur est payée au prix HDV).
             </li>
             <li>
-              Généton : {formatKamas(g.value)} brut ({g.origin === 'joueur' ? 'votre valeur' : g.basis}) — fourchette {formatKamas(g.range[0])} → {formatKamas(g.range[1])} ; compté net de la taxe (parchemin revendu).
+              Généton : {formatKamas(g.value)} brut ({g.origin === 'joueur' ? 'votre valeur' : g.origin === 'marche' ? `marché du serveur : ${g.basis}` : g.basis}) — fourchette de la recherche {formatKamas(g.range[0])} →{' '}
+              {formatKamas(g.range[1])} ; compté net de la taxe (parchemin revendu).
+            </li>
+            <li>
+              Prix du marché :{' '}
+              {ctx.market
+                ? `export HDV${ctx.market.serverName ? ` de ${ctx.market.serverName}` : ''} du ${frenchDay(ctx.market.exportDate)}, utilisé après vos prix et avant les défauts. Montures : le prix de l’objet-monture à l’HDV (mixte : niveaux, états et séniles mélangés) n’est qu’un plafond de vente — il ramène un défaut plus cher à son niveau et borne la valeur, sans être compté seul.`
+                : 'aucun export HDV importé pour ce serveur.'}
             </li>
           </ul>
         </Card>
@@ -1563,6 +1691,7 @@ function AssumptionsTab({ result, rules, taxPct, ctx }: { result: CycleResult | 
                 <th className="num">Défaut</th>
                 <th>Confiance</th>
                 <th>Date</th>
+                <th className="num">Marché du serveur</th>
                 <th>Votre prix</th>
               </tr>
             </thead>
@@ -1570,6 +1699,7 @@ function AssumptionsTab({ result, rules, taxPct, ctx }: { result: CycleResult | 
               {keyItems.map((id) => {
                 const d = PRICES_DEFAULT.items.find((i) => i.id === id)
                 const own = ctx.overrides[String(id)]
+                const mq = marketQuote(id, ctx.market)
                 return (
                   <tr key={id}>
                     <td title={d?.notes ?? undefined}>
@@ -1579,6 +1709,10 @@ function AssumptionsTab({ result, rules, taxPct, ctx }: { result: CycleResult | 
                     <td className="num">{d?.price ? formatKamas(d.price) : '—'}</td>
                     <td>{d && (d.priceType === 'estimate' ? <Badge tone="warn">estimation</Badge> : <ConfidenceBadge level={d.confidence} />)}</td>
                     <td>{d?.date ?? '—'}</td>
+                    <td className="num" title={mq ? marketTitle(id, ctx.market)?.title : undefined}>
+                      {mq ? formatKamas(mq.price) : '—'}
+                      {mq && <small className="muted">{formatNumber(mq.info.sold24)}/24 h</small>}
+                    </td>
                     <td>{own !== undefined ? <Badge tone="accent">{formatKamas(own)}</Badge> : <a href={href('prix', { q: itemName(id) })}>saisir</a>}</td>
                   </tr>
                 )
@@ -1597,6 +1731,7 @@ function AssumptionsTab({ result, rules, taxPct, ctx }: { result: CycleResult | 
                       <ConfidenceBadge level={d.confidence} />
                     </td>
                     <td>—</td>
+                    <td className="num">—</td>
                     <td>—</td>
                   </tr>
                 )
@@ -1612,6 +1747,7 @@ function AssumptionsTab({ result, rules, taxPct, ctx }: { result: CycleResult | 
                     <ConfidenceBadge level={dragoHint.confidence} />
                   </td>
                   <td>—</td>
+                  <td className="num">—</td>
                   <td>—</td>
                 </tr>
               )}
@@ -1708,6 +1844,30 @@ function AssumptionsTab({ result, rules, taxPct, ctx }: { result: CycleResult | 
   )
 }
 
+// ---------- Bandeau : prix du marché du serveur ----------
+
+/** Origine des prix de la page : export HDV du serveur (date, fraîcheur) ou prix saisis et défauts. */
+function MarketBanner({ market, serverName, today, genetonOrigin, genetonValue }: { market: MarketSource | null; serverName: string; today: string; genetonOrigin: string; genetonValue: number }) {
+  if (!market)
+    return (
+      <Callout>
+        Aucun export HDV pour {serverName} : les calculs utilisent vos prix et les prix par défaut de la recherche.{' '}
+        <a href={href('prix', { onglet: 'hdv' })}>Importer les prix du marché du serveur</a> pour chiffrer d’un coup carburants, makinas, filets et ressources.
+      </Callout>
+    )
+  const fr = snapshotFreshness(market.exportDate, today)
+  return (
+    <div className="stack" style={{ gap: 6, marginBottom: 12 }}>
+      <small className="muted">
+        Prix du marché : export HDV de <strong>{market.serverName || serverName}</strong> du {frenchDay(market.exportDate)} (après vos prix, avant les défauts). Généton : {formatKamas(genetonValue)} (
+        {genetonOrigin === 'marche' ? 'marché' : genetonOrigin === 'joueur' ? 'votre valeur' : 'défaut'}). Montures : le prix de l’HDV (mixte) n’est qu’un plafond de vente. ·{' '}
+        <a href={href('prix', { onglet: 'marche' })}>Lecture du marché</a>
+      </small>
+      {fr.level !== 'frais' && <Callout tone={fr.tone === 'ok' ? undefined : fr.tone}>{fr.message}</Callout>}
+    </div>
+  )
+}
+
 // ---------- Page ----------
 
 export default function ProfitPage() {
@@ -1726,8 +1886,15 @@ export default function ProfitPage() {
   const pGenerations = usePrices((s) => s.generations)
   const genetonOverride = usePrices((s) => s.genetonValue)
   const inventory = useInventory((s) => s.mounts)
-  const mctx = useMemo<MountPriceContext>(() => ({ mountOverrides: pMounts, generationOverrides: pGenerations, useDefaults: useDefaultPrices }), [pMounts, pGenerations, useDefaultPrices])
-  const geneton = genetonKamasValue(genetonOverride)
+  const server = useActiveServer()
+  const today = useServerDay()
+  // Marché du serveur : prix de l'objet-monture (HDV mixte) = plafond de vente prudent des décisions.
+  const mctx = useMemo<MountPriceContext>(
+    () => ({ mountOverrides: pMounts, generationOverrides: pGenerations, useDefaults: useDefaultPrices, market: ctx.market }),
+    [pMounts, pGenerations, useDefaultPrices, ctx.market],
+  )
+  // Généton : votre valeur, sinon le marché du serveur (boutique d'Eugène Éton), sinon le défaut.
+  const geneton = genetonKamasValue(genetonOverride, { market: ctx.market, saleTax })
   const [tab, setTab] = useState<TabId>('cycle')
 
   // Réglages en direct + écarts saisis ici + champs de la page.
@@ -1848,8 +2015,9 @@ export default function ProfitPage() {
         rules,
         jobLevel,
         genetonValue: geneton.value,
+        maxMarketShare: server.maxMarketShare,
       },
-    [parents, params, ctx, mctx, rules, jobLevel, geneton.value, geneton.origin, goalPath, myBatches],
+    [parents, params, ctx, mctx, rules, jobLevel, geneton.value, geneton.origin, goalPath, myBatches, server.maxMarketShare],
   )
 
   const run = (c: CycleConfig): CycleResult | null => {
@@ -1882,6 +2050,7 @@ export default function ProfitPage() {
           </>
         }
       />
+      <MarketBanner market={ctx.market ?? null} serverName={server.name} today={today} genetonOrigin={geneton.origin} genetonValue={geneton.value} />
       <Tabs tabs={TABS} value={tab} onChange={setTab} />
       {tab === 'cycle' && (
         <CycleTab
@@ -1909,6 +2078,7 @@ export default function ProfitPage() {
           genetonValue={geneton.value}
           goalPath={goalPath}
           profile={myBatches?.profile ?? null}
+          maxMarketShare={server.maxMarketShare}
           onToggleSteriles={(v) => set({ includeSteriles: v })}
           onSimulate={(key) => {
             set({ mode: 'croisement', crossingKey: key })

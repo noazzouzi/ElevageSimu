@@ -7,7 +7,8 @@ import { persist } from 'zustand/middleware'
 import { JOB_XP_PER_CAPTURE } from '../domain/constants'
 import { newId } from './inventory'
 import { persistOptions, syncAcrossTabs } from './persistence'
-import { STORE_KEYS, sanitizeJournal } from './schema'
+import { STORE_KEYS } from './profiles'
+import { sanitizeJournal } from './schema'
 
 export type JournalEvent =
   | { kind: 'capture'; speciesId: number; count: number; netItemId?: number | null }

@@ -39,6 +39,7 @@ import { formatDuration, formatKamas, formatNumber, formatPercent } from '../../
 import { useInventory } from '../../store/inventory'
 import { usePriceContext, usePrices } from '../../store/prices'
 import { useRules, useSettings } from '../../store/settings'
+import { profileKey } from '../../store/profiles'
 import { Badge, Callout, Card, Empty, GaugeChip, NumberField, PageHeader, Progress, SelectField, Stat, Tabs } from '../components'
 import { href } from '../router'
 import { ConfidenceBadge, GenBadge, SpeciesName, SpeciesPicker } from '../species'
@@ -89,7 +90,7 @@ interface RunProgress {
   engine: Engine
 }
 
-const STORAGE_KEY = 'elevagesimu:optimiseur'
+const STORAGE_KEY = profileKey('optimiseur')
 const TIERS: FuelTier[] = [1, 2, 3, 4]
 const NET_KINDS: NetKind[] = ['universel', 'multiplicateur', 'renforce', 'multiplicateur_renforce']
 const RUN_OPTIONS = [

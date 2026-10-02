@@ -76,3 +76,37 @@ describe('résolution des prix', () => {
     expect(r.missing).toEqual([OEIL])
   })
 })
+
+describe('marché importé (export HDV du serveur)', () => {
+  // [médiane 30 j, moyenne 30 j, médiane 24 h, vendus 24 h, vendus 7 j, vendus 30 j, kamas/jour]
+  const market = {
+    rows: {
+      [String(EXTRAIT_MANGEOIRE)]: [1296, 1284, 1251, 4093, 25041, 91971, 3973147] as [number, number, number, number, number, number, number],
+      [String(TRUITE)]: [17, 18, 28, 39154, 366066, 1554575, 880925] as [number, number, number, number, number, number, number],
+      [String(OEIL)]: [0, 0, 0, 0, 0, 0, 0] as [number, number, number, number, number, number, number],
+    },
+    stat: 'auto' as const,
+    exportDate: '2026-10-02',
+    serverName: 'Tylezia',
+  }
+
+  it('origine « marche » entre le prix saisi et le défaut ; une ligne sans vente n’est pas un prix', () => {
+    const ctx: PriceContext = { overrides: {}, useDefaults: true, market }
+    expect(marketPrice(EXTRAIT_MANGEOIRE, ctx)).toMatchObject({ price: 1251, origin: 'marche', market: { exportDate: '2026-10-02', stat: 'median24', sold24: 4093 } })
+    expect(marketPrice(EXTRAIT_MANGEOIRE, { ...ctx, overrides: { [EXTRAIT_MANGEOIRE]: 900 } }).origin).toBe('joueur')
+    // Œil de Pikdoa : présent mais sans vente → défaut de la recherche (850).
+    expect(marketPrice(OEIL, ctx)).toMatchObject({ price: 850, origin: 'defaut' })
+    expect(marketPrice(OEIL, { ...ctx, useDefaults: false })).toMatchObject({ price: null, origin: 'manquant' })
+    // Sans marché : comportement d'avant.
+    expect(marketPrice(EXTRAIT_MANGEOIRE, { overrides: {}, useDefaults: true, market: null })).toMatchObject({ price: 1000, origin: 'defaut' })
+  })
+
+  it('le moins cher entre le marché et le craft complet (ingrédients au marché ou au défaut)', () => {
+    const ctx: PriceContext = { overrides: {}, useDefaults: true, market, jobLevel: 30 }
+    // Truite 28 (marché) + Œil 850 (défaut) = 878 < 1 251.
+    expect(resolvePrice(EXTRAIT_MANGEOIRE, ctx)).toMatchObject({ price: 878, origin: 'craft', complete: true })
+    expect(craftCost(EXTRAIT_MANGEOIRE, ctx)?.lines.map((l) => l.origin)).toEqual(['marche', 'defaut'])
+    // Statistique médiane 30 j.
+    expect(marketPrice(EXTRAIT_MANGEOIRE, { ...ctx, market: { ...market, stat: 'median30' } }).price).toBe(1296)
+  })
+})

@@ -1,5 +1,7 @@
-// Page « Prix » : prix HDV de votre serveur (ressources clés, carburants, makinas, filets,
-// ingrédients, montures), avec prix par défaut sourcés, saisie rapide, collage en masse et
+// Page « Prix » : prix HDV du serveur du profil ouvert (ressources clés, carburants, makinas, filets,
+// ingrédients, montures) : prix saisis, prix du marché importés (export CSV de l'HDV, onglet « Marché
+// HDV » : src/ui/MarketImport.tsx), lecture du marché pour l'élevage (onglet « Marché » :
+// src/ui/MarketInsightsPanel.tsx), prix par défaut sourcés, saisie rapide, collage en masse et
 // import/export. Tous les calculs de rentabilité lisent ces prix (usePrices + usePriceContext).
 import { useMemo, useRef, useState, type ReactNode } from 'react'
 import {
@@ -24,6 +26,7 @@ import {
   MOUNT_BANDS,
   MOUNT_PRICE_STALE_DAYS,
   NET_KIND_LABELS,
+  REFERENCE_KIND_LABELS,
   buildPriceExport,
   defaultGenerationPrice,
   defaultPriceIssue,
@@ -41,17 +44,24 @@ import {
   type MountPriceContext,
 } from '../../domain/economy'
 import { FUEL_SIZE_LABELS, FUEL_TIERS, bestFuel, dustOption, fillPlan, fuelOption, fuelsOf } from '../../domain/fuel'
-import { craftCost, resolvePrice, type PriceContext, type ResolvedPrice } from '../../domain/pricing'
+import { MOUNT_MARKET_NOTE, PRICE_STAT_LABELS, PRICE_STAT_SHORT, frenchDay, marketMountReference, type MarketSource } from '../../domain/market'
+import { snapshotFreshness } from '../../domain/marketInsights'
+import { craftCost, marketQuote, resolvePrice, type PriceContext, type ResolvedPrice } from '../../domain/pricing'
 import type { FamilyId, FuelTier, GaugeId, MakinaKind } from '../../domain/types'
 import { formatDate, formatKamas, formatNumber } from '../../lib/format'
+import { useMarket, useMarketGeneton } from '../../store/market'
 import { usePriceContext, usePrices } from '../../store/prices'
+import { useActiveProfile, useActiveServer } from '../../store/profiles'
 import { useRules, useSettings } from '../../store/settings'
 import { Badge, Callout, Card, Empty, GaugeChip, NumberField, PageHeader, Progress, Tabs } from '../components'
-import { useRoute } from '../router'
+import MarketImport from '../MarketImport'
+import MarketInsightsPanel from '../MarketInsightsPanel'
+import { href, useRoute } from '../router'
 import { ConfidenceBadge, GenBadge } from '../species'
+import { useServerDay } from '../useServerDay'
 import './PricesPage.css'
 
-type TabId = 'ressources' | 'carburants' | 'makinas' | 'filets' | 'ingredients' | 'montures' | 'masse'
+type TabId = 'ressources' | 'carburants' | 'makinas' | 'filets' | 'ingredients' | 'montures' | 'marche' | 'hdv' | 'masse'
 
 const ITEM_TABS: TabId[] = ['ressources', 'carburants', 'makinas', 'filets', 'ingredients']
 
@@ -62,6 +72,8 @@ const TAB_LABELS: Record<TabId, string> = {
   filets: 'Filets',
   ingredients: 'Ingrédients',
   montures: 'Montures',
+  marche: 'Marché',
+  hdv: 'Marché HDV (CSV)',
   masse: 'Saisie en masse & fichiers',
 }
 
@@ -219,7 +231,27 @@ function DefaultCell({ d, onConfirm }: { d?: DefaultItemPrice | DefaultMountPric
   )
 }
 
+/** « 02/10 » d'une date AAAA-MM-JJ. */
+const shortDay = (iso: string) => frenchDay(iso).slice(0, 5)
+
+function marketTitle(r: NonNullable<ResolvedPrice['market']>): string {
+  return `Prix du marché importé (export HDV${r.serverName ? ` de ${r.serverName}` : ''} du ${frenchDay(r.exportDate)}, ${PRICE_STAT_SHORT[r.stat]}) : ${formatNumber(r.sold24)} vendus en 24 h, ${formatNumber(r.sold30)} en 30 jours (≈ ${formatNumber(r.perDayAvg, 1)}/jour).`
+}
+
 function EffectiveCell({ r }: { r: ResolvedPrice }) {
+  if (r.origin === 'marche' && r.market)
+    return (
+      <span className="effective-cell">
+        {formatKamas(r.price)}
+        <Badge tone="info" title={marketTitle(r.market)}>
+          marché ({shortDay(r.market.exportDate)})
+        </Badge>
+        <small className="muted" title={marketTitle(r.market)}>
+          {formatNumber(r.market.sold24)} vendus/24 h
+        </small>
+        {r.craftLocked !== undefined && <small className="muted">craft niv. {r.craftLocked} requis : prix HDV retenu</small>}
+      </span>
+    )
   if (r.origin === 'joueur')
     return (
       <span className="effective-cell">
@@ -264,6 +296,18 @@ function EffectiveCell({ r }: { r: ResolvedPrice }) {
   return <Badge tone="danger">à saisir</Badge>
 }
 
+/** Prix du marché importé d'un objet (même s'il n'est pas retenu : prix saisi plus bas, craft moins cher). */
+function MarketCell({ id, market }: { id: number; market: MarketSource }) {
+  const q = marketQuote(id, market)
+  if (!q) return <span className="muted">{market.rows[String(id)] ? 'sans vente' : '—'}</span>
+  return (
+    <span className="default-cell" title={marketTitle(q.info)}>
+      <span>{formatKamas(q.price)}</span>
+      <small className="muted">{formatNumber(q.info.sold24)}/24 h</small>
+    </span>
+  )
+}
+
 function CraftCell({ id, ctx }: { id: number; ctx: PriceContext }) {
   const c = craftCost(id, ctx)
   if (!c) return <span className="muted">—</span>
@@ -287,7 +331,8 @@ function ItemPriceTable<T extends ItemRef>({ rows, before = [], after = [], ctx,
   const items = usePrices((s) => s.items)
   const setItem = usePrices((s) => s.setItem)
   if (!rows.length) return <Empty>{empty ?? 'Aucun objet ne correspond.'}</Empty>
-  const ncols = 4 + before.length + after.length
+  const market = ctx.market ?? null
+  const ncols = 4 + before.length + after.length + (market ? 1 : 0)
   // En-tête de groupe : calculé avant le rendu (pas de variable modifiée pendant le rendu).
   const groups = rows.map((row) => groupBy?.(row) ?? null)
   return (
@@ -301,6 +346,7 @@ function ItemPriceTable<T extends ItemRef>({ rows, before = [], after = [], ctx,
                 {c.header}
               </th>
             ))}
+            {market && <th title={`Export HDV du ${frenchDay(market.exportDate)} (${PRICE_STAT_LABELS[market.stat]})`}>Marché HDV ({shortDay(market.exportDate)})</th>}
             <th>Prix par défaut</th>
             <th>Votre prix HDV</th>
             <th>Prix retenu</th>
@@ -317,6 +363,7 @@ function ItemPriceTable<T extends ItemRef>({ rows, before = [], after = [], ctx,
             const header = group !== null && group !== (i > 0 ? groups[i - 1] : null)
             const own = items[String(row.id)]
             const d = defaultItemPrice(row.id)
+            const quote = market ? marketQuote(row.id, market) : null
             return (
               <FragmentRows key={row.id} header={header ? group : null} ncols={ncols}>
                 <tr>
@@ -331,11 +378,16 @@ function ItemPriceTable<T extends ItemRef>({ rows, before = [], after = [], ctx,
                       {c.cell(row)}
                     </td>
                   ))}
+                  {market && (
+                    <td>
+                      <MarketCell id={row.id} market={market} />
+                    </td>
+                  )}
                   <td>
                     <DefaultCell d={d} />
                   </td>
                   <td>
-                    <PriceInput value={own} label={row.name} placeholder={d?.price ? formatNumber(d.price) : undefined} onCommit={(v) => setItem(row.id, v)} />
+                    <PriceInput value={own} label={row.name} placeholder={quote ? formatNumber(quote.price) : d?.price ? formatNumber(d.price) : undefined} onCommit={(v) => setItem(row.id, v)} />
                   </td>
                   <td>
                     <EffectiveCell r={resolvePrice(row.id, ctx)} />
@@ -375,7 +427,9 @@ function KeyResourcesTab({ q, ctx }: { q: string; ctx: PriceContext }) {
   const genetonOverride = usePrices((s) => s.genetonValue)
   const setGenetonValue = usePrices((s) => s.setGenetonValue)
   const rules = useRules()
-  const g = genetonKamasValue(genetonOverride)
+  const saleTax = useSettings((s) => s.saleTax)
+  const marketGeneton = useMarketGeneton(saleTax)
+  const g = genetonKamasValue(genetonOverride, { market: ctx.market, saleTax })
   const dust = PRICES_DEFAULT.poussiere
   const showGeneton = matches(q, 'généton', 'geneton', 'génétons')
   const showDust = matches(q, 'poussière', "poussière d'élevage", 'adèle vage')
@@ -409,9 +463,31 @@ function KeyResourcesTab({ q, ctx }: { q: string; ctx: PriceContext }) {
                 <PriceInput value={genetonOverride ?? undefined} label="Valeur d’un généton" placeholder={String(PRICES_DEFAULT.genetons.kamasPerGeneton)} onCommit={(v) => setGenetonValue(v)} />
               </label>
               <span className="effective-cell">
-                Retenu : <strong>{formatKamas(g.value)}</strong> <Badge tone={g.origin === 'joueur' ? 'accent' : 'info'}>{g.origin === 'joueur' ? 'votre valeur' : 'défaut'}</Badge>
+                Retenu : <strong>{formatKamas(g.value)}</strong>{' '}
+                <Badge tone={g.origin === 'joueur' ? 'accent' : 'info'} title={g.basis}>
+                  {g.origin === 'joueur' ? 'votre valeur' : g.origin === 'marche' ? 'marché du serveur' : 'défaut'}
+                </Badge>
               </span>
             </div>
+            {marketGeneton && (
+              <div className="stack" style={{ gap: 4, marginTop: 6 }}>
+                <span className="effective-cell">
+                  Marché du serveur : <strong>{formatKamas(marketGeneton.value)}</strong> par généton
+                  <Badge tone="info" title={marketGeneton.lines.slice(0, 6).map((l) => `${l.name} : ${l.price === null ? 'sans prix' : `${formatKamas(l.price)} ÷ ${l.cost} = ${formatNumber(l.perGeneton ?? 0)} K`}`).join('\n')}>
+                    marché
+                  </Badge>
+                  {genetonOverride !== null && genetonOverride !== Math.round(marketGeneton.value) && (
+                    <button className="btn small" type="button" onClick={() => setGenetonValue(null)} title="Sans valeur saisie, les calculs suivent le marché du serveur">
+                      Effacer votre valeur et suivre le marché
+                    </button>
+                  )}
+                </span>
+                <small className="muted">
+                  Meilleur échange : {marketGeneton.best.name} ({formatKamas(marketGeneton.best.price)} ÷ {marketGeneton.best.cost} génétons, {formatNumber(marketGeneton.best.sold24)} vendus/24 h) ; net de taxe ≈{' '}
+                  {formatKamas(marketGeneton.net)}.
+                </small>
+              </div>
+            )}
             <small className="muted">
               Comptée nette de la taxe d’HDV (le parchemin est revendu). Liés au compte selon le guide DPLN (échangeables selon DofusDB, à vérifier). {rules.id === '3.7' ? 'En 3.7, les génétons par parent doublent : le prix des parchemins pourrait baisser.' : ''}
             </small>
@@ -714,7 +790,7 @@ function IngredientsTab({ q, ctx }: { q: string; ctx: PriceContext }) {
   )
 }
 
-function MountsTab({ q, mctx }: { q: string; mctx: MountPriceContext }) {
+function MountsTab({ q, mctx, market }: { q: string; mctx: MountPriceContext; market: MarketSource | null }) {
   const defaultFamily = useSettings((s) => s.family)
   const [family, setFamily] = useState<FamilyId>(defaultFamily)
   const [gen, setGen] = useState<number | 'toutes'>('toutes')
@@ -740,6 +816,12 @@ function MountsTab({ q, mctx }: { q: string; mctx: MountPriceContext }) {
             </select>
           </label>
         </div>
+        {market && (
+          <Callout>
+            <strong>HDV du serveur (export du {frenchDay(market.exportDate)})</strong> : la dernière colonne de « Par couleur » donne le prix de
+            l’objet-monture à l’HDV. {MOUNT_MARKET_NOTE} Pour vos décisions, saisissez le prix d’une monture du niveau et de l’état voulus.
+          </Callout>
+        )}
         <Callout tone="warn">
           Presque aucun prix de monture n’a été relevé. Seuls vos prix et les relevés fiables (observés, confiance au moins moyenne, de moins de {MOUNT_PRICE_STALE_DAYS} jours avant le dernier relevé) entrent dans les calculs :
           les <strong>planchers calculés</strong> (extraction, brisage, revente de base), les relevés anciens ou peu fiables sont affichés pour information, « non comptés » tant que vous ne les confirmez pas. Saisissez les prix de
@@ -815,6 +897,7 @@ function MountsTab({ q, mctx }: { q: string; mctx: MountPriceContext }) {
                   {MOUNT_BANDS.map((b) => (
                     <th key={b}>{BAND_LABELS[b]}</th>
                   ))}
+                  {market && <th title={MOUNT_MARKET_NOTE}>HDV du serveur ({shortDay(market.exportDate)})</th>}
                 </tr>
               </thead>
               <tbody>
@@ -828,19 +911,22 @@ function MountsTab({ q, mctx }: { q: string; mctx: MountPriceContext }) {
                     </td>
                     {MOUNT_BANDS.map((b) => {
                       const eff = mountSalePrice(s.id, Number(b), mctx)
-                      const ref = eff.price === null ? eff.references.find((r) => r.level === Number(b)) ?? eff.references[0] : undefined
+                      // Prix de l'HDV seul (mixte) : plafond de vente, jamais compté seul → « à saisir » (colonne HDV à droite).
+                      const marketOnly = eff.origin === 'marche' && !eff.cappedFrom
+                      const counted = marketOnly ? null : eff.price
+                      const ref = counted === null ? eff.references.find((r) => r.level === Number(b)) ?? eff.references[0] : undefined
                       return (
                         <td key={b}>
                           <div className="mount-cell">
-                            <PriceInput value={mounts[`${s.id}|${b}`]} label={`${s.name} ${BAND_LABELS[b]}`} placeholder={eff.price !== null ? formatNumber(eff.price) : undefined} onCommit={(v) => setMount(s.id, b, v)} />
+                            <PriceInput value={mounts[`${s.id}|${b}`]} label={`${s.name} ${BAND_LABELS[b]}`} placeholder={counted !== null ? formatNumber(counted) : undefined} onCommit={(v) => setMount(s.id, b, v)} />
                             <small className="muted">
-                              {eff.price === null ? (
+                              {counted === null ? (
                                 <>
                                   <Badge tone="danger">à saisir</Badge>
                                   {ref && (
                                     <span title={ref.reason}>
                                       {' '}
-                                      réf. ≈ {formatKamas(ref.price)} ({ref.kind === 'niveau-superieur' ? `niv. ${ref.level} seulement` : DEFAULT_PRICE_ISSUE_LABELS[ref.kind]}, non comptée)
+                                      réf. ≈ {formatKamas(ref.price)} ({ref.kind === 'niveau-superieur' ? `niv. ${ref.level} seulement` : REFERENCE_KIND_LABELS[ref.kind]}, non comptée)
                                     </span>
                                   )}
                                   {ref && CONFIRMABLE.includes(ref.kind as DefaultPriceIssue) && (
@@ -853,6 +939,10 @@ function MountsTab({ q, mctx }: { q: string; mctx: MountPriceContext }) {
                                     </button>
                                   )}
                                 </>
+                              ) : eff.origin === 'marche' && eff.cappedFrom ? (
+                                <span title={eff.note}>
+                                  {formatKamas(eff.price)} · défaut {formatKamas(eff.cappedFrom.price)} plafonné par l’HDV
+                                </span>
                               ) : eff.origin === 'joueur-espece' ? (
                                 'votre prix'
                               ) : (
@@ -865,6 +955,7 @@ function MountsTab({ q, mctx }: { q: string; mctx: MountPriceContext }) {
                         </td>
                       )
                     })}
+                    {market && <MountMarketCell speciesId={s.id} market={market} />}
                   </tr>
                 ))}
               </tbody>
@@ -873,6 +964,28 @@ function MountsTab({ q, mctx }: { q: string; mctx: MountPriceContext }) {
         )}
       </Card>
     </div>
+  )
+}
+
+/** Prix de l'objet-monture à l'HDV du serveur : indication seulement (« HDV mixte »), jamais compté d'office. */
+function MountMarketCell({ speciesId, market }: { speciesId: number; market: MarketSource }) {
+  const ref = marketMountReference(market, speciesId)
+  if (!ref || ref.price === null)
+    return (
+      <td>
+        <small className="muted">{ref?.depth ? 'sans vente' : '—'}</small>
+      </td>
+    )
+  return (
+    <td>
+      <span className="default-cell" title={MOUNT_MARKET_NOTE}>
+        <span>{formatKamas(ref.price)}</span>
+        <Badge tone="warn">HDV mixte</Badge>
+        <small className="muted">
+          {formatNumber(ref.depth?.sold24 ?? 0)}/24 h · {formatNumber(ref.depth?.sold30 ?? 0)}/30 j
+        </small>
+      </span>
+    </td>
   )
 }
 
@@ -927,7 +1040,7 @@ function BulkTab() {
   }
 
   const clearAll = () => {
-    if (!window.confirm('Effacer tous vos prix saisis (objets, montures, généton) ? Les prix par défaut restent disponibles.')) return
+    if (!window.confirm(`Effacer tous vos prix saisis pour le serveur ${server} (objets, montures, généton) ? Ils sont partagés par tous les profils de ce serveur. Les prix du marché importés et les prix par défaut restent disponibles.`)) return
     state.replaceAll({ items: {}, mounts: {}, generations: {}, genetonValue: null })
     setMessage({ tone: 'warn', text: 'Tous vos prix ont été effacés.' })
   }
@@ -1051,7 +1164,7 @@ function countMatches(tab: TabId, q: string): number {
   }
 }
 
-/** Route : #/prix?q=nom (recherche) et &onglet=carburants|makinas|filets|ingredients|montures|masse. */
+/** Route : #/prix?q=nom (recherche) et &onglet=carburants|makinas|filets|ingredients|montures|marche|hdv|masse. */
 export default function PricesPage() {
   const route = useRoute()
   const q = route.params.get('q') ?? ''
@@ -1076,11 +1189,17 @@ function PricesView({ initialQuery, initialTab }: { initialQuery: string; initia
   const updatedAt = usePrices((s) => s.updatedAt)
   const pMounts = usePrices((s) => s.mounts)
   const pGenerations = usePrices((s) => s.generations)
+  // Marché du serveur : prix de l'objet-monture (HDV mixte), plafond de vente dans les décisions.
   const mctx = useMemo<MountPriceContext>(
-    () => ({ mountOverrides: pMounts, generationOverrides: pGenerations, useDefaults: settings.useDefaultPrices }),
-    [pMounts, pGenerations, settings.useDefaultPrices],
+    () => ({ mountOverrides: pMounts, generationOverrides: pGenerations, useDefaults: settings.useDefaultPrices, market: ctx.market }),
+    [pMounts, pGenerations, settings.useDefaultPrices, ctx.market],
   )
   const coverage = useMemo(() => priceCoverage(ctx), [ctx])
+  const profile = useActiveProfile()
+  const server = useActiveServer()
+  const snapshot = useMarket((st) => st.snapshot)
+  const today = useServerDay()
+  const freshness = snapshot ? snapshotFreshness(snapshot.exportDate, today) : null
   const counts = useMemo(() => Object.fromEntries(ITEM_TABS.map((t) => [t, countMatches(t, q)])) as Record<TabId, number>, [q])
   const ownCount = Object.keys(ctx.overrides).length + Object.keys(pMounts).length + Object.keys(pGenerations).length
 
@@ -1098,14 +1217,16 @@ function PricesView({ initialQuery, initialTab }: { initialQuery: string; initia
     <div className="prices-page">
       <PageHeader
         title="Prix"
-        subtitle="Prix de l’HDV de votre serveur : ils alimentent tous les calculs de coûts et de rentabilité. Sans prix, un coût est affiché « incomplet », jamais compté comme 0."
+        subtitle="Prix de l’HDV du serveur du profil ouvert (saisis, ou importés d’un export CSV de l’HDV) : ils alimentent tous les calculs de coûts et de rentabilité. Sans prix, un coût est affiché « incomplet », jamais compté comme 0."
       />
       <Card>
         <div className="row" style={{ alignItems: 'flex-end', gap: 16 }}>
-          <label className="field">
-            Serveur
-            <input value={settings.server} placeholder="ex. Salar" onChange={(e) => settings.update({ server: e.target.value })} style={{ width: 180 }} />
-          </label>
+          <div className="field">
+            Serveur{' '}
+            <span>
+              <strong>{server.name}</strong> <small className="muted">(profil {profile.name} · <a href={href('reglages', { s: 'profils' })}>gérer</a>)</small>
+            </span>
+          </div>
           <label className="check" title="Prix relevés par la recherche (vidéos, guides), datés et sourcés ; majoritairement Salar, mars → septembre 2026.">
             <input type="checkbox" checked={settings.useDefaultPrices} onChange={(e) => settings.update({ useDefaultPrices: e.target.checked })} />
             Utiliser les prix par défaut quand vous n’avez rien saisi
@@ -1116,9 +1237,29 @@ function PricesView({ initialQuery, initialTab }: { initialQuery: string; initia
             {updatedAt ? ` · dernière saisie ${formatDate(updatedAt)}` : ''}
           </small>
         </div>
+        {snapshot ? (
+          <small className="muted" style={{ display: 'block', marginTop: 6 }}>
+            Marché : export HDV de {server.name} du <strong>{frenchDay(snapshot.exportDate)}</strong> ({formatNumber(snapshot.stats.useful)} objets, {PRICE_STAT_LABELS[server.priceStat].toLowerCase()}) —{' '}
+            <button className="btn ghost small" type="button" onClick={() => setTab('marche')}>
+              lecture du marché
+            </button>
+            <button className="btn ghost small" type="button" onClick={() => setTab('hdv')}>
+              détail et nouvel import
+            </button>
+          </small>
+        ) : (
+          <Callout>
+            Aucun prix du marché pour {server.name}.{' '}
+            <button className="btn small primary" type="button" onClick={() => setTab('hdv')}>
+              Importer un export HDV (CSV)
+            </button>{' '}
+            pour chiffrer d’un coup ingrédients, carburants, makinas, filets et ressources.
+          </Callout>
+        )}
+        {freshness && freshness.level !== 'frais' && <Callout tone={freshness.tone === 'ok' ? undefined : freshness.tone}>{freshness.message}</Callout>}
         {settings.useDefaultPrices && (
           <small className="muted" style={{ display: 'block', marginTop: 6 }}>
-            Défauts : {PRICES_DEFAULT.asOf}. {PRICES_DEFAULT.server}.
+            Défauts (après vos prix et le marché) : {PRICES_DEFAULT.asOf}. {PRICES_DEFAULT.server}.
           </small>
         )}
         <div className="divider" />
@@ -1136,7 +1277,7 @@ function PricesView({ initialQuery, initialTab }: { initialQuery: string; initia
           ))}
         </div>
         <small className="muted" style={{ display: 'block', marginTop: 6 }}>
-          Couverture : objets dont le prix est complet (saisi, défaut ou coût de craft dont tous les ingrédients ont un prix).
+          Couverture : objets dont le prix est complet (saisi, marché importé, défaut ou coût de craft dont tous les ingrédients ont un prix).
         </small>
       </Card>
 
@@ -1159,7 +1300,9 @@ function PricesView({ initialQuery, initialTab }: { initialQuery: string; initia
       {tab === 'makinas' && <MakinasTab q={q} ctx={ctx} />}
       {tab === 'filets' && <NetsTab q={q} ctx={ctx} />}
       {tab === 'ingredients' && <IngredientsTab q={q} ctx={ctx} />}
-      {tab === 'montures' && <MountsTab q={q} mctx={mctx} />}
+      {tab === 'montures' && <MountsTab q={q} mctx={mctx} market={ctx.market ?? null} />}
+      {tab === 'marche' && <MarketInsightsPanel ctx={ctx} onImport={() => setTab('hdv')} />}
+      {tab === 'hdv' && <MarketImport />}
       {tab === 'masse' && <BulkTab />}
     </div>
   )

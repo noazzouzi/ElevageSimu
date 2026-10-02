@@ -6,7 +6,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { persistOptions, syncAcrossTabs } from './persistence'
-import { isPlainObject, registerStoreSchema, STORE_KEYS, type Sanitized } from './schema'
+import { STORE_KEYS } from './profiles'
+import { isPlainObject, registerStoreSchema, type Sanitized } from './schema'
 
 /** Durée de conservation des conseils « faits » et des cases de routine (au-delà : purgés). */
 export const PLAN_PROGRESS_RETENTION_MS = 30 * 86_400_000
@@ -109,4 +110,4 @@ export function isChecked(state: Pick<PlanProgressState, 'checked'>, key: string
 }
 
 // Import d'une sauvegarde : même normalisation qu'au chargement (schema.normalizeStoreValue).
-registerStoreSchema(STORE_KEYS.planProgress, { sanitize: (raw) => sanitizePlanProgress(raw) as unknown as Sanitized<Record<string, unknown>> })
+registerStoreSchema('planProgress', { sanitize: (raw) => sanitizePlanProgress(raw) as unknown as Sanitized<Record<string, unknown>> })

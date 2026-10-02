@@ -1,0 +1,341 @@
+/* Page « Investissement » : entrées, indicateurs, courbe de trésorerie, feuille de route, plan d'action. */
+
+.investment-page .inv-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px 20px;
+  align-items: start;
+}
+.investment-page .inv-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.investment-page .inv-presets {
+  gap: 6px;
+}
+.investment-page .inv-check {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+.investment-page .inv-levers {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin: 14px 0 6px;
+  padding: 8px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.investment-page .inv-levers legend {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding: 0 4px;
+}
+.investment-page .inv-profile {
+  margin: 10px 0 4px;
+}
+.investment-page .inv-run {
+  margin-top: 10px;
+}
+.investment-page .inv-progress {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Résultats */
+.investment-page .inv-results {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: opacity 0.2s;
+}
+.investment-page .inv-results.stale {
+  opacity: 0.6;
+}
+.investment-page .inv-results > .card + .card {
+  margin-top: 0;
+}
+.investment-page .inv-kpis {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 900px) {
+  .investment-page .inv-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.investment-page .inv-kpis .stat small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+.investment-page .inv-alloc {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px 20px;
+  margin: 0;
+}
+.investment-page .inv-alloc > div {
+  min-width: 0;
+}
+.investment-page .inv-alloc dt {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.investment-page .inv-alloc dd {
+  margin: 2px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Courbe de trésorerie */
+.investment-page .inv-chart {
+  margin: 0;
+}
+.investment-page .inv-chart figcaption {
+  margin-bottom: 6px;
+}
+.investment-page .inv-chart-box {
+  position: relative;
+  width: 0;
+  min-width: 100%;
+  overflow: hidden;
+}
+.investment-page .inv-chart svg {
+  display: block;
+  touch-action: pan-y;
+}
+.investment-page .inv-chart svg:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.investment-page .inv-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.investment-page .inv-zero {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+}
+.investment-page .inv-axis {
+  font-size: 11px;
+  fill: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.investment-page .inv-band {
+  fill: var(--accent);
+  fill-opacity: 0.12;
+  stroke: none;
+}
+.investment-page .inv-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.investment-page .inv-marker {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  stroke-opacity: 0.6;
+}
+.investment-page .inv-be-line {
+  stroke: var(--ok);
+  stroke-width: 1;
+}
+.investment-page .inv-be-dot {
+  fill: var(--ok);
+  stroke: var(--bg-elev);
+  stroke-width: 2;
+}
+.investment-page .inv-be-label {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--text);
+}
+.investment-page .inv-end-dot,
+.investment-page .inv-hover-dot {
+  fill: var(--accent);
+  stroke: var(--bg-elev);
+  stroke-width: 2;
+}
+.investment-page .inv-end-label {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--text);
+}
+.investment-page .inv-cross {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+}
+.investment-page .inv-hit {
+  fill: transparent;
+  cursor: crosshair;
+}
+.investment-page .inv-tip {
+  position: absolute;
+  width: max-content;
+  max-width: 260px;
+  pointer-events: none;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  color: var(--text-muted);
+}
+.investment-page .inv-tip strong {
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+/* Feuille de route */
+.investment-page .inv-track {
+  position: relative;
+  margin: 18px 14px 14px;
+  border-top: 2px solid var(--border);
+}
+.investment-page .inv-dot {
+  position: absolute;
+  transform: translate(-50%, -12px);
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  border: 2px solid var(--bg-elev);
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+.investment-page .inv-dot.point-mort {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.investment-page .inv-dot.horizon {
+  background: var(--gold-soft);
+  color: var(--gold);
+}
+.investment-page .inv-milestones {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 6px 18px;
+}
+.investment-page .inv-milestones li {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+.investment-page .inv-num {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  min-width: 1.2em;
+  text-align: right;
+}
+
+/* Courses */
+.investment-page .inv-shop .inv-group td {
+  background: var(--bg-sunken);
+  font-weight: 600;
+}
+.investment-page .inv-note {
+  display: block;
+}
+
+/* Plan d'action */
+.investment-page .inv-actions {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.investment-page .inv-actions h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  color: var(--accent-strong);
+}
+.investment-page .inv-actions > li > ul {
+  list-style: none;
+  padding: 0 0 0 12px;
+  margin: 0;
+  border-left: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.investment-page .inv-action .row {
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.investment-page .inv-amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  margin-left: auto;
+}
+.investment-page .inv-amount.neg,
+.investment-page .inv-neg {
+  color: var(--danger);
+}
+.investment-page .inv-amount.pos,
+.investment-page .inv-pos {
+  color: var(--ok);
+}
+.investment-page .inv-action-details {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+/* Tableaux */
+.investment-page .table td.num,
+.investment-page .table th.num {
+  white-space: nowrap;
+}
+.investment-page .inv-chosen td {
+  background: color-mix(in srgb, var(--accent-soft) 45%, transparent);
+}
+.investment-page .inv-details {
+  margin-top: 10px;
+}
+.investment-page .inv-details summary {
+  cursor: pointer;
+  color: var(--accent-strong);
+}
+.investment-page .inv-notes {
+  margin: 8px 0;
+  padding-left: 18px;
+}
+.investment-page .inv-risks .callout {
+  margin: 6px 0;
+}
+
+@media (max-width: 520px) {
+  .investment-page .inv-amount {
+    margin-left: 0;
+  }
+  .investment-page .inv-track {
+    margin: 4px 10px 12px;
+  }
+}

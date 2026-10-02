@@ -18,6 +18,7 @@ npm test           # vitest run
 npx vitest run src/domain/xxx.test.ts   # un fichier de test
 npm run lint       # oxlint --react-plugin src (règles React et hooks comprises)
 node scripts/build-data.mjs             # régénère src/data/*.json depuis research/
+node scripts/import-hdv-csv.mjs <csv> <serveur> <AAAA-MM-JJ>   # préréglage de prix HDV (src/data/market/)
 ```
 
 ## Arborescence
@@ -25,12 +26,16 @@ node scripts/build-data.mjs             # régénère src/data/*.json depuis res
 ```
 src/
   data/            JSON générés + index.ts (accès typé, index de croisements, stats)
+    market/        préréglages de prix HDV (instantanés compacts, chargés à la demande)
   domain/          logique pure, testée (aucun import React, aucun accès au store)
-  store/           stores zustand persistés (localStorage, clés « elevagesimu:* »)
+  store/           stores zustand persistés (localStorage) : registre des profils « elevagesimu:profiles »,
+                   données de profil « elevagesimu:p:<profil>:<base> », de serveur « elevagesimu:s:<serveur>:<base> »
   lib/format.ts    formatage FR (kamas, %, durées, heures)
   ui/
     components.tsx composants génériques (PageHeader, Card, Stat, Badge, Callout, Progress,
                    NumberField, SelectField, Tabs, Empty, GaugeChip)
+    ProfileSwitcher.tsx  sélecteur de profil de la barre latérale ; ProfilesSection.tsx (Réglages) ;
+                   MarketImport.tsx (Prix › Marché HDV : import CSV, historique)
     species.tsx    GenBadge, SpeciesName, ConfidenceBadge, SpeciesPicker
     router.ts      routage par hash : href(page, params), navigate(), useRoute()
     pages/         une page = un fichier XxxPage.tsx (export default), enregistrée dans registry.tsx
@@ -56,14 +61,18 @@ src/
 | `src/domain/projection.ts` | Projection « maintenant » d'un enclos | `projectPaddock`, `projectGaugeLevels`, `projectMountsFromPlan`, `planActiveHistory` (même calcul pour l'Enclos et l'Accueil) — docs/api/projection.md |
 | `src/domain/paddockPlanStatus.ts` | État d'un plan démarré | `planStatus` (en cours / dû / en retard / dépassé / terminé), `planYield`, `projectedMountPatches`, `remainingPlanConsumption`, `pointsValue` |
 | `src/domain/xp.ts` | XP | `mountXpForLevel`, `mountLevelFromXp`, `mountXpBetween`, `jobXpForLevel`, `jobLevelFromXp`, `jobXpBetween`, `craftXp(L, J, ratio)` |
-| `src/domain/pricing.ts` | Prix | `marketPrice`, `craftCost`, `resolvePrice(id, ctx)` (joueur > défaut > coût des ingrédients ; avec `ctx.jobLevel`, recette hors de portée → prix HDV d'abord, sinon craft signalé `craftLocked` ; `conflict` si un prix par défaut contredit vos ingrédients ; `complete=false` si un ingrédient manque), `netSale` |
+| `src/domain/market.ts` | Prix du marché (export HDV CSV) | `parseHdvCsv`, `buildSnapshot`, `relevantItemIds`, `priceFromRow(row, stat)` (`auto` = médiane 24 h si ≥ 5 ventes, sinon 30 j), `marketDepth` / `sellablePerDay` (liquidité), `genetonValueFromMarket`, `marketMountReference` (« HDV mixte »), `diffPrices`, `keyPrices` — docs/api/market.md |
+| `src/domain/pricing.ts` | Prix | `marketPrice`, `craftCost`, `resolvePrice(id, ctx)` (joueur > **marché importé** (`ctx.market`, origine `marche`) > défaut > coût des ingrédients ; avec `ctx.jobLevel`, recette hors de portée → prix HDV d'abord, sinon craft signalé `craftLocked` ; `conflict` si un prix par défaut contredit vos ingrédients ; `complete=false` si un ingrédient manque), `netSale` |
 | `src/domain/almanax.ts` | Almanax (jour de jeu, heure de Paris) | `serverDay(ms)`, `almanaxAt(ms)`, `almanaxOn(isoDate)`, `upcomingAlmanax(now, days)`, `serverDayStart`, `nextServerDayStart` ; `isoDay(ms)` = jour local (affichage seulement) ; hook `useServerDay()` (src/ui) |
 | `src/domain/mounts.ts` | Montures | `effectiveFertility`, `matingBlockers`, `cloningBlockers`, `toBreedingParent`, `capturedMount`, `babyMount`, `mountName`, libellés |
-| `src/store/settings.ts` | Réglages | `useSettings` (ruleset, jobLevel, jobLevelUpdatedAt, family, goalSpeciesId, preferredTier, xpFiller, parentTargetLevel, useOptimakina, saleTax, useDefaultPrices, accounts, hoursPerDay, checkIntervalMinutes, almanaxGaugeDoubling…), `useRules()` |
-| `src/store/schema.ts`, `persistence.ts`, `sync.ts` | Persistance sûre | `PERSISTED_STORES` (versions), sanitizers, `persistOptions` (migration, normalisation, écriture sans exception, alertes), `syncAcrossTabs` — docs/api/infra.md |
+| `src/store/profiles.ts`, `profileRegistry.ts` | Profils et serveurs | `STORE_KEYS` (clés du profil ouvert), `profileKey(base)` (préférences de page), `ACTIVE_PROFILE_ID`, `ACTIVE_SERVER_ID`, `useProfiles` (créer, dupliquer, renommer, supprimer, changer de serveur, ouvrir), `useActiveProfile()`, `useActiveServer()` ; migration des données d'avant les profils — docs/api/profiles.md |
+| `src/store/market.ts` | Marché importé (par serveur) | `useMarket`, `useMarketHistory`, `applyMarketSnapshot(serverId, snap)`, `MARKET_PRESETS` (Tylezia 02/10/2026), `useMarketSource()`, `useMarketGeneton(tax)` — docs/api/market.md |
+| `src/lib/backup.ts` | Sauvegarde | tout ou un profil (`exportAll`, `exportProfile`, `importAll`, `downloadProfileBackup`) — docs/api/backup.md |
+| `src/store/settings.ts` | Réglages (du profil ouvert) | `useSettings` (ruleset, jobLevel, jobLevelUpdatedAt, family, goalSpeciesId, preferredTier, xpFiller, parentTargetLevel, useOptimakina, saleTax, useDefaultPrices, accounts, hoursPerDay, checkIntervalMinutes, almanaxGaugeDoubling…), `useRules()` |
+| `src/store/schema.ts`, `persistence.ts`, `sync.ts` | Persistance sûre | `STORE_BASES` (versions, portée profil/serveur), `persistedStoreInfo(key)`, clés (`profileStoreKey`, `serverStoreKey`, `parseStoreKey`), sanitizers, `persistOptions` (migration, normalisation, écriture sans exception, alertes), `syncAcrossTabs`, `freezeWrites`, `safeWriteText` — docs/api/infra.md |
 | `src/store/inventory.ts` | Montures possédées | `useInventory` (`mounts`, `add`, `addMany`, `update`, `updateMany`, `patchMany`, `remove`, `removeMany`, `replaceAll`), `newId` |
 | `src/store/paddocks.ts` | Enclos | `usePaddocks` (niveaux de jauges saisis, jauges actives) |
-| `src/store/prices.ts` | Prix saisis | `usePrices` (items, mounts `${speciesId}|${band}`, generations `${family}|${gen}|${band}`, genetonValue), `usePriceContext()` (niveau d'Éleveur inclus) |
+| `src/store/prices.ts` | Prix saisis (du serveur ouvert, partagés par ses profils) | `usePrices` (items, mounts `${speciesId}|${band}`, generations `${family}|${gen}|${band}`, genetonValue), `usePriceContext()` (niveau d'Éleveur et **marché importé du serveur** inclus) |
 | `src/store/journal.ts` | Journal | `useJournal().log({kind: 'capture'|'accouplement'|'clonage'|'extraction'|'vente'|'achat'|'craft'|'note', …})` |
 
 ## Règles de code
@@ -79,6 +88,9 @@ src/
 - Les règles du jeu viennent du ruleset actif (`useRules()`), jamais de 3.6 codé en dur dans une page.
 - Les prix : toujours `usePriceContext()` + `resolvePrice`/`craftCost` ; un coût incomplet est affiché
   avec un avertissement et un lien vers la page Prix (`href('prix', {q: nom})`), jamais compté comme 0.
+  Une origine `marche` s'affiche « marché (JJ/MM) » avec le volume (`ResolvedPrice.market.sold24`).
+- Données par profil : tout store persisté utilise `STORE_KEYS` (src/store/profiles.ts) et toute préférence
+  de page `profileKey(base)` — jamais une clé « elevagesimu:xxx » écrite en dur.
 - Chaque module de domaine nouveau documente son API dans `docs/api/<module>.md` (court).
 
 ## Répartition des modules (propriétaires)
@@ -94,6 +106,7 @@ src/
 | Optimiseur | `src/domain/programSim.ts` (+ tests), `src/domain/programSim.worker.ts`, `src/ui/pages/OptimizerPage.tsx` |
 | Métier | `src/domain/job.ts` (+ tests), `src/ui/pages/JobPage.tsx` |
 | Pilotage | `src/domain/advisor.ts` (+ tests), `src/ui/pages/HomePage.tsx`, `src/ui/pages/PlanPage.tsx`, `src/store/planProgress.ts` |
+| Fondation v2 (profils, marché HDV) | `src/store/profiles.ts`, `profileRegistry.ts`, `market.ts`, `schema.ts`, `persistence.ts` (+ tests), `src/domain/market.ts`, `src/domain/pricing.ts` (+ tests), `src/lib/backup.ts`, `src/ui/ProfileSwitcher.tsx`, `src/ui/ProfilesSection.tsx`, `src/ui/MarketImport.tsx`, `scripts/import-hdv-csv.mjs`, `src/data/market/*.json` |
 
 Un fichier partagé (`index.css`, `components.tsx`, `species.tsx`, `data/index.ts`, stores existants)
 ne se modifie que par **ajout** compatible (nouvel export, nouvelle classe), jamais en cassant l'existant.

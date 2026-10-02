@@ -34,8 +34,21 @@ import {
 import { GAUGE_IDS, GAUGE_LABELS, JOB_XP_PER_CAPTURE, MOUNT_STAT_MAX, PADDOCK_UNLOCK_LEVELS, TICK_SECONDS } from './constants'
 import { bestFuel, type BestFuelOpts, type GaugePointCost } from './fuel'
 import { breed, type BreedingParent, type BreedingResult } from './genetics'
+import {
+  DEFAULT_MAX_MARKET_SHARE,
+  MOUNT_MARKET_NOTE,
+  frenchDay,
+  genetonValueFromMarket,
+  marketConfidence,
+  marketDepth,
+  marketItemName,
+  snapshotPrice,
+  type ConcretePriceStat,
+  type GenetonMarketValue,
+  type MarketSource,
+} from './market'
 import { refillAdvice, SOCLE_MIN_SHARE } from './paddockAssign'
-import { canCraftRecipe, marketPrice, resolvePrice, type PriceContext, type PriceOrigin } from './pricing'
+import { canCraftRecipe, marketPrice, marketQuote, resolvePrice, type MarketPriceInfo, type PriceContext, type PriceOrigin } from './pricing'
 import type { Ruleset } from './rules'
 import type { FamilyId, FuelTier, GaugeId, MakinaKind, Species } from './types'
 import { mountXpBetween } from './xp'
@@ -46,6 +59,9 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
 const uniq = <T>(ids: T[]): T[] => [...new Set(ids)]
 const fmtK = (n: number) => `${Math.round(n).toLocaleString('fr-FR')} K`
 const fmtN = (n: number) => Math.round(n).toLocaleString('fr-FR')
+/** Petite quantité par jour : une décimale sous 10 (« 0,3 »). */
+const fmtD = (n: number) => (Math.abs(n) < 10 ? (Math.round(n * 10) / 10).toLocaleString('fr-FR') : fmtN(n))
+const pctN = (x: number) => `${Math.round(x * 1000) / 10}`.replace('.', ',') + ' %'
 
 /** Normalise un libellé pour comparer des noms (minuscules, sans accents ni apostrophes typographiques). */
 export function normalizeName(s: string): string {
@@ -103,17 +119,90 @@ export interface MountPriceContext {
   /** Clé `${family}|${generation}|${band}`. */
   generationOverrides: Record<string, number>
   useDefaults: boolean
+  /**
+   * Marché importé du serveur (export HDV, `usePriceContext().market`) : prix de l'objet-monture,
+   * « HDV mixte » (niveaux, états et montures séniles mélangés). Facultatif : absent = ancien
+   * comportement. Utilisé par `mountSalePrice` entre vos prix et les défauts de la recherche ; les
+   * décisions (`mountValuation`) ne s'en servent que comme plafond de vente (voir `mountValuation`).
+   */
+  market?: MarketSource | null
 }
 
 export type MountState = 'fertile' | 'feconde' | 'sterile'
-export type MountPriceOrigin = 'joueur-espece' | 'joueur-generation' | 'defaut-espece' | 'defaut-generation' | 'manquant'
+export type MountPriceOrigin = 'joueur-espece' | 'joueur-generation' | 'marche' | 'defaut-espece' | 'defaut-generation' | 'manquant'
 
 export const MOUNT_PRICE_ORIGIN_LABELS: Record<MountPriceOrigin, string> = {
   'joueur-espece': 'votre prix (couleur)',
   'joueur-generation': 'votre prix (génération)',
+  marche: 'HDV du serveur (mixte)',
   'defaut-espece': 'défaut (couleur)',
   'defaut-generation': 'défaut (génération)',
   manquant: 'aucun prix',
+}
+
+/** Badge d'un prix d'objet-monture issu de l'export HDV (SPEC-v2 §1, « piège des montures »). */
+export const MOUNT_MARKET_BADGE = 'HDV mixte : niveau/sénilité/état non distingués'
+
+/**
+ * Prix de l'objet-monture d'une espèce à l'HDV du serveur (export importé). Indication de marché :
+ * niveaux, fertile/stérile et montures séniles d'avant la 3.5 sont mélangés (`mixed`).
+ */
+export interface MountMarketQuote {
+  itemId: number
+  /** Prix brut (statistique du serveur). */
+  price: number
+  /** Statistique réellement utilisée. */
+  stat: ConcretePriceStat
+  exportDate: string
+  serverName?: string
+  sold24: number
+  sold7: number
+  sold30: number
+  /** Ventes moyennes par jour (30 j). */
+  perDayAvg: number
+  kamasPerDay: number
+  confidence: string
+  mixed: true
+  /** « HDV mixte : niveau/sénilité/état non distingués ». */
+  badge: string
+  note: string
+}
+
+/** Prix de marché de l'objet-monture (null : pas de marché, objet absent ou sans vente). */
+export function mountMarketQuote(speciesId: number, market: MarketSource | null | undefined): MountMarketQuote | null {
+  const itemId = getSpecies(speciesId)?.itemId
+  if (!itemId || !market) return null
+  const q = marketQuote(itemId, market)
+  if (!q) return null
+  return {
+    itemId,
+    price: q.price,
+    stat: q.info.stat,
+    exportDate: q.info.exportDate,
+    serverName: q.info.serverName,
+    sold24: q.info.sold24,
+    sold7: q.info.sold7,
+    sold30: q.info.sold30,
+    perDayAvg: q.info.perDayAvg,
+    kamasPerDay: q.info.kamasPerDay,
+    confidence: q.confidence,
+    mixed: true,
+    badge: MOUNT_MARKET_BADGE,
+    note: MOUNT_MARKET_NOTE,
+  }
+}
+
+/**
+ * Génération à partir de laquelle un prix d'objet-monture très bas fait soupçonner des montures
+ * séniles (extraction = 1 ressource) dans les ventes : prix < `SENILE_PRICE_RATIO` × valeur
+ * d'extraction (G8–G10 « bradées » 24–40 k sur Tylezia, SPEC-v2 §1).
+ */
+export const SENILE_MIN_GENERATION = 5
+export const SENILE_PRICE_RATIO = 0.5
+
+/** Le prix de marché d'un objet-monture fait-il soupçonner des montures séniles ? */
+export function possibleSenile(generation: number, marketPriceGross: number | null, extractionGross: number | null): boolean {
+  return generation >= SENILE_MIN_GENERATION && marketPriceGross !== null && extractionGross !== null && extractionGross > 0 && marketPriceGross < SENILE_PRICE_RATIO * extractionGross
 }
 
 /** Pourquoi un prix par défaut de la recherche n'entre pas dans les décisions automatiques. */
@@ -265,14 +354,25 @@ export interface MountPriceReference {
   price: number
   net: boolean
   level: number
-  kind: DefaultPriceIssue | 'niveau-superieur'
+  /** `marche` : prix de l'objet-monture à l'HDV du serveur, plafond de vente non compté seul. */
+  kind: DefaultPriceIssue | 'niveau-superieur' | 'marche'
   reason: string
   origin: MountPriceOrigin
   row?: DefaultMountPrice
 }
 
+/** Libellés courts de toutes les natures de référence (affichage « non comptée »). */
+export const REFERENCE_KIND_LABELS: Record<MountPriceReference['kind'], string> = {
+  ...DEFAULT_PRICE_ISSUE_LABELS,
+  'niveau-superieur': 'niveau supérieur seulement',
+  marche: 'HDV mixte, plafond',
+}
+
 export interface MountSalePrice {
-  /** Prix brut utilisable pour les décisions, ou null (à saisir). */
+  /**
+   * Prix brut, ou null (à saisir). Origine `marche` sans `cappedFrom` : prix de l'objet-monture à
+   * l'HDV (indication « HDV mixte ») — `mountValuation` ne le compte pas seul (plafond de vente).
+   */
   price: number | null
   origin: MountPriceOrigin
   /** Tranche la plus proche du niveau (affichage). */
@@ -282,14 +382,23 @@ export interface MountSalePrice {
   /** Obsolète : un plancher n'est jamais un prix de vente (il figure dans `references`). Toujours faux. */
   isFloor: boolean
   row?: DefaultMountPrice
-  /** exact (niveau d'ancrage), interpolation entre deux ancrages, palier inférieur (aucun ancrage au-dessus). */
-  method: 'exact' | 'interpolation' | 'palier-inferieur' | 'aucun'
-  /** Prix interpolé ou repris d'un niveau inférieur : estimation. */
+  /**
+   * exact (niveau d'ancrage), interpolation entre deux ancrages, palier inférieur (aucun ancrage
+   * au-dessus), `marche` (prix de l'objet-monture à l'HDV du serveur, tous niveaux confondus).
+   */
+  method: 'exact' | 'interpolation' | 'palier-inferieur' | 'marche' | 'aucun'
+  /** Prix interpolé ou repris d'un niveau inférieur, ou prix de marché mixte : estimation. */
   estimated: boolean
   anchors: MountPriceAnchor[]
   /** Références non utilisées (de la plus proche du niveau à la plus lointaine). */
   references: MountPriceReference[]
   note?: string
+  /** Prix de l'objet-monture à l'HDV du serveur (quand `mctx.market` le connaît), quelle que soit l'origine retenue. */
+  market?: MountMarketQuote
+  /** Plafond de vente prudent (brut) = prix du marché ; vos prix ne sont jamais plafonnés. */
+  ceiling?: number
+  /** Relevé par défaut de la recherche ramené au prix du marché (plus bas) : prix et origine d'avant. */
+  cappedFrom?: { price: number; origin: MountPriceOrigin }
 }
 
 function referenceReason(issue: DefaultPriceIssue, r: DefaultMountPrice, price: number): string {
@@ -339,8 +448,47 @@ function bandAnchor(sp: Species, band: MountBand, state: MountState, mctx: Mount
  * génération), interpolés linéairement entre deux ancrages ; au-dessus du dernier ancrage, prix du
  * palier inférieur (estimation prudente) ; jamais un prix d'un niveau supérieur appliqué en dessous.
  * Planchers calculés, relevés anciens ou peu fiables : `references` seulement (prix null, « à saisir »).
+ *
+ * Avec `mctx.market` (export HDV du serveur), le prix de l'objet-monture s'intercale entre vos prix et
+ * les défauts de la recherche (origine `marche`, `market` = date, statistique, volume) :
+ *  - vos prix (couleur ou génération) priment et ne sont jamais plafonnés ;
+ *  - un relevé par défaut plus cher que le marché est ramené au prix du marché (`cappedFrom`) ;
+ *  - sans autre prix, le prix du marché est renvoyé (`method: 'marche'`, estimation « HDV mixte ») —
+ *    `mountValuation` ne le compte alors que comme plafond de vente.
  */
 export function mountSalePrice(speciesId: number, level: number, mctx: MountPriceContext, opts: { state?: MountState } = {}): MountSalePrice {
+  const base = mountSalePriceBase(speciesId, level, mctx, opts)
+  const mq = mountMarketQuote(speciesId, mctx.market)
+  if (!mq) return base
+  const withMarket = { ...base, market: mq, ceiling: mq.price }
+  if (base.origin === 'joueur-espece' || base.origin === 'joueur-generation') return withMarket
+  const where = `l’HDV${mq.serverName ? ` de ${mq.serverName}` : ''} du ${frenchDay(mq.exportDate)}`
+  if (base.price !== null) {
+    if (mq.price >= base.price) return withMarket
+    return {
+      ...withMarket,
+      price: mq.price,
+      origin: 'marche',
+      confidence: mq.confidence,
+      estimated: true,
+      cappedFrom: { price: base.price, origin: base.origin },
+      note: `Relevé par défaut (${fmtK(base.price)}) ramené au prix de l’objet-monture à ${where} (${fmtK(mq.price)}, ${MOUNT_MARKET_BADGE}) : plafond de vente prudent.`,
+    }
+  }
+  return {
+    ...withMarket,
+    price: mq.price,
+    origin: 'marche',
+    confidence: mq.confidence,
+    priceType: undefined,
+    row: undefined,
+    method: 'marche',
+    estimated: true,
+    note: `Prix de l’objet-monture à ${where} : ${fmtK(mq.price)} (${fmtN(mq.sold24)} vendus/24 h, ≈ ${fmtD(mq.perDayAvg)}/jour) — ${MOUNT_MARKET_BADGE}. Plafond de vente, pas un prix de décision : saisissez le prix d’une monture du niveau et de l’état voulus.`,
+  }
+}
+
+function mountSalePriceBase(speciesId: number, level: number, mctx: MountPriceContext, opts: { state?: MountState }): MountSalePrice {
   const band = mountBand(level)
   const L = clamp(Math.floor(level || 1), 1, 200)
   const sp = getSpecies(speciesId)
@@ -405,9 +553,14 @@ export interface ExtractionValue {
   complete: boolean
   origin: PriceOrigin
   confidence?: string
+  /** Prix issu du marché importé (origine `marche`) : date de l'export, statistique, volume. */
+  market?: MarketPriceInfo
 }
 
-/** Valeur d'extraction : quantité × prix de la ressource de la famille (Neurone, Ambre, Corne). */
+/**
+ * Valeur d'extraction : quantité × prix de la ressource de la famille (Neurone, Ambre, Corne). Le prix
+ * suit `pricing.marketPrice` : votre prix > marché importé du serveur (`ctx.market`) > défaut.
+ */
 export function extractionValue(speciesId: number, ctx: PriceContext, opts: { senile?: boolean } = {}): ExtractionValue {
   const sp = getSpecies(speciesId)
   const family = sp?.family ?? 'muldo'
@@ -424,6 +577,7 @@ export function extractionValue(speciesId: number, ctx: PriceContext, opts: { se
     complete: qty === 0 || p.price !== null,
     origin: p.origin,
     confidence: p.confidence,
+    market: p.market,
   }
 }
 
@@ -455,12 +609,19 @@ export interface BrisageValue {
   scale: number
   complete: boolean
   note: string
+  /** Prix brut de la rune Ga retenu (avec un contexte de prix ; null = inconnu). */
+  runePrice?: number | null
+  /** Origine du prix de la rune (votre prix, marché du serveur, défaut). */
+  runeOrigin?: PriceOrigin
+  /** Rune chiffrée au marché importé : date de l'export, statistique, volume. */
+  runeMarket?: MarketPriceInfo
 }
 
 /**
  * Valeur de brisage d'une monture (runes) selon les rendements observés de la recherche
  * (valuation.brisage.defaultValuePerMountByLevel, interpolés entre niv. 45 / 53 / 100 / 200), mise
- * à l'échelle du prix de la rune Ga si vous l'avez saisi. Aucune donnée pour les Dragodindes.
+ * à l'échelle du prix de la rune Ga (Ga Pa 1557, Ga Pme 1558) : votre prix, sinon celui du marché
+ * importé du serveur (`ctx.market`), sinon le défaut. Aucune donnée pour les Dragodindes.
  */
 export function brisageValue(family: FamilyId, level: number, ctx?: PriceContext): BrisageValue {
   const data = PRICES_DEFAULT.valuation.brisage as BrisageData | undefined
@@ -504,15 +665,19 @@ export function brisageValue(family: FamilyId, level: number, ctx?: PriceContext
   let scale = 1
   let complete = true
   let note = method === 'extrapolation' ? `Extrapolé sous le niveau ${anchors[0][0]} (runes Ga dès ≈ niv. ${BRISAGE_MIN_LEVEL}).` : method === 'interpolation' ? 'Interpolé entre les relevés.' : 'Relevé.'
+  let runeInfo: Pick<BrisageValue, 'runePrice' | 'runeOrigin' | 'runeMarket'> = {}
   if (ctx) {
     const def = defaultItemPrice(rune)?.price ?? null
-    const cur = marketPrice(rune, ctx).price
+    const p = marketPrice(rune, ctx)
+    const cur = p.price
+    runeInfo = { runePrice: cur, runeOrigin: p.origin, runeMarket: p.market }
+    const name = marketItemName(rune, ctx.market?.names)
     if (cur === null || def === null) {
       complete = false
-      note += ` Prix de la ${itemName(rune)} manquant.`
+      note += ` Prix de la ${name} manquant.`
     } else if (cur !== def) {
       scale = cur / def
-      note += ` Mis à l'échelle du prix de la ${itemName(rune)} (${Math.round(scale * 100)} % du défaut).`
+      note += ` Mis à l'échelle du prix de la ${name}${p.origin === 'marche' && p.market ? ` (HDV du ${frenchDay(p.market.exportDate)})` : ''} : ${Math.round(scale * 100)} % du défaut.`
     }
   }
   return {
@@ -524,6 +689,7 @@ export function brisageValue(family: FamilyId, level: number, ctx?: PriceContext
     scale,
     complete,
     note,
+    ...runeInfo,
   }
 }
 
@@ -548,6 +714,10 @@ export interface FateValue {
   estimated?: boolean
   /** Vente sans prix utilisable : référence affichée (plancher, relevé ancien…), nette de taxe, jamais comptée. */
   reference?: { net: number; kind: MountPriceReference['kind']; reason: string }
+  /** Vente : plafond prudent (net de taxe) = prix de l'objet-monture à l'HDV du serveur. */
+  ceiling?: number
+  /** Vente : prix de l'objet-monture à l'HDV du serveur (« HDV mixte »). */
+  market?: MountMarketQuote
 }
 
 export interface MountValuation {
@@ -565,6 +735,13 @@ export interface MountValuation {
   /** La meilleure option repose sur une estimation (prix interpolé). */
   estimated: boolean
   salePrice: MountSalePrice
+  /**
+   * Borne haute de la meilleure valeur nette : `best` si tout est chiffré ; avec une vente seulement
+   * plafonnée par le marché (HDV mixte) et les autres options chiffrées, max(best, plafond) ; sinon null.
+   */
+  bestHigh?: number | null
+  /** Prix de marché de l'objet-monture très bas (montures séniles probables) : avertissement à afficher. */
+  marketWarning?: string
 }
 
 export interface ValuationOptions {
@@ -580,23 +757,43 @@ export interface ValuationOptions {
  * Valeur d'une monture : max(vente, extraction, brisage), chaque terme net de la taxe d'HDV. Une vente
  * sans prix utilisable (plancher, relevé ancien) est « à saisir » : la valeur connue est alors une
  * borne basse (`complete: false`) et la référence est seulement affichée (`sale.reference`).
+ *
+ * Marché du serveur (`mountPrices.market`) : le prix de l'objet-monture (« HDV mixte ») n'est qu'un
+ * PLAFOND DE VENTE prudent pour les décisions :
+ *  - il ramène un relevé par défaut plus cher à son niveau (vente comptée au prix du marché) ;
+ *  - seul (aucun de vos prix ni relevé fiable), il n'est PAS compté : vente « à saisir », référence
+ *    affichée (`kind: 'marche'`), `sale.ceiling` et `bestHigh` = borne haute de la valeur ;
+ *  - vos prix ne sont jamais plafonnés ;
+ *  - un prix de marché < ½ × valeur d'extraction dès la G5 signale des montures séniles probables
+ *    (`marketWarning`) : jamais une opportunité d'achat pour extraire.
  */
 export function mountValuation(speciesId: number, level: number, opts: ValuationOptions): MountValuation {
   const sp = getSpecies(speciesId)
   const tax = clamp(opts.saleTax, 0, 1)
   const salePrice = mountSalePrice(speciesId, level, opts.mountPrices, { state: opts.state })
-  const ref = salePrice.price === null ? salePrice.references[0] : undefined
+  // Prix de marché seul (aucun autre prix) : plafond, jamais compté comme prix de décision.
+  const marketOnly = salePrice.origin === 'marche' && !salePrice.cappedFrom
+  const decisionPrice = marketOnly ? null : salePrice.price
+  const ceilingNet = salePrice.ceiling === undefined ? undefined : salePrice.ceiling * (1 - tax)
+  const marketRef: MountPriceReference | undefined =
+    marketOnly && salePrice.price !== null
+      ? { price: salePrice.price, net: false, level: clamp(Math.floor(level || 1), 1, 200), kind: 'marche', reason: salePrice.note ?? MOUNT_MARKET_BADGE, origin: 'marche' }
+      : undefined
+  // Le prix du serveur (HDV mixte) passe avant un plancher ou un relevé ancien de la recherche.
+  const ref = decisionPrice === null ? (marketRef ?? salePrice.references[0]) : undefined
   const sale: FateValue = {
     kind: 'vente',
     possible: true,
-    gross: salePrice.price,
-    net: salePrice.price === null ? null : salePrice.price * (1 - tax),
-    complete: salePrice.price !== null,
+    gross: decisionPrice,
+    net: decisionPrice === null ? null : decisionPrice * (1 - tax),
+    complete: decisionPrice !== null,
     confidence: salePrice.confidence,
     origin: MOUNT_PRICE_ORIGIN_LABELS[salePrice.origin],
-    note: salePrice.price === null ? (ref?.reason ?? 'Aucun prix de vente : saisissez le prix HDV de cette monture.') : salePrice.note,
+    note: decisionPrice === null ? (ref?.reason ?? 'Aucun prix de vente : saisissez le prix HDV de cette monture.') : salePrice.note,
     estimated: salePrice.estimated,
     reference: ref ? { net: ref.net ? ref.price : ref.price * (1 - tax), kind: ref.kind, reason: ref.reason } : undefined,
+    ceiling: ceilingNet,
+    market: salePrice.market,
   }
   const ex = extractionValue(speciesId, opts.ctx, { senile: opts.senile })
   const extraction: FateValue = {
@@ -623,6 +820,16 @@ export function mountValuation(speciesId: number, level: number, opts: Valuation
   const fates = [extraction, brisage, sale].filter((f) => f.possible && f.net !== null)
   let best: FateValue | null = null
   for (const f of fates) if (!best || (f.net as number) > (best.net as number) + 1e-9) best = f
+  const complete = [sale, extraction, brisage].every((f) => !f.possible || f.complete)
+  // Borne haute : vente plafonnée par le marché, autres options chiffrées.
+  let bestHigh: number | null = complete ? (best?.net ?? null) : null
+  if (!complete && !sale.complete && ceilingNet !== undefined && [extraction, brisage].every((f) => !f.possible || f.complete))
+    bestHigh = Math.max(best?.net ?? 0, ceilingNet)
+  // Montures séniles probables : prix de l'objet-monture très bas face à l'extraction (G5+).
+  let marketWarning: string | undefined
+  const mq = salePrice.market
+  if (mq && sp && !opts.senile && possibleSenile(sp.generation, mq.price, ex.value))
+    marketWarning = `Prix HDV de l’objet-monture (${fmtK(mq.price)}) sous la moitié de sa valeur d’extraction (${fmtK(ex.value ?? 0)}) : ventes probablement tirées par des montures séniles (extraction = 1 ressource). N’achetez pas ces montures pour les extraire sans vérifier qu’elles ne sont pas séniles.`
   return {
     speciesId,
     level,
@@ -632,28 +839,309 @@ export function mountValuation(speciesId: number, level: number, opts: Valuation
     best: best?.net ?? null,
     bestKind: best?.kind ?? null,
     confidence: best?.confidence ?? 'low',
-    complete: [sale, extraction, brisage].every((f) => !f.possible || f.complete),
+    complete,
     estimated: !!best?.estimated,
     salePrice,
+    bestHigh,
+    marketWarning,
   }
 }
 
 // ---------- Génétons ----------
 
 export interface GenetonValue {
+  /** Valeur brute d'un généton (kamas, avant la taxe de revente du parchemin). */
   value: number
   range: [number, number]
-  origin: 'joueur' | 'defaut'
+  /** Votre valeur, marché importé du serveur (boutique d'Eugène Éton), ou défaut de la recherche. */
+  origin: 'joueur' | 'marche' | 'defaut'
   confidence: string
   basis: string
+  /** Valeur nette de la taxe de vente (si `saleTax` est fourni). */
+  net?: number
+  /** Origine `marche` : détail de la boutique (meilleur échange, toutes les lignes) et export. */
+  market?: GenetonMarketValue & { exportDate: string; serverName?: string }
 }
 
-/** Valeur d'un généton en kamas (brute, avant la taxe de revente du parchemin) : votre valeur, sinon 375 K (Puissant Parchemin ≈ 60 000 / 160). */
-export function genetonKamasValue(override?: number | null): GenetonValue {
+/**
+ * Valeur d'un généton en kamas (brute, avant la taxe de revente du parchemin) : votre valeur, sinon
+ * celle du marché importé du serveur (`opts.market` : max(prix ÷ coût) sur la boutique d'Eugène Éton —
+ * Petits/normaux/Grands/Puissants Parchemins, Tourmaline 130), sinon 375 K (Puissant Parchemin ≈
+ * 60 000 / 160). `net` = brute × (1 − `saleTax`) quand la taxe est fournie (les calculs comptent les
+ * génétons nets). Pour une production importante, voir `genetonLiquidValue` (volume des parchemins).
+ */
+export function genetonKamasValue(override?: number | null, opts: { market?: MarketSource | null; saleTax?: number } = {}): GenetonValue {
   const g = PRICES_DEFAULT.genetons
+  const tax = opts.saleTax === undefined ? undefined : clamp(opts.saleTax, 0, 1)
+  const withNet = (v: GenetonValue): GenetonValue => (tax === undefined ? v : { ...v, net: v.value * (1 - tax) })
   if (override !== null && override !== undefined && Number.isFinite(override) && override >= 0)
-    return { value: override, range: g.range, origin: 'joueur', confidence: 'joueur', basis: 'Valeur saisie.' }
-  return { value: g.kamasPerGeneton, range: g.range, origin: 'defaut', confidence: g.confidence, basis: g.basis }
+    return withNet({ value: override, range: g.range, origin: 'joueur', confidence: 'joueur', basis: 'Valeur saisie.' })
+  const m = opts.market ? genetonValueFromMarket(opts.market, tax ?? 0) : null
+  if (m && opts.market) {
+    const row = opts.market.rows[String(m.best.id)]
+    const where = `HDV${opts.market.serverName ? ` de ${opts.market.serverName}` : ''} du ${frenchDay(opts.market.exportDate)}`
+    return withNet({
+      value: m.value,
+      range: g.range,
+      origin: 'marche',
+      confidence: row ? marketConfidence(row) : 'low',
+      basis: `${m.best.name} ${fmtK(m.best.price ?? 0)} ÷ ${m.best.cost} génétons (${where}, ${fmtN(m.best.sold24)} vendus/24 h).`,
+      market: { ...m, exportDate: opts.market.exportDate, serverName: opts.market.serverName },
+    })
+  }
+  return withNet({ value: g.kamasPerGeneton, range: g.range, origin: 'defaut', confidence: g.confidence, basis: g.basis })
+}
+
+export interface GenetonLiquidLine {
+  id: number
+  name: string
+  cost: number
+  /** Prix brut de l'objet de la boutique. */
+  price: number
+  /** Objets vendables par jour sans saturer (part du volume moyen). */
+  sellablePerDay: number
+  /** Objets prévus par jour (génétons alloués ÷ coût). */
+  units: number
+  /** Génétons alloués à cet objet par jour. */
+  genetons: number
+}
+
+export interface GenetonLiquidValue {
+  /** Valeur brute moyenne d'un généton écoulé (kamas). */
+  perGeneton: number | null
+  /** Valeur nette moyenne (taxe de vente). */
+  net: number | null
+  /** Génétons écoulés par jour sans saturer (≤ génétons produits). */
+  absorbed: number
+  /** Génétons produits par jour au-delà de ce que le marché absorbe (non valorisés). */
+  surplus: number
+  lines: GenetonLiquidLine[]
+}
+
+/**
+ * Valeur d'une production de génétons compte tenu du volume des parchemins sur ce serveur : les
+ * génétons du jour vont d'abord à l'objet le plus rentable (prix ÷ coût), dans la limite de `share`
+ * (15 %) de son volume quotidien moyen, puis au suivant… Un généton qui ne trouve pas preneur n'est pas
+ * valorisé (`surplus`). null sans marché ni prix de la boutique.
+ */
+export function genetonLiquidValue(
+  market: MarketSource | null | undefined,
+  genetonsPerDay: number,
+  opts: { share?: number; saleTax?: number } = {},
+): GenetonLiquidValue | null {
+  const m = market ? genetonValueFromMarket(market, opts.saleTax ?? 0) : null
+  if (!m || !market) return null
+  const share = opts.share ?? DEFAULT_MAX_MARKET_SHARE
+  let left = Math.max(0, genetonsPerDay)
+  let kamas = 0
+  const lines: GenetonLiquidLine[] = []
+  for (const l of m.lines) {
+    if (left <= 1e-9 || l.price === null || l.perGeneton === null) break
+    const d = marketDepth(market, l.id)
+    const sellable = d ? d.perDayAvg * share : 0
+    if (sellable <= 0) continue
+    const units = Math.min(sellable, left / l.cost)
+    const g = units * l.cost
+    left -= g
+    kamas += units * l.price
+    lines.push({ id: l.id, name: l.name, cost: l.cost, price: l.price, sellablePerDay: sellable, units, genetons: g })
+  }
+  const absorbed = Math.max(0, genetonsPerDay) - left
+  const tax = clamp(opts.saleTax ?? 0, 0, 1)
+  return {
+    perGeneton: absorbed > 0 ? kamas / absorbed : null,
+    net: absorbed > 0 ? (kamas / absorbed) * (1 - tax) : null,
+    absorbed,
+    surplus: left,
+    lines,
+  }
+}
+
+// ---------- Liquidité du marché (ventes prévues vs volume du serveur) ----------
+
+/** Source de marché : un `MarketSource` ou un contexte de prix (`ctx.market`). */
+export type MarketLike = MarketSource | Pick<PriceContext, 'market'> | null | undefined
+
+function marketOf(src: MarketLike): MarketSource | null {
+  if (!src) return null
+  if ('rows' in src) return src
+  return src.market ?? null
+}
+
+/** Ce que le marché d'un serveur absorbe d'un objet par jour sans saturer. */
+export interface SalesCap {
+  itemId: number
+  name: string
+  /** Part du volume quotidien moyen retenue (0,15 = 15 %, réglage `ServerEntry.maxMarketShare`). */
+  share: number
+  sold24: number
+  sold30: number
+  /** Ventes moyennes par jour (vendus_30j ÷ 30). */
+  perDayAvg: number
+  /** Kamas échangés par jour. */
+  kamasPerDay: number
+  /** Quantité absorbable par jour (fractionnaire : 0,3 = une vente tous les 3 à 4 jours). */
+  perDay: number
+  /** Unités entières par jour. */
+  perDayFloor: number
+  /** Kamas absorbables par jour (`share` × kamas échangés). */
+  kamasCap: number
+  /** Prix du marché (statistique du serveur) ; null = sans vente. */
+  price: number | null
+}
+
+/**
+ * Plafond de ventes d'un objet : `share` (15 % par défaut) du volume quotidien moyen sur 30 jours.
+ * null si l'objet est absent de l'export (liquidité inconnue) ou sans marché.
+ */
+export function salesCap(id: number, src: MarketLike, share = DEFAULT_MAX_MARKET_SHARE): SalesCap | null {
+  const market = marketOf(src)
+  const d = market ? marketDepth(market, id) : null
+  if (!market || !d) return null
+  const s = clamp(share, 0, 1)
+  return {
+    itemId: id,
+    name: marketItemName(id, market.names),
+    share: s,
+    sold24: d.sold24,
+    sold30: d.sold30,
+    perDayAvg: d.perDayAvg,
+    kamasPerDay: d.kamasPerDay,
+    perDay: d.perDayAvg * s,
+    perDayFloor: Math.floor(d.perDayAvg * s + 1e-9),
+    kamasCap: d.kamasPerDay * s,
+    price: snapshotPrice(market, id),
+  }
+}
+
+/** Quantité d'un objet que le marché absorbe par jour (fractionnaire), null = inconnue. */
+export function absorbablePerDay(id: number, src: MarketLike, share = DEFAULT_MAX_MARKET_SHARE): number | null {
+  return salesCap(id, src, share)?.perDay ?? null
+}
+
+export type SaleKind = 'ressource' | 'monture' | 'rune' | 'parchemin' | 'autre'
+
+/** Ventes prévues d'un objet (unités par jour). */
+export interface PlannedSale {
+  itemId: number
+  perDay: number
+  kind?: SaleKind
+}
+
+export interface LiquidityCheck {
+  itemId: number
+  name: string
+  kind: SaleKind
+  /** Unités prévues par jour. */
+  perDay: number
+  /** Absorbables par jour (null = liquidité inconnue). */
+  cap: number | null
+  /** Ventes moyennes du marché par jour. */
+  marketPerDay: number | null
+  share: number
+  /** Part du volume quotidien moyen que prendraient ces ventes (null = inconnue). */
+  marketShare: number | null
+  exceeds: boolean
+  /** Message à afficher (dépassement ou liquidité inconnue), sinon null. */
+  message: string | null
+}
+
+const SALE_KIND_LABELS: Record<SaleKind, string> = { ressource: 'ressource', monture: 'monture', rune: 'rune', parchemin: 'parchemin', autre: 'objet' }
+
+/**
+ * Compare des ventes prévues (unités par jour, regroupées par objet) au volume du marché : dépassement
+ * quand elles excèdent `share` du volume quotidien moyen. Sans marché : liste vide.
+ */
+export function checkPlannedSales(sales: PlannedSale[], src: MarketLike, share = DEFAULT_MAX_MARKET_SHARE): LiquidityCheck[] {
+  const market = marketOf(src)
+  if (!market) return []
+  const merged = new Map<number, PlannedSale>()
+  for (const s of sales) {
+    if (!(s.perDay > 0)) continue
+    const prev = merged.get(s.itemId)
+    merged.set(s.itemId, { itemId: s.itemId, perDay: (prev?.perDay ?? 0) + s.perDay, kind: prev?.kind ?? s.kind })
+  }
+  const out: LiquidityCheck[] = []
+  for (const s of merged.values()) {
+    const cap = salesCap(s.itemId, market, share)
+    const kind = s.kind ?? 'autre'
+    const name = marketItemName(s.itemId, market.names)
+    if (!cap) {
+      out.push({ itemId: s.itemId, name, kind, perDay: s.perDay, cap: null, marketPerDay: null, share, marketShare: null, exceeds: false, message: `${name} : absent de l’export HDV, liquidité inconnue (${fmtD(s.perDay)} ${SALE_KIND_LABELS[kind]}s/jour prévues).` })
+      continue
+    }
+    const exceeds = s.perDay > cap.perDay + 1e-9
+    out.push({
+      itemId: s.itemId,
+      name,
+      kind,
+      perDay: s.perDay,
+      cap: cap.perDay,
+      marketPerDay: cap.perDayAvg,
+      share: cap.share,
+      marketShare: cap.perDayAvg > 0 ? s.perDay / cap.perDayAvg : null,
+      exceeds,
+      message: exceeds
+        ? `${name} : ${fmtD(s.perDay)} par jour prévus pour ≈ ${fmtD(cap.perDay)} absorbables (${pctN(cap.share)} des ${fmtD(cap.perDayAvg)} vendus par jour en moyenne sur ce serveur) — le prix baissera ou les ventes s’étaleront.`
+        : null,
+    })
+  }
+  return out.sort((a, b) => Number(b.exceeds) - Number(a.exceeds) || (b.marketShare ?? 0) - (a.marketShare ?? 0))
+}
+
+/**
+ * Ventes qu'entraînent des montures valorisées (bébés, stériles) : ressource d'extraction × génération,
+ * objet-monture vendu, runes Ga (équivalent en runes : valeur ÷ prix de la rune). `qty` montures.
+ */
+function salesOfFate(speciesId: number, fate: FateKind | 'clone' | null | undefined, qty: number, ctx: PriceContext, grossValue: number | null): PlannedSale[] {
+  const sp = getSpecies(speciesId)
+  if (!sp || qty <= 0) return []
+  if (fate === 'extraction') return sp.extractionQty > 0 ? [{ itemId: FAMILIES[sp.family].extractionItemId, perDay: qty * sp.extractionQty, kind: 'ressource' }] : []
+  if (fate === 'vente') return sp.itemId ? [{ itemId: sp.itemId, perDay: qty, kind: 'monture' }] : []
+  if (fate === 'brisage') {
+    const rune = BRISAGE_RUNE[sp.family]
+    const price = rune === null ? null : marketPrice(rune, ctx).price
+    if (rune === null || price === null || price <= 0 || grossValue === null) return []
+    return [{ itemId: rune, perDay: (qty * grossValue) / price, kind: 'rune' }]
+  }
+  return []
+}
+
+/**
+ * Génétons produits par jour face à ce que la boutique d'Eugène Éton permet d'écouler sur ce serveur
+ * (parchemins et Tourmaline revendus, `share` du volume de chacun, du meilleur échange au moins bon).
+ * Une ligne `kind: 'parchemin'` exprimée en génétons (itemId = meilleur échange) ; null sans génétons ni
+ * prix de la boutique.
+ */
+export function genetonLiquidityCheck(genetonsPerDay: number, src: MarketLike, share = DEFAULT_MAX_MARKET_SHARE): LiquidityCheck | null {
+  const market = marketOf(src)
+  if (!market || !(genetonsPerDay > 0)) return null
+  const m = genetonValueFromMarket(market)
+  if (!m) return null
+  let cap = 0
+  let perDayAvg = 0
+  for (const l of m.lines) {
+    if (l.price === null) continue
+    const d = marketDepth(market, l.id)
+    if (!d) continue
+    cap += d.perDayAvg * share * l.cost
+    perDayAvg += d.perDayAvg * l.cost
+  }
+  const exceeds = genetonsPerDay > cap + 1e-9
+  return {
+    itemId: m.best.id,
+    name: 'Génétons (parchemins de la boutique)',
+    kind: 'parchemin',
+    perDay: genetonsPerDay,
+    cap,
+    marketPerDay: perDayAvg,
+    share,
+    marketShare: perDayAvg > 0 ? genetonsPerDay / perDayAvg : null,
+    exceeds,
+    message: exceeds
+      ? `Génétons : ${fmtD(genetonsPerDay)} par jour pour ≈ ${fmtD(cap)} écoulables en parchemins et Tourmaline sur ce serveur (${pctN(share)} du volume de chaque objet de la boutique) — leur valeur baissera.`
+      : null,
+  }
 }
 
 // ---------- Lot de fécondité : modèle idéal, typique (planificateur) ou vos lots ----------
@@ -1443,7 +1931,8 @@ interface Bounded {
 const boundedOf = (v: MountValuation): Bounded => ({
   value: v.best,
   low: v.best ?? 0,
-  high: v.complete && v.best !== null ? v.best : null,
+  // Vente seulement plafonnée par le marché (HDV mixte) : borne haute connue (`bestHigh`).
+  high: v.complete && v.best !== null ? v.best : (v.bestHigh ?? null),
   complete: v.complete && v.best !== null,
 })
 
@@ -1552,8 +2041,13 @@ export interface CycleConfig {
   batchProfile?: BatchProfile
   /** Parents engagés (défaut 'opportunite'). */
   parentValue?: ParentValueMode
-  /** Origine de la valeur du généton (défaut 'defaut' : estimation de la recherche). */
-  genetonOrigin?: 'joueur' | 'defaut'
+  /** Origine de la valeur du généton (défaut 'defaut' : estimation de la recherche ; 'marche' : HDV du serveur). */
+  genetonOrigin?: 'joueur' | 'marche' | 'defaut'
+  /**
+   * Part du volume quotidien moyen d'un objet que vos ventes peuvent prendre (défaut 0,15 ; réglage du
+   * serveur `maxMarketShare`) : au-delà, avertissement de liquidité (`liquidity`).
+   */
+  maxMarketShare?: number
   /** Espèces de l'objectif et de son chemin (heuristique Optimakina « étape de l'objectif »). */
   goalPath?: Iterable<number>
   ctx: PriceContext
@@ -1634,8 +2128,11 @@ export interface RevenueLine {
   note?: string
   /** Valeur reposant sur une estimation (prix interpolé, clonage, valeur du généton par défaut). */
   estimated?: boolean
-  /** Vente sans prix utilisable : référence affichée (nette, par unité), jamais comptée. */
-  reference?: { net: number; reason: string }
+  /**
+   * Vente sans prix utilisable : référence affichée (nette, par unité), jamais comptée. `kind: 'marche'` :
+   * prix de l'objet-monture à l'HDV du serveur (plafond de vente, « HDV mixte »).
+   */
+  reference?: { net: number; reason: string; kind?: MountPriceReference['kind'] }
   low: number
   high: number | null
 }
@@ -1716,6 +2213,12 @@ export interface CycleResult {
   missingSpecies: number[]
   assumptions: string[]
   warnings: string[]
+  /**
+   * Ventes qu'entraîne le cycle répété en continu (ressources extraites, montures vendues, runes,
+   * parchemins des génétons), par jour, face au volume du marché du serveur (`ctx.market`) ; vide sans
+   * marché importé. Les dépassements sont aussi dans `warnings`.
+   */
+  liquidity: LiquidityCheck[]
 }
 
 function sumCat(lines: MaterialLine[], cat: CostCategory): CategoryTotal {
@@ -2059,7 +2562,7 @@ export function cycleProfit(cfg: CycleConfig): CycleResult {
       confidence: v.confidence,
       note: o.isTarget ? 'Génération cible' : undefined,
       estimated: v.estimated,
-      reference: !b.complete && v.sale.reference ? { net: v.sale.reference.net, reason: v.sale.reference.reason } : undefined,
+      reference: !b.complete && v.sale.reference ? { net: v.sale.reference.net, reason: v.sale.reference.reason, kind: v.sale.reference.kind } : undefined,
       low: b.low * qty,
       high: b.high === null ? null : b.high * qty,
     })
@@ -2081,7 +2584,7 @@ export function cycleProfit(cfg: CycleConfig): CycleResult {
         confidence: v.confidence,
         note: v.note,
         estimated: v.estimated,
-        reference: !v.complete && ref && v.fate !== 'clone' ? { net: ref.net, reason: ref.reason } : undefined,
+        reference: !v.complete && ref && v.fate !== 'clone' ? { net: ref.net, reason: ref.reason, kind: ref.kind } : undefined,
         low: v.low * st.qty,
         high: v.high === null ? null : v.high * st.qty,
       })
@@ -2090,7 +2593,8 @@ export function cycleProfit(cfg: CycleConfig): CycleResult {
   if (expectedGenetons > 0) {
     const g = PRICES_DEFAULT.genetons
     const unit = cfg.genetonValue * (1 - tax)
-    const fromDefault = (cfg.genetonOrigin ?? 'defaut') === 'defaut'
+    const origin = cfg.genetonOrigin ?? 'defaut'
+    const fromDefault = origin === 'defaut'
     revenue.push({
       key: 'genetons',
       kind: 'genetons',
@@ -2099,9 +2603,9 @@ export function cycleProfit(cfg: CycleConfig): CycleResult {
       unitValue: unit,
       subtotal: expectedGenetons * unit,
       complete: true,
-      confidence: fromDefault ? g.confidence : 'joueur',
+      confidence: fromDefault ? g.confidence : origin === 'marche' ? 'medium' : 'joueur',
       estimated: fromDefault,
-      note: `Liés au compte : valeur via les parchemins d’Eugène Éton revendus à l’HDV (${fmtK(cfg.genetonValue)} brut, nette de taxe)${fromDefault ? ` — estimation de la recherche, fourchette ${fmtK(g.range[0])} → ${fmtK(g.range[1])}` : ''}.`,
+      note: `Liés au compte : valeur via les parchemins d’Eugène Éton revendus à l’HDV (${fmtK(cfg.genetonValue)} brut, nette de taxe)${fromDefault ? ` — estimation de la recherche, fourchette ${fmtK(g.range[0])} → ${fmtK(g.range[1])}` : origin === 'marche' ? ' — meilleur échange de la boutique au prix du marché du serveur' : ''}.`,
       low: expectedGenetons * unit,
       high: expectedGenetons * unit,
     })
@@ -2169,6 +2673,24 @@ export function cycleProfit(cfg: CycleConfig): CycleResult {
     profit: profitR,
     kamasPerHour: { low: perHour(profitR.low), high: perHour(profitR.high) },
     roi: { low: roiOf(revR.low, costR.high), high: roiOf(revR.high, costR.low) },
+  }
+
+  // Liquidité : ventes du cycle répété en continu face au volume du marché du serveur.
+  let liquidity: LiquidityCheck[] = []
+  const market = ctx.market ?? null
+  if (market && total > 0) {
+    const cyclesPerDay = 86_400 / total
+    const sales: PlannedSale[] = []
+    for (const l of revenue) {
+      if (l.speciesId === undefined || (l.kind !== 'bebe' && l.kind !== 'sterile')) continue
+      const gross = l.unitValue === null ? null : tax < 1 ? l.unitValue / (1 - tax) : null
+      sales.push(...salesOfFate(l.speciesId, l.fate, l.qty * cyclesPerDay, ctx, gross))
+    }
+    const share = cfg.maxMarketShare ?? DEFAULT_MAX_MARKET_SHARE
+    liquidity = checkPlannedSales(sales, market, share)
+    const gl = genetonLiquidityCheck(expectedGenetons * cyclesPerDay, market, share)
+    if (gl) liquidity.push(gl)
+    for (const l of liquidity) if (l.exceeds && l.message) warnings.push(`Liquidité (cycle répété en continu) — ${l.message}`)
   }
 
   // Coût par bébé cible : brut (dépenses) et net (formule de la recherche).
@@ -2266,6 +2788,7 @@ export function cycleProfit(cfg: CycleConfig): CycleResult {
     missingSpecies,
     assumptions: assumptions.filter(Boolean),
     warnings,
+    liquidity,
   }
 }
 
@@ -2312,6 +2835,13 @@ export interface RankingOptions {
   rules: Ruleset
   jobLevel: number
   genetonValue: number
+  /** Part du volume quotidien moyen vendable (défaut 0,15 ; réglage du serveur `maxMarketShare`). */
+  maxMarketShare?: number
+  /**
+   * Accouplements par jour pour la vérification de liquidité. Défaut : plein régime = enclos débloqués
+   * × ⌊lot ÷ 2⌋ couples par tour, tours de fécondité + XP restante du modèle de lot, en continu.
+   */
+  matingsPerDay?: number
 }
 
 export interface CrossingRank {
@@ -2353,6 +2883,34 @@ export interface CrossingRank {
   jobXp: number
   missingSpecies: number[]
   missingItems: number[]
+  /**
+   * Avec un marché importé (`ctx.market`) : ventes qu'entraînerait ce croisement à `matingsPerDay`
+   * accouplements par jour (bébés et stériles selon leur meilleur devenir, génétons) face au volume du
+   * serveur. Absent sans marché.
+   */
+  liquidity?: LiquidityCheck[]
+  /** Un objet dépasse ce que le marché absorbe à ce rythme. */
+  liquidityExceeded?: boolean
+  /** Rythme retenu pour `liquidity` (accouplements par jour). */
+  matingsPerDay?: number
+}
+
+/**
+ * Accouplements par jour à plein régime : enclos débloqués × ⌊lot ÷ 2⌋ couples, un tour = fécondité
+ * du lot + XP restante après la phase d'amour (même calcul que `cycleProfit`), en continu.
+ */
+export function fullRateMatingsPerDay(opts: { jobLevel: number; batchSize: number; tier: FuelTier; xpTier?: FuelTier; parentLevel: number; parentStartLevel?: number; profile: BatchProfile; rules: Ruleset }): number {
+  const rules = opts.rules
+  const batchSize = clamp(Math.floor(opts.batchSize || 10), 1, 10)
+  const pairsPerRound = unlockedPaddockCount(opts.jobLevel) * Math.max(1, Math.floor(batchSize / 2))
+  const start = clamp(Math.floor(opts.parentStartLevel ?? 1), 1, 200)
+  const xp = mountXpBetween(start, clamp(Math.floor(opts.parentLevel || 1), start, 200))
+  const xpTier = opts.xpTier ?? opts.tier
+  const tierM = maintainedTier('mangeoire', xp, xpTier, rules)
+  const overlap = xpOverlapPoints(opts.tier, tierM, rules, opts.profile.points.dragofesse ?? MOUNT_STAT_MAX)
+  const levelSec = (Math.max(0, xp - overlap) / rules.gaugeRatePerTick[tierM]) * TICK_SECONDS
+  const perRound = opts.profile.seconds + levelSec
+  return perRound > 0 ? (pairsPerRound * 86_400) / perRound : 0
 }
 
 /**
@@ -2399,6 +2957,11 @@ export function crossingRanking(family: FamilyId, opts: RankingOptions): Crossin
     return s
   }
   const makinaCache = new Map<number, MakinaCost>()
+  const market = ctx.market ?? null
+  const share = opts.maxMarketShare ?? DEFAULT_MAX_MARKET_SHARE
+  const rate = market
+    ? (opts.matingsPerDay ?? fullRateMatingsPerDay({ jobLevel: opts.jobLevel, batchSize, tier: opts.tier, xpTier: opts.xpTier, parentLevel, parentStartLevel: startLevel, profile, rules }))
+    : 0
   const out: CrossingRank[] = []
   for (const child of speciesOfFamily(family, { breedableOnly: true })) {
     for (const [a, b] of child.crossings) {
@@ -2469,6 +3032,25 @@ export function crossingRanking(family: FamilyId, opts: RankingOptions): Crossin
         low: costHigh === null || Number.isNaN(revLow) ? null : revLow - costHigh,
         high: revHigh === null || Number.isNaN(revHigh) ? null : revHigh - (fertPair ?? 0) - (lvlPair ?? 0) - mkLow,
       }
+      // Liquidité à plein régime (marché importé seulement).
+      let liquidity: LiquidityCheck[] | undefined
+      if (market && rate > 0) {
+        const sales: PlannedSale[] = []
+        const grossOf = (net: number | null) => (net === null || tax >= 1 ? null : net / (1 - tax))
+        for (const o of r.outcomes) {
+          const v = val(o.speciesId, 1, 'fertile')
+          const gross = v.bestKind === 'brisage' ? grossOf(v.brisage.net) : null
+          sales.push(...salesOfFate(o.speciesId, v.bestKind, o.probability * r.babies * rate, ctx, gross))
+        }
+        if (includeSteriles)
+          for (const [id, st] of [[a, sA], [b, sB]] as [number, SterileOption][]) {
+            const fate = st.fate === 'clone' ? null : st.fate
+            sales.push(...salesOfFate(id, fate, rate, ctx, fate === 'brisage' ? grossOf(st.direct.brisage.net) : null))
+          }
+        liquidity = checkPlannedSales(sales, market, share)
+        const gl = genetonLiquidityCheck(r.expectedGenetons * rate, market, share)
+        if (gl) liquidity.push(gl)
+      }
       out.push({
         key: `${a}-${b}`,
         child: child.id,
@@ -2498,6 +3080,7 @@ export function crossingRanking(family: FamilyId, opts: RankingOptions): Crossin
         jobXp: r.jobXp,
         missingSpecies: eco.missingSpecies,
         missingItems: uniq([...(fert.complete ? [] : fert.missing), ...(lvl.complete ? [] : lvl.missing), ...(usedMk && !usedMk.complete ? usedMk.missing : [])]),
+        ...(liquidity ? { liquidity, liquidityExceeded: liquidity.some((l) => l.exceeds), matingsPerDay: rate } : {}),
       })
     }
   }

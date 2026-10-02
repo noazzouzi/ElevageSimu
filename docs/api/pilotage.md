@@ -11,6 +11,10 @@ dans `src/domain/advisor.test.ts` (47 tests, états synthétiques à heure fixe)
 Pages associées : `src/ui/pages/HomePage.tsx` (`#/accueil`, page d'accueil) et
 `src/ui/pages/PlanPage.tsx` (`#/plan?onglet=chemin|phase|strategie|routines|erreurs`).
 
+**v2 — modes de rentabilité** (`docs/api/modes.md`) : le conseiller, l'accueil et le plan suivent le mode
+actif du profil (`settings.mode`, résolu par `useActiveMode()` avec la dernière comparaison enregistrée) :
+voir « Mode de rentabilité » plus bas. `progression` (défaut) = comportement d'avant les modes.
+
 ## Utilisation type
 
 ```ts
@@ -19,6 +23,7 @@ const input: AdvisorInput = {
   priceCtx: usePriceContext(), mountPrices, genetonValue: usePrices((s) => s.genetonValue), pricedItems,
   journalXp: { xp: journalJobXp(useJournal((s) => s.entries), settings.jobLevelUpdatedAt).xp },
   goalSim: useGoalSimulation(goalProgramConfig(settings, rules)).summary,        // null pendant le calcul
+  mode: useActiveMode(), maxMarketShare: useActiveServer().maxMarketShare,          // mode de rentabilité (v2)
 }
 // Lourd (≈ 0,3 à 1 s pour 250 montures) : mémorisé d'une visite à l'autre (mêmes références de stores, même jour).
 const analysis = analyzeStateCached({ ...input, now: midi_du_jour, paddocks: [], paddockPlans: {} })
@@ -41,9 +46,9 @@ niveaux de jauges (lus par `adviseNow`). La simulation de l'objectif s'applique 
 | `AdvisorSettings` | Sous-ensemble structurel de `useSettings` (jobLevel, family, goalSpeciesId, goal, preferredTier, xpFiller, parentTargetLevel, useOptimakina, saleTax, useDefaultPrices) + facultatifs **`accounts`** (captures par combat), **`hoursPerDay`** (passages par jour du calendrier), **`checkIntervalMinutes`** (durée minimale d'une étape : `minStepSeconds` de la répartition, comme la page Enclos), **`almanaxGaugeDoubling`** (doublement Almanax des jauges appliqué aux plans/projections ; défaut non). |
 | `AdvisorPaddockPlan` | `PlanSchedule & { paddockId, tier, mountIds, tiers?, rulesetId? }` (= `ActivePaddockPlan` du store). |
 | `AdvisorPaddock` | `PaddockState & { gaugeUpdatedAt?, activeHistory?, gaugeRulesets? }` (= `PaddockRecord` du store) : saisie jauge par jauge, jauges actives successives, version des règles de chaque saisie (niveaux d'une autre version → conseil « niveaux de jauges à vérifier », ni recharge ni « jauge vide »). |
-| `AdvisorInput` | `{ now, settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue?, pricedItems?, journalXp?, goalSim? }`. `journalXp = { xp }` : XP d'Éleveur du journal depuis `settings.jobLevelUpdatedAt`. `goalSim` : `ProgramSummary` de la simulation de l'objectif. |
-| `AdvisorAnalysis` | `{ day, almanax, unlocked, summary, fates, pairs, pairCandidates, waiting, assignment, freeSlots, goal, capture, job, fertility, genetonValue, expectedGenetons, matingJobXp, missingPrices, unpricedMounts, errors }`. `waiting: WaitingPartner[]` = montures de l'objectif mises de côté (`{mountId, partnerId, targetSpecies}`, `PairSuggestion.waitFor`). `errors: AdvisorSectionError[]` = `{section, label, message}` des sections en panne. `expectedGenetons` = Σ `result.expectedGenetons` (bébés déjà comptés). |
-| `AdvisorSection`, `ADVISOR_SECTION_LABELS` | `'summary' \| 'pairs' \| 'fates' \| 'assignment' \| 'goal' \| 'job' \| 'costs' \| 'onboarding' \| 'alarms' \| 'gauges' \| 'almanax' \| 'mating' \| 'exits' \| 'placement' \| 'captures' \| 'prices'` et libellés FR. |
+| `AdvisorInput` | `{ now, settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue?, pricedItems?, journalXp?, goalSim?, mode?, maxMarketShare? }`. `mode: ActiveMode \| null` (modes.ts) : mode de rentabilité actif ; `maxMarketShare` : part du volume quotidien vendable du serveur (0,15). `journalXp = { xp }` : XP d'Éleveur du journal depuis `settings.jobLevelUpdatedAt`. `goalSim` : `ProgramSummary` de la simulation de l'objectif. |
+| `AdvisorAnalysis` | `{ day, almanax, unlocked, summary, fates, pairs, pairCandidates, waiting, assignment, freeSlots, goal, capture, job, fertility, genetonValue, expectedGenetons, matingJobXp, missingPrices, unpricedMounts, errors }`. `waiting: WaitingPartner[]` = montures de l'objectif mises de côté (`{mountId, partnerId, targetSpecies}`, `PairSuggestion.waitFor`). `errors: AdvisorSectionError[]` = `{section, label, message}` des sections en panne. `expectedGenetons` = Σ `result.expectedGenetons` (bébés déjà comptés). **`mode: ModeAnalysis \| null`** = `{active, family, goalSpeciesId (espèce visée par la chaîne du mode), captureShares, overridden (sorts changés par le mode)}` (null sans mode ou en progression). |
+| `AdvisorSection`, `ADVISOR_SECTION_LABELS` | `'summary' \| 'pairs' \| 'fates' \| 'assignment' \| 'goal' \| 'job' \| 'costs' \| 'onboarding' \| 'alarms' \| 'gauges' \| 'almanax' \| 'mating' \| 'exits' \| 'placement' \| 'captures' \| 'prices' \| 'mode'` et libellés FR. |
 
 ## Analyse (`analyzeState`) : ordre et branchements
 
@@ -84,6 +89,38 @@ regroupe dans un encadré avec « Télécharger une sauvegarde ».
 | Métier : niveau estimé d'après le journal (« nouvel enclos probablement débloqué » : priorité 2), XP restante (journal déduit), meilleur craft, jalon, Almanax | 2–4 | `jobStatus` |
 | Prix manquants, objectif atteint / à choisir / impossible | 2–4 | — |
 
+## Mode de rentabilité (v2)
+
+Sans mode, ou en `progression` : comportement inchangé (objectif de génération). En **rush**, **brisage** ou
+**vente** (`input.mode`, stratégie de la dernière comparaison, sinon stratégie par défaut signalée) :
+
+- **Réglages effectifs** de l'analyse : famille du mode ; espèce visée = cible de la stratégie (rush, vente :
+  `params.targetSpeciesIds[0]`, sinon `cheapestOfGeneration(famille, G)`) pour l'appariement (`rankPairs`)
+  et le sort des montures (`recommendFates`) ; objectif « kamas » ; palier, niveau des parents et Optimakina
+  de la stratégie (rush, vente). L'objectif de génération (`goalStatus`) n'est pas calculé (`goal = null`).
+- **Sorts pilotés par le mode** (après `recommendFates`, comme `mountFate` mais selon la stratégie) :
+  - rush : une monture de la famille de génération ≥ G (cible) est **extraite au lieu d'être gardée** ;
+    déjà prévue dans un accouplement (plan ou bébé gratuit) : « Accoupler puis extraire » ; féconde avec une
+    autre féconde produite de sexe opposé (si « accoupler avant d'extraire ») : accouplées ensemble puis
+    extraites ; fertile : « Féconder, accoupler puis extraire » (gardée pour le prochain lot) ; sans
+    « accoupler avant » : extraction directe. Les générations sous la cible gardent le sort de la chaîne
+    (garder, accoupler, **cloner** pour recycler les stériles) ;
+  - vente : même chose, mais **vendue** quand votre prix, sinon le prix prudent du marché (`conservativeMountMarketPrice`,
+    « HDV mixte », `complete: false`), sinon le prix par défaut dépasse l'extraction ;
+  - brisage : chaque monture de la famille est **montée au niveau de brisage puis brisée** (`monter`,
+    `targetLevel`, coût de Mangeoire du lot) ; une G ≥ 2 qui rapporte plus à l'extraction est extraite ; un
+    accouplement prévu au plan est gardé (« Accoupler puis briser »).
+  Les autres familles et les séniles gardent leur sort.
+- **Conseils** : « Mode … : routine du jour » (`category: 'objectif'`, priorité 2 si stratégie non calculée
+  ou périmée, sinon 3) : ventes des ressources **dans la limite du volume** (part du marché du serveur),
+  carburant à acheter/fabriquer par jour et par semaine, Optimakinas, génétons, montures dont le sort suit
+  le mode, bénéfice attendu (`amount`) ; « Calculer / Recalculer » (lien `modes`) ; `auto` sans calcul :
+  « Mode automatique : comparez les modes de rentabilité ». **Captures** : famille du mode, couleurs de la
+  routine (ou du plan de production), nombre = places libres, sexe en déficit par couleur (brisage sans
+  accouplement : sexe indifférent), combats, zone, filet. Pas de conseil d'objectif (« choisir une monture
+  visée »). Accouplements et sorties mentionnent le mode.
+- `analyzeStateCached` compare aussi `activeModeKey(mode)` et `maxMarketShare`.
+
 ## Fonctions
 
 | Signature | Rôle |
@@ -116,10 +153,19 @@ garde les 12 derniers résultats en mémoire (non persistés) et les partage ent
 
 ## Pages
 
+- **Accueil** (v2) : carte du **mode actif** (stratégie, bénéfice net attendu par jour, résumé et routine du
+  premier passage avec les places libres du jour, ventes sous le plafond ; calcul absent ou périmé
+  signalé) ; en progression, bandeau discret « Comparer les modes ». Prix HDV des montures (`market`) et
+  généton du marché passés au conseiller.
 - **Accueil** : `analyzeStateCached` ; simulation de l'objectif (si non atteint) ; KPI « Niveau d'Éleveur »
   au niveau estimé (« saisi : niv. N, +X XP au journal ») ; objectif « ≈ N captures restantes (simulation) »
   ou « jusqu'à ≈ N (borne haute) » ; « Prochaine alarme » signale un plan terminé à appliquer ; encadré
   « Une partie des conseils n'a pas pu être calculée » (sections `erreur`) avec sauvegarde.
+- **Plan** (v2) : bandeau du mode actif ; en rush/brisage/vente, l'onglet « Chemin » devient la **production
+  du mode** (indicateurs, chaîne de croisements avec chances et Optimakina, accouplements par jour, couleurs
+  à capturer — `productionPlan` si la comparaison n'est pas calculée), « Stratégie » commence par la
+  stratégie du mode (paramètres et pourquoi), « Routines » par la **routine du mode** passage par passage
+  (cases `routine:<jour>:mode-<id>-<passage>`).
 - **Plan** : effort attendu en deux colonnes — **simulation (retenue)** et **modèle analytique (référence,
   borne haute)** — avec « Pourquoi deux chiffres ? » ; calendrier **depuis votre étable**
   (`remainingProgram`, passages par jour d'après le temps de jeu, coût matériel restant au prorata) ;

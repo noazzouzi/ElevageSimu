@@ -15,7 +15,9 @@ import BreedingPage from './BreedingPage'
 import GeneticsPage from './GeneticsPage'
 import GuidePage from './GuidePage'
 import HomePage from './HomePage'
+import InvestmentPage from './InvestmentPage'
 import JobPage from './JobPage'
+import ModesPage from './ModesPage'
 import MountsPage from './MountsPage'
 import OptimizerPage from './OptimizerPage'
 import PaddocksPage from './PaddocksPage'
@@ -35,6 +37,8 @@ const CASES: { id: string; Page: ComponentType; title: string }[] = [
   { id: 'genetique', Page: GeneticsPage, title: 'Génétique' },
   { id: 'optimiseur', Page: OptimizerPage, title: 'Optimiseur de stratégie' },
   { id: 'rentabilite', Page: ProfitPage, title: 'Rentabilité' },
+  { id: 'modes', Page: ModesPage, title: 'Modes de rentabilité' },
+  { id: 'investissement', Page: InvestmentPage, title: 'Investissement' },
   { id: 'metier', Page: JobPage, title: 'Métier Éleveur' },
   { id: 'prix', Page: PricesPage, title: 'Prix' },
   { id: 'guide', Page: GuidePage, title: 'Guide & règles' },

@@ -1,0 +1,52 @@
+/* Accueil : carte du mode de rentabilité actif (préfixe hp-mode). */
+.hp-mode-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 8px 14px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+  font-size: 0.92rem;
+}
+.hp-mode .card-title h2 {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.hp-mode-kpis {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) 1fr;
+  gap: 12px 20px;
+  align-items: center;
+}
+.hp-mode-strategy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hp-mode-today {
+  margin-top: 12px;
+}
+.hp-mode-today h3 {
+  font-size: 0.95rem;
+  margin: 0 0 6px;
+}
+.hp-mode-today ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  font-size: 0.92rem;
+}
+@media (max-width: 720px) {
+  .hp-mode-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+.hp-mode-note {
+  font-size: 0.82rem;
+  margin: -2px 0 6px;
+}

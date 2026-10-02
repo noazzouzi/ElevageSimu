@@ -8,6 +8,7 @@ import {
   appKeys,
   backupFileName,
   exportAll,
+  exportProfile,
   importAll,
   isAppKey,
   parseBackup,
@@ -17,6 +18,7 @@ import {
   storeLabel,
   summarizeBackup,
   validateBackup,
+  type BackupFile,
   type StorageLike,
 } from './backup'
 
@@ -417,5 +419,142 @@ describe('summarizeBackup', () => {
 describe('backupFileName', () => {
   it('produit un nom daté en heure locale', () => {
     expect(backupFileName(new Date(2026, 9, 2, 14, 5))).toBe('elevagesimu-sauvegarde-2026-10-02-14h05.json')
+  })
+})
+
+// ---------- v2 : profils et serveurs ----------
+
+const REG = {
+  version: 1,
+  activeProfileId: 'alpha',
+  profiles: [
+    { id: 'alpha', name: 'Alpha', serverId: 'tylezia', createdAt: 1 },
+    { id: 'beta', name: 'Beta', serverId: 'salar', createdAt: 2 },
+  ],
+  servers: [
+    { id: 'tylezia', name: 'Tylezia', createdAt: 1, priceStat: 'auto', maxMarketShare: 0.15 },
+    { id: 'salar', name: 'Salar', createdAt: 1, priceStat: 'median30', maxMarketShare: 0.15 },
+  ],
+}
+const pricesOf = (p: number) => JSON.stringify({ state: { items: { '1844': p }, mounts: {}, generations: {}, genetonValue: null, updatedAt: 1 }, version: 1 })
+const market = JSON.stringify({ state: { snapshot: { format: 'elevagesimu-hdv', version: 1, serverName: 'Tylezia', exportDate: '2026-10-02', importedAt: 5, source: 'x.csv', rows: { '1844': [17, 18, 28, 39154, 366066, 1554575, 880925] }, names: {}, stats: { lines: 1, read: 1, ignored: 0, invalid: 0, duplicates: 0, relevant: 1, recognized: 1, useful: 1, coverage: [], missing: [], missingCount: 0 } } }, version: 1 })
+
+function v2Storage() {
+  return new FakeStorage({
+    'elevagesimu:profiles': JSON.stringify(REG),
+    'elevagesimu:p:alpha:settings': JSON.stringify(settings),
+    'elevagesimu:p:alpha:inventory': JSON.stringify(inventory),
+    'elevagesimu:p:alpha:metier': JSON.stringify({ tab: 'plan' }),
+    'elevagesimu:p:beta:inventory': JSON.stringify({ state: { mounts: [mountOf('b-1')] }, version: 1 }),
+    'elevagesimu:s:tylezia:prices': pricesOf(30),
+    'elevagesimu:s:tylezia:market': market,
+    'elevagesimu:s:salar:prices': pricesOf(99),
+    'elevagesimu:enclos-notifications': 'oui',
+  })
+}
+
+describe('sauvegardes v2 (profils et serveurs)', () => {
+  it('tout : registre, profils, serveurs ; aller-retour identique ; libellés avec les noms', () => {
+    const source = v2Storage()
+    const b = exportAll(source, new Date('2026-10-02T12:00:00Z'))
+    expect(b.version).toBe(2)
+    expect(b.scope).toEqual({ kind: 'all' })
+    const v = validateBackup(JSON.parse(serializeBackup(b)))
+    expect(v.ok && v.warnings).toEqual([])
+    const target = new FakeStorage({ 'elevagesimu:p:vieux:inventory': '{}' })
+    const r = importAll(b, { storage: target, reload: false })
+    expect(r.ok).toBe(true)
+    for (const k of appKeys(source)) expect(target.getItem(k)).toBe(source.getItem(k))
+    expect(target.getItem('elevagesimu:p:vieux:inventory')).toBeNull()
+    const lines = Object.fromEntries(summarizeBackup(b).map((l) => [l.key, l]))
+    expect(lines['elevagesimu:profiles'].detail).toBe('2 profils, 2 serveurs')
+    expect(lines['elevagesimu:p:alpha:inventory']).toMatchObject({ label: 'Montures (étable, enclos, inventaire) — profil Alpha', detail: '3 montures' })
+    expect(lines['elevagesimu:s:tylezia:market']).toMatchObject({ label: 'Prix du marché (export HDV) — serveur Tylezia', detail: '1 objet, export du 02/10/2026' })
+    expect(lines['elevagesimu:p:alpha:metier'].label).toBe('Préférences de la page Métier — profil Alpha')
+    const usage = storageUsage(source)
+    expect(usage.entries.find((e) => e.key === 'elevagesimu:s:salar:prices')?.label).toBe('Prix saisis — serveur Salar')
+  })
+
+  it('valide et normalise les stores de n’importe quel profil ou serveur ; refuse un registre plus récent', () => {
+    const b = exportAll(v2Storage())
+    const bad = { ...b, stores: { ...b.stores, 'elevagesimu:s:tylezia:prices': JSON.parse(pricesOf(-5)) } }
+    const v = validateBackup(bad)
+    expect(v.ok && v.warnings.join(' ')).toMatch(/Prix saisis — serveur tylezia : 1 prix invalide retiré/)
+    expect(validateBackup({ ...b, stores: { ...b.stores, 'elevagesimu:p:alpha:inventory': { ...inventory, version: 99 } } }).ok).toBe(false)
+    expect(validateBackup({ ...b, stores: { ...b.stores, 'elevagesimu:profiles': { ...REG, version: 5 } } }).ok).toBe(false)
+    const unreadable = validateBackup({ ...b, stores: { ...b.stores, 'elevagesimu:profiles': 'cassé' } })
+    expect(unreadable.ok && unreadable.warnings.join(' ')).toMatch(/Registre des profils illisible/)
+    expect(validateBackup({ ...b, scope: { kind: 'profil' } }).ok).toBe(false)
+  })
+
+  it('un seul profil : ses données et celles de son serveur, sans les autres profils', () => {
+    const b = exportProfile('alpha', v2Storage(), new Date('2026-10-02T12:00:00Z'))
+    expect(b?.scope).toMatchObject({ kind: 'profile', profile: { id: 'alpha', name: 'Alpha' }, server: { id: 'tylezia', name: 'Tylezia' } })
+    expect(Object.keys(b?.stores ?? {})).toEqual([
+      'elevagesimu:p:alpha:inventory',
+      'elevagesimu:p:alpha:metier',
+      'elevagesimu:p:alpha:settings',
+      'elevagesimu:s:tylezia:market',
+      'elevagesimu:s:tylezia:prices',
+    ])
+    expect(exportProfile('inconnu', v2Storage())).toBeNull()
+    expect(backupFileName(new Date(2026, 9, 2, 14, 5), 'Alpha')).toBe('elevagesimu-profil-alpha-2026-10-02-14h05.json')
+    // Une clé d'un autre profil glissée dans le fichier est ignorée.
+    const v = validateBackup({ ...b, stores: { ...b?.stores, 'elevagesimu:p:beta:inventory': {} } })
+    expect(v.ok && v.keys).not.toContain('elevagesimu:p:beta:inventory')
+  })
+
+  it('restaurer un profil sur un autre appareil : profil et serveur créés, profil ouvert, autres profils intacts', () => {
+    const b = exportProfile('alpha', v2Storage())
+    const target = new FakeStorage({
+      'elevagesimu:profiles': JSON.stringify({ ...REG, activeProfileId: 'beta', profiles: [REG.profiles[1]], servers: [REG.servers[1]] }),
+      'elevagesimu:p:beta:inventory': JSON.stringify({ state: { mounts: [] }, version: 1 }),
+    })
+    const r = importAll(serializeBackup(b as BackupFile), { storage: target, reload: false })
+    expect(r).toMatchObject({ ok: true, profileId: 'alpha' })
+    const reg = JSON.parse(target.getItem('elevagesimu:profiles') ?? 'null')
+    expect(reg.activeProfileId).toBe('alpha')
+    expect(reg.profiles.map((p: { id: string }) => p.id)).toEqual(['beta', 'alpha'])
+    expect(reg.servers.map((s: { id: string }) => s.id)).toEqual(['salar', 'tylezia'])
+    expect(target.getItem('elevagesimu:p:alpha:inventory')).toBe(JSON.stringify(inventory))
+    expect(target.getItem('elevagesimu:s:tylezia:prices')).toBe(pricesOf(30))
+    expect(target.getItem('elevagesimu:p:beta:inventory')).not.toBeNull()
+  })
+
+  it('restaurer un profil existant le remplace ; le serveur existant garde ses prix ; « comme nouveau profil » crée une copie', () => {
+    const b = exportProfile('alpha', v2Storage()) as BackupFile
+    const target = v2Storage()
+    target.setItem('elevagesimu:p:alpha:journal', JSON.stringify({ state: { entries: [] }, version: 1 }))
+    target.setItem('elevagesimu:s:tylezia:prices', pricesOf(31))
+    const r = importAll(b, { storage: target, reload: false })
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.warnings.join(' ')).toMatch(/Serveur « Tylezia » déjà présent/)
+    expect(target.getItem('elevagesimu:p:alpha:journal')).toBeNull()
+    expect(target.getItem('elevagesimu:s:tylezia:prices')).toBe(pricesOf(31))
+
+    const copy = importAll(b, { storage: target, reload: false, asNewProfile: true })
+    expect(copy).toMatchObject({ ok: true, profileId: 'alpha-2' })
+    const reg = JSON.parse(target.getItem('elevagesimu:profiles') ?? 'null')
+    expect(reg.profiles.find((p: { id: string }) => p.id === 'alpha-2')).toMatchObject({ name: 'Alpha (2)', serverId: 'tylezia' })
+    expect(target.getItem('elevagesimu:p:alpha-2:inventory')).toBe(JSON.stringify(inventory))
+    expect(target.getItem('elevagesimu:p:alpha:inventory')).toBe(JSON.stringify(inventory))
+  })
+
+  it('fusionner une sauvegarde complète : registres fusionnés, profil ouvert gardé ; une sauvegarde v1 va dans le profil ouvert', () => {
+    const target = new FakeStorage({
+      'elevagesimu:profiles': JSON.stringify({ ...REG, activeProfileId: 'gamma', profiles: [{ id: 'gamma', name: 'Gamma', serverId: 'salar', createdAt: 3 }], servers: [REG.servers[1]] }),
+    })
+    expect(importAll(exportAll(v2Storage()), { storage: target, mode: 'merge', reload: false }).ok).toBe(true)
+    const reg = JSON.parse(target.getItem('elevagesimu:profiles') ?? 'null')
+    expect(reg.activeProfileId).toBe('gamma')
+    expect(reg.profiles.map((p: { id: string }) => p.id).sort()).toEqual(['alpha', 'beta', 'gamma'])
+
+    const v1 = { app: BACKUP_APP, version: 1, exportedAt: '2026-01-01T00:00:00Z', stores: { 'elevagesimu:inventory': inventory, 'elevagesimu:prices': JSON.parse(pricesOf(7)), 'elevagesimu:montures-ui': { sort: 'x' } } }
+    const r = importAll(v1, { storage: target, mode: 'merge', reload: false })
+    expect(r.ok && r.warnings.join(' ')).toMatch(/3 données versées dans le profil « Gamma »/)
+    expect(target.getItem('elevagesimu:p:gamma:inventory')).toBe(JSON.stringify(inventory))
+    expect(target.getItem('elevagesimu:s:salar:prices')).toBe(pricesOf(7))
+    expect(target.getItem('elevagesimu:p:gamma:montures-ui')).toBe(JSON.stringify({ sort: 'x' }))
+    expect(target.getItem('elevagesimu:inventory')).toBeNull()
   })
 })

@@ -1,12 +1,16 @@
-// Prix saisis par le joueur (surchargent les valeurs par défaut issues de la recherche).
+// Prix saisis par le joueur pour le serveur du profil ouvert (surchargent le marché importé et les
+// valeurs par défaut issues de la recherche). Clé : « elevagesimu:s:<serveur>:prices » — partagés par
+// tous les profils du même serveur.
 // Lecture normalisée (prix invalides retirés, jamais remplacés par 0) : src/store/schema.ts ;
 // persistance sûre et synchronisation entre onglets : src/store/persistence.ts.
 import { useMemo } from 'react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { PriceContext } from '../domain/pricing'
+import { useMarketSource } from './market'
 import { persistOptions, syncAcrossTabs } from './persistence'
-import { STORE_KEYS, sanitizePrices, type PricesData } from './schema'
+import { STORE_KEYS } from './profiles'
+import { sanitizePrices, type PricesData } from './schema'
 import { useSettings } from './settings'
 
 export type LevelBand = '1' | '100' | '200'
@@ -63,7 +67,9 @@ export const usePrices = create<PriceStore>()(
 syncAcrossTabs(usePrices)
 
 /**
- * Contexte de prix courant (prix saisis + réglage « utiliser les prix par défaut » + niveau d'Éleveur).
+ * Contexte de prix courant : prix saisis du serveur + marché importé du serveur (statistique du serveur)
+ * + réglage « utiliser les prix par défaut » + niveau d'Éleveur. Ordre de résolution
+ * (pricing.marketPrice) : prix saisi > marché > défaut de la recherche > coût de fabrication.
  * Le niveau d'Éleveur (`jobLevel`) fait que le coût des ingrédients d'une recette hors de portée n'est
  * pas pris pour un prix (pricing.resolvePrice : prix HDV d'abord, sinon coût de craft signalé
  * `craftLocked`) — sur toutes les pages, pas seulement Rentabilité et Prix.
@@ -72,5 +78,6 @@ export function usePriceContext(): PriceContext {
   const overrides = usePrices((s) => s.items)
   const useDefaults = useSettings((s) => s.useDefaultPrices)
   const jobLevel = useSettings((s) => s.jobLevel)
-  return useMemo(() => ({ overrides, useDefaults, jobLevel }), [overrides, useDefaults, jobLevel])
+  const market = useMarketSource()
+  return useMemo(() => ({ overrides, useDefaults, jobLevel, market }), [overrides, useDefaults, jobLevel, market])
 }

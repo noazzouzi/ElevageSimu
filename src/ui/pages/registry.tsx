@@ -11,6 +11,8 @@ const BreedingPage = lazy(() => import('./BreedingPage'))
 const GeneticsPage = lazy(() => import('./GeneticsPage'))
 const OptimizerPage = lazy(() => import('./OptimizerPage'))
 const ProfitPage = lazy(() => import('./ProfitPage'))
+const ModesPage = lazy(() => import('./ModesPage'))
+const InvestmentPage = lazy(() => import('./InvestmentPage'))
 const JobPage = lazy(() => import('./JobPage'))
 const PricesPage = lazy(() => import('./PricesPage'))
 const GuidePage = lazy(() => import('./GuidePage'))
@@ -35,8 +37,10 @@ export const PAGES: PageDef[] = [
   { id: 'genetique', title: 'Génétique', icon: '🧬', section: 'Simuler', description: 'Arbres et croisements.', component: GeneticsPage },
   { id: 'optimiseur', title: 'Optimiseur', icon: '📈', section: 'Simuler', description: 'Comparer les stratégies.', component: OptimizerPage },
   { id: 'rentabilite', title: 'Rentabilité', icon: '💰', section: 'Économie', description: 'Coûts, revenus, bénéfice.', component: ProfitPage },
+  { id: 'modes', title: 'Modes de rentabilité', icon: '🎯', section: 'Économie', description: 'Rush Volkorne, Muldo, Dragodinde, brisage, ventes.', component: ModesPage },
+  { id: 'investissement', title: 'Investissement', icon: '💼', section: 'Économie', description: 'Budget, plan d’action, retour sur investissement.', component: InvestmentPage },
   { id: 'metier', title: 'Métier Éleveur', icon: '🛠️', section: 'Économie', description: 'XP, crafts et coûts.', component: JobPage },
   { id: 'prix', title: 'Prix', icon: '🏷️', section: 'Économie', description: 'Prix HDV et ressources.', component: PricesPage },
   { id: 'guide', title: 'Guide & règles', icon: '📖', section: 'Aide', description: 'Mécaniques de l\'élevage 3.5+.', component: GuidePage },
-  { id: 'reglages', title: 'Réglages', icon: '⚙️', section: 'Aide', description: 'Profil, sauvegarde, import/export.', component: SettingsPage },
+  { id: 'reglages', title: 'Réglages', icon: '⚙️', section: 'Aide', description: 'Profils et serveurs, réglages, sauvegarde.', component: SettingsPage },
 ]

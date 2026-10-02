@@ -10,11 +10,19 @@ Tests : `src/store/stores.test.ts` (jsdom), `src/lib/backup.test.ts`, `src/domai
 ## Persistance des stores (`src/store/persistence.ts`, `src/store/schema.ts`)
 
 ```ts
+import { STORE_KEYS } from './profiles'            // clés du profil ouvert (v2)
 export const useXxx = create<XxxStore>()(
   persist((set) => ({ … }), persistOptions<XxxStore, XxxData>({ name: STORE_KEYS.xxx, sanitize: sanitizeXxx, migrate? })),
 )
 syncAcrossTabs(useXxx)
 ```
+
+**v2 — profils et serveurs** (`docs/api/profiles.md`) : les stores ne lisent plus `elevagesimu:<base>` mais
+`elevagesimu:p:<profil>:<base>` (données du profil) ou `elevagesimu:s:<serveur>:<base>` (prix saisis, marché
+importé et son historique). Le profil ouvert est résolu de façon synchrone par `src/store/profiles.ts`
+(importé par chaque store) **avant** la création des stores ; `STORE_KEYS` (exporté par `profiles.ts`, plus
+par `schema.ts`) en donne les clés. Nouveau store : déclarer sa base dans `STORE_BASES` (schema.ts, avec
+`scope: 'profile' | 'server'`), puis `name: STORE_KEYS.<base>`. Préférences de page : `profileKey(base)`.
 
 | Garantie | Comment |
 |---|---|
@@ -27,9 +35,13 @@ syncAcrossTabs(useXxx)
 
 | Export | Rôle |
 |---|---|
-| `STORE_KEYS`, `PERSISTED_STORES: Record<clé, {label, version}>` (schema) | Source unique des clés, libellés et **versions** des stores (utilisée par les stores et par `validateBackup`). Changer une forme = incrémenter la version ici + fournir la migration. |
-| `normalizeStoreValue(key, value)` (schema) | `{state, version}` → refus si version plus récente / structure inattendue ; sinon migration + normalisation : `{ok, value: {state, version: actuelle}, issues}`. |
-| `registerStoreSchema(key, {migrate?, sanitize?})` (schema) | Déclare la normalisation d'un store défini ailleurs : `paddocks.ts`, `paddockPlans.ts` et `planProgress.ts` y inscrivent leur sanitizer (`sanitizePaddocks`, `sanitizePaddockPlans`, `sanitizePlanProgress`), appliqué aussi à l'import d'une sauvegarde. |
+| `STORE_BASES: Record<StoreBase, {label, version, scope}>` (schema) | Source unique des libellés, **versions** et portées des stores (`settings`, `inventory`, `paddocks`, `paddockPlans`, `planProgress`, `journal` : profil ; `prices`, `market`, `market-history` : serveur). Changer une forme = incrémenter la version ici + fournir la migration. |
+| `STORE_KEYS` (**profiles.ts**), `profileKey(base)`, `serverKey(base)` | Clés du profil et du serveur ouverts. |
+| `persistedStoreInfo(key)` (schema) | `{label, version, scope, base}` d'une clé de store sous n'importe quelle forme (profil, serveur, ancienne clé) ; undefined pour une préférence de page ou une base hors de sa portée. `storeVersion(key)` s'appuie dessus. |
+| `profileStoreKey(id, base)`, `serverStoreKey(id, base)`, `storeKeysFor(profil, serveur)`, `parseStoreKey(key)` → `{kind: 'profile' \| 'server' \| 'global' \| 'legacy', id?, base}`, `isValidScopeId`, `PROFILES_KEY`, `GLOBAL_KEYS`, `LEGACY_STORE_KEYS`, `STORAGE_PREFIX`, `StorageLike` (schema) | Construction et analyse des clés. |
+| `PERSISTED_STORES` (schema) | Compatibilité : stores d'avant les profils, par ancienne clé (sauvegardes v1). |
+| `normalizeStoreValue(key, value)` (schema) | `{state, version}` → refus si version plus récente / structure inattendue ; sinon migration + normalisation : `{ok, value: {state, version: actuelle}, issues}` — pour la clé de n'importe quel profil ou serveur. |
+| `registerStoreSchema(keyOrBase, {migrate?, sanitize?})` (schema) | Déclare la normalisation d'un store défini ailleurs, par **base** (`'paddocks'`) ou par clé : `paddocks.ts`, `paddockPlans.ts` et `planProgress.ts` y inscrivent leur sanitizer, appliqué aussi à l'import d'une sauvegarde. Les sanitizers du marché (`sanitizeMarketState`, `sanitizeMarketHistoryState`) sont inscrits directement dans schema.ts. |
 | `sanitizeSettings(raw, now?)`, `migrateSettings(raw, from, now?)`, `sanitizeMount(raw)`, `sanitizeInventory(raw)`, `sanitizePrices(raw)`, `sanitizeJournal(raw)` (schema) | Normalisations pures (`{state, issues}`), jamais d'exception. |
 | `Settings`, `Goal`, `DEFAULT_SETTINGS`, `SETTINGS_BOUNDS` (schema, ré-exportés par `settings.ts`) | Type, valeurs par défaut et bornes des réglages. |
 | `persistOptions(cfg)` | Options de `persist` ci-dessus (`name`, `version?` = `PERSISTED_STORES`, `sanitize`, `migrate?`, `partialize?`). |
@@ -37,8 +49,13 @@ syncAcrossTabs(useXxx)
 | `syncAcrossTabs(store)` | Synchronisation entre onglets (sans effet hors navigateur). |
 | `useStorageHealth` | Store non persisté : `issues: StorageIssue[]` (`key, kind: 'ecriture' \| 'version' \| 'illisible' \| 'corrige', label, message, quota?, at`), `dismiss(key, kind)`. |
 | `retryPendingWrites()`, `pendingWrites()`, `writeBlockReason(key)`, `overwriteBlocked(key)` | Réessai, valeurs non enregistrées, blocage d'une clé, levée du blocage (écrase la donnée stockée). |
+| `freezeWrites()`, `writesFrozen()` | Bloque toute écriture des stores jusqu'au rechargement (changement / suppression de profil, import, remise à zéro) : un store ne peut plus réécrire les données d'un profil supprimé. |
+| `safeWriteText(key, text)` | Écriture sûre hors store (registre des profils, marché d'un autre serveur) : échec signalé, renvoie `false`. |
+| `reportStorageIssue({key, kind, message, label?})` | Signale un problème de stockage (bandeau) pour une donnée hors store zustand. |
 
-Les alertes s'affichent en haut de chaque page via `PageHeader` (`StorageAlerts`). `DataRecoveryActions`
+Les alertes s'affichent en haut de chaque page via `PageHeader` (`StorageAlerts`). Le message laissé avant
+un rechargement (`setFlash`, import, changement de profil) est affiché par `App.tsx` (`FlashBanner`), quelle
+que soit la page. `DataRecoveryActions`
 (télécharger une sauvegarde, réinitialiser les réglages avec confirmation) est affiché dans le filet d'erreur
 de page (`App.tsx`, `PageBoundary`), qui retente l'affichage quand l'adresse change (autre onglet, autre enclos).
 
@@ -52,6 +69,9 @@ de page (`App.tsx`, `PageBoundary`), qui retente l'affichage quand l'adresse cha
 | `useJournal` | `removeBefore(ms)` (alléger le journal, renvoie le nombre supprimé) ; `journalJobXp(entries, since)` → `{xp, entries, captures, matings, crafts}` : XP d'Éleveur enregistrée après `since` (captures × 30, accouplements et crafts : XP de l'entrée). Niveau estimé = `jobLevelFromXp(jobXpForLevel(jobLevel) + xp)` (plancher : bonus Almanax non comptés). |
 | `usePrices` | Un prix négatif ou non numérique est retiré (« pas de prix »), jamais enregistré. `usePriceContext()` inclut désormais **`jobLevel`** (réglages) : une recette hors de portée prend le prix HDV sur toutes les pages (la page Métier l'omet, son plan de montée fabrique aux niveaux futurs). |
 | `usePlanProgress` | `persistOptions` + `sanitizePlanProgress(raw)` (entrées « clé → instant » invalides écartées). |
+| `usePrices` (v2) | Clé du **serveur** ouvert (`elevagesimu:s:<serveur>:prices`) : partagés par les profils du serveur. `usePriceContext()` inclut `market` (marché importé du serveur, statistique du serveur) : ordre prix saisi > marché > défaut > craft (`docs/api/market.md`). |
+| `useSettings` (v2) | Clé du profil ; `server` = libellé dérivé du serveur ouvert, `update({server})` renomme le serveur ouvert. |
+| `useMarket`, `useMarketHistory` (v2, `src/store/market.ts`) | Marché importé du serveur ouvert et historique des imports (`docs/api/market.md`). |
 
 ## Jour de jeu (`src/domain/almanax.ts`, `src/ui/useServerDay.ts`)
 

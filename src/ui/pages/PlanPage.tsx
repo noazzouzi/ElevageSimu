@@ -1,6 +1,8 @@
 // Plan d'élevage : objectif (monture visée ou rentabilité maximale), phase P0–P6 avec checklists
 // persistées, chemin vers l'objectif (recette, captures par couleur, effort attendu), calendrier
 // estimé (simulation rapide), stratégie conseillée, routines, Almanax à exploiter, erreurs à éviter.
+// En mode de rentabilité (rush, brisage, vente : settings.mode), le chemin devient la chaîne de production du
+// mode, la stratégie celle du mode et les routines celles du mode (session par session).
 import { useEffect, useMemo, useState } from 'react'
 import { FAMILIES, GAME, STRATEGY, getSpecies, itemName, type StrategyPhase } from '../../data'
 import {
@@ -29,6 +31,8 @@ import { requiredSpecies } from '../../domain/breedingPath'
 import { GAUGE_LABELS, PADDOCK_UNLOCK_LEVELS } from '../../domain/constants'
 import { NET_KIND_LABELS, batchProfile, crossingRanking, genetonKamasValue, type CrossingRank, type MountPriceContext } from '../../domain/economy'
 import { jobAlmanaxDays } from '../../domain/job'
+import { mergedSessions, modeConfig, strategyParamLines, strategyWhy, type ActiveMode, type ModeProfile } from '../../domain/modes'
+import { productionPlan, type ProductionPlanInfo } from '../../domain/production'
 import { unlockedPaddocks } from '../../domain/mountFate'
 import { effectiveFertility } from '../../domain/mounts'
 import { OPTIMAKINA_SYSTEMATIC_GENERATION } from '../../domain/pairing'
@@ -46,7 +50,9 @@ import { Badge, Callout, Card, Empty, PageHeader, Progress, SelectField, Stat, T
 import { navigate, href, useRoute } from '../router'
 import { ConfidenceBadge, SpeciesName, SpeciesPicker } from '../species'
 import { useGoalSimulation, type GoalSimulationStatus } from '../useGoalSimulation'
+import { useActiveMode, useModeProfile } from '../useModes'
 import './PlanPage.css'
+import './PlanMode.css'
 
 type TabId = 'chemin' | 'phase' | 'strategie' | 'routines' | 'erreurs'
 
@@ -134,11 +140,17 @@ export default function PlanPage() {
   const mountOverrides = usePrices((s) => s.mounts)
   const generationOverrides = usePrices((s) => s.generations)
   const genetonOverride = usePrices((s) => s.genetonValue)
+  // Prix de l'objet-monture du marché du serveur (« HDV mixte ») : plafond de vente prudent seulement.
   const mountPrices: MountPriceContext = useMemo(
-    () => ({ mountOverrides, generationOverrides, useDefaults: settings.useDefaultPrices }),
-    [mountOverrides, generationOverrides, settings.useDefaultPrices],
+    () => ({ mountOverrides, generationOverrides, useDefaults: settings.useDefaultPrices, market: ctx.market }),
+    [mountOverrides, generationOverrides, settings.useDefaultPrices, ctx.market],
   )
-  const genetonValue = genetonKamasValue(genetonOverride).value
+  // Généton : votre valeur, sinon le marché du serveur (boutique d'Eugène Éton), sinon la recherche.
+  const genetonValue = genetonKamasValue(genetonOverride, { market: ctx.market ?? null }).value
+  // Mode de rentabilité actif : chaîne de production, stratégie et routine du mode.
+  const mode = useActiveMode()
+  const modeProfile = useModeProfile()
+  const modeOn = mode.kind !== 'progression'
   const now = useToday()
   // XP du journal depuis la dernière saisie du niveau : niveau estimé (plancher) pour la phase.
   const jobLevelUpdatedAt = useSettings((s) => s.jobLevelUpdatedAt)
@@ -177,12 +189,15 @@ export default function PlanPage() {
           réglages, ou téléchargez une sauvegarde depuis les <a href={href('reglages')}>réglages</a> pour signaler le problème.
         </Callout>
       )}
+      <ModeBanner mode={mode} />
       <div className="grid grid-2 pl-top">
         <GoalCard settings={settings} update={update} goal={goal} mounts={mounts} />
         <PhaseCard phase={phase} jobLevel={jobLevel} savedLevel={settings.jobLevel} mounts={mounts} />
       </div>
       <Tabs<TabId> tabs={TABS} value={tab} onChange={(t) => navigate('plan', { onglet: t })} />
+      {tab === 'chemin' && modeOn && <ModePathTab mode={mode} profile={modeProfile} />}
       {tab === 'chemin' &&
+        !modeOn &&
         (goal ? (
           <PathTab goal={goal} settings={settings} rules={rules} mounts={mounts} ctx={ctx} unlocked={unlocked} genetonValue={genetonValue} now={now} sim={sim} />
         ) : (
@@ -197,10 +212,254 @@ export default function PlanPage() {
           />
         ))}
       {tab === 'phase' && <PhaseTab phase={phase} jobLevel={jobLevel} mounts={mounts} />}
+      {tab === 'strategie' && modeOn && <ModeStrategyCard mode={mode} />}
       {tab === 'strategie' && <StrategyTab settings={settings} rules={rules} unlocked={unlocked} estimatedLevel={jobLevel} />}
+      {tab === 'routines' && modeOn && <ModeRoutineCard mode={mode} now={now} />}
       {tab === 'routines' && <RoutinesTab now={now} settings={settings} />}
       {tab === 'erreurs' && <MistakesTab />}
     </div>
+  )
+}
+
+// ---------- Mode de rentabilité ----------
+
+/** Rappel du mode actif : en rush, brisage ou vente, les conseils suivent la production du mode, pas l'objectif. */
+function ModeBanner({ mode }: { mode: ActiveMode }) {
+  const def = mode.def
+  if (mode.kind === 'progression')
+    return (
+      <p className="pl-mode-strip muted">
+        Mode de rentabilité : <strong>{def.label}</strong>
+        {mode.requested === 'auto' ? ' (automatique, modes non comparés)' : ''} — le plan suit votre objectif ci-dessous.{' '}
+        <a href={href('modes')}>Comparer les modes →</a>
+      </p>
+    )
+  const net = mode.outcome?.strategy?.net
+  return (
+    <Callout tone={mode.source === 'defaut' || mode.stale ? 'warn' : undefined}>
+      <strong>
+        <span aria-hidden>{def.icon}</span> Mode {def.label}
+        {mode.requested === 'auto' ? ' (automatique)' : ''}
+      </strong>{' '}
+      : {def.objective} Stratégie : {mode.strategyLabel}
+      {net ? ` — ${formatKamasRange(net, true)} par jour en régime permanent` : ''}. Les conseils, le chemin et les routines suivent ce mode ; l’objectif ci-dessous ne sert
+      qu’en mode Progression.{' '}
+      {mode.source === 'defaut' ? (
+        <a href={href('modes', { mode: mode.id })}>Calculer la stratégie du mode →</a>
+      ) : mode.stale ? (
+        <a href={href('modes', { mode: mode.id })}>Recalculer (réglages ou prix changés) →</a>
+      ) : (
+        <a href={href('modes', { mode: mode.id })}>Détail du mode →</a>
+      )}
+    </Callout>
+  )
+}
+
+/** Plan de production du mode (chaîne de croisements, captures), même sans comparaison calculée. */
+function useModePlan(mode: ActiveMode, profile: ModeProfile): { plan: Pick<ProductionPlanInfo, 'targetGeneration' | 'targets' | 'steps' | 'captureShares' | 'optimakina'> | null; error: string | null } {
+  const digestPlan = mode.outcome?.digest?.plan ?? null
+  const id = mode.id
+  const family = mode.family
+  const params = mode.params
+  return useMemo(() => {
+    if (digestPlan) return { plan: digestPlan, error: null }
+    try {
+      const cfg = modeConfig(id, profile, {
+        family: family ?? undefined,
+        params: { targetGeneration: params.targetGeneration, parentLevel: params.parentLevel, brisageLevel: params.brisageLevel, tier: params.tier, mateBeforeExtract: params.mateBeforeExtract, optimakina: params.optimakina },
+      })
+      return { plan: cfg ? productionPlan(cfg) : null, error: null }
+    } catch (e) {
+      return { plan: null, error: e instanceof Error ? e.message : String(e) }
+    }
+  }, [digestPlan, id, family, params, profile])
+}
+
+function ModePathTab({ mode, profile }: { mode: ActiveMode; profile: ModeProfile }) {
+  const { plan, error } = useModePlan(mode, profile)
+  const d = mode.outcome?.digest ?? null
+  const st = d?.steady
+  const caps = d?.routine.capturesPerDay ?? []
+  const capTotal = caps.reduce((a, c) => a + c.perDay, 0)
+  const steps = plan ? [...plan.steps].sort((a, b) => b.generation - a.generation) : []
+  const famPlural = mode.family ? (FAMILIES[mode.family]?.plural ?? mode.family) : ''
+  return (
+    <>
+      <Card title={`Production du mode ${mode.def.label}`} actions={<a href={href('modes', { mode: mode.id })}>Comparer les modes →</a>}>
+        {st && d ? (
+          <div className="grid grid-4 pl-mode-kpis">
+            <Stat label="Bénéfice net / jour" value={formatKamasRange(st.net, true)} hint="régime permanent (simulation)" />
+            <Stat
+              label={mode.kind === 'brisage' ? 'Brisées / jour' : mode.kind === 'vente' ? 'Montures vendues / jour' : `${d.market.find((m) => m.kind === 'ressource')?.name ?? 'Ressources'} / jour`}
+              value={formatNumber(mode.kind === 'brisage' ? st.brokenPerDay : mode.kind === 'vente' ? st.mountsSoldPerDay : st.resourcesPerDay, 1)}
+              hint={mode.kind === 'vente' ? `+ ${formatNumber(st.resourcesPerDay, 1)} ressources extraites` : undefined}
+            />
+            <Stat label="Captures / jour" value={formatNumber(st.capturesPerDay, 1)} hint={`${famPlural} G1`} />
+            <Stat
+              label="Montée en charge"
+              value={mode.outcome?.strategy?.rampUpDays !== null && mode.outcome?.strategy?.rampUpDays !== undefined ? `${formatNumber(mode.outcome.strategy.rampUpDays)} jours` : '—'}
+              hint={`capital ≈ ${formatKamas(d.capital.total, true)}`}
+            />
+          </div>
+        ) : (
+          <Callout tone="warn">
+            Stratégie par défaut ({mode.strategyLabel}) : la comparaison des modes n’est pas calculée pour ce profil.{' '}
+            <a href={href('modes', { mode: mode.id })}>Calculer (≈ 5 s)</a>
+          </Callout>
+        )}
+        {error && <Callout tone="danger">Chaîne de production indisponible : {error}</Callout>}
+        {mode.kind === 'brisage' ? (
+          <p>
+            Capturez des {famPlural} G1 (n’importe quelle couleur), montez-les au niveau <strong>{mode.params.brisageLevel}</strong> par lots de 10 (Mangeoire seule, palier{' '}
+            {mode.params.tier}), puis brisez-les.
+            {mode.params.mateBeforeExtract ? ' Accouplez les fécondes de sexes opposés avant de les briser (bébé gratuit).' : ''}
+          </p>
+        ) : (
+          plan && (
+            <p>
+              Chaque enclos produit des <strong>G{plan.targetGeneration}</strong> ({plan.targets.map((t) => getSpecies(t)?.name ?? `#${t}`).join(', ')}) par la recette la moins
+              chère en captures ; {mode.kind === 'vente' ? 'elles sont vendues fertiles dans la limite du volume, le reste est extrait' : 'elles sont accouplées une fois puis extraites'}
+              . Les stériles des générations inférieures sont clonées (recyclées) ; les surplus de génération ≥ 2 sont extraits.
+            </p>
+          )
+        )}
+      </Card>
+      {plan && mode.kind !== 'brisage' && steps.length > 0 && (
+        <Card title="Chaîne de croisements (de la cible aux captures)">
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Espèce</th>
+                  <th className="num">Génération</th>
+                  <th>Croisement</th>
+                  <th className="num">Chance de génération cible</th>
+                  <th>Optimakina</th>
+                  {d && <th className="num">Accouplements / jour</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {steps
+                  .filter((x) => x.crossing)
+                  .map((x) => {
+                    const perDay = d?.routine.matingsPerDay.find((m) => m.speciesId === x.speciesId)?.perDay
+                    return (
+                      <tr key={x.speciesId}>
+                        <td>
+                          <SpeciesName id={x.speciesId} withGen={false} />
+                        </td>
+                        <td className="num">G{x.generation}</td>
+                        <td>{x.crossing ? `${getSpecies(x.crossing[0])?.name ?? x.crossing[0]} × ${getSpecies(x.crossing[1])?.name ?? x.crossing[1]}` : '—'}</td>
+                        <td className="num">{formatPercent(x.targetChance, 0)}</td>
+                        <td>{x.optimakina ? <Badge tone="info">oui</Badge> : <span className="muted">non</span>}</td>
+                        {d && <td className="num">{perDay !== undefined ? formatNumber(perDay, 1) : '—'}</td>}
+                      </tr>
+                    )
+                  })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+      {plan && (
+        <Card title="Captures (couleurs G1)" actions={<a className="btn small" href={href('montures', { captures: 1 })}>Saisir des captures</a>}>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Couleur</th>
+                  <th className="num">Part</th>
+                  {capTotal > 0 && <th className="num">Par jour (régime permanent)</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {(capTotal > 0 ? caps.map((c) => ({ speciesId: c.speciesId, share: c.perDay / capTotal, perDay: c.perDay })) : plan.captureShares.map((c) => ({ ...c, perDay: null as number | null }))).map((c) => (
+                  <tr key={c.speciesId}>
+                    <td>
+                      <SpeciesName id={c.speciesId} withGen={false} />
+                    </td>
+                    <td className="num">{formatPercent(c.share, 0)}</td>
+                    {capTotal > 0 && <td className="num">{c.perDay !== null ? formatNumber(c.perDay, 1) : '—'}</td>}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="muted pl-note">Capturez seulement de quoi remplir les places libres, le sexe en déficit de chaque couleur d’abord (la page d’accueil donne le compte du jour).</p>
+        </Card>
+      )}
+    </>
+  )
+}
+
+/** Stratégie du mode : paramètres retenus et pourquoi. */
+function ModeStrategyCard({ mode }: { mode: ActiveMode }) {
+  const o = mode.outcome
+  if (!o)
+    return (
+      <Callout tone="warn">
+        Mode {mode.def.label} : stratégie par défaut ({mode.strategyLabel}). <a href={href('modes', { mode: mode.id })}>Calculez la comparaison des modes</a> pour la stratégie
+        optimisée de votre profil.
+      </Callout>
+    )
+  return (
+    <Card title={`Stratégie du mode ${mode.def.label}`} actions={<a href={href('modes', { mode: mode.id })}>Détail →</a>}>
+      <div className="grid grid-2">
+        <dl className="pl-mode-params">
+          {strategyParamLines(o).map((p) => (
+            <div key={p.label}>
+              <dt>{p.label}</dt>
+              <dd>{p.value}</dd>
+            </div>
+          ))}
+        </dl>
+        <ul className="pl-mode-why">
+          {strategyWhy(o).map((w) => (
+            <li key={w}>{w}</li>
+          ))}
+        </ul>
+      </div>
+    </Card>
+  )
+}
+
+/** Routine du mode, passage par passage (cases enregistrées pour la journée de jeu). */
+function ModeRoutineCard({ mode, now }: { mode: ActiveMode; now: number }) {
+  const routine = mode.routine
+  const today = serverDay(now)
+  if (!routine)
+    return (
+      <Callout tone="warn">
+        Mode {mode.def.label} : la routine précise (quantités par passage, carburant, ventes) vient de la comparaison des modes —{' '}
+        <a href={href('modes', { mode: mode.id })}>calculez-la (≈ 5 s)</a>.
+      </Callout>
+    )
+  const sessions = mergedSessions(routine)
+  return (
+    <Card title={`Routine du mode ${mode.def.label}`} actions={<Badge>remise à zéro chaque jour</Badge>}>
+      <p className="muted">
+        {routine.summary}. Stratégie : {routine.strategyLabel}. Ordre d’un passage : accoupler → cloner → sortir → capturer → mettre en enclos.
+      </p>
+      <div className={`grid grid-${Math.min(3, sessions.length + 1)} pl-routine`}>
+        {sessions.map((s) => (
+          <div key={s.id}>
+            <h3 className="pl-when">{s.label}</h3>
+            <Checklist scope={checklistKey('routine', today, `mode-${mode.id}-${s.id}`)} items={s.items.map((it) => it.text)} />
+          </div>
+        ))}
+        <div>
+          <h3 className="pl-when">Une fois par jour</h3>
+          <Checklist scope={checklistKey('routine', today, `mode-${mode.id}-jour`)} items={routine.daily.map((it) => it.text)} />
+        </div>
+      </div>
+      {routine.notes.length > 0 && (
+        <ul className="muted pl-note">
+          {routine.notes.map((n) => (
+            <li key={n}>{n}</li>
+          ))}
+        </ul>
+      )}
+    </Card>
   )
 }
 

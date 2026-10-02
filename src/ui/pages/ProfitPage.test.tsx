@@ -5,9 +5,10 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { DEFAULT_SETTINGS, useSettings } from '../../store/settings'
 import { useInventory } from '../../store/inventory'
 import { usePrices } from '../../store/prices'
+import { profileKey } from '../../store/profiles'
 import ProfitPage from './ProfitPage'
 
-const KEY = 'elevagesimu:rentabilite'
+const KEY = profileKey('rentabilite')
 
 function reset() {
   window.localStorage.clear()

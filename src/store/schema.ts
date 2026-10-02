@@ -11,14 +11,78 @@
 //    français) ; un prix invalide est retiré (« pas de prix »), jamais remplacé par 0.
 import { FAMILY_IDS, getSpecies } from '../data'
 import { ABILITY_LABELS, MAX_PADDOCKS, MOUNT_MAX_LEVEL, MOUNT_STAT_MAX, SERENITY_MAX, SERENITY_MIN } from '../domain/constants'
+import { sanitizeHistory, sanitizeSnapshot, type MarketHistoryEntry, type MarketSnapshot } from '../domain/market'
+import type { ProfitModeId } from '../domain/production'
 import { RULESETS } from '../domain/rules'
 import type { Ability, FamilyId, Fertility, FuelTier, Gender, Mount, MountLocation, RulesetId } from '../domain/types'
 import type { JournalEntry } from './journal'
 
-// ---------- Stores persistés ----------
+// ---------- Clés de stockage ----------
+//
+// v2 (profils et serveurs, docs/api/profiles.md) :
+//   - registre des profils : « elevagesimu:profiles » ;
+//   - données d'un profil  : « elevagesimu:p:<profil>:<base> » (réglages, montures, enclos, plans,
+//     avancement, journal, préférences des pages) ;
+//   - données d'un serveur : « elevagesimu:s:<serveur>:<base> » (prix saisis, marché importé, historique).
+// v1 (avant les profils) : « elevagesimu:<base> » — clés « anciennes », migrées vers le profil
+// « Principal » à la première ouverture de la v2 et conservées comme copie de sécurité.
+// Les clés du profil actif sont dans src/store/profiles.ts (`STORE_KEYS`, `profileKey`).
 
-/** Clés localStorage des stores zustand persistés. */
-export const STORE_KEYS = {
+/** Préfixe de toutes les clés de l'application dans le localStorage. */
+export const STORAGE_PREFIX = 'elevagesimu:'
+/** Registre des profils et des serveurs. */
+export const PROFILES_KEY = 'elevagesimu:profiles'
+/** Copie d'un registre illisible, gardée telle quelle avant reconstruction. */
+export const PROFILES_CORRUPT_KEY = 'elevagesimu:profiles-corrompu'
+/** Réglage de l'appareil (notifications du navigateur), commun à tous les profils. */
+export const NOTIFICATIONS_KEY = 'elevagesimu:enclos-notifications'
+/** Clés globales (ni profil ni serveur, jamais migrées). */
+export const GLOBAL_KEYS: readonly string[] = [PROFILES_KEY, PROFILES_CORRUPT_KEY, NOTIFICATIONS_KEY]
+
+/** Sous-ensemble de l'API Web Storage utilisé (localStorage ou faux stockage de test). */
+export interface StorageLike {
+  readonly length: number
+  key(index: number): string | null
+  getItem(key: string): string | null
+  setItem(key: string, value: string): void
+  removeItem(key: string): void
+}
+
+export type StoreScope = 'profile' | 'server'
+
+export interface PersistedStoreInfo {
+  /** Libellé lisible (français). */
+  label: string
+  /** Version actuelle du schéma persisté (`version` de persist). */
+  version: number
+  /** Portée : données d'un profil ou d'un serveur. */
+  scope?: StoreScope
+}
+
+/**
+ * Stores persistés (par « base » de clé) : libellé, version actuelle du schéma et portée. Source unique
+ * utilisée par les stores (option `version` de persist) et par la validation des sauvegardes. Incrémenter
+ * la version ici ET fournir la migration correspondante à chaque changement de forme.
+ */
+export const STORE_BASES = {
+  settings: { label: 'Réglages', version: 3, scope: 'profile' },
+  inventory: { label: 'Montures (étable, enclos, inventaire)', version: 1, scope: 'profile' },
+  paddocks: { label: 'Jauges des enclos', version: 1, scope: 'profile' },
+  paddockPlans: { label: 'Plans d’enclos en cours', version: 1, scope: 'profile' },
+  planProgress: { label: 'Avancement du plan d’élevage', version: 1, scope: 'profile' },
+  journal: { label: 'Journal d’élevage', version: 1, scope: 'profile' },
+  prices: { label: 'Prix saisis', version: 1, scope: 'server' },
+  market: { label: 'Prix du marché (export HDV)', version: 1, scope: 'server' },
+  'market-history': { label: 'Historique des imports HDV', version: 1, scope: 'server' },
+} as const satisfies Record<string, Required<PersistedStoreInfo>>
+
+export type StoreBase = keyof typeof STORE_BASES
+
+/** Bases de stores qui existaient avant les profils (clés « elevagesimu:<base> »). */
+const LEGACY_BASES: StoreBase[] = ['settings', 'inventory', 'paddocks', 'paddockPlans', 'planProgress', 'prices', 'journal']
+
+/** Clés des stores avant les profils (v1). Lecture seule : copie de sécurité après migration. */
+export const LEGACY_STORE_KEYS = {
   settings: 'elevagesimu:settings',
   inventory: 'elevagesimu:inventory',
   paddocks: 'elevagesimu:paddocks',
@@ -28,31 +92,81 @@ export const STORE_KEYS = {
   journal: 'elevagesimu:journal',
 } as const
 
-export interface PersistedStoreInfo {
-  /** Libellé lisible (français). */
-  label: string
-  /** Version actuelle du schéma persisté (`version` de persist). */
-  version: number
+/** Identifiant de profil ou de serveur valide (minuscules, chiffres, tirets ; pas de « : »). */
+export function isValidScopeId(id: unknown): id is string {
+  return typeof id === 'string' && /^[a-z0-9][a-z0-9-]{0,47}$/.test(id)
+}
+
+/** Clé d'une donnée de profil : « elevagesimu:p:<profil>:<base> ». */
+export function profileStoreKey(profileId: string, base: string): string {
+  return `${STORAGE_PREFIX}p:${profileId}:${base}`
+}
+
+/** Clé d'une donnée de serveur : « elevagesimu:s:<serveur>:<base> ». */
+export function serverStoreKey(serverId: string, base: string): string {
+  return `${STORAGE_PREFIX}s:${serverId}:${base}`
+}
+
+/** Préfixe de toutes les clés d'un profil (ou d'un serveur). */
+export function profileKeyPrefix(profileId: string): string {
+  return `${STORAGE_PREFIX}p:${profileId}:`
+}
+export function serverKeyPrefix(serverId: string): string {
+  return `${STORAGE_PREFIX}s:${serverId}:`
+}
+
+/** Clés de tous les stores pour un profil et son serveur. */
+export function storeKeysFor(profileId: string, serverId: string): Record<StoreBase, string> {
+  const out = {} as Record<StoreBase, string>
+  for (const [base, info] of Object.entries(STORE_BASES) as [StoreBase, PersistedStoreInfo][])
+    out[base] = info.scope === 'server' ? serverStoreKey(serverId, base) : profileStoreKey(profileId, base)
+  return out
+}
+
+export interface ParsedStoreKey {
+  /** profil, serveur, clé globale, ou clé d'avant les profils. */
+  kind: 'profile' | 'server' | 'global' | 'legacy'
+  /** Identifiant du profil ou du serveur. */
+  id?: string
+  /** Base de la clé (« inventory », « montures-ui »…). */
+  base: string
+}
+
+/** Analyse une clé de l'application (null si ce n'est pas une clé « elevagesimu:… » reconnue). */
+export function parseStoreKey(key: string): ParsedStoreKey | null {
+  if (typeof key !== 'string' || !key.startsWith(STORAGE_PREFIX) || key.length <= STORAGE_PREFIX.length) return null
+  if (GLOBAL_KEYS.includes(key)) return { kind: 'global', base: key.slice(STORAGE_PREFIX.length) }
+  const rest = key.slice(STORAGE_PREFIX.length)
+  const scoped = /^([ps]):([^:]+):([^:]+)$/.exec(rest)
+  if (scoped) return isValidScopeId(scoped[2]) ? { kind: scoped[1] === 'p' ? 'profile' : 'server', id: scoped[2], base: scoped[3] } : null
+  if (rest.includes(':')) return null
+  return { kind: 'legacy', base: rest }
 }
 
 /**
- * Stores persistés de l'application et version actuelle de leur schéma : source unique utilisée par les
- * stores (option `version` de persist) et par la validation des sauvegardes. Incrémenter la version ici
- * ET fournir la migration correspondante (`migrateStoreState`) à chaque changement de forme.
+ * Store persisté correspondant à une clé, quelle que soit sa forme (profil, serveur ou ancienne clé) ;
+ * undefined si ce n'est pas un store (préférences de page, clé inconnue, base dans la mauvaise portée).
  */
-export const PERSISTED_STORES: Record<string, PersistedStoreInfo> = {
-  [STORE_KEYS.settings]: { label: 'Réglages', version: 3 },
-  [STORE_KEYS.inventory]: { label: 'Montures (étable, enclos, inventaire)', version: 1 },
-  [STORE_KEYS.paddocks]: { label: 'Jauges des enclos', version: 1 },
-  [STORE_KEYS.paddockPlans]: { label: 'Plans d’enclos en cours', version: 1 },
-  [STORE_KEYS.planProgress]: { label: 'Avancement du plan d’élevage', version: 1 },
-  [STORE_KEYS.prices]: { label: 'Prix saisis', version: 1 },
-  [STORE_KEYS.journal]: { label: 'Journal d’élevage', version: 1 },
+export function persistedStoreInfo(key: string): (PersistedStoreInfo & { base: StoreBase }) | undefined {
+  const p = parseStoreKey(key)
+  if (!p || !Object.hasOwn(STORE_BASES, p.base)) return undefined
+  const base = p.base as StoreBase
+  const info: PersistedStoreInfo = STORE_BASES[base]
+  if (p.kind === 'legacy' ? !LEGACY_BASES.includes(base) : p.kind !== info.scope) return undefined
+  return { ...info, base }
 }
+
+/**
+ * Stores d'avant les profils, par clé (compatibilité : sauvegardes v1). Pour une clé de la v2, utiliser
+ * `persistedStoreInfo(key)`.
+ */
+export const PERSISTED_STORES: Record<string, PersistedStoreInfo> = Object.fromEntries(
+  LEGACY_BASES.map((b) => [LEGACY_STORE_KEYS[b as keyof typeof LEGACY_STORE_KEYS], { label: STORE_BASES[b].label, version: STORE_BASES[b].version, scope: STORE_BASES[b].scope }]),
+)
 
 /** Version actuelle d'un store persisté (undefined si la clé n'est pas un store connu). */
 export function storeVersion(key: string): number | undefined {
-  return PERSISTED_STORES[key]?.version
+  return persistedStoreInfo(key)?.version
 }
 
 /** Résultat d'une normalisation : état utilisable + problèmes corrigés (phrases courtes en français). */
@@ -88,6 +202,26 @@ function freshId(prefix: string): string {
 // ---------- Réglages ----------
 
 export type Goal = 'profit' | 'succes' | 'mixte'
+
+/**
+ * Mode de rentabilité du profil (docs/SPEC-v2.md §4, src/domain/modes.ts) : oriente le conseiller, l'accueil
+ * et le plan. `progression` = comportement d'avant les modes (objectif de génération) : valeur des profils
+ * migrés et nouveaux. Même liste que `ProfitModeId` (production.ts), vérifiée à la compilation.
+ */
+export type ProfileMode = ProfitModeId
+
+/** Modes acceptés (objet typé : un mode ajouté à `ProfitModeId` sans être listé ici ne compile pas). */
+const PROFILE_MODE_SET: Record<ProfileMode, true> = {
+  auto: true,
+  'rush-corne': true,
+  'rush-ambre': true,
+  'rush-neurone': true,
+  'brisage-pa': true,
+  'brisage-pm': true,
+  'vente-montures': true,
+  progression: true,
+}
+export const PROFILE_MODES = Object.keys(PROFILE_MODE_SET) as ProfileMode[]
 
 export interface Settings {
   /** Version des règles du jeu (3.6 = live). */
@@ -132,6 +266,12 @@ export interface Settings {
    * poussées de sérénité sont alors calculées au rythme normal.
    */
   almanaxGaugeDoubling: boolean
+  /**
+   * Mode de rentabilité suivi par les conseils (`auto`, `rush-corne`, `rush-ambre`, `rush-neurone`,
+   * `brisage-pa`, `brisage-pm`, `vente-montures`, `progression`). Ajouté sans changement de version :
+   * champ absent (profil migré, ancienne sauvegarde) → `progression`, le comportement d'avant les modes.
+   */
+  mode: ProfileMode
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -152,6 +292,7 @@ export const DEFAULT_SETTINGS: Settings = {
   useOptimakina: true,
   saleTax: 0.02,
   almanaxGaugeDoubling: false,
+  mode: 'progression',
 }
 
 /** Bornes des réglages numériques (mêmes bornes que les champs de la page Réglages). */
@@ -180,6 +321,7 @@ const SETTING_LABELS: Partial<Record<keyof Settings, string>> = {
   parentTargetLevel: 'niveau visé des parents',
   saleTax: 'taxe HDV',
   jobLevelUpdatedAt: 'date du niveau d’Éleveur',
+  mode: 'mode de rentabilité',
 }
 
 /**
@@ -187,6 +329,9 @@ const SETTING_LABELS: Partial<Record<keyof Settings, string>> = {
  *  - v0/v1 → v2 : champs manquants complétés par les valeurs par défaut (fait par `sanitizeSettings`) ;
  *  - v2 → v3 : `jobLevelUpdatedAt` ajouté. Un niveau déjà saisi (> 1) est daté de la migration, pour ne
  *    pas lui ajouter l'XP d'un journal qu'il inclut peut-être déjà ; un niveau 1 compte tout le journal.
+ *  - `mode` (modes de rentabilité, v2) : ajouté sans changement de version, comme `almanaxGaugeDoubling` :
+ *    absent → `progression` (comportement d'avant les modes) par `sanitizeSettings`, valeur inconnue
+ *    corrigée et signalée.
  */
 export function migrateSettings(raw: unknown, fromVersion: number, now: number = Date.now()): unknown {
   if (!isPlainObject(raw)) return raw
@@ -204,7 +349,7 @@ export function sanitizeSettings(raw: unknown, now: number = Date.now()): Saniti
   const src = isPlainObject(raw) ? raw : {}
   const out: Record<string, unknown> = { ...DEFAULT_SETTINGS }
   const fixed = new Set<string>()
-  const special = new Set<string>(['ruleset', 'family', 'goal', 'preferredTier', 'goalSpeciesId', 'jobLevelUpdatedAt', ...Object.keys(SETTINGS_BOUNDS)])
+  const special = new Set<string>(['ruleset', 'family', 'goal', 'preferredTier', 'goalSpeciesId', 'jobLevelUpdatedAt', 'mode', ...Object.keys(SETTINGS_BOUNDS)])
   // 1. Champs simples (booléens, texte, et tout champ ajouté plus tard) : même type que la valeur par défaut.
   for (const k of Object.keys(DEFAULT_SETTINGS) as (keyof Settings)[]) {
     if (special.has(k) || !(k in src)) continue
@@ -222,6 +367,7 @@ export function sanitizeSettings(raw: unknown, now: number = Date.now()): Saniti
   oneOf('goal', (v) => typeof v === 'string' && (GOALS as string[]).includes(v))
   oneOf('preferredTier', (v) => typeof v === 'number' && (TIERS as number[]).includes(v))
   oneOf('goalSpeciesId', (v) => v === null || (typeof v === 'number' && Number.isInteger(v) && getSpecies(v) !== undefined))
+  oneOf('mode', (v) => typeof v === 'string' && Object.hasOwn(PROFILE_MODE_SET, v))
   // 3. Nombres bornés.
   for (const [k, b] of Object.entries(SETTINGS_BOUNDS)) {
     if (!(k in src)) continue
@@ -460,6 +606,32 @@ export function sanitizeJournal(raw: unknown): Sanitized<{ entries: JournalEntry
   return { state: { entries }, issues }
 }
 
+// ---------- Marché (export HDV, par serveur) ----------
+
+export interface MarketData {
+  /** Instantané courant des prix du marché du serveur (null = aucun import). */
+  snapshot: MarketSnapshot | null
+}
+
+/** Marché normalisé : lignes invalides retirées (jamais remplacées par 0) ; instantané illisible → aucun. */
+export function sanitizeMarketState(raw: unknown): Sanitized<MarketData> {
+  const src = isPlainObject(raw) ? raw.snapshot : undefined
+  if (src === undefined || src === null) return { state: { snapshot: null }, issues: [] }
+  const r = sanitizeSnapshot(src)
+  if (!r.snapshot) return { state: { snapshot: null }, issues: ['instantané de marché illisible ignoré (réimportez l’export HDV)'] }
+  return { state: { snapshot: r.snapshot }, issues: r.issues }
+}
+
+export interface MarketHistoryData {
+  entries: MarketHistoryEntry[]
+}
+
+/** Historique des imports normalisé (entrées illisibles retirées). */
+export function sanitizeMarketHistoryState(raw: unknown): Sanitized<MarketHistoryData> {
+  const r = sanitizeHistory(raw)
+  return { state: { entries: r.entries }, issues: r.dropped ? [`${s(r.dropped, 'entrée d’historique illisible ignorée', 'entrées d’historique illisibles ignorées')}`] : [] }
+}
+
 // ---------- Registre ----------
 
 /** Migration (jamais de perte) et normalisation propres à un store ; absentes = état gardé tel quel. */
@@ -468,21 +640,27 @@ export interface StoreSchema {
   sanitize?: (raw: unknown) => Sanitized<Record<string, unknown>>
 }
 
-/** Schémas connus (les autres stores ne sont que vérifiés dans leur forme `{state, version}`). */
+const asRecord = <T>(f: (raw: unknown) => Sanitized<T>) => (raw: unknown) => f(raw) as unknown as Sanitized<Record<string, unknown>>
+
+/** Schémas connus, par base de clé (les autres stores ne sont que vérifiés dans leur forme `{state, version}`). */
 export const STORE_SCHEMAS: Record<string, StoreSchema> = {
-  [STORE_KEYS.settings]: { migrate: (raw, from) => migrateSettings(raw, from), sanitize: (raw) => sanitizeSettings(raw) as unknown as Sanitized<Record<string, unknown>> },
-  [STORE_KEYS.inventory]: { sanitize: sanitizeInventory },
-  [STORE_KEYS.prices]: { sanitize: (raw) => sanitizePrices(raw) as unknown as Sanitized<Record<string, unknown>> },
-  [STORE_KEYS.journal]: { sanitize: sanitizeJournal },
+  settings: { migrate: (raw, from) => migrateSettings(raw, from), sanitize: asRecord((raw) => sanitizeSettings(raw)) },
+  inventory: { sanitize: sanitizeInventory },
+  prices: { sanitize: asRecord(sanitizePrices) },
+  journal: { sanitize: sanitizeJournal },
+  market: { sanitize: asRecord(sanitizeMarketState) },
+  'market-history': { sanitize: asRecord(sanitizeMarketHistoryState) },
 }
 
 /**
  * Déclare la normalisation d'un store défini ailleurs (enclos, plans d'enclos, avancement du plan :
  * leurs sanitizers vivent avec le store, qui importe ce module) pour que l'import d'une sauvegarde
- * (`normalizeStoreValue`) l'applique aussi. Appelé par le module du store à son chargement.
+ * (`normalizeStoreValue`) l'applique aussi. Appelé par le module du store à son chargement, avec la
+ * base (« paddocks ») ou une clé de ce store (profil actif ou ancienne clé).
  */
-export function registerStoreSchema(key: string, schema: StoreSchema): void {
-  STORE_SCHEMAS[key] = schema
+export function registerStoreSchema(keyOrBase: string, schema: StoreSchema): void {
+  const base = keyOrBase.startsWith(STORAGE_PREFIX) ? (parseStoreKey(keyOrBase)?.base ?? keyOrBase) : keyOrBase
+  STORE_SCHEMAS[base] = schema
 }
 
 export type StoreValueCheck =
@@ -490,12 +668,12 @@ export type StoreValueCheck =
   | { ok: false; error: string }
 
 /**
- * Valeur persistée `{state, version}` d'un store connu, amenée à la version actuelle (migration) puis
- * normalisée. Refuse une version plus récente que celle de l'application (elle ne saurait pas la lire
- * sans perte) et une structure inattendue.
+ * Valeur persistée `{state, version}` d'un store connu (n'importe quel profil ou serveur, ou ancienne
+ * clé), amenée à la version actuelle (migration) puis normalisée. Refuse une version plus récente que
+ * celle de l'application (elle ne saurait pas la lire sans perte) et une structure inattendue.
  */
 export function normalizeStoreValue(key: string, value: unknown): StoreValueCheck {
-  const info = PERSISTED_STORES[key]
+  const info = persistedStoreInfo(key)
   const label = info?.label ?? key
   if (!isPlainObject(value) || !isPlainObject(value.state)) return { ok: false, error: `Données « ${label} » invalides (structure inattendue).` }
   if (value.version !== undefined && (typeof value.version !== 'number' || !Number.isInteger(value.version) || value.version < 0))
@@ -507,7 +685,7 @@ export function normalizeStoreValue(key: string, value: unknown): StoreValueChec
       ok: false,
       error: `Données « ${label} » créées par une version plus récente de l’application (format v${from}, cette version lit jusqu’à v${current}) : mettez-la à jour (rechargez la page) avant d’importer.`,
     }
-  const schema = STORE_SCHEMAS[key]
+  const schema = info ? STORE_SCHEMAS[info.base] : undefined
   if (!schema) {
     // Store sans migration déclarée : une version plus ancienne est reprise telle quelle (migration
     // identité), sinon persist l'ignorerait au chargement.

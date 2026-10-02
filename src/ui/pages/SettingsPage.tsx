@@ -1,6 +1,7 @@
-// Page « Réglages » : profil d'éleveur (règles du jeu, niveau, objectif, rythme, accouplements,
-// économie), sauvegarde des données (export / import / remise à zéro) et « à propos ».
-// Tous les réglages sont dans useSettings (persisté) ; la sauvegarde dans src/lib/backup.ts.
+// Page « Réglages » : profils et serveurs (src/ui/ProfilesSection.tsx), profil d'éleveur (règles du jeu,
+// niveau, objectif, rythme, accouplements, économie), sauvegarde des données (tout ou un profil :
+// export / import / remise à zéro) et « à propos ».
+// Tous les réglages sont dans useSettings (persisté, propre au profil ouvert) ; la sauvegarde dans src/lib/backup.ts.
 // Les styles de la tranche « Guide & réglages » sont dans GuidePage.css.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { FAMILIES, GAME, MAKINAS, NETS, PRICES_DEFAULT, getSpecies } from '../../data'
@@ -22,21 +23,23 @@ import { jobLevelFromXp, jobXpBetween, jobXpForLevel, mountXpForLevel } from '..
 import {
   TYPICAL_STORAGE_QUOTA_BYTES,
   downloadBackup,
+  downloadProfileBackup,
   importAll,
   readBackupFile,
   resetAll,
   storageUsage,
   summarizeBackup,
-  takeFlash,
   type BackupValidation,
   type ImportMode,
 } from '../../lib/backup'
 import { formatDate, formatDuration, formatNumber, formatPercent, plural } from '../../lib/format'
 import { journalJobXp, useJournal } from '../../store/journal'
 import { useStorageHealth } from '../../store/persistence'
+import { ACTIVE_PROFILE_ID, useActiveProfile, useActiveServer, useProfiles } from '../../store/profiles'
 import { useRules, useSettings, type Goal } from '../../store/settings'
 import { Badge, Callout, Card, NumberField, PageHeader, Progress, Stat } from '../components'
 import { href, useRoute } from '../router'
+import ProfilesSection from '../ProfilesSection'
 import { ConfidenceBadge, GenBadge, SpeciesPicker } from '../species'
 import './GuidePage.css'
 
@@ -90,6 +93,7 @@ const TIER_ADVICE: Record<FuelTier, string> = {
 }
 
 const SECTIONS: { id: string; label: string }[] = [
+  { id: 'profils', label: 'Profils et serveurs' },
   { id: 'regles', label: 'Version du jeu' },
   { id: 'profil', label: 'Profil' },
   { id: 'objectif', label: 'Objectif' },
@@ -245,16 +249,6 @@ function JobUnlocks({ level, family }: { level: number; family: FamilyId }) {
 
 // ---------- Section Données ----------
 
-/**
- * Message « flash » laissé avant le rechargement (import, remise à zéro) : lu une seule fois par
- * chargement de page (le double rendu du mode strict ne le perd pas), oublié dès le premier affichage.
- */
-let flashOnce: string | null | undefined
-function readFlashOnce(): string | null {
-  if (flashOnce === undefined) flashOnce = takeFlash()
-  return flashOnce
-}
-
 const JOURNAL_KEEP_OPTIONS: { months: number; label: string }[] = [
   { months: 12, label: 'plus d’un an' },
   { months: 6, label: 'plus de 6 mois' },
@@ -272,10 +266,9 @@ function DataSection() {
   const [exported, setExported] = useState<string | null>(null)
   const [imp, setImp] = useState<ImportState>({ status: 'idle' })
   const [confirmReset, setConfirmReset] = useState<'none' | 'all' | 'settings'>('none')
-  const [message, setMessage] = useState<{ tone: 'ok' | 'danger'; text: string } | null>(() => {
-    const m = readFlashOnce()
-    return m ? { tone: 'ok', text: m } : null
-  })
+  // Le message laissé avant un rechargement (import, remise à zéro, changement de profil) est affiché
+  // par l'application (App.tsx, FlashBanner), quelle que soit la page.
+  const [message, setMessage] = useState<{ tone: 'ok' | 'danger'; text: string } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const resetSettings = useSettings((s) => s.reset)
   const journal = useJournal((s) => s.entries)
@@ -287,17 +280,23 @@ function DataSection() {
   const journalCutoff = renderedAt - journalMonths * 30.44 * 86_400_000
   const oldJournal = useMemo(() => journal.filter((e) => e.at < journalCutoff).length, [journal, journalCutoff])
 
-  useEffect(() => {
-    // Le message flash ne doit s'afficher qu'une fois, même si la page Réglages est rouverte ensuite.
-    flashOnce = null
-  }, [])
-
+  const profile = useActiveProfile()
+  const profileCount = useProfiles((st) => st.registry.profiles.length)
   const doExport = () => {
     try {
       // Sans argument : instantané actuel, modifications non enregistrées (quota plein) comprises.
       const name = downloadBackup()
       setExported(name)
       refreshUsage()
+    } catch {
+      setMessage({ tone: 'danger', text: 'Le téléchargement a échoué : votre navigateur bloque peut-être les téléchargements.' })
+    }
+  }
+  const doExportProfile = () => {
+    try {
+      const name = downloadProfileBackup(ACTIVE_PROFILE_ID)
+      if (name) setExported(name)
+      else setMessage({ tone: 'danger', text: 'Sauvegarde du profil impossible : profil introuvable dans le stockage (mode ancien format ?). Téléchargez plutôt une sauvegarde complète.' })
     } catch {
       setMessage({ tone: 'danger', text: 'Le téléchargement a échoué : votre navigateur bloque peut-être les téléchargements.' })
     }
@@ -310,9 +309,9 @@ function DataSection() {
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  const doImport = (mode: ImportMode) => {
+  const doImport = (mode: ImportMode, asNewProfile = false) => {
     if (imp.status !== 'ready') return
-    const r = importAll(imp.validation.backup, { mode })
+    const r = importAll(imp.validation.backup, { mode, asNewProfile })
     // En cas de succès, la page se recharge (message affiché au retour).
     if (!r.ok) setImp({ status: 'error', message: r.error })
   }
@@ -368,11 +367,15 @@ function DataSection() {
         <div className="stack">
           <h3>Exporter</h3>
           <p className="gs-help" style={{ marginTop: 0 }}>
-            Télécharge un fichier <code>.json</code> avec vos montures, enclos, plans, prix, journal, réglages et préférences d’affichage.
+            Télécharge un fichier <code>.json</code> avec vos montures, enclos, plans, prix (saisis et marché importé), journal, réglages et préférences
+            d’affichage : <strong>tout</strong> (tous les profils et serveurs) ou <strong>ce profil seulement</strong> (avec les prix de son serveur).
           </p>
           <div className="row">
             <button className="btn primary" onClick={doExport}>
-              ⬇ Télécharger une sauvegarde
+              ⬇ Tout sauvegarder ({plural(profileCount, 'profil', 'profils')})
+            </button>
+            <button className="btn" onClick={doExportProfile}>
+              ⬇ Ce profil seulement (« {profile.name} »)
             </button>
           </div>
           {exported && <Callout tone="ok">Sauvegarde téléchargée : {exported}</Callout>}
@@ -394,6 +397,11 @@ function DataSection() {
               <small>
                 {imp.validation.backup.exportedAt ? `Exporté le ${formatDate(Date.parse(imp.validation.backup.exportedAt))}` : 'Date d’export inconnue'} · format v
                 {imp.validation.backup.version}
+                {imp.validation.backup.scope?.kind === 'profile'
+                  ? ` · profil « ${imp.validation.backup.scope.profile.name} » (serveur ${imp.validation.backup.scope.server.name})`
+                  : imp.validation.backup.version < 2
+                    ? ' · avant les profils'
+                    : ' · tous les profils'}
               </small>
               {imp.validation.keys.length > 0 && (
                 <ul>
@@ -410,26 +418,51 @@ function DataSection() {
                   {w}
                 </Callout>
               ))}
-              <p className="gs-help">
-                <strong>Remplacer</strong> : vos données actuelles sont effacées et remplacées par celles du fichier. <strong>Fusionner</strong> : seules
-                les données présentes dans le fichier sont remplacées, le reste est gardé. La page se recharge ensuite.
-              </p>
+              {imp.validation.backup.scope?.kind === 'profile' ? (
+                <p className="gs-help">
+                  <strong>Restaurer ce profil</strong> : le profil d’origine (même identifiant) est remplacé, ou créé s’il n’existe pas ici ; les autres profils ne changent pas.{' '}
+                  <strong>Importer comme nouveau profil</strong> : une copie est ajoutée. Si son serveur existe déjà ici, ses prix actuels sont gardés.
+                  Le profil importé est ensuite ouvert (la page se recharge).
+                </p>
+              ) : (
+                <p className="gs-help">
+                  <strong>Remplacer</strong> : toutes vos données actuelles (tous les profils) sont effacées et remplacées par celles du fichier
+                  {imp.validation.backup.version < 2 ? ' (reprises dans le profil « Principal »)' : ''}. <strong>Fusionner</strong> : seules les données
+                  présentes dans le fichier sont remplacées, le reste est gardé
+                  {imp.validation.backup.version < 2 ? ` (une sauvegarde d’avant les profils est versée dans le profil ouvert, « ${profile.name} »)` : ''}. La page
+                  se recharge ensuite.
+                </p>
+              )}
               <div className="row">
                 <button className="btn" onClick={doExport}>
                   Sauvegarder d’abord mes données actuelles
                 </button>
               </div>
-              <div className="row">
-                <button className="btn primary" onClick={() => doImport('replace')}>
-                  Remplacer mes données
-                </button>
-                <button className="btn" onClick={() => doImport('merge')} disabled={imp.validation.keys.length === 0}>
-                  Fusionner
-                </button>
-                <button className="btn ghost" onClick={() => setImp({ status: 'idle' })}>
-                  Annuler
-                </button>
-              </div>
+              {imp.validation.backup.scope?.kind === 'profile' ? (
+                <div className="row">
+                  <button className="btn primary" onClick={() => doImport('replace')}>
+                    Restaurer ce profil
+                  </button>
+                  <button className="btn" onClick={() => doImport('replace', true)}>
+                    Importer comme nouveau profil
+                  </button>
+                  <button className="btn ghost" onClick={() => setImp({ status: 'idle' })}>
+                    Annuler
+                  </button>
+                </div>
+              ) : (
+                <div className="row">
+                  <button className="btn primary" onClick={() => doImport('replace')}>
+                    Remplacer mes données
+                  </button>
+                  <button className="btn" onClick={() => doImport('merge')} disabled={imp.validation.keys.length === 0}>
+                    Fusionner
+                  </button>
+                  <button className="btn ghost" onClick={() => setImp({ status: 'idle' })}>
+                    Annuler
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -480,7 +513,10 @@ function DataSection() {
       )}
       {confirmReset === 'settings' && (
         <Callout tone="warn">
-          <p>Les réglages de cette page reviennent aux valeurs par défaut (règles 3.6, niveau 1, Muldo…). Vos montures, prix et journal ne changent pas.</p>
+          <p>
+            Les réglages du profil « {profile.name} » reviennent aux valeurs par défaut (règles 3.6, niveau 1, Muldo…). Ses montures, son journal et les
+            prix du serveur ne changent pas.
+          </p>
           <div className="row">
             <button
               className="btn primary"
@@ -502,8 +538,9 @@ function DataSection() {
       {confirmReset === 'all' && (
         <Callout tone="danger">
           <p>
-            <strong>Action définitive.</strong> Toutes les données d’ElevageSimu de ce navigateur seront effacées : montures, enclos et plans en cours,
-            prix saisis, journal, réglages et préférences. Les autres sites ne sont pas touchés.
+            <strong>Action définitive.</strong> Toutes les données d’ElevageSimu de ce navigateur seront effacées, <strong>pour tous les profils et
+            serveurs</strong> : montures, enclos et plans en cours, prix saisis et importés, journal, réglages et préférences. Les autres sites ne sont pas
+            touchés. (Pour supprimer un seul profil : section « Profils et serveurs ».)
           </p>
           <div className="row">
             <button className="btn" onClick={doExport}>
@@ -527,6 +564,8 @@ function DataSection() {
 export default function SettingsPage() {
   const s = useSettings()
   const update = useSettings((st) => st.update)
+  const activeProfile = useActiveProfile()
+  const activeServer = useActiveServer()
   const rules = useRules()
   const goal = s.goalSpeciesId !== null ? getSpecies(s.goalSpeciesId) : undefined
   const paddocks = PADDOCK_UNLOCK_LEVELS.filter((p) => p.level <= s.jobLevel).length
@@ -559,10 +598,11 @@ export default function SettingsPage() {
     <div className="settings-page">
       <PageHeader
         title="Réglages"
-        subtitle="Votre profil d’éleveur : il alimente tous les calculs (plans, probabilités, coûts, conseils). Chaque changement est enregistré automatiquement dans ce navigateur."
+        subtitle="Profils et serveurs, puis les réglages du profil ouvert : ils alimentent tous les calculs (plans, probabilités, coûts, conseils). Chaque changement est enregistré automatiquement dans ce navigateur."
       />
 
       <div className="grid grid-4 gs-summary">
+        <Stat label="Profil ouvert" value={activeProfile.name} hint={`serveur ${activeServer.name}`} />
         <Stat label="Règles du jeu" value={rules.id} hint={rules.id === '3.7' ? 'bêta' : rules.id === '3.6' ? 'live' : 'historique'} />
         <Stat label="Éleveur" value={`niv. ${s.jobLevel}`} hint={`${paddocks} enclos sur ${MAX_PADDOCKS}`} />
         <Stat label="Objectif" value={GOALS.find((g) => g.id === s.goal)?.title ?? s.goal} hint={FAMILIES[s.family].plural} />
@@ -576,6 +616,12 @@ export default function SettingsPage() {
           </button>
         ))}
       </nav>
+
+      <div id="reglages-profils" className="gs-anchor">
+        <Card title="Profils et serveurs">
+          <ProfilesSection />
+        </Card>
+      </div>
 
       <div id="reglages-regles" className="gs-anchor">
         <Card title="Version des règles du jeu">
@@ -622,13 +668,22 @@ export default function SettingsPage() {
       </div>
 
       <div id="reglages-profil" className="gs-anchor">
-        <Card title="Profil d’éleveur">
+        <Card title={`Profil d’éleveur — ${activeProfile.name}`}>
           <div className="gs-fields">
-            <Field help="Les prix varient beaucoup d’un serveur à l’autre : notez le vôtre pour savoir à quoi correspondent vos prix saisis.">
-              <label className="field">
-                Serveur
-                <input value={s.server} onChange={(e) => update({ server: e.target.value })} placeholder="ex. Salar, Tal Kasha…" maxLength={40} />
-              </label>
+            <Field
+              help={
+                <>
+                  Les prix varient beaucoup d’un serveur à l’autre : chaque serveur a ses propres prix (saisis et marché importé), partagés par ses profils.{' '}
+                  <button type="button" className="btn small" onClick={() => jump('profils')}>
+                    Changer de serveur ou de profil
+                  </button>
+                </>
+              }
+            >
+              <div className="field">
+                Serveur du profil
+                <strong>{activeServer.name}</strong>
+              </div>
             </Field>
             <Field
               help={

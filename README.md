@@ -21,11 +21,34 @@ rentable.
 | **Optimiseur** | Simulation Monte-Carlo de programmes d'élevage complets vers une monture visée : comparez les stratégies (niveau des parents, Optimakina, clonage, palier de jauge, nombre d'enclos) en captures, accouplements, carburant, jours et kamas. |
 | **Rentabilité** | Coût des matières (carburants par jauge, makinas, filets), revenus attendus (bébés, stériles, génétons), **bénéfice, kamas/heure, ROI** d'un cycle de production ; classement des croisements ; valeur de votre inventaire ; hypothèses et sources. |
 | **Métier Éleveur** | Plan de montée au moins cher (en kamas ou en ressources), liste de courses, jalons de déblocage, autres sources d'XP. |
-| **Prix** | Prix HDV de votre serveur (ressources, carburants, makinas, filets, ingrédients, montures, généton), prix par défaut datés et sourcés, coût de fabrication calculé, couverture, collage en masse, import/export. Un prix manquant n'est **jamais** compté comme 0 : le coût est affiché « incomplet ». |
+| **Modes de rentabilité** | *(en construction)* Rush Volkorne → Cornes, Rush Muldo → Ambres, Rush Dragodinde → Neurones, brisage, vente de montures : kamas par jour de chaque mode sur votre serveur. |
+| **Investissement** | *(en construction)* Un budget (ex. 20 M) → plan d'action daté, retour sur investissement, bénéfice par jour. |
+| **Prix** | Prix HDV de votre serveur (ressources, carburants, makinas, filets, ingrédients, montures, généton) : **import d'un export CSV de l'HDV** (≈ 1 000 objets utiles chiffrés d'un coup, avec le volume des ventes ; préréglage « Tylezia du 02/10/2026 » en un clic), prix saisis, prix par défaut datés et sourcés, coût de fabrication calculé, couverture, collage en masse, import/export. Chaque prix indique son origine (« votre prix », « marché (02/10) · 2 203 vendus/24 h », « défaut », « craft »). Un prix manquant n'est **jamais** compté comme 0 : le coût est affiché « incomplet ». |
 | **Guide & règles** | Les mécaniques expliquées, l'Almanax, les zones de capture, les erreurs fréquentes, les nouveautés 3.7 et la fiabilité des données. |
-| **Réglages** | Profil (version des règles, niveau d'Éleveur, objectif, palier préféré, niveau visé des parents…), sauvegarde / restauration de toutes vos données. |
+| **Réglages** | **Profils et serveurs** (créer, dupliquer, renommer, supprimer, changer de serveur), réglages du profil (version des règles, niveau d'Éleveur, objectif, palier préféré, niveau visé des parents…), sauvegarde / restauration de tout ou d'un seul profil. |
 
-Toutes vos données restent **dans votre navigateur** (localStorage) ; exportez-les depuis Réglages.
+### Profils et serveurs
+
+Vous élevez sur plusieurs serveurs ? Chaque **profil** (un élevage : montures, enclos, plans, journal,
+réglages) est rattaché à un **serveur**, qui porte sa propre économie : prix saisis et prix du marché
+importés, partagés par tous les profils de ce serveur. Le profil ouvert est affiché en haut de la barre
+latérale (avec la date du dernier import des prix) ; on en change en un clic (l'application se recharge).
+À la première ouverture de cette version, vos données existantes deviennent le profil « Principal » sur le
+serveur noté dans vos réglages ; l'ancienne copie est gardée jusqu'à ce que vous la supprimiez (Réglages).
+
+### Importer les prix de l'HDV (CSV)
+
+Page **Prix › Marché HDV (CSV)** : choisissez l'export CSV de l'HDV de votre serveur (colonnes
+`gid;nom;…;vendus_24h;vendus_7j;vendus_30j;median_30j;moyen_30j;median_24h;kamas_par_jour`), vérifiez
+l'aperçu (lignes lues, objets reconnus, couverture par catégorie, évolution des prix clés) puis remplacez
+les prix du marché du serveur. Statistique de prix réglable par serveur (automatique : médiane 24 h s'il y a
+eu au moins 5 ventes, sinon médiane 30 jours). Les prix d'objets-montures de l'HDV mélangent niveaux, états
+et montures séniles : ils sont affichés « HDV mixte », à titre indicatif. Pour un serveur nommé Tylezia, le
+bouton « Charger les prix de Tylezia du 02/10/2026 » charge l'export fourni. Pour en générer un autre :
+`node scripts/import-hdv-csv.mjs <fichier.csv> <serveur> <AAAA-MM-JJ>`.
+
+Toutes vos données restent **dans votre navigateur** (localStorage) ; exportez-les depuis Réglages (tout, ou
+un seul profil).
 
 ## Fiabilité des règles et des données
 
@@ -40,7 +63,8 @@ lacunes connues) :
   [Dofus pour les Noobs](https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html).
 - **Recettes du métier** (211) et provenance des 471 ingrédients : DofusDB, identiques au client.
 - **Prix par défaut** : relevés communautaires datés (peu nombreux, surtout Salar) — à remplacer par les
-  prix de votre serveur dans la page Prix. Les estimations sont signalées comme telles.
+  prix de votre serveur dans la page Prix (export CSV de l'HDV ou saisie). Les estimations sont signalées
+  comme telles.
 
 Points encore incertains (affichés dans l'application) : poids exact de certains croisements, tirage des
 2 bébés d'un Reproducteur, sérénité initiale des captures, conservation du niveau au clonage, valeurs
@@ -60,6 +84,8 @@ npm test                      # tests unitaires (Vitest)
 npm run build                 # vérification TypeScript + build de production (dist/)
 npm run lint                  # oxlint
 node scripts/build-data.mjs   # régénère src/data/*.json depuis research/
+node scripts/import-hdv-csv.mjs research/raw/hdv/tylezia-2026-10-02.csv Tylezia 2026-10-02
+                              # préréglage de prix HDV (src/data/market/tylezia-2026-10-02.json)
 ```
 
 Le build est statique (chemins relatifs) : `dist/` peut être hébergé n'importe où. Un workflow

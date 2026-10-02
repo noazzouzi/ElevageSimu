@@ -5,7 +5,8 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Mount } from '../domain/types'
 import { persistOptions, syncAcrossTabs } from './persistence'
-import { STORE_KEYS, sanitizeInventory } from './schema'
+import { STORE_KEYS } from './profiles'
+import { sanitizeInventory } from './schema'
 
 export type NewMount = Omit<Mount, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
 

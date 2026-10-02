@@ -11,7 +11,8 @@ import { acknowledgeStep, nextSwitchOf, planProgress, type NextSwitch, type Plan
 import { RULESETS } from '../domain/rules'
 import type { FuelTier, GaugeId, RulesetId } from '../domain/types'
 import { persistOptions } from './persistence'
-import { STORE_KEYS, isPlainObject, registerStoreSchema, type Sanitized } from './schema'
+import { STORE_KEYS } from './profiles'
+import { isPlainObject, registerStoreSchema, type Sanitized } from './schema'
 
 /** Plan actif d'un enclos (sérialisable). */
 export interface ActivePaddockPlan {
@@ -257,4 +258,4 @@ export function sanitizePaddockPlans(raw: unknown): Sanitized<{ plans: Record<st
 }
 
 // Import d'une sauvegarde : même normalisation qu'au chargement (schema.normalizeStoreValue).
-registerStoreSchema(STORE_KEYS.paddockPlans, { sanitize: (raw) => sanitizePaddockPlans(raw) as unknown as Sanitized<Record<string, unknown>> })
+registerStoreSchema('paddockPlans', { sanitize: (raw) => sanitizePaddockPlans(raw) as unknown as Sanitized<Record<string, unknown>> })

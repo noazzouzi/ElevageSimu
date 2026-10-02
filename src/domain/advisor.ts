@@ -41,7 +41,9 @@ import {
   type LevelingPlan,
 } from './job'
 import { inventorySummary, recommendFates, unlockedPaddocks, type InventorySummary, type LevelCostFn, type MountFate, type ValuationFn } from './mountFate'
-import { effectiveFertility, mountName, toBreedingParent } from './mounts'
+import { marketItemName, sellablePerDay } from './market'
+import { activeModeKey, pluralItemName, type ActiveMode, type RoutineItem } from './modes'
+import { effectiveFertility, matingBlockers, mountName, toBreedingParent } from './mounts'
 import { canBenefit, gaugeTier, simulatePaddock, validateActiveGauges, type SimMount } from './paddock'
 import { PADDOCK_ROLE_LABELS, assignPaddocks, gaugeSwitch, toSimMount, type AssignResult, type PlanSchedule } from './paddockAssign'
 import { planStatus, remainingPlanConsumption } from './paddockPlanStatus'
@@ -57,6 +59,7 @@ import {
   type PairSuggestion,
 } from './pairing'
 import type { PriceContext } from './pricing'
+import { cheapestOfGeneration, conservativeMountMarketPrice, productionPlan, type ProductionConfig } from './production'
 import type { ProgramConfig, ProgramSummary } from './programSim'
 import { planActiveHistory, projectMountsFromPlan, projectPaddock } from './projection'
 import { gaugeMax, type Ruleset } from './rules'
@@ -222,6 +225,16 @@ export interface AdvisorInput {
    * (borne haute) est utilisé et annoncé comme tel.
    */
   goalSim?: ProgramSummary | null
+  /**
+   * Mode de rentabilité actif du profil (`resolveActiveMode(settings.mode, résultats enregistrés)`,
+   * src/domain/modes.ts). Absent ou `progression` : comportement d'avant les modes (objectif). Rush :
+   * captures de la famille du mode, extraction à la génération de la stratégie au lieu de garder
+   * (accoupler avant si la stratégie le prévoit), ventes des ressources dans la limite du volume ;
+   * brisage : monter au niveau de brisage puis briser ; vente : vendre les montures visées.
+   */
+  mode?: ActiveMode | null
+  /** Part du volume quotidien vendable (serveur, défaut 0,15) : plafond des ventes conseillées. */
+  maxMarketShare?: number
 }
 
 // ---------- Utilitaires ----------
@@ -1055,6 +1068,7 @@ export type AdvisorSection =
   | 'placement'
   | 'captures'
   | 'prices'
+  | 'mode'
 
 export const ADVISOR_SECTION_LABELS: Record<AdvisorSection, string> = {
   summary: 'résumé de l’étable',
@@ -1073,6 +1087,7 @@ export const ADVISOR_SECTION_LABELS: Record<AdvisorSection, string> = {
   placement: 'placement en enclos',
   captures: 'captures',
   prices: 'prix manquants',
+  mode: 'mode de rentabilité',
 }
 
 /** Section qui n'a pas pu être calculée : affichée « section indisponible », jamais masquée en silence. */
@@ -1120,6 +1135,21 @@ export interface AdvisorAnalysis {
   unpricedMounts: number
   /** Sections qui n'ont pas pu être calculées (message), à afficher. */
   errors: AdvisorSectionError[]
+  /** Mode de rentabilité appliqué (rush, brisage, vente), null en progression ou sans mode. */
+  mode: ModeAnalysis | null
+}
+
+/** Ce que le mode actif change dans l'analyse. */
+export interface ModeAnalysis {
+  active: ActiveMode
+  /** Famille travaillée (captures, montures du mode). */
+  family: FamilyId
+  /** Espèce visée par la chaîne du mode (rush, vente), passée comme objectif à l'appariement et au sort des montures. */
+  goalSpeciesId: number | null
+  /** Couleurs G1 à capturer et leur part (routine de la stratégie, sinon plan de production). */
+  captureShares: { speciesId: number; share: number }[]
+  /** Montures dont le sort a été changé par le mode (extraire au lieu de garder, monter puis briser…). */
+  overridden: number
 }
 
 /** Fonctions économiques communes (valorisations mises en cache, C_eff de la règle de prix). */
@@ -1179,6 +1209,299 @@ function collectWaiting(ranked: PairSuggestion[], plan: PairSuggestion[]): Waiti
   return [...out.values()]
 }
 
+// ---------- Mode de rentabilité ----------
+
+/** Réglages effectifs et cibles d'un mode actif (rush, brisage, vente) ; null en progression. */
+interface ModeBase {
+  active: ActiveMode
+  family: FamilyId
+  /** Espèce visée par la chaîne (rush, vente) : objectif de l'appariement et du sort des montures. */
+  goalSpeciesId: number | null
+  /** Génération à partir de laquelle une monture de la famille est « produite » (extraite, vendue). */
+  targetGeneration: number
+  targetSpecies: Set<number>
+  settings: AdvisorSettings
+}
+
+/**
+ * Réglages effectifs du mode actif : famille du mode, espèce visée = cible de la stratégie (rush, vente),
+ * objectif « kamas », palier des jauges, niveau des parents et Optimakina de la stratégie. Null sans mode,
+ * en progression, ou si la famille du mode est inconnue.
+ */
+function modeOverlay(input: Pick<AdvisorInput, 'mode' | 'settings'>): ModeBase | null {
+  const m = input.mode
+  if (!m || m.kind === 'progression') return null
+  const family = m.family ?? (m.kind === 'vente' ? input.settings.family : null)
+  if (!family || !FAMILIES[family]) return null
+  const p = m.params
+  const targets = p.targetSpeciesIds.filter((id) => getSpecies(id)?.family === family)
+  const T = m.kind === 'brisage' ? 1 : Math.max(2, Math.min(10, Math.round(p.targetGeneration)))
+  const goalSpeciesId = m.kind === 'brisage' ? null : (targets[0] ?? cheapestOfGeneration(family, T))
+  const s = input.settings
+  const settings: AdvisorSettings = {
+    ...s,
+    family,
+    goalSpeciesId,
+    goal: 'profit',
+    ...(m.kind === 'brisage'
+      ? {}
+      : { preferredTier: p.tier, parentTargetLevel: p.parentLevel, useOptimakina: p.optimakina !== 'none' }),
+  }
+  return { active: m, family, goalSpeciesId, targetGeneration: T, targetSpecies: new Set(goalSpeciesId !== null ? [...targets, goalSpeciesId] : targets), settings }
+}
+
+/** Couleurs G1 à capturer pour le mode : routine de la stratégie calculée, sinon plan de production. */
+function modeCaptureShares(input: AdvisorInput, base: ModeBase): { speciesId: number; share: number }[] {
+  const digest = base.active.outcome?.digest
+  if (digest && digest.family === base.family) {
+    const caps = digest.routine.capturesPerDay
+    const total = caps.reduce((a, c) => a + c.perDay, 0)
+    if (total > 0) return caps.map((c) => ({ speciesId: c.speciesId, share: c.perDay / total }))
+    if (digest.plan.captureShares.length) return digest.plan.captureShares
+  }
+  const def = base.active.def
+  if (!def.mode || def.mode === 'progression') return []
+  const p = base.active.params
+  const cfg: ProductionConfig = {
+    family: base.family,
+    mode: def.mode,
+    targetGeneration: def.mode === 'brisage' ? undefined : base.targetGeneration,
+    targetSpeciesIds: def.mode === 'brisage' ? undefined : [...base.targetSpecies],
+    parentLevel: p.parentLevel,
+    brisageLevel: p.brisageLevel,
+    optimakina: p.optimakina,
+    tier: p.tier,
+    mateBeforeExtract: p.mateBeforeExtract,
+    paddocks: Math.max(1, unlockedPaddocks(input.settings.jobLevel)),
+    hoursPerDay: input.settings.hoursPerDay,
+    characters: input.settings.accounts,
+    jobLevel: input.settings.jobLevel,
+    rules: input.rules,
+    prices: { ctx: input.priceCtx, saleTax: input.settings.saleTax, mountPrices: input.mountPrices },
+    horizonDays: 30,
+  }
+  return productionPlan(cfg).captureShares
+}
+
+const MODE_EXIT_LABEL: Record<'extraction' | 'vente' | 'brisage', string> = { extraction: 'extraire', vente: 'vendre', brisage: 'briser' }
+
+/**
+ * Sorts des montures pilotés par le mode (comme `recommendFates`, mais selon la stratégie du mode) :
+ *  - rush : une monture de la famille du mode de génération ≥ cible est extraite au lieu d'être gardée —
+ *    accouplée d'abord si la stratégie « accoupler avant d'extraire » le prévoit (fertile : à féconder ;
+ *    féconde : avec une féconde de sexe opposé de la même production) ; les générations sous la cible
+ *    gardent le sort de la chaîne (garder, accoupler, cloner) ;
+ *  - vente : même chose, mais vendue (prix prudent du marché ou votre prix) quand la vente rapporte plus
+ *    que l'extraction ;
+ *  - brisage : chaque monture de la famille est montée au niveau de brisage puis brisée (une génération ≥ 2
+ *    qui rapporte plus à l'extraction est extraite).
+ * Les montures des autres familles et les séniles gardent leur sort.
+ */
+function applyModeFates(
+  fates: Map<string, MountFate>,
+  mounts: readonly Mount[],
+  base: ModeBase,
+  o: { valuation: ValuationFn; levelCost: LevelCostFn; plannedPartners: Map<string, string>; ctx: PriceContext; saleTax: number },
+): { fates: Map<string, MountFate>; overridden: number } {
+  const out = new Map(fates)
+  const m = base.active
+  const label = m.def.short
+  const p = m.params
+  let overridden = 0
+  const kindOf = (mt: Mount) => getSpecies(mt.speciesId)
+  const inFamily = mounts.filter((mt) => {
+    const sp = kindOf(mt)
+    return !!sp && sp.family === base.family && sp.breedable && effectiveFertility(mt) !== 'senile'
+  })
+  const set = (mt: Mount, f: Omit<MountFate, 'mountId' | 'usefulness' | 'floor' | 'floorComplete' | 'rule'> & Partial<Pick<MountFate, 'floor' | 'floorComplete'>>) => {
+    const prev = out.get(mt.id)
+    out.set(mt.id, {
+      mountId: mt.id,
+      rule: 0,
+      usefulness: prev?.usefulness ?? { kind: 'aucune', useful: false, detail: '', crossings: [] },
+      floor: f.floor ?? prev?.floor ?? null,
+      floorComplete: f.floorComplete ?? prev?.floorComplete ?? false,
+      ...f,
+    })
+    overridden++
+  }
+  const val = (mt: Mount, level = mt.level, state?: 'fertile' | 'feconde' | 'sterile') => {
+    const f = effectiveFertility(mt)
+    const st = state ?? (f === 'senile' ? 'sterile' : f)
+    return o.valuation(mt.speciesId, level, { state: st, senile: false })
+  }
+  /** Sortie après accouplement : la fiche existante (plan ou bébé gratuit) garde son partenaire, la sortie devient celle du mode. */
+  const keepMating = (mt: Mount, f: MountFate, exit: 'extraction' | 'vente' | 'brisage', why: string) => {
+    const after = val(mt, mt.level, 'sterile')
+    const v = exit === 'extraction' ? after.extraction : exit === 'brisage' ? after.brisage : after.sale
+    set(mt, {
+      action: 'accoupler',
+      label: `Accoupler puis ${MODE_EXIT_LABEL[exit]} (${label})`,
+      reason: `${f.reason} Mode ${m.def.label} : ${why}`,
+      value: v.net,
+      valueNote: `stérile après l'accouplement, ${MODE_EXIT_LABEL[exit]} (hors bébé)`,
+      confidence: f.confidence,
+      complete: v.net !== null,
+      partnerId: f.partnerId,
+      exit,
+    })
+  }
+
+  if (m.kind === 'rush' || m.kind === 'vente') {
+    const T = base.targetGeneration
+    const produced = inFamily.filter((mt) => (kindOf(mt)?.generation ?? 0) >= T)
+    const used = new Set<string>()
+    /** Sortie du mode pour cette monture, dans son état actuel ou après l'accouplement (stérile). */
+    const exitFor = (mt: Mount, state?: 'sterile'): { kind: 'extraction' | 'vente'; net: number | null; complete: boolean; why: string } => {
+      const v = val(mt, mt.level, state)
+      const ext = v.extraction.net
+      // Vente : seulement les montures fertiles (ou fécondes), comme le moteur de production.
+      if (m.kind === 'vente' && state !== 'sterile' && effectiveFertility(mt) !== 'sterile') {
+        // Prix de vente : le vôtre, sinon le prix prudent du marché du serveur (comme le moteur de
+        // production), sinon le prix par défaut de la recherche (à vérifier).
+        const tax = Math.max(0, Math.min(1, o.saleTax))
+        const own = v.sale.origin === 'joueur' ? v.sale.net : null
+        const prudent = own === null ? conservativeMountMarketPrice(o.ctx.market ?? null, mt.speciesId) : null
+        const fallback = own === null && !prudent ? v.sale.net : null
+        const sale = own ?? (prudent ? prudent.price * (1 - tax) : fallback)
+        const extTxt = ext !== null ? formatKamas(ext) : 'inconnue'
+        if (sale !== null && sale > (ext ?? 0))
+          return {
+            kind: 'vente',
+            net: sale,
+            complete: own !== null,
+            why:
+              own !== null
+                ? `vendre (votre prix ≈ ${formatKamas(sale)} net, extraction ≈ ${extTxt}).`
+                : prudent
+                  ? `vendre au prix prudent du marché (≈ ${formatKamas(sale)} net, « HDV mixte » : vérifiez les montures comparables) plutôt qu'extraire (≈ ${extTxt}).`
+                  : `vendre au prix par défaut de la recherche (≈ ${formatKamas(sale)} net, à vérifier à l'HDV) plutôt qu'extraire (≈ ${extTxt}).`,
+          }
+      }
+      return { kind: 'extraction', net: ext, complete: v.extraction.net !== null, why: `extraire (G${kindOf(mt)?.generation ?? '?'} → ${ext !== null ? `≈ ${formatKamas(ext)} net` : 'valeur inconnue'}).` }
+    }
+    // 1. Montures déjà prévues dans un accouplement (plan ou bébé gratuit) : la sortie devient celle du mode.
+    for (const mt of produced) {
+      const f = out.get(mt.id)
+      if (f?.action === 'accoupler' && f.partnerId) {
+        const e = exitFor(mt, 'sterile')
+        keepMating(mt, f, e.kind, `après l'accouplement, ${e.why}`)
+        used.add(mt.id)
+      }
+    }
+    // 2. Fécondes : bébé gratuit entre montures produites de sexes opposés (si la stratégie le prévoit) —
+    //    en vente, seulement les invendables (une monture vendue l'est fertile, pas stérile).
+    const fecund = produced.filter((mt) => !used.has(mt.id) && effectiveFertility(mt) === 'feconde' && exitFor(mt).kind === 'extraction')
+    if (p.mateBeforeExtract)
+      for (const a of fecund) {
+        if (used.has(a.id)) continue
+        const b = fecund.find((x) => x !== a && !used.has(x.id) && matingBlockers(a, x).length === 0)
+        if (!b) continue
+        for (const [x, y] of [
+          [a, b],
+          [b, a],
+        ] as const) {
+          const e = exitFor(x, 'sterile')
+          const v = e.net
+          set(x, {
+            action: 'accoupler',
+            label: `Accoupler puis ${MODE_EXIT_LABEL[e.kind]} (${label})`,
+            reason: `Mode ${m.def.label} : G${kindOf(x)?.generation ?? '?'} produite — accouplez-la d'abord avec ${mountName(y)} (bébé gratuit, génétons, XP d'Éleveur), puis ${e.why}`,
+            value: v,
+            valueNote: `${MODE_EXIT_LABEL[e.kind]} après l'accouplement (hors bébé)`,
+            confidence: 'medium',
+            complete: v !== null,
+            partnerId: y.id,
+            exit: e.kind,
+          })
+          used.add(x.id)
+        }
+      }
+    // 3. Les autres : sortir maintenant (fertile à féconder d'abord si on accouple avant d'extraire).
+    for (const mt of produced) {
+      if (used.has(mt.id)) continue
+      const eff = effectiveFertility(mt)
+      const e = exitFor(mt)
+      if (eff === 'fertile' && p.mateBeforeExtract && e.kind === 'extraction') {
+        set(mt, {
+          action: 'garder',
+          label: `Féconder, accoupler puis extraire (${label})`,
+          reason: `Mode ${m.def.label} : G${kindOf(mt)?.generation ?? '?'} produite. La stratégie retenue accouple chaque monture produite une fois avant de l'extraire (bébé gratuit) : rendez-la féconde dans le prochain lot, accouplez-la avec une autre monture produite de sexe opposé, puis ${e.why}`,
+          value: e.net,
+          valueNote: 'extraction après l’accouplement (hors bébé)',
+          confidence: 'medium',
+          complete: e.complete,
+          exit: 'extraction',
+        })
+        continue
+      }
+      set(mt, {
+        action: e.kind,
+        label: `${e.kind === 'vente' ? 'Vendre' : 'Extraire'} (${label})`,
+        reason: `Mode ${m.def.label} : G${kindOf(mt)?.generation ?? '?'} produite (génération visée G${T}${eff === 'feconde' && p.mateBeforeExtract ? ', aucune autre féconde produite de sexe opposé pour un bébé gratuit' : ''}) — ${e.why}`,
+        value: e.net,
+        valueNote: e.kind === 'vente' ? 'vente nette de taxe' : 'extraction nette de taxe',
+        confidence: e.kind === 'vente' && !e.complete ? 'low' : 'medium',
+        complete: e.complete,
+        exit: e.kind,
+        ...(e.kind === 'vente' && !e.complete ? { hint: 'Prix « HDV mixte » (niveaux, états et séniles mélangés) : vérifiez le prix des montures comparables avant de vendre.' } : {}),
+      })
+    }
+    return { fates: out, overridden }
+  }
+
+  if (m.kind === 'brisage') {
+    const L = p.brisageLevel
+    for (const mt of inFamily) {
+      const f = out.get(mt.id)
+      const gen = kindOf(mt)?.generation ?? 1
+      // Accouplement déjà prévu (plan d'appariement, ou bébé gratuit si la stratégie accouple avant de briser).
+      if (f?.action === 'accoupler' && f.partnerId && (p.mateBeforeExtract || o.plannedPartners.has(mt.id))) {
+        keepMating(mt, f, 'brisage', `après l'accouplement, monter la stérile au niveau ${L} puis la briser.`)
+        continue
+      }
+      const now = val(mt)
+      const atL = val(mt, Math.max(mt.level, L))
+      const ext = now.extraction.net
+      if (mt.level >= L) {
+        if (gen >= 2 && ext !== null && atL.brisage.net !== null && ext > atL.brisage.net) {
+          set(mt, { action: 'extraction', label: `Extraire (${label})`, reason: `Mode ${m.def.label} : G${gen}, l'extraction (≈ ${formatKamas(ext)}) rapporte plus que le brisage (≈ ${formatKamas(atL.brisage.net)}).`, value: ext, valueNote: 'extraction nette de taxe', confidence: 'medium', complete: true, exit: 'extraction' })
+          continue
+        }
+        set(mt, {
+          action: 'brisage',
+          label: `Briser (${label})`,
+          reason: `Mode ${m.def.label} : niveau ${mt.level} ≥ ${L}, à briser (runes ${m.def.resourceName ?? ''}).`.replace(' ()', ''),
+          value: now.brisage.net,
+          valueNote: 'brisage net de taxe',
+          confidence: 'medium',
+          complete: now.brisage.net !== null,
+          exit: 'brisage',
+        })
+        continue
+      }
+      const lc = o.levelCost(mt.level, L, mt, PADDOCK_SLOTS)
+      const gain = atL.brisage.net !== null && lc.cost !== null ? atL.brisage.net - lc.cost : null
+      if (gen >= 2 && ext !== null && (gain === null || ext >= gain)) {
+        set(mt, { action: 'extraction', label: `Extraire (${label})`, reason: `Mode ${m.def.label} : G${gen}, l'extraction (≈ ${formatKamas(ext)}) rapporte au moins autant que monter au niveau ${L} et briser${gain !== null ? ` (≈ ${formatKamas(gain)} net du carburant)` : ''}.`, value: ext, valueNote: 'extraction nette de taxe', confidence: 'medium', complete: true, exit: 'extraction' })
+        continue
+      }
+      set(mt, {
+        action: 'monter',
+        label: `Monter niv. ${L} puis briser (${label})`,
+        reason: `Mode ${m.def.label} : montez-la au niveau ${L} (Mangeoire, lot de 10 au palier ${p.tier}) puis brisez-la${atL.brisage.net !== null ? ` (≈ ${formatKamas(atL.brisage.net)} brut de carburant${lc.cost !== null ? `, ≈ ${formatKamas(lc.cost)} de Mangeoire par monture` : ''})` : ''}.`,
+        value: gain,
+        valueNote: 'brisage au niveau visé moins le carburant',
+        confidence: 'low',
+        complete: gain !== null && lc.complete,
+        targetLevel: L,
+        exit: 'brisage',
+      })
+    }
+  }
+  return { fates: out, overridden }
+}
+
 /**
  * Calculs lourds de l'aide (plan d'accouplement, sort des montures, répartition en enclos, objectif,
  * métier, prix manquants). Ne dépend de `now` que par le jour (Almanax) : la page le mémorise
@@ -1186,7 +1509,7 @@ function collectWaiting(ranked: PairSuggestion[], plan: PairSuggestion[]): Waiti
  * échoue est notée dans `errors` (et affichée), les autres restent calculées.
  */
 export function analyzeState(input: AdvisorInput): AdvisorAnalysis {
-  const { settings, rules, mounts, priceCtx: ctx } = input
+  const { rules, mounts, priceCtx: ctx } = input
   const errors: AdvisorSectionError[] = []
   const fail = (section: AdvisorSection, e: unknown) => {
     console.error('[conseiller]', section, e)
@@ -1194,6 +1517,10 @@ export function analyzeState(input: AdvisorInput): AdvisorAnalysis {
   }
   const day = serverDay(input.now) // jour de jeu (Paris) : Almanax, Takeza
   const almanax = almanaxOn(day)
+  // Mode de rentabilité (rush, brisage, vente) : famille, espèce visée, palier et niveau des parents de la
+  // stratégie remplacent ceux des réglages pour l'appariement, le sort des montures et la répartition.
+  const modeBase = modeOverlay(input)
+  const settings = modeBase?.settings ?? input.settings
   const unlocked = unlockedPaddocks(settings.jobLevel)
   let summary: InventorySummary
   try {
@@ -1202,8 +1529,9 @@ export function analyzeState(input: AdvisorInput): AdvisorAnalysis {
     fail('summary', e)
     summary = emptySummary(mounts.length)
   }
-  const genetonValue = genetonKamasValue(input.genetonValue ?? null).value
-  const kit = economyKit(input)
+  // Valeur du généton : la vôtre, sinon le marché du serveur (boutique d'Eugène Éton), sinon la recherche.
+  const genetonValue = genetonKamasValue(input.genetonValue ?? null, { market: ctx.market ?? null }).value
+  const kit = economyKit({ ...input, settings })
   const missing = new MissingCollector()
 
   // 1. Plan d'accouplement d'abord : le sort des montures en dépend (une monture prévue au plan
@@ -1253,6 +1581,17 @@ export function analyzeState(input: AdvisorInput): AdvisorAnalysis {
     } catch (e) {
       fail('fates', e)
     }
+  // 2 bis. Mode de rentabilité : extraire / vendre / briser au lieu de garder (sorties pilotées par le mode).
+  let mode: ModeAnalysis | null = null
+  if (modeBase)
+    try {
+      const r = applyModeFates(fates, mounts, modeBase, { valuation: kit.valuation, levelCost: kit.levelCost, plannedPartners, ctx, saleTax: settings.saleTax })
+      fates = r.fates
+      mode = { active: modeBase.active, family: modeBase.family, goalSpeciesId: modeBase.goalSpeciesId, captureShares: modeCaptureShares(input, modeBase), overridden: r.overridden }
+    } catch (e) {
+      fail('mode', e)
+      mode = { active: modeBase.active, family: modeBase.family, goalSpeciesId: modeBase.goalSpeciesId, captureShares: [], overridden: 0 }
+    }
 
   // 3. Répartition en enclos (mêmes options que la page Enclos).
   const xpTargets: Record<string, number> = {}
@@ -1281,9 +1620,10 @@ export function analyzeState(input: AdvisorInput): AdvisorAnalysis {
     : mounts.filter((m) => m.location.kind === 'enclos' && m.location.paddock <= unlocked).length
   const freeSlots = Math.max(0, unlocked * PADDOCK_SLOTS - used)
 
-  // 4. Objectif (effort restant avec vos montures ; la simulation est appliquée par `adviseNow`).
+  // 4. Objectif (effort restant avec vos montures ; la simulation est appliquée par `adviseNow`). En mode de
+  //    rentabilité (rush, brisage, vente), la production du mode remplace l'objectif de génération.
   let goal: GoalStatus | null = null
-  if (settings.goalSpeciesId !== null)
+  if (settings.goalSpeciesId !== null && !modeBase)
     try {
       goal = goalStatus(settings.goalSpeciesId, mounts, { parentLevel: settings.parentTargetLevel, useOptimakina: settings.useOptimakina, rules })
       if (goal?.error && goal.tree) fail('goal', goal.error)
@@ -1335,6 +1675,7 @@ export function analyzeState(input: AdvisorInput): AdvisorAnalysis {
     missingPrices: missing.list(),
     unpricedMounts,
     errors,
+    mode,
   }
 }
 
@@ -1367,7 +1708,9 @@ function sameAnalysisInput(x: AdvisorInput, y: AdvisorInput): boolean {
     shallowEqual(x.priceCtx, y.priceCtx) &&
     shallowEqual(x.mountPrices, y.mountPrices) &&
     Object.is(x.genetonValue ?? null, y.genetonValue ?? null) &&
-    Object.is(x.journalXp?.xp ?? 0, y.journalXp?.xp ?? 0)
+    Object.is(x.journalXp?.xp ?? 0, y.journalXp?.xp ?? 0) &&
+    activeModeKey(x.mode) === activeModeKey(y.mode) &&
+    Object.is(x.maxMarketShare ?? null, y.maxMarketShare ?? null)
   )
 }
 
@@ -1477,9 +1820,11 @@ function onboardingAdvice({ input }: Ctx): Advice[] {
   return []
 }
 
-function goalAdvice({ input, goal }: Ctx): Advice[] {
+function goalAdvice({ input, goal, a }: Ctx): Advice[] {
   const s = input.settings
   const out: Advice[] = []
+  // Mode de rentabilité actif : la production du mode remplace l'objectif de génération (conseil « mode »).
+  if (a.mode) return out
   if (goal?.reached)
     out.push({
       id: `objectif:atteint:${goal.speciesId}`,
@@ -2094,7 +2439,7 @@ function matingAdvice({ input, a, byId }: Ctx): Advice[] {
       priority: 2,
       category: 'accouplement',
       title: `Accoupler ${nb(a.pairs.length, 'couple')} ${plural(a.pairs.length, 'fécond')}`,
-      detail: `Plan d'appariement pour l'objectif « ${objectiveLabel(input.settings.goal)} » : chaque monture n'est utilisée qu'une fois, sur ${nb(a.pairCandidates, 'couple')} possible${a.pairCandidates > 1 ? 's' : ''}. Accouplez depuis l'étable, par génération croissante, puis clonez ou sortez les stériles (indiqué « ensuite »). ${
+      detail: `Plan d'appariement pour ${a.mode ? `le mode « ${a.mode.active.def.label} » (chaîne vers ${a.mode.goalSpeciesId !== null ? nameOf(a.mode.goalSpeciesId) : 'la génération visée'})` : `l'objectif « ${objectiveLabel(input.settings.goal)} »`} : chaque monture n'est utilisée qu'une fois, sur ${nb(a.pairCandidates, 'couple')} possible${a.pairCandidates > 1 ? 's' : ''}. Accouplez depuis l'étable, par génération croissante, puis clonez ou sortez les stériles (indiqué « ensuite »). ${
         opti
           ? `Optimakina sur ${nb(opti, 'couple')} : règle de prix (prix < C_eff × Δ / p) dès que le prix et le coût du couple sont connus ; sinon systématique dès la cible G${OPTIMAKINA_SYSTEMATIC_GENERATION} (G${OPTIMAKINA_GOAL_STEP_GENERATION}–G5 pour les étapes de l'objectif).`
           : ''
@@ -2201,8 +2546,9 @@ function fateAdvice({ input, a, byId }: Ctx): Advice[] {
       priority: 3,
       category: 'vente',
       title: `Sortir ${nb(exits.length, 'monture')} (${parts.join(', ')})`,
-      detail:
-        "Montures sans usage pour votre plan : meilleure sortie nette de taxe entre vente, extraction et brisage, avec vos prix. Avant d'extraire deux fécondes, accouplez-les (bébé gratuit).",
+      detail: a.mode
+        ? `Mode ${a.mode.active.def.label} : les montures produites (G${a.mode.active.kind === 'brisage' ? '1+' : `${a.mode.active.params.targetGeneration}+`} de la famille du mode) sortent selon la stratégie (${a.mode.active.kind === 'vente' ? 'vente si le prix prudent dépasse l’extraction, sinon extraction' : a.mode.active.kind === 'brisage' ? 'montée au niveau de brisage puis brisage' : 'extraction'}) ; les autres montures sans usage prennent leur meilleure sortie nette de taxe. Avant d'extraire deux fécondes, accouplez-les (bébé gratuit).`
+        : "Montures sans usage pour votre plan : meilleure sortie nette de taxe entre vente, extraction et brisage, avec vos prix. Avant d'extraire deux fécondes, accouplez-les (bébé gratuit).",
       link: { page: 'montures', params: { sort: main }, label: 'Voir les montures à sortir' },
       items: sorted.slice(0, 12).map((f) => {
         const m = byId.get(f.mountId)
@@ -2308,8 +2654,10 @@ function placementAdvice({ input, a, byId, now }: Ctx): Advice[] {
   ]
 }
 
-function captureAdvice({ input, a, goal }: Ctx): Advice[] {
+function captureAdvice(ctx: Ctx): Advice[] {
+  const { input, a, goal } = ctx
   if (input.mounts.length === 0) return []
+  if (a.mode) return modeCaptureAdvice(ctx)
   const s = input.settings
   const items: AdviceItem[] = []
   const cap = a.capture
@@ -2483,6 +2831,154 @@ function priceAdvice({ input, a, missing }: Ctx): Advice[] {
   return out
 }
 
+// ---------- Mode de rentabilité : routine du jour et captures ----------
+
+const ROUTINE_ICON_TONE: Partial<Record<RoutineItem['kind'], AdviceItem['tone']>> = { note: 'ok' }
+
+/**
+ * Conseil « mode actif » : stratégie suivie, bénéfice attendu par jour et gestes quotidiens de la routine
+ * (vendre les ressources dans la limite du volume du marché, carburant à acheter ou fabriquer,
+ * Optimakinas, génétons). Sans stratégie calculée (ou calcul périmé) : inviter à la calculer.
+ */
+function modeAdvice({ input, a }: Ctx): Advice[] {
+  const m = input.mode
+  if (!m) return []
+  const out: Advice[] = []
+  if (m.note)
+    out.push({
+      id: `mode:auto-non-calcule`,
+      priority: 3,
+      category: 'objectif',
+      title: 'Mode automatique : comparez les modes de rentabilité',
+      detail: m.note,
+      link: { page: 'modes', label: 'Comparer les modes' },
+    })
+  if (!a.mode) return out
+  const mode = a.mode
+  const act = mode.active
+  const famPlural = FAMILIES[mode.family]?.plural ?? mode.family
+  const items: AdviceItem[] = []
+  const routine = act.routine
+  if (act.source === 'defaut')
+    items.push({
+      id: 'calculer',
+      text: 'Calculer la stratégie de ce mode pour votre profil (≈ 5 s, page Modes de rentabilité)',
+      hint: `En attendant, stratégie par défaut : ${act.strategyLabel}.`,
+      tone: 'warn',
+      link: { page: 'modes', params: { mode: act.id }, label: 'Calculer' },
+    })
+  else if (act.stale)
+    items.push({
+      id: 'recalculer',
+      text: 'Recalculer les modes : vos réglages ou les prix du serveur ont changé depuis le dernier calcul',
+      tone: 'warn',
+      link: { page: 'modes', params: { mode: act.id }, label: 'Recalculer' },
+    })
+  if (routine)
+    for (const it of routine.daily)
+      items.push({ id: `routine-${it.id}`, text: it.text, hint: it.hint, tone: it.tone ?? ROUTINE_ICON_TONE[it.kind], link: it.kind === 'carburant' || it.kind === 'makina' ? { page: 'prix', label: 'Prix' } : undefined })
+  else if (act.itemId !== null && input.priceCtx.market) {
+    const cap = sellablePerDay(input.priceCtx.market, act.itemId, input.maxMarketShare ?? 0.15)
+    const name = marketItemName(act.itemId, input.priceCtx.market?.names)
+    if (cap !== null)
+      items.push({
+        id: 'plafond',
+        text: `Vendre au plus ${formatNumber(cap)} ${pluralItemName(name, cap)} par jour (${formatNumber((input.maxMarketShare ?? 0.15) * 100)} % du volume quotidien du marché)`,
+        hint: 'Au-delà, vos ventes font baisser le prix : gardez le surplus pour le lendemain.',
+      })
+  }
+  if (mode.overridden > 0)
+    items.push({
+      id: 'sorts',
+      text: `${nb(mode.overridden, 'monture')} de la famille ${famPlural} ${plural(mode.overridden, 'suit', 'suivent')} la stratégie du mode (${act.kind === 'brisage' ? 'monter puis briser' : act.kind === 'vente' ? 'vendre ou extraire' : 'extraire'} au lieu de garder)`,
+      link: { page: 'montures', label: 'Mes montures' },
+    })
+  const net = routine?.headline.net ?? act.outcome?.strategy?.net ?? null
+  const kamasDay = net && net.low !== null ? net.low : null
+  out.push({
+    id: `mode:${act.id}:${a.day}:${act.source}:${act.stale ? 1 : 0}`,
+    priority: act.source === 'defaut' || act.stale ? 2 : 3,
+    category: 'objectif',
+    title: `Mode ${act.def.label}${act.requested === 'auto' ? ' (automatique)' : ''} : routine du jour`,
+    detail: `${act.def.objective} Stratégie : ${act.strategyLabel}.${routine ? ` En régime permanent : ${routine.summary}.` : ''} Les accouplements, sorties et captures ci-dessous suivent ce mode ; la routine complète, session par session, est dans le Plan d’élevage.`,
+    link: { page: 'plan', params: { onglet: 'routines' }, label: 'Routine du mode' },
+    items,
+    amount: kamasDay !== null && net ? { label: 'Bénéfice net attendu par jour (régime permanent)', value: kamasDay, complete: net.high !== null && Math.abs(net.high - (net.low ?? 0)) < 0.5 } : undefined,
+    confidence: act.source === 'defaut' ? 'low' : 'medium',
+  })
+  return out
+}
+
+/**
+ * Captures du mode : famille du mode, couleurs de la routine (ou du plan de production) pour remplir les
+ * places libres, sexe en déficit de chaque couleur (brisage sans accouplement : n'importe quel sexe),
+ * combats selon les personnages, zone et filet.
+ */
+function modeCaptureAdvice({ input, a }: Ctx): Advice[] {
+  const mode = a.mode
+  if (!mode) return []
+  const s = input.settings
+  const act = mode.active
+  const waiting = a.assignment?.stats.waiting ?? 0
+  const free = waiting > 0 ? 0 : a.freeSlots
+  const toCatch = free
+  if (toCatch <= 0) return []
+  const stableFree = Math.max(0, input.rules.stableSlots - input.mounts.filter((m) => m.location.kind === 'etable').length)
+  const shares = mode.captureShares.filter((x) => x.share > 0)
+  const famPlural = FAMILIES[mode.family]?.plural ?? mode.family
+  const sexMatters = act.kind !== 'brisage' || act.params.mateBeforeExtract
+  const items: AdviceItem[] = []
+  if (shares.length) {
+    const counts = largestRemainder(shares.map((x) => x.share * toCatch))
+    shares.forEach((x, i) => {
+      const n = counts[i]
+      if (n <= 0) return
+      const owned = input.mounts.filter((m) => m.speciesId === x.speciesId && (effectiveFertility(m) === 'fertile' || effectiveFertility(m) === 'feconde'))
+      const males = owned.filter((m) => m.gender === 'male').length
+      const females = owned.length - males
+      const wantMales = Math.max(0, Math.min(n, Math.round((owned.length + n) / 2) - males))
+      const sexes = sexMatters ? ` (${[wantMales ? `${wantMales} ♂` : '', n - wantMales ? `${n - wantMales} ♀` : ''].filter(Boolean).join(', ')})` : ''
+      items.push({
+        id: `g1-${x.speciesId}`,
+        text: `${nameOf(x.speciesId)} : ${formatNumber(n)}${sexes}`,
+        hint: `${formatPercent(x.share, 0)} des captures du mode${sexMatters ? ` ; vous en avez ${males} ♂ / ${females} ♀` : ''}`,
+      })
+    })
+  } else items.push({ id: 'couleurs', text: `${formatNumber(toCatch)} ${famPlural} G1, ${act.kind === 'brisage' ? 'n’importe quelle couleur' : 'couleurs de la recette'}` })
+  if (stableFree < toCatch)
+    items.push({ id: 'etable', text: `Étable presque pleine (${nb(stableFree, 'place')} ${plural(stableFree, 'libre')}) : sortez d'abord les montures produites`, tone: 'warn', link: { page: 'montures', label: 'Mes montures' } })
+  const cap = a.capture
+  const c = cap.cost
+  const perFight = capturesPerFight(s.accounts, c.mountsPerCast)
+  items.push({
+    id: 'combats',
+    text: `≈ ${nb(Math.ceil(toCatch / perFight), 'combat')} de capture pour ${nb(toCatch, 'monture')}`,
+    hint: `${nb(Math.max(1, Math.round(s.accounts ?? 1)), 'personnage')} × ${nb(c.mountsPerCast, 'monture')} par lancer = ${nb(perFight, 'capture')} par combat`,
+  })
+  if (cap.spot) items.push({ id: 'zone', text: `Où : ${captureSpotText(cap.spot)}`, hint: cap.spot.note })
+  if (c.net)
+    items.push({
+      id: 'filet',
+      text: `Filet : ${c.net.name} (${NET_KIND_LABELS[cap.netKind].toLowerCase()}, ${formatNumber(c.mountsPerCast)} par lancer)`,
+      hint: c.perMount !== null ? `${formatKamas(c.perMount)} par monture${c.complete ? '' : ' (minimum)'}` : 'coût incomplet',
+      tone: c.complete ? undefined : 'warn',
+    })
+  const perDay = act.routine?.headline.captures
+  return [
+    {
+      id: `capture:${a.day}:${act.id}:${hashKey(items.map((i) => i.text).join('|'))}`,
+      priority: free >= PADDOCK_SLOTS ? 2 : 3,
+      category: 'capture',
+      title: `Capturer ${formatNumber(toCatch)} ${famPlural} G1 (${act.def.short})`,
+      detail: `Mode ${act.def.label} : remplissez les ${nb(free, 'place')} ${plural(free, 'libre')} en enclos avec les couleurs de la stratégie (${act.strategyLabel})${perDay ? ` ; en régime permanent ≈ ${formatNumber(perDay, 1)} captures par jour` : ''}. ${sexMatters ? 'Capturez le sexe en déficit de chaque couleur d’abord. ' : ''}30 XP d'Éleveur par capture.`,
+      link: { page: 'montures', params: { captures: 1 }, label: 'Saisir les captures' },
+      items,
+      amount: c.perMount !== null ? { label: 'Filets', value: c.perMount * toCatch, complete: c.complete } : undefined,
+      missing: c.complete ? undefined : c.missing,
+    },
+  ]
+}
+
 // ---------- Assemblage ----------
 
 /** Tri : priorité, puis heure (les actions minutées d'abord), puis ordre d'une session. */
@@ -2547,6 +3043,7 @@ export function adviseNow(input: AdvisorInput, analysis: AdvisorAnalysis = analy
   run('captures', captureAdvice)
   run('job', jobAdvice)
   run('goal', goalAdvice)
+  run('mode', modeAdvice)
   // Les prix en dernier : les recharges de carburant y ajoutent leurs objets manquants.
   run('prices', priceAdvice)
   const seen = new Set<string>()

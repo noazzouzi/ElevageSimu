@@ -48,6 +48,7 @@ import { useInventory, type NewMount } from '../../store/inventory'
 import { useJournal } from '../../store/journal'
 import { usePriceContext, usePrices } from '../../store/prices'
 import { useRules, useSettings } from '../../store/settings'
+import { profileKey } from '../../store/profiles'
 import { Badge, Callout, Card, Empty, NumberField, PageHeader, Progress, Stat } from '../components'
 import { GaugeBars, Modal, MountEditor, SerenitySmiley, SmileyPicker, StatusBadge } from '../MountEditor'
 import { href, useRoute } from '../router'
@@ -101,7 +102,7 @@ interface SortState {
 
 const DEFAULT_FILTERS: Filters = { family: 'toutes', generation: 0, status: 'tous', location: 'tous', band: 'toutes', fate: 'tous', q: '' }
 const DEFAULT_SORT: SortState = { key: 'generation', dir: -1 }
-const UI_KEY = 'elevagesimu:montures-ui'
+const UI_KEY = profileKey('montures-ui')
 
 function loadUi(): { filters: Filters; sort: SortState } {
   try {

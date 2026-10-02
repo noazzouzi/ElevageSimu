@@ -51,6 +51,10 @@ import type { FertilityStep } from './fertility'
 import type { PriceContext } from './pricing'
 import { RULESETS } from './rules'
 import type { GaugeId, Mount, PaddockState } from './types'
+import tylezia from '../data/market/tylezia-2026-10-02.json'
+import { marketSourceOf, sanitizeSnapshot } from './market'
+import { modeConfig, outcomeFromSummary, resolveActiveMode, storeModeResults, type ActiveMode, type ModeProfile } from './modes'
+import { cheapestOfGeneration, runProduction } from './production'
 
 const R36 = RULESETS['3.6']
 const R37 = RULESETS['3.7']
@@ -1005,5 +1009,132 @@ describe('tri et regroupement', () => {
     ])
     expect(groups[0].label).toBe('Maintenant')
     expect(nextTimedAdvice([base({ id: 'a', dueAt: NOW + 5000 }), base({ id: 'b', dueAt: NOW + 1000 }), base({ id: 'c' })], NOW)?.id).toBe('b')
+  })
+})
+
+// ---------- Modes de rentabilité ----------
+
+describe('mode de rentabilité actif', () => {
+  const T6 = cheapestOfGeneration('muldo', 6) as number
+  const tyleziaCtx: PriceContext = { overrides: {}, useDefaults: true, market: marketSourceOf(sanitizeSnapshot(tylezia).snapshot!, 'auto', 'Tylezia'), jobLevel: 120 }
+  const rushAmbre = (over: Partial<ActiveMode['params']> = {}): ActiveMode => {
+    const m = resolveActiveMode('rush-ambre', null)
+    return { ...m, params: { ...m.params, ...over } }
+  }
+  const fatesOf = (mounts: Mount[], mode: ActiveMode | null, settings: Partial<AdvisorSettings> = {}, priceCtx: PriceContext = fullCtx) =>
+    analyzeState(input({ mounts, mode, settings: { jobLevel: 120, ...settings }, priceCtx }))
+
+  it('Rush : la génération de la stratégie est extraite au lieu d’être gardée, accouplée d’abord si prévu', () => {
+    const sterile = mk(T6, { fertility: 'sterile', gender: 'femelle' })
+    const fm = fecund(T6, { gender: 'male' })
+    const ff = fecund(T6, { gender: 'femelle' })
+    const fertile = mk(T6, { gender: 'male' })
+    const higher = mk(AIGUE_AMANDE, { fertility: 'sterile' })
+    const g1 = mk(DORE, { gender: 'male' })
+    const a = fatesOf([sterile, fm, ff, fertile, higher, g1], rushAmbre(), { goalSpeciesId: DORE_POURPRE })
+    // L'objectif de génération est remplacé par la production du mode.
+    expect(a.goal).toBeNull()
+    expect(a.mode?.family).toBe('muldo')
+    expect(a.mode?.goalSpeciesId).toBe(T6)
+    expect(a.mode?.overridden).toBeGreaterThanOrEqual(5)
+    expect(a.fates.get(sterile.id)).toMatchObject({ action: 'extraction', exit: 'extraction' })
+    expect(a.fates.get(sterile.id)?.label).toMatch(/Rush Ambre/)
+    expect(a.fates.get(higher.id)?.action).toBe('extraction')
+    // Fécondes produites de sexes opposés : bébé gratuit, puis extraction.
+    expect(a.fates.get(fm.id)).toMatchObject({ action: 'accoupler', exit: 'extraction', partnerId: ff.id })
+    expect(a.fates.get(ff.id)).toMatchObject({ action: 'accoupler', exit: 'extraction', partnerId: fm.id })
+    // Fertile produite : à féconder, accoupler, puis extraire.
+    expect(a.fates.get(fertile.id)?.action).toBe('garder')
+    expect(a.fates.get(fertile.id)?.label).toMatch(/Féconder, accoupler puis extraire/)
+    // Une G1 de la chaîne garde le sort de la chaîne (pas extraite).
+    expect(['extraction']).not.toContain(a.fates.get(g1.id)?.action)
+  })
+
+  it('Rush sans « accoupler avant d’extraire » : extraction directe', () => {
+    const fertile = mk(T6, { gender: 'male' })
+    const fm = fecund(T6, { gender: 'male' })
+    const ff = fecund(T6, { gender: 'femelle' })
+    const a = fatesOf([fertile, fm, ff], rushAmbre({ mateBeforeExtract: false }))
+    expect(a.fates.get(fertile.id)?.action).toBe('extraction')
+    // Sans le plan d'appariement ni bébé gratuit du mode : extraites (ou accouplées par le plan de la chaîne).
+    for (const m of [fm, ff]) expect(['extraction', 'accoupler']).toContain(a.fates.get(m.id)?.action)
+    for (const m of [fm, ff]) expect(a.fates.get(m.id)?.exit).toBe('extraction')
+  })
+
+  it('Progression (ou aucun mode) : comportement d’avant les modes', () => {
+    const mounts = [mk(T6, { fertility: 'sterile' }), fecund(DORE, { gender: 'male' }), fecund(POURPRE, { gender: 'femelle' }), mk(INDIGO)]
+    const plain = fatesOf(mounts, null)
+    const prog = fatesOf(mounts, resolveActiveMode('progression', null))
+    expect(prog.mode).toBeNull()
+    expect([...prog.fates.values()].map((f) => [f.mountId, f.action, f.label])).toEqual([...plain.fates.values()].map((f) => [f.mountId, f.action, f.label]))
+  })
+
+  it('Brisage : monter au niveau de brisage puis briser ; les autres familles gardent leur sort', () => {
+    const volkG1 = SPECIES.find((x) => x.family === 'volkorne' && x.generation === 1 && x.capturable)!.id
+    const low = mk(volkG1, { level: 1 })
+    const ready = mk(volkG1, { level: 90 })
+    const muldo = mk(DORE)
+    const mode = resolveActiveMode('brisage-pa', null)
+    const plain = fatesOf([low, ready, muldo], null)
+    const a = fatesOf([low, ready, muldo], mode)
+    expect(a.fates.get(low.id)).toMatchObject({ action: 'monter', targetLevel: 80, exit: 'brisage' })
+    expect(a.fates.get(ready.id)).toMatchObject({ action: 'brisage', exit: 'brisage' })
+    expect(a.fates.get(muldo.id)?.action).toBe(plain.fates.get(muldo.id)?.action)
+  })
+
+  it('Vente : vendre au prix prudent du marché si la vente dépasse l’extraction, sinon extraire', () => {
+    const rich = mk(122, { gender: 'male' }) // Muldo Pourpre et Ivoire (G6) : ≈ 699 K prudent à Tylezia
+    const poor = mk(142, { gender: 'femelle' }) // Muldo Turquoise et Ébène (G6) : ≈ 104 K < 6 Ambres
+    const base = resolveActiveMode('vente-montures', null, { family: 'muldo' })
+    const mode: ActiveMode = { ...base, params: { ...base.params, targetGeneration: 6, mateBeforeExtract: false } }
+    const a = fatesOf([rich, poor], mode, {}, tyleziaCtx)
+    expect(a.fates.get(rich.id)).toMatchObject({ action: 'vente', exit: 'vente', complete: false })
+    expect(a.fates.get(rich.id)?.reason).toMatch(/prix prudent du marché/)
+    expect(a.fates.get(rich.id)?.value).toBeGreaterThan(600_000)
+    expect(a.fates.get(poor.id)).toMatchObject({ action: 'extraction', exit: 'extraction' })
+  })
+
+  it('conseils : captures de la famille du mode et routine du jour (stratégie à calculer)', () => {
+    const mounts = [mk(DORE, { gender: 'male', location: { kind: 'enclos', paddock: 1 } }), mk(T6, { fertility: 'sterile' })]
+    const list = adviseNow(input({ mounts, mode: rushAmbre(), settings: { jobLevel: 120, goal: 'succes' } }))
+    const cap = byCat(list, 'capture')[0]
+    expect(cap.title).toMatch(/^Capturer \d+ Muldos G1 \(Rush Ambre\)$/)
+    expect(cap.items?.some((i) => /♂|♀/.test(i.text))).toBe(true)
+    expect(cap.items?.find((i) => i.id === 'combats')).toBeDefined()
+    const modeAdv = list.find((x) => x.id.startsWith('mode:rush-ambre'))
+    expect(modeAdv?.title).toBe('Mode Rush Muldo (Ambres) : routine du jour')
+    expect(modeAdv?.items?.find((i) => i.id === 'calculer')?.link?.page).toBe('modes')
+    // Pas de conseil « choisir une monture visée » : l'objectif est remplacé par le mode.
+    expect(list.some((x) => x.id === 'objectif:choisir')).toBe(false)
+    // Mode automatique sans calcul : invitation à comparer, conseils de progression.
+    const auto = adviseNow(input({ mounts, mode: resolveActiveMode('auto', null), settings: { jobLevel: 120 } }))
+    expect(auto.some((x) => x.id === 'mode:auto-non-calcule')).toBe(true)
+  })
+
+  it('conseils : avec une stratégie calculée, vendre les Ambres sous le plafond de volume du serveur', () => {
+    const profile: ModeProfile = { jobLevel: 120, hoursPerDay: 3, characters: 1, rules: R36, prices: { ctx: tyleziaCtx, saleTax: 0.02, maxMarketShare: 0.15 }, paddocks: 2, horizonDays: 20 }
+    const cfg = { ...modeConfig('rush-ambre', profile)!, targetGeneration: 2 }
+    const outcome = outcomeFromSummary('rush-ambre', runProduction(cfg, { runs: 1 }), 'G2 · test')
+    const stored = storeModeResults([outcome], profile, { computedAt: 1, quick: true })
+    const mode = resolveActiveMode('rush-ambre', stored)
+    expect(mode.source).toBe('calcul')
+    const list = adviseNow(input({ mounts: [mk(DORE)], mode, priceCtx: tyleziaCtx, settings: { jobLevel: 120 } }))
+    const modeAdv = list.find((x) => x.id.startsWith('mode:rush-ambre'))!
+    const sell = modeAdv.items?.find((i) => i.id === 'routine-vendre-17864')
+    // Ambre de muldo : 72 027 ventes sur 30 jours → 15 % ≈ 360 par jour.
+    expect(sell?.text).toMatch(/Ambres? de muldo par jour, jamais plus de 360/)
+    expect(modeAdv.amount?.label).toMatch(/Bénéfice net attendu/)
+    expect(modeAdv.items?.some((i) => i.id === 'calculer')).toBe(false)
+  })
+
+  it('le cache de l’analyse suit le mode actif', () => {
+    clearAnalysisCache()
+    const mounts = [mk(T6, { fertility: 'sterile' })]
+    const base = input({ mounts, settings: { jobLevel: 120 } })
+    const a1 = analyzeStateCached({ ...base, mode: null })
+    const a2 = analyzeStateCached({ ...base, mode: rushAmbre() })
+    expect(a2).not.toBe(a1)
+    expect(analyzeStateCached({ ...base, mode: rushAmbre() })).toBe(a2)
+    expect(a2.fates.get(mounts[0].id)?.action).toBe('extraction')
   })
 })

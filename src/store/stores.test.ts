@@ -2,10 +2,21 @@
 // Persistance des stores : versions (jamais de perte), normalisation des données mal formées,
 // synchronisation entre onglets (événement « storage »), échecs d'écriture (quota plein).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { PERSISTED_STORES } from './schema'
+import { PROFILES_KEY, persistedStoreInfo } from './schema'
 
-const INV = 'elevagesimu:inventory'
-const SET = 'elevagesimu:settings'
+// v2 : les stores lisent les clés du profil ouvert (« elevagesimu:p:<profil>:<base> ») et de son serveur
+// (« elevagesimu:s:<serveur>:prices »). Chaque test part d'un registre avec le profil « p1 » sur « s1 ».
+const INV = 'elevagesimu:p:p1:inventory'
+const SET = 'elevagesimu:p:p1:settings'
+const PROGRESS = 'elevagesimu:p:p1:planProgress'
+const PADDOCKS = 'elevagesimu:p:p1:paddocks'
+const PRICES = 'elevagesimu:s:s1:prices'
+const REGISTRY = {
+  version: 1,
+  activeProfileId: 'p1',
+  profiles: [{ id: 'p1', name: 'Test', serverId: 's1', createdAt: 1 }],
+  servers: [{ id: 's1', name: 'Serveur test', createdAt: 1, priceStat: 'auto', maxMarketShare: 0.15 }],
+}
 
 const mountOf = (id: string, patch: Record<string, unknown> = {}) => ({
   id,
@@ -45,6 +56,7 @@ async function load() {
 
 beforeEach(() => {
   localStorage.clear()
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(REGISTRY))
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
 afterEach(() => {
@@ -52,15 +64,18 @@ afterEach(() => {
 })
 
 describe('versions persistées (R3)', () => {
-  it('chaque store déclare la version de PERSISTED_STORES (source unique, utilisée par les sauvegardes)', async () => {
+  it('chaque store déclare la version de STORE_BASES (source unique, utilisée par les sauvegardes) et la clé du profil ouvert', async () => {
     const m = await load()
     const { usePaddocks } = await import('./paddocks')
     const { usePaddockPlans } = await import('./paddockPlans')
     const { usePlanProgress } = await import('./planProgress')
-    const options = [m.useInventory, m.useSettings, m.useJournal, m.usePrices, usePaddocks, usePaddockPlans, usePlanProgress].map((s) => s.persist.getOptions())
+    const { useMarket, useMarketHistory } = await import('./market')
+    const options = [m.useInventory, m.useSettings, m.useJournal, m.usePrices, usePaddocks, usePaddockPlans, usePlanProgress, useMarket, useMarketHistory].map((s) => s.persist.getOptions())
     for (const { name, version } of options) {
-      expect(PERSISTED_STORES[name ?? '']?.version, name).toBe(version ?? 0)
+      expect(persistedStoreInfo(name ?? '')?.version, name).toBe(version ?? 0)
+      expect(name).toMatch(/^elevagesimu:(p:p1|s:s1):/)
     }
+    expect(options.map((o) => o.name)).toContain(PRICES)
   })
 
   it('une donnée enregistrée par une version plus récente est gardée telle quelle, jamais écrasée', async () => {
@@ -143,22 +158,22 @@ describe('normalisation à la lecture (R4)', () => {
   })
 
   it('avancement du plan mal formé : entrées invalides écartées, plus « version plus récente » écrasée (R3/R4)', async () => {
-    localStorage.setItem('elevagesimu:planProgress', JSON.stringify({ state: { checked: { a: 5, b: 'x', c: -1 }, done: [] }, version: 1 }))
+    localStorage.setItem(PROGRESS, JSON.stringify({ state: { checked: { a: 5, b: 'x', c: -1 }, done: [] }, version: 1 }))
     const m = await load()
     const { usePlanProgress } = await import('./planProgress')
     expect(usePlanProgress.getState().checked).toEqual({ a: 5 })
     expect(usePlanProgress.getState().done).toEqual({})
-    expect(m.useStorageHealth.getState().issues.some((i) => i.kind === 'corrige' && i.key === 'elevagesimu:planProgress')).toBe(true)
+    expect(m.useStorageHealth.getState().issues.some((i) => i.kind === 'corrige' && i.key === PROGRESS)).toBe(true)
     // Version plus récente : gardée telle quelle, écriture bloquée.
-    localStorage.setItem('elevagesimu:planProgress', JSON.stringify({ state: { checked: { z: 1 }, done: {} }, version: 9 }))
+    localStorage.setItem(PROGRESS, JSON.stringify({ state: { checked: { z: 1 }, done: {} }, version: 9 }))
     await load()
     const again = await import('./planProgress')
     again.usePlanProgress.getState().toggle('nouvelle')
-    expect(JSON.parse(localStorage.getItem('elevagesimu:planProgress')!).version).toBe(9)
+    expect(JSON.parse(localStorage.getItem(PROGRESS)!).version).toBe(9)
   })
 
   it('prix invalides retirés (jamais comptés comme 0)', async () => {
-    localStorage.setItem('elevagesimu:prices', JSON.stringify({ state: { items: { '1': 10, '2': 'x', '3': -1 }, mounts: {}, generations: {}, genetonValue: null, updatedAt: 0 }, version: 1 }))
+    localStorage.setItem(PRICES, JSON.stringify({ state: { items: { '1': 10, '2': 'x', '3': -1 }, mounts: {}, generations: {}, genetonValue: null, updatedAt: 0 }, version: 1 }))
     const m = await load()
     expect(m.usePrices.getState().items).toEqual({ '1': 10 })
   })
@@ -197,12 +212,12 @@ describe('synchronisation entre onglets (R5)', () => {
     const { usePlanProgress } = await import('./planProgress')
     const paddocks = usePaddocks.getState().paddocks.map((p) => (p.id === 1 ? { ...p, active: ['foudroyeur'] } : p))
     const remote = JSON.stringify({ state: { paddocks }, version: 1 })
-    localStorage.setItem('elevagesimu:paddocks', remote)
-    window.dispatchEvent(new StorageEvent('storage', { key: 'elevagesimu:paddocks', newValue: remote, storageArea: localStorage }))
+    localStorage.setItem(PADDOCKS, remote)
+    window.dispatchEvent(new StorageEvent('storage', { key: PADDOCKS, newValue: remote, storageArea: localStorage }))
     expect(usePaddocks.getState().paddocks[0].active).toEqual(['foudroyeur'])
     const progress = JSON.stringify({ state: { checked: { 'phase:P1:actions:0': 5 }, done: {} }, version: 1 })
-    localStorage.setItem('elevagesimu:planProgress', progress)
-    window.dispatchEvent(new StorageEvent('storage', { key: 'elevagesimu:planProgress', newValue: progress, storageArea: localStorage }))
+    localStorage.setItem(PROGRESS, progress)
+    window.dispatchEvent(new StorageEvent('storage', { key: PROGRESS, newValue: progress, storageArea: localStorage }))
     expect(usePlanProgress.getState().checked).toEqual({ 'phase:P1:actions:0': 5 })
   })
 

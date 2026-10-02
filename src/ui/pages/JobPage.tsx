@@ -29,7 +29,8 @@ import {
   type PlanSegment,
   type ShoppingLine,
 } from '../../domain/job'
-import type { PriceOrigin } from '../../domain/pricing'
+import { PRICE_STAT_SHORT, frenchDay, marketDepth, type MarketSource } from '../../domain/market'
+import { marketQuote, type PriceOrigin } from '../../domain/pricing'
 import type { GaugeId } from '../../domain/types'
 import { craftXp, jobLevelFromXp, jobXpForLevel, MAX_LEVEL } from '../../domain/xp'
 import { formatClock, formatDate, formatInDays, formatIsoDay, formatKamas, formatNumber, formatPercent, plural } from '../../lib/format'
@@ -37,6 +38,7 @@ import { journalJobXp, useJournal, type JournalJobXp } from '../../store/journal
 import { usePriceContext } from '../../store/prices'
 import type { PriceContext } from '../../domain/pricing'
 import { useRules, useSettings } from '../../store/settings'
+import { profileKey } from '../../store/profiles'
 import { Badge, Callout, Card, Empty, NumberField, PageHeader, Progress, SelectField, Stat, Tabs } from '../components'
 import { href } from '../router'
 import { ConfidenceBadge } from '../species'
@@ -47,11 +49,12 @@ import './JobPage.css'
 
 /**
  * Contexte de prix de la montée du métier : sans `jobLevel`, car un plan de montée fabrique des recettes
- * (et leurs ingrédients intermédiaires) aux niveaux qu'il atteint, pas seulement au niveau actuel.
+ * (et leurs ingrédients intermédiaires) aux niveaux qu'il atteint, pas seulement au niveau actuel. Le
+ * marché importé du serveur (export HDV) est gardé : vos prix > marché > défauts.
  */
 function useLevelingPriceContext(): PriceContext {
   const base = usePriceContext()
-  return useMemo(() => ({ overrides: base.overrides, useDefaults: base.useDefaults }), [base.overrides, base.useDefaults])
+  return useMemo(() => ({ overrides: base.overrides, useDefaults: base.useDefaults, market: base.market }), [base.overrides, base.useDefaults, base.market])
 }
 
 type TabId = 'plan' | 'courses' | 'crafts' | 'jalons' | 'xp' | 'almanax' | 'reperes'
@@ -71,7 +74,7 @@ interface Prefs {
   sort: { key: SortKey; dir: 1 | -1 }
 }
 
-const STORAGE_KEY = 'elevagesimu:metier'
+const STORAGE_KEY = profileKey('metier')
 const TAB_IDS: TabId[] = ['plan', 'courses', 'crafts', 'jalons', 'xp', 'almanax', 'reperes']
 const DEFAULT_PREFS: Prefs = {
   target: null,
@@ -139,6 +142,7 @@ const KIND_TONES: Record<JobOptionKind, 'info' | 'gold' | 'accent' | 'ok'> = {
 
 const ORIGIN_LABELS: Record<PriceOrigin, { label: string; tone: 'accent' | 'info' | 'ok' | 'danger' }> = {
   joueur: { label: 'votre prix', tone: 'accent' },
+  marche: { label: 'marché', tone: 'info' },
   defaut: { label: 'défaut', tone: 'info' },
   craft: { label: 'craft', tone: 'ok' },
   manquant: { label: 'manquant', tone: 'danger' },
@@ -312,7 +316,7 @@ export default function JobPage() {
       <Card>
         <Tabs tabs={TABS} value={prefs.tab} onChange={(tab) => setPrefs({ tab })} />
         {prefs.tab === 'plan' && <PlanTab plan={plan} atMax={atMax} />}
-        {prefs.tab === 'courses' && <ShoppingTab plan={plan} />}
+        {prefs.tab === 'courses' && <ShoppingTab plan={plan} market={ctx.market ?? null} />}
         {prefs.tab === 'crafts' && (
           <CraftsTab level={level} options={options} chosenId={plan.segments[0]?.recipeId ?? null} sort={prefs.sort} onSort={(sort) => setPrefs({ sort })} metric={prefs.metric} />
         )}
@@ -796,10 +800,20 @@ function PlanTab({ plan, atMax }: { plan: LevelingPlan; atMax: boolean }) {
 
 // ---------- Onglet : liste de courses ----------
 
-function ShoppingTab({ plan }: { plan: LevelingPlan }) {
+/** Jours de ventes du serveur (volume moyen sur 30 j) que représente un achat ; null = inconnu. */
+function marketDays(id: number, qty: number, market: MarketSource | null): number | null {
+  const d = marketDepth(market, id)
+  return d && d.perDayAvg > 0 ? qty / d.perDayAvg : null
+}
+
+/** Au-delà de ce nombre de jours de ventes du serveur, un achat fait monter le prix (à étaler). */
+const BUY_DAYS_WARN = 1
+
+function ShoppingTab({ plan, market }: { plan: LevelingPlan; market: MarketSource | null }) {
   const [copied, setCopied] = useState<'ok' | 'err' | null>(null)
   if (!plan.shopping.length) return <Empty>Rien à acheter : aucun craft n’est prévu pour cet objectif.</Empty>
   const missing = plan.shopping.filter((l) => l.missing)
+  const heavy = market ? plan.shopping.filter((l) => (marketDays(l.id, l.qty, market) ?? 0) > BUY_DAYS_WARN) : []
   const known = plan.shopping.reduce((s, l) => s + (l.subtotal ?? 0), 0)
   const copy = async () => {
     try {
@@ -813,7 +827,8 @@ function ShoppingTab({ plan }: { plan: LevelingPlan }) {
     <div className="stack">
       <div className="row">
         <p className="muted" style={{ margin: 0 }}>
-          Tous les ingrédients du plan, du niveau {plan.fromLevel} au niveau {plan.reachedLevel}. Les prix viennent de la page Prix (vos prix, sinon les prix par défaut sourcés).
+          Tous les ingrédients du plan, du niveau {plan.fromLevel} au niveau {plan.reachedLevel}. Les prix viennent de la page Prix : vos prix, sinon le marché du serveur
+          {market ? ` (export HDV du ${frenchDay(market.exportDate)})` : ' (aucun export HDV importé)'}, sinon les prix par défaut sourcés.
         </p>
         <span className="spacer" />
         <button type="button" className="btn small" onClick={copy}>
@@ -828,6 +843,15 @@ function ShoppingTab({ plan }: { plan: LevelingPlan }) {
           <a href={href('prix', { onglet: 'ingredients' })}>Saisir les prix des ingrédients</a>
         </Callout>
       )}
+      {heavy.length > 0 && (
+        <Callout tone="warn">
+          {plural(heavy.length, 'ingrédient demande', 'ingrédients demandent')} plus d’une journée de ventes du serveur ({heavy
+            .slice(0, 4)
+            .map((l) => l.name)
+            .join(', ')}
+          {heavy.length > 4 ? '…' : ''}) : achetez en plusieurs fois ou attendez-vous à payer plus cher que le prix affiché.
+        </Callout>
+      )}
       <div className="table-wrap">
         <table className="table">
           <thead>
@@ -837,23 +861,49 @@ function ShoppingTab({ plan }: { plan: LevelingPlan }) {
               <th className="num">Prix unitaire</th>
               <th className="num">Sous-total</th>
               <th>Origine du prix</th>
+              {market && <th className="num">Volume du serveur</th>}
             </tr>
           </thead>
           <tbody>
-            {plan.shopping.map((l) => (
-              <tr key={l.id}>
-                <td>{l.missing ? <a href={href('prix', { q: l.name })}>{l.name}</a> : l.name}</td>
-                <td className="num">{formatNumber(l.qty)}</td>
-                <td className="num">{l.unit === null ? '—' : `${l.missing ? '≥ ' : ''}${formatKamas(l.unit)}`}</td>
-                <td className="num">{l.subtotal === null ? <Cost value={null} complete={false} q={l.name} /> : `${l.missing ? '≥ ' : ''}${formatKamas(l.subtotal)}`}</td>
-                <td>
-                  <div className="row" style={{ gap: 4 }}>
-                    <Badge tone={ORIGIN_LABELS[l.origin].tone}>{ORIGIN_LABELS[l.origin].label}</Badge>
-                    {l.origin === 'defaut' && <ConfidenceBadge level={l.confidence} />}
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {plan.shopping.map((l) => {
+              const q = l.origin === 'marche' ? marketQuote(l.id, market) : null
+              const depth = market ? marketDepth(market, l.id) : null
+              const days = marketDays(l.id, l.qty, market)
+              return (
+                <tr key={l.id}>
+                  <td>{l.missing ? <a href={href('prix', { q: l.name })}>{l.name}</a> : l.name}</td>
+                  <td className="num">{formatNumber(l.qty)}</td>
+                  <td className="num">{l.unit === null ? '—' : `${l.missing ? '≥ ' : ''}${formatKamas(l.unit)}`}</td>
+                  <td className="num">{l.subtotal === null ? <Cost value={null} complete={false} q={l.name} /> : `${l.missing ? '≥ ' : ''}${formatKamas(l.subtotal)}`}</td>
+                  <td>
+                    <div className="row" style={{ gap: 4 }}>
+                      {q ? (
+                        <Badge
+                          tone="info"
+                          title={`Prix du marché importé (HDV${q.info.serverName ? ` de ${q.info.serverName}` : ''} du ${frenchDay(q.info.exportDate)}, ${PRICE_STAT_SHORT[q.info.stat]}) : ${formatNumber(q.info.sold24)} vendus en 24 h.`}
+                        >
+                          marché ({frenchDay(q.info.exportDate).slice(0, 5)})
+                        </Badge>
+                      ) : (
+                        <Badge tone={ORIGIN_LABELS[l.origin].tone}>{ORIGIN_LABELS[l.origin].label}</Badge>
+                      )}
+                      {l.origin === 'defaut' && <ConfidenceBadge level={l.confidence} />}
+                    </div>
+                  </td>
+                  {market && (
+                    <td className="num" title={depth ? `${formatNumber(depth.sold24)} vendus en 24 h, ${formatNumber(depth.sold30)} en 30 jours` : 'Absent de l’export HDV'}>
+                      {depth ? `${formatNumber(depth.perDayAvg, depth.perDayAvg < 10 ? 1 : 0)}/jour` : '—'}
+                      {days !== null && days > BUY_DAYS_WARN && (
+                        <>
+                          {' '}
+                          <Badge tone="warn">≈ {formatNumber(days, days < 10 ? 1 : 0)} j de ventes</Badge>
+                        </>
+                      )}
+                    </td>
+                  )}
+                </tr>
+              )
+            })}
           </tbody>
           <tfoot>
             <tr>
@@ -864,6 +914,7 @@ function ShoppingTab({ plan }: { plan: LevelingPlan }) {
                 <Cost value={known} complete={missing.length === 0} />
               </td>
               <td />
+              {market && <td />}
             </tr>
           </tfoot>
         </table>

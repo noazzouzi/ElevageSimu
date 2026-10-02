@@ -1,0 +1,269 @@
+/* Page « Modes de rentabilité ». */
+.modes-page .md-warn-text {
+  color: var(--warn);
+}
+
+.modes-page .md-assumptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px 16px;
+  align-items: end;
+}
+
+.modes-page .md-note {
+  font-size: 0.85rem;
+  margin: 8px 0 0;
+}
+
+.modes-page .md-progress {
+  display: grid;
+  gap: 6px;
+}
+.modes-page .md-progress .btn {
+  justify-self: start;
+}
+
+/* Bandeau mode actif / meilleur mode */
+.modes-page .md-best {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  align-items: center;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--gold-soft);
+}
+.modes-page .md-best > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.modes-page .md-best > div.row {
+  flex-direction: row;
+  align-items: center;
+}
+.modes-page .md-best-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.modes-page .md-best-date {
+  font-size: 0.8rem;
+}
+
+/* Tableau comparatif */
+.modes-page .md-table tbody tr {
+  cursor: pointer;
+}
+.modes-page .md-table tbody tr.selected td {
+  background: var(--accent-soft);
+}
+.modes-page .md-table tbody tr.unavailable td {
+  color: var(--text-muted);
+}
+.modes-page .md-mode-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+.modes-page .md-mode-btn:hover,
+.modes-page .md-mode-btn:focus-visible {
+  color: var(--accent-strong);
+  text-decoration: underline;
+}
+.modes-page .md-badges {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.modes-page .md-cell-sub {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+.modes-page .md-strategy {
+  max-width: 34ch;
+}
+.modes-page .md-risks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.modes-page .neg {
+  color: var(--danger);
+}
+.modes-page .pos {
+  color: var(--ok);
+}
+.modes-page .md-notes {
+  font-size: 0.85rem;
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+/* Détail d'un mode */
+.modes-page .md-detail .md-kpis {
+  margin: 12px 0;
+}
+.modes-page .md-sections {
+  margin-top: 16px;
+  gap: 20px;
+}
+.modes-page .md-sections h3,
+.modes-page .md-routine h3,
+.modes-page .md-liquidity h3 {
+  font-size: 1rem;
+  margin: 0 0 8px;
+}
+.modes-page .md-strategy-label {
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+.modes-page .md-params {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+.modes-page .md-params > div {
+  display: grid;
+  grid-template-columns: minmax(130px, 40%) 1fr;
+  gap: 8px;
+  padding: 3px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.modes-page .md-params dt {
+  color: var(--text-muted);
+}
+.modes-page .md-params dd {
+  margin: 0;
+}
+.modes-page .md-why {
+  margin: 0 0 12px;
+  padding-left: 18px;
+}
+.modes-page .md-why li + li {
+  margin-top: 4px;
+}
+.modes-page .md-total td {
+  font-weight: 700;
+  border-top: 2px solid var(--border);
+}
+
+/* Routine */
+.modes-page .md-routine {
+  margin-top: 20px;
+}
+.modes-page .md-sessions {
+  align-items: start;
+}
+.modes-page .md-session {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  background: var(--bg-sunken);
+}
+.modes-page .md-session.daily {
+  background: var(--accent-soft);
+}
+.modes-page .md-session h4 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+.modes-page .md-session ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.modes-page .md-session li label {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+.modes-page .md-session li input {
+  margin-top: 4px;
+}
+.modes-page .md-session li small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin-left: 22px;
+}
+.modes-page .md-session li small.md-amount {
+  color: var(--text);
+  font-weight: 600;
+}
+.modes-page .md-session li.done > label span {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+.modes-page .md-session li.warn > label span {
+  color: var(--warn);
+}
+
+/* Liquidité, avertissements */
+.modes-page .md-liquidity {
+  margin-top: 20px;
+}
+.modes-page .md-warnings {
+  margin: 16px 0 0;
+  padding-left: 18px;
+  font-size: 0.88rem;
+}
+.modes-page .md-warnings li.warn {
+  color: var(--warn);
+}
+.modes-page .md-assumptions-list {
+  margin-top: 12px;
+}
+.modes-page .md-assumptions-list summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* Courbe de cumul */
+.modes-page .md-chart {
+  margin: 4px 0 0;
+}
+.modes-page .md-chart svg {
+  width: 100%;
+  height: 120px;
+  display: block;
+  background: var(--bg-sunken);
+  border-radius: var(--radius-sm);
+}
+.modes-page .md-chart-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.modes-page .md-chart-zero {
+  stroke: var(--text-muted);
+  stroke-dasharray: 4 4;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.modes-page .md-chart figcaption {
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+@media (max-width: 720px) {
+  .modes-page .md-params > div {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}

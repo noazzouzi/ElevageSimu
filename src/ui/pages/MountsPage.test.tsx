@@ -8,6 +8,7 @@ import type { Mount } from '../../domain/types'
 import { useInventory } from '../../store/inventory'
 import { useJournal } from '../../store/journal'
 import { usePrices } from '../../store/prices'
+import { STORE_KEYS } from '../../store/profiles'
 import { DEFAULT_SETTINGS, useSettings } from '../../store/settings'
 import MountsPage from './MountsPage'
 
@@ -54,7 +55,7 @@ describe('Montures — actions groupées', () => {
     const toolbar = screen.getByRole('toolbar', { name: 'Actions sur la sélection' })
     const writes = vi.spyOn(Storage.prototype, 'setItem')
     fireEvent.click(within(toolbar).getByRole('button', { name: /Marquer féconde/ }))
-    const inventoryWrites = writes.mock.calls.filter(([k]) => k === 'elevagesimu:inventory').length
+    const inventoryWrites = writes.mock.calls.filter(([k]) => k === STORE_KEYS.inventory).length
     expect(inventoryWrites).toBe(1)
     const after = useInventory.getState().mounts
     expect(after.filter((m) => effectiveFertility(m) === 'feconde')).toHaveLength(2)

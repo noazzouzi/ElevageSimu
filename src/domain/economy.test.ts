@@ -1,7 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import { FUELS, NETS, PRICES_DEFAULT, SPECIES, findMakina } from '../data'
+import tylezia from '../data/market/tylezia-2026-10-02.json'
 import {
   BRISAGE_RUNE,
+  MOUNT_MARKET_BADGE,
+  REFERENCE_KIND_LABELS,
+  absorbablePerDay,
+  checkPlannedSales,
+  fullRateMatingsPerDay,
+  genetonLiquidValue,
+  genetonLiquidityCheck,
+  mountMarketQuote,
+  possibleSenile,
+  salesCap,
   FERTILITY_POINT_COST_HINTS,
   TYPICAL_BATCH,
   batchProfile,
@@ -40,6 +51,7 @@ import {
 } from './economy'
 import { findFuel } from './fuel'
 import { breed } from './genetics'
+import { buildSnapshot, marketSourceOf, parseHdvCsv, sanitizeSnapshot } from './market'
 import { planPaddock, refillAdvice } from './paddockAssign'
 import type { SimMount } from './paddock'
 import type { PriceContext } from './pricing'
@@ -743,5 +755,231 @@ describe('saisie des prix', () => {
     expect(cov.carburants).toEqual([5, 120])
     expect(cov.makinas).toEqual([0, 81])
     expect(cov.extraction).toEqual([3, 3])
+  })
+})
+
+// ---------- Marché importé du serveur (export HDV) ----------
+
+/** Lignes réelles de l'export HDV de Tylezia (02/10/2026). */
+const HDV_FIXTURE = [
+  'gid;nom;niveau;type;categorie;vendus_24h;vendus_7j;vendus_30j;median_30j;moyen_30j;median_24h;kamas_par_jour',
+  '33072;Muldo Doré;60;Muldo;Familier;22;225;975;11847;21627;13831;385027',
+  '33088;Muldo Indigo;60;Muldo;Familier;7;125;626;15082;33000;15998;314711',
+  '33076;Muldo Doré et Indigo;60;Muldo;Familier;0;23;48;35141;86394;0;56225',
+  '33247;Volkorne Saphir et Prune;60;Volkorne;Familier;0;3;3;38000;38000;0;3800',
+  '33144;Volkorne Améthyste et Amande;60;Volkorne;Familier;0;3;3;750000;1048888;0;75000',
+  '19975;Corne de volkorne;60;Os;Ressource;10744;38301;127342;30205;32111;26497;128212170',
+  '17864;Ambre de muldo;60;Ressource diverse;Ressource;2410;18645;72027;33823;33930;31285;81205640',
+  '33515;Neurone de dragodinde;60;Ressource diverse;Ressource;2203;17611;67939;26056;28517;28987;59007286',
+  '1557;Rune Ga Pa;100;Rune de forgemagie;Ressource;10673;85651;310552;29534;29646;28598;305728092',
+  '1558;Rune Ga Pme;95;Rune de forgemagie;Ressource;10429;75498;239222;21460;21898;21509;171123470',
+  '15271;Tourmaline;10;Pierre précieuse;Ressource;2281;21349;74269;44355;44826;43364;109806716',
+  '814;Puissant Parchemin de Chance;1;Parchemin de caractéristique;Consommable;1245;8369;32905;68823;68405;70298;75487360',
+  '809;Petit Parchemin de Chance;1;Parchemin de caractéristique;Consommable;1503;12301;45497;5393;5323;5079;8178844',
+  '686;Petit Parchemin d’Intelligence;1;Parchemin de caractéristique;Consommable;1196;11774;43377;5043;4935;5062;7291673',
+  '802;Petit Parchemin de Sagesse;1;Parchemin de caractéristique;Consommable;1850;19764;64697;4785;4710;4853;10319171',
+].join('\n')
+
+describe('marché importé du serveur (export HDV de Tylezia)', () => {
+  const snap = buildSnapshot(parseHdvCsv(HDV_FIXTURE), { serverName: 'Tylezia', exportDate: '2026-10-02', importedAt: 0 })
+  const market = marketSourceOf(snap, 'auto', 'Tylezia')
+  const mctxM: MountPriceContext = { mountOverrides: {}, generationOverrides: {}, useDefaults: false, market }
+  const ctxM: PriceContext = { overrides: {}, useDefaults: false, market }
+  const VOLK_SAPHIR_PRUNE = byName('Volkorne Saphir et Prune') // G10, 38 000 : sénile probable
+  const VOLK_AMETHYSTE_AMANDE = byName('Volkorne Améthyste et Amande') // G10, 750 000
+
+  it('prix de vente : le marché s’intercale entre vos prix et les défauts (origine « marché », HDV mixte, volume)', () => {
+    const s = mountSalePrice(DORE, 1, mctxM)
+    // 22 ventes en 24 h ≥ 5 : médiane 24 h.
+    expect(s).toMatchObject({ price: 13_831, origin: 'marche', method: 'marche', estimated: true, ceiling: 13_831 })
+    expect(s.market).toMatchObject({ itemId: 33072, stat: 'median24', sold24: 22, sold30: 975, badge: MOUNT_MARKET_BADGE, mixed: true, exportDate: '2026-10-02' })
+    expect(s.market!.perDayAvg).toBeCloseTo(32.5, 10)
+    expect(mountMarketQuote(DORE_INDIGO, market)).toMatchObject({ price: 35_141, stat: 'median30' }) // aucune vente en 24 h
+    expect(mountMarketQuote(DORE, null)).toBeNull()
+    // Vos prix priment et ne sont jamais plafonnés.
+    expect(mountSalePrice(DORE, 1, { ...mctxM, mountOverrides: { [`${DORE}|1`]: 40_000 } })).toMatchObject({ price: 40_000, origin: 'joueur-espece', ceiling: 13_831 })
+    // Relevé par défaut fiable (Muldo Doré niv. 100 ≈ 50 000) ramené au prix du serveur.
+    expect(mountSalePrice(DORE, 100, { ...mctxM, useDefaults: true })).toMatchObject({ price: 13_831, origin: 'marche', method: 'exact', cappedFrom: { price: 50_000, origin: 'defaut-espece' } })
+    // Sans marché : comportement inchangé.
+    expect(mountSalePrice(DORE, 100, { ...defaultsMount, market: null })).toEqual(mountSalePrice(DORE, 100, defaultsMount))
+    expect(mountSalePrice(DORE, 100, defaultsMount).market).toBeUndefined()
+  })
+
+  it('décisions : le prix du marché seul n’est qu’un plafond de vente (non compté) ; il plafonne un défaut', () => {
+    const v = mountValuation(DORE_INDIGO, 1, { ctx: ctxM, mountPrices: mctxM, saleTax: 0.02 })
+    expect(v.sale).toMatchObject({ gross: null, net: null, complete: false })
+    expect(v.sale.ceiling).toBeCloseTo(35_141 * 0.98, 6)
+    expect(v.sale.reference).toMatchObject({ kind: 'marche' })
+    expect(v.sale.reference!.net).toBeCloseTo(35_141 * 0.98, 6)
+    expect(REFERENCE_KIND_LABELS.marche).toMatch(/HDV/)
+    // Extraction : 2 × Ambre au prix du serveur (31 285, médiane 24 h).
+    expect(v.bestKind).toBe('extraction')
+    expect(v.best).toBeCloseTo(2 * 31_285 * 0.98, 6)
+    expect(v.complete).toBe(false)
+    expect(v.bestHigh).toBeCloseTo(2 * 31_285 * 0.98, 6) // max(extraction, plafond 34 438)
+    // G10 vendue 750 000 à l'HDV : extraction comptée, la vente reste une borne haute.
+    const g10 = mountValuation(VOLK_AMETHYSTE_AMANDE, 100, { ctx: ctxM, mountPrices: mctxM, saleTax: 0.02 })
+    expect(g10.bestKind).toBe('extraction')
+    expect(g10.best).toBeCloseTo(10 * 26_497 * 0.98, 6)
+    expect(g10.bestHigh).toBeCloseTo(750_000 * 0.98, 6)
+    expect(g10.marketWarning).toBeUndefined()
+    // Un défaut plafonné par le marché est compté (au prix du marché).
+    const capped = mountValuation(DORE, 100, { ctx: ctxM, mountPrices: { ...mctxM, useDefaults: true }, saleTax: 0.02 })
+    expect(capped.sale).toMatchObject({ complete: true })
+    expect(capped.sale.net).toBeCloseTo(13_831 * 0.98, 6)
+    // Vos prix : comptés, jamais plafonnés.
+    const own = mountValuation(DORE_INDIGO, 1, { ctx: ctxM, mountPrices: { ...mctxM, mountOverrides: { [`${DORE_INDIGO}|1`]: 90_000 } }, saleTax: 0.02 })
+    expect(own.bestKind).toBe('vente')
+    expect(own.best).toBeCloseTo(90_000 * 0.98, 6)
+  })
+
+  it('montures séniles probables : G5+ vendue sous la moitié de sa valeur d’extraction', () => {
+    const v = mountValuation(VOLK_SAPHIR_PRUNE, 100, { ctx: ctxM, mountPrices: mctxM, saleTax: 0.02 })
+    expect(v.marketWarning).toMatch(/sénile/)
+    expect(possibleSenile(10, 38_000, 264_970)).toBe(true)
+    expect(possibleSenile(4, 38_000, 264_970)).toBe(false) // G4 : pas de soupçon
+    expect(possibleSenile(10, 140_000, 264_970)).toBe(false)
+    expect(possibleSenile(10, 38_000, null)).toBe(false)
+  })
+
+  it('généton : valeur du marché (boutique d’Eugène Éton), nette de taxe ; votre valeur prime', () => {
+    const g = genetonKamasValue(null, { market, saleTax: 0.02 })
+    expect(g).toMatchObject({ origin: 'marche', value: 507.9 }) // Petit Parchemin de Chance 5 079 ÷ 10
+    expect(g.net).toBeCloseTo(507.9 * 0.98, 10)
+    expect(g.market?.best.name).toBe('Petit Parchemin de Chance')
+    expect(g.basis).toMatch(/Tylezia du 02\/10\/2026/)
+    expect(genetonKamasValue(400, { market })).toMatchObject({ origin: 'joueur', value: 400 })
+    expect(genetonKamasValue(null)).toMatchObject({ origin: 'defaut', value: 375 })
+    expect(genetonKamasValue(null).net).toBeUndefined()
+  })
+
+  it('génétons et liquidité : meilleur échange d’abord, dans la limite du volume, puis le suivant', () => {
+    const small = genetonLiquidValue(market, 1_000)!
+    expect(small.perGeneton).toBeCloseTo(507.9, 10)
+    expect(small.surplus).toBe(0)
+    const big = genetonLiquidValue(market, 5_000)!
+    expect(big.lines[0].id).toBe(809)
+    expect(big.lines[0].genetons).toBeCloseTo((45_497 / 30) * 0.15 * 10, 6)
+    expect(big.lines[1].id).toBe(686) // Petit Parchemin d'Intelligence (506,2 / généton)
+    expect(big.perGeneton!).toBeLessThan(507.9)
+    expect(big.perGeneton!).toBeGreaterThan(485)
+    const huge = genetonLiquidValue(market, 10_000_000)!
+    expect(huge.surplus).toBeGreaterThan(0)
+    expect(huge.absorbed + huge.surplus).toBeCloseTo(10_000_000, 3)
+    expect(genetonLiquidValue(null, 100)).toBeNull()
+    expect(genetonLiquidityCheck(huge.absorbed + 1, market)).toMatchObject({ exceeds: true, kind: 'parchemin' })
+    expect(genetonLiquidityCheck(100, market)).toMatchObject({ exceeds: false, message: null })
+  })
+
+  it('brisage et extraction au prix du marché du serveur (origine, date, volume)', () => {
+    const b = brisageValue('muldo', 100, ctxM)
+    expect(b).toMatchObject({ runePrice: 21_509, runeOrigin: 'marche', complete: true, runeItemId: 1558 })
+    expect(b.scale).toBeCloseTo(21_509 / 18_000, 10)
+    expect(b.runeMarket).toMatchObject({ exportDate: '2026-10-02', sold24: 10_429 })
+    expect(b.note).toMatch(/Rune Ga Pme/)
+    const e = extractionValue(DORE_INDIGO, ctxM)
+    expect(e).toMatchObject({ qty: 2, unitPrice: 31_285, value: 62_570, origin: 'marche' })
+    expect(e.market?.sold24).toBe(2_410)
+  })
+
+  it('liquidité : plafond de ventes (15 % du volume moyen), quantité absorbable, ventes prévues', () => {
+    const cap = salesCap(19975, market)!
+    expect(cap.perDay).toBeCloseTo((127_342 / 30) * 0.15, 6)
+    expect(cap.perDayFloor).toBe(636)
+    expect(cap).toMatchObject({ price: 26_497, name: 'Corne de volkorne', sold24: 10_744 })
+    expect(salesCap(19975, ctxM, 0.5)!.perDay).toBeCloseTo(127_342 / 60, 6)
+    expect(absorbablePerDay(33144, market)).toBeCloseTo((3 / 30) * 0.15, 12) // G10 rare : une vente tous les ≈ 67 jours
+    expect(salesCap(999_999, market)).toBeNull()
+    expect(salesCap(19975, null)).toBeNull()
+    const checks = checkPlannedSales(
+      [
+        { itemId: 19975, perDay: 400, kind: 'ressource' },
+        { itemId: 19975, perDay: 300 },
+        { itemId: 17864, perDay: 10, kind: 'ressource' },
+        { itemId: 999_999, perDay: 1 },
+      ],
+      market,
+    )
+    const corne = checks.find((c) => c.itemId === 19975)!
+    expect(corne).toMatchObject({ perDay: 700, exceeds: true, kind: 'ressource' })
+    expect(corne.message).toMatch(/^Corne de volkorne : 700 par jour/)
+    expect(checks[0].itemId).toBe(19975) // dépassements en premier
+    expect(checks.find((c) => c.itemId === 17864)!.exceeds).toBe(false)
+    expect(checks.find((c) => c.itemId === 999_999)).toMatchObject({ cap: null, exceeds: false })
+    expect(checkPlannedSales([{ itemId: 19975, perDay: 1 }], null)).toEqual([])
+  })
+
+  const cycle = (ctx: PriceContext): CycleConfig => ({
+    family: 'muldo',
+    parentA: DORE,
+    parentB: INDIGO,
+    pairs: 5,
+    parentLevel: 40,
+    tier: 1,
+    batchSize: 10,
+    optimakina: 'jamais',
+    includeCapture: false,
+    saleTax: 0.02,
+    batchModel: 'ideal',
+    ctx,
+    mountPrices: mprices,
+    rules: R36,
+    jobLevel: 200,
+    genetonValue: 375,
+  })
+
+  it('cycle : ventes du cycle répété en continu face au volume du serveur, avertissement au-delà', () => {
+    const r = cycleProfit(cycle({ ...fullCtx(), market }))
+    const perDay = 86_400 / r.seconds.total
+    // Bébés G2 extraits (2 Ambres) ; stériles et bébés G1 vendus (votre prix de génération).
+    const ambre = r.liquidity.find((l) => l.itemId === AMBRE)!
+    const g2 = r.revenue.find((l) => l.kind === 'bebe' && l.speciesId === DORE_INDIGO)!
+    expect(g2.fate).toBe('extraction')
+    expect(ambre.perDay).toBeCloseTo(g2.qty * 2 * perDay, 6)
+    expect(ambre.exceeds).toBe(false)
+    // Muldos Dorés vendus (stériles + bébés G1) : bien plus que les ≈ 4,9 absorbés par jour.
+    const dore = r.liquidity.find((l) => l.itemId === 33072)!
+    expect(dore).toMatchObject({ kind: 'monture', exceeds: true })
+    expect(dore.cap).toBeCloseTo((975 / 30) * 0.15, 6)
+    expect(r.warnings.some((w) => w.startsWith('Liquidité') && w.includes('Muldo Doré'))).toBe(true)
+    // Revenu inchangé par la vérification (avertissement seulement).
+    expect(r.totalRevenue).toBeCloseTo(cycleProfit(cycle(fullCtx())).totalRevenue, 6)
+    // Part du marché réglable.
+    expect(cycleProfit({ ...cycle({ ...fullCtx(), market }), maxMarketShare: 1 }).liquidity.find((l) => l.itemId === 33072)!.exceeds).toBe(false)
+    // Sans marché : aucune vérification.
+    const none = cycleProfit(cycle(fullCtx()))
+    expect(none.liquidity).toEqual([])
+    expect(none.warnings.some((w) => w.startsWith('Liquidité'))).toBe(false)
+  })
+
+  it('classement : liquidité à plein régime (marché importé seulement)', () => {
+    const opts = { tier: 1 as const, batchSize: 10, parentLevel: 40, optimakina: 'jamais' as const, saleTax: 0.02, mountPrices: mprices, rules: R36, jobLevel: 40, genetonValue: 375 }
+    const rows = crossingRanking('muldo', { ...opts, ctx: { ...fullCtx(), market } })
+    const rate = fullRateMatingsPerDay({ jobLevel: 40, batchSize: 10, tier: 1, parentLevel: 40, profile: batchProfile('typique', 1, R36), rules: R36 })
+    // 2 enclos débloqués au niveau 40 × 5 couples par tour.
+    expect(rate).toBeGreaterThan(10)
+    expect(rate).toBeLessThan(2 * 5 * 86_400 / batchProfile('typique', 1, R36).seconds + 1e-9)
+    const doreIndigo = rows.find((r) => r.child === DORE_INDIGO)!
+    expect(doreIndigo.matingsPerDay).toBeCloseTo(rate, 6)
+    expect(doreIndigo.liquidity?.some((l) => l.itemId === AMBRE)).toBe(true)
+    expect(doreIndigo.liquidityExceeded).toBe(true) // Muldos Dorés stériles vendus
+    expect(crossingRanking('muldo', { ...opts, ctx: { ...fullCtx(), market }, matingsPerDay: 0.1 }).find((r) => r.child === DORE_INDIGO)!.liquidityExceeded).toBe(false)
+    expect(crossingRanking('muldo', { ...opts, ctx: fullCtx() })[0].liquidity).toBeUndefined()
+  })
+
+  it('préréglage de Tylezia : le plafond de vente des montures borne les marges (jamais compté comme prix)', () => {
+    const ty = marketSourceOf(sanitizeSnapshot(tylezia).snapshot!, 'auto', 'Tylezia')
+    const ctx: PriceContext = { overrides: {}, useDefaults: false, market: ty, jobLevel: 200 }
+    const base = { tier: 2 as const, batchSize: 10, parentLevel: 100, optimakina: 'auto' as const, saleTax: 0.02, ctx, rules: R36, jobLevel: 200, genetonValue: 500 }
+    const without = crossingRanking('volkorne', { ...base, mountPrices: noMountPrices }).filter((r) => r.targetGeneration === 10)
+    const withM = crossingRanking('volkorne', { ...base, mountPrices: { ...noMountPrices, market: ty } }).filter((r) => r.targetGeneration === 10)
+    expect(withM.length).toBe(without.length)
+    expect(without.every((r) => r.marginRange.high === null)).toBe(true)
+    const bounded = withM.filter((r) => r.marginRange.high !== null)
+    expect(bounded.length).toBeGreaterThan(0)
+    for (const r of bounded) expect(r.marginRange.high!).toBeGreaterThanOrEqual(r.marginRange.low ?? -Infinity)
+    // Les marges connues (bornes basses) ne comptent pas les prix de marché des montures.
+    const byKey = new Map(without.map((r) => [r.key, r]))
+    for (const r of withM) expect(r.margin).toBeCloseTo(byKey.get(r.key)!.margin, 6)
   })
 })

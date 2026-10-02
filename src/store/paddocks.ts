@@ -16,7 +16,8 @@ import { validateActiveGauges } from '../domain/paddock'
 import { RULESETS, gaugeMax, getRuleset } from '../domain/rules'
 import type { GaugeId, PaddockState, RulesetId } from '../domain/types'
 import { persistOptions } from './persistence'
-import { STORE_KEYS, isPlainObject, registerStoreSchema, type Sanitized } from './schema'
+import { STORE_KEYS } from './profiles'
+import { isPlainObject, registerStoreSchema, type Sanitized } from './schema'
 
 /** Jauges actives à partir d'un instant (ms). */
 export interface ActiveChange {
@@ -287,4 +288,4 @@ export function sanitizePaddocks(raw: unknown): Sanitized<{ paddocks: PaddockRec
 }
 
 // Import d'une sauvegarde : même normalisation qu'au chargement (schema.normalizeStoreValue).
-registerStoreSchema(STORE_KEYS.paddocks, { sanitize: (raw) => sanitizePaddocks(raw) as unknown as Sanitized<Record<string, unknown>> })
+registerStoreSchema('paddocks', { sanitize: (raw) => sanitizePaddocks(raw) as unknown as Sanitized<Record<string, unknown>> })

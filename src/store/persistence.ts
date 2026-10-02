@@ -10,7 +10,7 @@
 //    « storage »), pour que deux onglets ouverts ne s'écrasent plus mutuellement.
 import { create, type StoreApi } from 'zustand'
 import type { PersistOptions, PersistStorage, StorageValue } from 'zustand/middleware'
-import { PERSISTED_STORES, isPlainObject, type Sanitized } from './schema'
+import { isPlainObject, persistedStoreInfo, type Sanitized } from './schema'
 
 // ---------- État de santé du stockage (non persisté) ----------
 
@@ -45,13 +45,21 @@ export const useStorageHealth = create<StorageHealthStore>()((set) => ({
   dismiss: (key, kind) => set((s) => ({ issues: s.issues.filter((i) => !(i.key === key && i.kind === kind)) })),
 }))
 
-const labelOf = (key: string) => PERSISTED_STORES[key]?.label ?? key
+const labelOf = (key: string) => persistedStoreInfo(key)?.label ?? (key === 'elevagesimu:profiles' ? 'Profils et serveurs' : key)
 
 function report(issue: Omit<StorageIssue, 'at' | 'label'>) {
   // Même problème déjà signalé : pas de nouvel affichage (évite un rendu à chaque écriture en échec).
   if (useStorageHealth.getState().issues.some((i) => i.key === issue.key && i.kind === issue.kind && i.message === issue.message)) return
   const full: StorageIssue = { ...issue, label: labelOf(issue.key), at: Date.now() }
   useStorageHealth.setState((s) => ({ issues: [...s.issues.filter((i) => !(i.key === issue.key && i.kind === issue.kind)), full] }))
+}
+
+/** Signale un problème de stockage (bandeau en haut des pages), pour les données hors stores zustand. */
+export function reportStorageIssue(issue: Omit<StorageIssue, 'at' | 'label'> & { label?: string }): void {
+  const { label, ...rest } = issue
+  if (useStorageHealth.getState().issues.some((i) => i.key === rest.key && i.kind === rest.kind && i.message === rest.message)) return
+  const full: StorageIssue = { ...rest, label: label ?? labelOf(rest.key), at: Date.now() }
+  useStorageHealth.setState((s) => ({ issues: [...s.issues.filter((i) => !(i.key === rest.key && i.kind === rest.kind)), full] }))
 }
 
 function clearIssues(key: string, kinds?: StorageIssueKind[]) {
@@ -68,6 +76,22 @@ const blocked = new Map<string, 'version' | 'illisible'>()
 const pending = new Map<string, string>()
 /** Clés dont l'écriture est suspendue (application d'une modification venue d'un autre onglet). */
 const suppressed = new Set<string>()
+/** Plus aucune écriture (rechargement imminent : changement ou suppression de profil, import). */
+let frozen = false
+
+/**
+ * Bloque toute écriture des stores jusqu'au rechargement de la page : à appeler juste avant
+ * `window.location.reload()` quand les clés du profil actif vont changer ou être effacées (sinon un
+ * store pourrait réécrire les données d'un profil supprimé).
+ */
+export function freezeWrites(): void {
+  frozen = true
+}
+
+/** Écritures bloquées par `freezeWrites` ? */
+export function writesFrozen(): boolean {
+  return frozen
+}
 
 function localStorageOrNull(): Storage | null {
   try {
@@ -96,6 +120,7 @@ function block(key: string, reason: 'version' | 'illisible', detail?: { from: nu
 
 /** Réessaie les écritures en échec ; renvoie vrai si plus rien n'est en attente. */
 export function retryPendingWrites(): boolean {
+  if (frozen) return pending.size === 0
   const ls = localStorageOrNull()
   if (!ls) return pending.size === 0
   for (const [key, text] of pending) {
@@ -159,7 +184,7 @@ export const safeStorage: PersistStorage<unknown> = {
     return parsed as unknown as StorageValue<unknown>
   },
   setItem(name, value) {
-    if (blocked.has(name) || suppressed.has(name)) return
+    if (frozen || blocked.has(name) || suppressed.has(name)) return
     const ls = localStorageOrNull()
     if (!ls && typeof window === 'undefined') return // hors navigateur (tests en Node)
     let text: string
@@ -197,12 +222,31 @@ export const safeStorage: PersistStorage<unknown> = {
   },
 }
 
+/**
+ * Écrit un texte sous une clé hors store zustand (registre des profils, données d'un autre serveur…) sans
+ * lever d'exception : échec signalé (bandeau) et renvoyé (false). Rien n'est écrit si les écritures
+ * sont bloquées (`freezeWrites`).
+ */
+export function safeWriteText(key: string, text: string): boolean {
+  if (frozen) return false
+  const ls = localStorageOrNull()
+  if (!ls) return false
+  try {
+    ls.setItem(key, text)
+  } catch (e) {
+    reportWriteFailure(key, e)
+    return false
+  }
+  clearIssues(key, ['ecriture'])
+  return true
+}
+
 // ---------- Options de persist ----------
 
 export interface PersistConfig<S, P> {
-  /** Clé localStorage (« elevagesimu:xxx »), déclarée dans PERSISTED_STORES (schema.ts). */
+  /** Clé localStorage du store (`STORE_KEYS.xxx` de src/store/profiles.ts : profil ou serveur actif), base déclarée dans STORE_BASES (schema.ts). */
   name: string
-  /** Version actuelle du schéma (défaut : celle de PERSISTED_STORES). */
+  /** Version actuelle du schéma (défaut : celle de STORE_BASES pour cette clé). */
   version?: number
   /** Conversion depuis une version antérieure (jamais appelée pour une version plus récente). Défaut : identité. */
   migrate?: (state: unknown, fromVersion: number) => unknown
@@ -221,7 +265,7 @@ export interface PersistConfig<S, P> {
  *    l'écriture au lieu d'écraser la donnée.
  */
 export function persistOptions<S, P = Partial<S>>(cfg: PersistConfig<S, P>): PersistOptions<S, P> {
-  const version = cfg.version ?? PERSISTED_STORES[cfg.name]?.version ?? 0
+  const version = cfg.version ?? persistedStoreInfo(cfg.name)?.version ?? 0
   const name = cfg.name
   return {
     name,

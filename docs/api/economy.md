@@ -8,9 +8,10 @@ const mctx: MountPriceContext = {                              // prix des montu
   mountOverrides: usePrices((s) => s.mounts),
   generationOverrides: usePrices((s) => s.generations),
   useDefaults: useSettings((s) => s.useDefaultPrices),
+  market: ctx.market,                                          // facultatif : prix HDV mixte = plafond de vente
 }
 const rules = useRules(); const jobLevel = useSettings((s) => s.jobLevel)
-const g = genetonKamasValue(usePrices((s) => s.genetonValue))  // g.value (brut), g.origin
+const g = genetonKamasValue(usePrices((s) => s.genetonValue), { market: ctx.market, saleTax })  // g.value (brut), g.origin, g.net
 ```
 
 **Règle commune** : un prix inconnu n'est jamais 0. Les fonctions renvoient `complete: false`, une
@@ -24,7 +25,7 @@ Un montant dont des prix manquent s'affiche en **intervalle** (`Range {low, high
 | Export | Rôle |
 |---|---|
 | `PriceContext` | `{overrides, useDefaults, jobLevel?}`. **`jobLevel`** (facultatif) : une recette de niveau supérieur n'est pas fabricable → son prix HDV prime ; sans prix HDV, le coût des ingrédients est retenu mais signalé `craftLocked` (estimation du prix HDV). Absent : tout est supposé fabricable (ancien comportement). Les fonctions d'`economy.ts` qui reçoivent `jobLevel` l'ajoutent elles-mêmes au contexte. |
-| `marketPrice(id, ctx)` | Prix joueur, sinon défaut (sans craft). |
+| `marketPrice(id, ctx)` | Prix joueur, sinon **marché importé** (`ctx.market` : export HDV du serveur, origine `marche`, détail `market` = date, statistique, volume), sinon défaut (sans craft). `PriceContext.market` est rempli par `usePriceContext()` — voir docs/api/market.md. |
 | `craftCost(recipeId, ctx)` | Σ ingrédients (`complete`, `missing`, `lines`). |
 | `resolvePrice(id, ctx): ResolvedPrice` | joueur > min(défaut, craft complet fabricable) > craft (incomplet = borne basse). Champs ajoutés : **`craftLocked?: number`** (niveau requis, joueur trop bas) et **`conflict?: PriceConflict`** quand un prix par défaut (autre serveur, daté) est ≥ `PRICE_CONFLICT_RATIO` (1,5) × un craft complet chiffré avec au moins un prix d'ingrédient du joueur : le défaut reste retenu, mais `conflict.message` (« Prix par défaut 1 000 K < vos ingrédients 3 000 K : saisissez le prix HDV de votre serveur. ») est à afficher. |
 | `canCraftRecipe(id, {jobLevel})` | Le joueur peut-il fabriquer la recette ? |
@@ -55,12 +56,16 @@ Un montant dont des prix manquent s'affiche en **intervalle** (`Range {low, high
 |---|---|
 | `MOUNT_BANDS`, `MOUNT_BAND_LEVEL`, `mountBand(level)` | Niveaux d'ancrage 1 / 100 / 200 ; `mountBand` = tranche la plus proche (affichage seulement). |
 | `defaultPriceIssue(row): DefaultPriceIssue \| null` | Une ligne par défaut est-elle un prix de **décision** ? `null` = oui (observée ou dérivée, confiance ≥ moyenne, de moins de `MOUNT_PRICE_STALE_DAYS` = 120 j avant le dernier relevé de la recherche). Sinon `'plancher'`, `'estimation'`, `'peu-fiable'`, `'ancien'` ou `'a-verifier'` (`excludeFromDefaults` du pipeline, ou note « Ne pas utiliser comme défaut »). `DEFAULT_PRICE_ISSUE_LABELS`. |
-| `mountSalePrice(speciesId, level, mctx, {state?}): MountSalePrice` | Prix **brut** de décision : ancrages aux niveaux 1/100/200 (votre prix couleur > votre prix génération > relevé par défaut fiable par nom > par génération), **interpolés** entre deux ancrages (`method: 'interpolation'`, `estimated`), prix du palier inférieur au-dessus du dernier (`'palier-inferieur'`, estimation prudente), **jamais** un prix de niveau supérieur appliqué en dessous (`price: null`). Planchers, relevés anciens/peu fiables : `price: null` et `references[]` (`{price, net, level, kind, reason}`), affichées « à saisir / non comptées ». `isFloor` est obsolète (toujours faux). |
+| `mountSalePrice(speciesId, level, mctx, {state?}): MountSalePrice` | Prix **brut** : ancrages aux niveaux 1/100/200 (votre prix couleur > votre prix génération > relevé par défaut fiable par nom > par génération), **interpolés** entre deux ancrages (`method: 'interpolation'`, `estimated`), prix du palier inférieur au-dessus du dernier (`'palier-inferieur'`, estimation prudente), **jamais** un prix de niveau supérieur appliqué en dessous (`price: null`). Planchers, relevés anciens/peu fiables : `price: null` et `references[]` (`{price, net, level, kind, reason}`), affichées « à saisir / non comptées ». `isFloor` est obsolète (toujours faux). **Avec `mctx.market`** (export HDV) : le prix de l'objet-monture s'intercale entre vos prix et les défauts — `market` (`MountMarketQuote` : prix, statistique, date, `sold24/7/30`, `perDayAvg`, `kamasPerDay`, `confidence`, `badge` « HDV mixte : niveau/sénilité/état non distingués »), `ceiling` = ce prix ; vos prix priment (jamais plafonnés) ; un relevé par défaut plus cher est ramené au prix du marché (`origin: 'marche'`, `cappedFrom {price, origin}`) ; sans autre prix : `origin: 'marche'`, `method: 'marche'`, `estimated` (indication, **non comptée seule** par `mountValuation`). |
+| `mountMarketQuote(speciesId, market)`, `MOUNT_MARKET_BADGE` | Prix de marché de l'objet-monture (null sans marché ni vente). |
+| `possibleSenile(gen, marketPrice, extractionGross)`, `SENILE_MIN_GENERATION = 5`, `SENILE_PRICE_RATIO = 0.5` | G5+ vendue sous ½ × sa valeur d'extraction : ventes probablement tirées par des montures séniles (extraction = 1). |
+| `REFERENCE_KIND_LABELS` | Libellés de toutes les natures de référence (`DefaultPriceIssue`, `niveau-superieur`, `marche`). |
 | `defaultGenerationPrice(family, gen, band, state?)`, `defaultSpeciesPrice(id, band)` | Ligne de prix par défaut (affichage ; plancher ramené à la revente de base). |
-| `extractionValue(speciesId, ctx, {senile?})` | `qty` (= génération ; G1 = 0 ; sénile = 1) × prix Neurone/Ambre/Corne (brut). |
-| `brisageValue(family, level, ctx?)` | Rendements observés interpolés (45/53/100/200), extrapolés de 0 (niv. 35) à 45, mis à l'échelle de la rune Ga. Dragodindes : `possible: false`. `BRISAGE_RISK_NOTE`. |
-| `mountValuation(speciesId, level, {ctx, mountPrices, saleTax, state?, senile?}): MountValuation` | `sale`, `extraction`, `brisage` (nets de taxe), `best`, `bestKind`, `confidence`, `complete`, **`estimated`**. Vente sans prix de décision : `sale.net = null`, **`sale.reference`** `{net, kind, reason}` (jamais comptée) → `complete: false`, `best` = borne basse. À égalité : extraction > brisage > vente. |
-| `genetonKamasValue(override?)` | Valeur **brute** d'un généton : 375 K par défaut (plage 125-725) ou la vôtre ; les calculs la comptent nette de la taxe (parchemin revendu). |
+| `extractionValue(speciesId, ctx, {senile?})` | `qty` (= génération ; G1 = 0 ; sénile = 1) × prix Neurone/Ambre/Corne (brut) : votre prix > **marché importé** (`ctx.market`, `market` = date, statistique, volume) > défaut. |
+| `brisageValue(family, level, ctx?)` | Rendements observés interpolés (45/53/100/200), extrapolés de 0 (niv. 35) à 45, mis à l'échelle de la rune Ga (Ga Pa 1557, Ga Pme 1558) : votre prix > **marché importé** > défaut ; `runePrice`, `runeOrigin`, `runeMarket` (avec `ctx`). Dragodindes : `possible: false`. `BRISAGE_RISK_NOTE`. |
+| `mountValuation(speciesId, level, {ctx, mountPrices, saleTax, state?, senile?}): MountValuation` | `sale`, `extraction`, `brisage` (nets de taxe), `best`, `bestKind`, `confidence`, `complete`, **`estimated`**. Vente sans prix de décision : `sale.net = null`, **`sale.reference`** `{net, kind, reason}` (jamais comptée) → `complete: false`, `best` = borne basse. À égalité : extraction > brisage > vente. **Marché (`mountPrices.market`) = plafond de vente prudent** : un défaut plafonné (`cappedFrom`) est compté au prix du marché ; le prix du marché **seul** n'est pas compté (`sale.reference.kind = 'marche'`, `sale.ceiling` net, `sale.market`) mais donne **`bestHigh`** = max(meilleure valeur connue, plafond) quand extraction et brisage sont chiffrés (bornes hautes de `cycleProfit` / `crossingRanking`) ; vos prix ne sont jamais plafonnés ; **`marketWarning`** si `possibleSenile` (G5+ < ½ extraction : jamais acheter pour extraire sans vérifier). |
+| `genetonKamasValue(override?, {market?, saleTax?})` | Valeur **brute** d'un généton : la vôtre, sinon **le marché du serveur** (`origin: 'marche'` : max(prix ÷ coût) sur la boutique d'Eugène Éton, Tourmaline 130 comprise ; `market` = détail, `basis` = « Petit Parchemin de Chance 5 079 K ÷ 10 (HDV de Tylezia du 02/10/2026…) »), sinon 375 K (plage 125-725). `net` = brute × (1 − `saleTax`) si fourni ; les calculs la comptent nette de la taxe (parchemin revendu). Tylezia 02/10 : 507,9 K brut. |
+| `genetonLiquidValue(market, genetonsPerDay, {share?, saleTax?})` | Valeur d'une production de génétons selon le volume de la boutique : meilleur échange d'abord (dans la limite de `share` de son volume moyen), puis le suivant ; `perGeneton`, `net`, `absorbed`, `surplus` (non valorisé), `lines`. |
 
 ## `economy.ts` — lots, coûts d'enclos, socle
 
@@ -90,12 +95,18 @@ Un montant dont des prix manquent s'affiche en **intervalle** (`Range {low, high
 | `cycleProfit(cfg: CycleConfig): CycleResult` | Voir ci-dessous. |
 | `crossingRanking(family, opts)` | Marge par accouplement = bébés + génétons nets + **valeur ajoutée aux parents** (stériles − valeur de départ, si `includeSteriles`, défaut vrai) − fécondité (lot typique par défaut) − XP − Optimakina (`optimakina: true` = règle auto). Lignes : `parentStartValue`, `parentDelta`, `parentComplete`, `optimakina` (décision), **`marginRange`** (afficher « ≤ » / fourchette / « inconnue »), `estimated`. Options : `batchModel`, `batchProfile`, `goalPath`. |
 | `unpricedSignature(r)`, `cyclesComparable(a, b)` | Deux variantes ne se comparent que si elles ont les mêmes postes non chiffrés (badge « non comparable »). |
+| `fullRateMatingsPerDay({jobLevel, batchSize, tier, xpTier?, parentLevel, parentStartLevel?, profile, rules})` | Accouplements par jour à plein régime : enclos débloqués × ⌊lot ÷ 2⌋ couples par tour (fécondité du lot + XP restante, même calcul que `cycleProfit`). |
 | `COST_CATEGORY_LABELS`, `CASH_CATEGORIES`, `FATE_LABELS`, `MOUNT_PRICE_ORIGIN_LABELS` | Libellés FR. |
 
 `CycleConfig` (en plus des champs historiques) : `optimakina: boolean | OptimakinaMode` (`true` = auto),
 `batchModel` (défaut `'typique'`), `batchProfile` (vos lots), `parentValue: 'opportunite' | 'hors'`
-(défaut : parents engagés comptés), `genetonOrigin`, `goalPath`, `serenityPointsPerMount` (défaut : celle
-du modèle).
+(défaut : parents engagés comptés), `genetonOrigin` (`'joueur' | 'marche' | 'defaut'`), `goalPath`,
+`serenityPointsPerMount` (défaut : celle du modèle), **`maxMarketShare`** (part du volume vendable, défaut
+0,15 ; réglage du serveur `ServerEntry.maxMarketShare`).
+
+`RankingOptions` : en plus, `maxMarketShare` et `matingsPerDay` (défaut `fullRateMatingsPerDay`). Avec un
+marché (`ctx.market`), chaque `CrossingRank` porte **`liquidity`** (ventes à ce rythme : bébés et stériles
+selon leur meilleur devenir, génétons), **`liquidityExceeded`** et `matingsPerDay`.
 
 `CycleResult` :
 - `materials` (catégories `fecondite`, `xp`, `makina`, `capture`, **`parents`** = valeur actuelle des
@@ -113,7 +124,28 @@ du modèle).
   `costPerTargetBaby` (**brut** : dépenses ÷ bébés cibles), **`netCostPerTargetBaby`** = (coûts − bébés
   ratés − stériles) ÷ bébés cibles (formule strategy.json) et `netCostComplete` ;
 - `optimakina` (décision), `batch`, `paddocks`/`paddocksUsed`/**`unlockedPaddocks`** (avertissement si plus
-  d'enclos que débloqués), `estimated` + `estimates[]`, `assumptions`, `warnings`, `breedWithout`.
+  d'enclos que débloqués), `estimated` + `estimates[]`, `assumptions`, `warnings`, `breedWithout` ;
+- **`liquidity: LiquidityCheck[]`** (vide sans marché) : ventes par jour du cycle répété en continu
+  (ressources extraites, montures vendues, runes Ga en équivalent de valeur, génétons écoulés en
+  parchemins) face au volume du serveur ; un dépassement ajoute un avertissement « Liquidité (cycle répété en
+  continu) — … » à `warnings` (le revenu n'est pas modifié) ;
+- `revenue[].reference.kind` (`'marche'` : vente seulement plafonnée par l'HDV mixte).
+
+## `economy.ts` — marché importé et liquidité
+
+Le marché du serveur vient de `ctx.market` (`usePriceContext()`) ; aucune fonction n'en a besoin
+(compatibilité). Règle des montures : **le prix d'un objet-monture (HDV mixte) n'est qu'un plafond de vente**
+— voir `mountSalePrice` et `mountValuation` ci-dessus.
+
+| Export | Rôle |
+|---|---|
+| `MarketLike` | `MarketSource` ou contexte de prix (`{market}`). |
+| `salesCap(id, src, share = 0.15): SalesCap \| null` | Ce que le marché absorbe d'un objet par jour : `perDay` (fractionnaire = `share` × vendus_30j ÷ 30), `perDayFloor`, `kamasCap`, `perDayAvg`, `sold24`, `sold30`, `kamasPerDay`, `price`. null = objet absent (liquidité inconnue). Tylezia : Corne ≈ 636,7/jour. |
+| `absorbablePerDay(id, src, share?)` | `salesCap(...).perDay` ou null. |
+| `PlannedSale {itemId, perDay, kind?}`, `SaleKind`, `LiquidityCheck` | Ventes prévues et vérification (`cap`, `marketPerDay`, `marketShare`, `exceeds`, `message`). |
+| `checkPlannedSales(sales, src, share?)` | Regroupe par objet, compare au plafond ; objet absent → `cap: null` avec message « liquidité inconnue » ; dépassements en premier. Sans marché : `[]`. |
+| `genetonLiquidityCheck(genetonsPerDay, src, share?)` | Génétons face à toute la boutique (parchemins + Tourmaline, `share` du volume de chacun), en génétons. |
+| `genetonLiquidValue(...)` | Voir ci-dessus. |
 
 ## `economy.ts` — saisie des prix
 
