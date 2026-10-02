@@ -1,0 +1,25 @@
+{
+"source": "Ankama Dofus 3 client 3.6.12.16 (RideGaugesDataRoot), extracted from cytrus.cdn.ankama.com bundle data_assets_ridegaugesdataroot.asset.bundle via UnityPy typetree",
+"extractedAt": "2026-10-01",
+"count": 3,
+"data": [
+{
+"id": 1,
+"maxValue": 20000,
+"minMood": 0,
+"maxMood": 5001
+},
+{
+"id": 2,
+"maxValue": 20000,
+"minMood": -2000,
+"maxMood": 2000
+},
+{
+"id": 3,
+"maxValue": 20000,
+"minMood": -5000,
+"maxMood": -1
+}
+]
+}

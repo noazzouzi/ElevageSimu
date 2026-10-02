@@ -1,0 +1,9666 @@
+{
+"source": "Ankama Dofus 3 client 3.6.12.16 (RidesDataRoot), extracted from cytrus.cdn.ankama.com bundle data_assets_ridesdataroot.asset.bundle via UnityPy typetree",
+"extractedAt": "2026-10-01",
+"count": 308,
+"data": [
+{
+"id": 3,
+"nameId": 1166436,
+"colorId": 1173232,
+"speciesId": 1,
+"generation": 3,
+"geneticWeight": 90,
+"linkedItemGid": 33020,
+"extractionRewardQuantity": 3,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 4,
+"breedingExperienceRewardQuantity": 90,
+"parents": [
+{
+"parent1": 33,
+"parent2": 46
+}
+],
+"children": [
+{
+"parent": 16,
+"child": 9
+},
+{
+"parent": 10,
+"child": 12
+},
+{
+"parent": 20,
+"child": 34
+},
+{
+"parent": 18,
+"child": 42
+},
+{
+"parent": 21,
+"child": 50
+},
+{
+"parent": 17,
+"child": 51
+},
+{
+"parent": 15,
+"child": 52
+},
+{
+"parent": 22,
+"child": 53
+},
+{
+"parent": 19,
+"child": 54
+},
+{
+"parent": 23,
+"child": 79
+}
+]
+},
+{
+"id": 9,
+"nameId": 1166633,
+"colorId": 1173280,
+"speciesId": 1,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33023,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 3,
+"parent2": 16
+}
+],
+"children": []
+},
+{
+"id": 10,
+"nameId": 1166439,
+"colorId": 1173219,
+"speciesId": 1,
+"generation": 1,
+"geneticWeight": 90,
+"linkedItemGid": 33063,
+"extractionRewardQuantity": 0,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 1,
+"breedingExperienceRewardQuantity": 30,
+"parents": [],
+"children": [
+{
+"parent": 16,
+"child": 11
+},
+{
+"parent": 20,
+"child": 38
+},
+{
+"parent": 18,
+"child": 46
+},
+{
+"parent": 21,
+"child": 57
+},
+{
+"parent": 17,
+"child": 62
+},
+{
+"parent": 15,
+"child": 69
+},
+{
+"parent": 22,
+"child": 70
+},
+{
+"parent": 19,
+"child": 71
+},
+{
+"parent": 23,
+"child": 84
+},
+{
+"parent": 3,
+"child": 12
+}
+]
+},
+{
+"id": 11,
+"nameId": 1166440,
+"colorId": 1173281,
+"speciesId": 1,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33045,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 10,
+"parent2": 16
+}
+],
+"children": []
+},
+{
+"id": 12,
+"nameId": 1166634,
+"colorId": 1173353,
+"speciesId": 1,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33026,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 3,
+"parent2": 10
+}
+],
+"children": []
+},
+{
+"id": 15,
+"nameId": 1166441,
+"colorId": 1173263,
+"speciesId": 1,
+"generation": 7,
+"geneticWeight": 90,
+"linkedItemGid": 33065,
+"extractionRewardQuantity": 7,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 60,
+"breedingExperienceRewardQuantity": 210,
+"parents": [
+{
+"parent1": 53,
+"parent2": 76
+}
+],
+"children": [
+{
+"parent": 20,
+"child": 39
+},
+{
+"parent": 18,
+"child": 47
+},
+{
+"parent": 21,
+"child": 58
+},
+{
+"parent": 17,
+"child": 63
+},
+{
+"parent": 16,
+"child": 66
+},
+{
+"parent": 22,
+"child": 72
+},
+{
+"parent": 19,
+"child": 73
+},
+{
+"parent": 23,
+"child": 85
+},
+{
+"parent": 3,
+"child": 52
+},
+{
+"parent": 10,
+"child": 69
+}
+]
+},
+{
+"id": 16,
+"nameId": 1166442,
+"colorId": 1173264,
+"speciesId": 1,
+"generation": 7,
+"geneticWeight": 90,
+"linkedItemGid": 33042,
+"extractionRewardQuantity": 7,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 60,
+"breedingExperienceRewardQuantity": 210,
+"parents": [
+{
+"parent1": 65,
+"parent2": 76
+}
+],
+"children": [
+{
+"parent": 20,
+"child": 37
+},
+{
+"parent": 18,
+"child": 45
+},
+{
+"parent": 21,
+"child": 56
+},
+{
+"parent": 17,
+"child": 61
+},
+{
+"parent": 22,
+"child": 67
+},
+{
+"parent": 19,
+"child": 68
+},
+{
+"parent": 23,
+"child": 83
+},
+{
+"parent": 3,
+"child": 9
+},
+{
+"parent": 10,
+"child": 11
+},
+{
+"parent": 15,
+"child": 66
+}
+]
+},
+{
+"id": 17,
+"nameId": 1166443,
+"colorId": 1173233,
+"speciesId": 1,
+"generation": 3,
+"geneticWeight": 90,
+"linkedItemGid": 33036,
+"extractionRewardQuantity": 3,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 4,
+"breedingExperienceRewardQuantity": 90,
+"parents": [
+{
+"parent1": 33,
+"parent2": 38
+}
+],
+"children": [
+{
+"parent": 20,
+"child": 36
+},
+{
+"parent": 18,
+"child": 44
+},
+{
+"parent": 21,
+"child": 55
+},
+{
+"parent": 22,
+"child": 64
+},
+{
+"parent": 19,
+"child": 65
+},
+{
+"parent": 23,
+"child": 82
+},
+{
+"parent": 3,
+"child": 51
+},
+{
+"parent": 16,
+"child": 61
+},
+{
+"parent": 10,
+"child": 62
+},
+{
+"parent": 15,
+"child": 63
+}
+]
+},
+{
+"id": 18,
+"nameId": 1166635,
+"colorId": 1173350,
+"speciesId": 1,
+"generation": 1,
+"geneticWeight": 20,
+"linkedItemGid": 33011,
+"extractionRewardQuantity": 0,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 1,
+"breedingExperienceRewardQuantity": 30,
+"parents": [],
+"children": [
+{
+"parent": 20,
+"child": 33
+},
+{
+"parent": 21,
+"child": 43
+},
+{
+"parent": 22,
+"child": 48
+},
+{
+"parent": 19,
+"child": 49
+},
+{
+"parent": 23,
+"child": 78
+},
+{
+"parent": 3,
+"child": 42
+},
+{
+"parent": 17,
+"child": 44
+},
+{
+"parent": 16,
+"child": 45
+},
+{
+"parent": 10,
+"child": 46
+},
+{
+"parent": 15,
+"child": 47
+}
+]
+},
+{
+"id": 19,
+"nameId": 1166444,
+"colorId": 1173249,
+"speciesId": 1,
+"generation": 5,
+"geneticWeight": 90,
+"linkedItemGid": 33050,
+"extractionRewardQuantity": 5,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 15,
+"breedingExperienceRewardQuantity": 150,
+"parents": [
+{
+"parent1": 38,
+"parent2": 51
+}
+],
+"children": [
+{
+"parent": 20,
+"child": 41
+},
+{
+"parent": 21,
+"child": 60
+},
+{
+"parent": 22,
+"child": 76
+},
+{
+"parent": 23,
+"child": 87
+},
+{
+"parent": 18,
+"child": 49
+},
+{
+"parent": 3,
+"child": 54
+},
+{
+"parent": 17,
+"child": 65
+},
+{
+"parent": 16,
+"child": 68
+},
+{
+"parent": 10,
+"child": 71
+},
+{
+"parent": 15,
+"child": 73
+}
+]
+},
+{
+"id": 20,
+"nameId": 1166445,
+"colorId": 1173220,
+"speciesId": 1,
+"generation": 1,
+"geneticWeight": 90,
+"linkedItemGid": 33001,
+"extractionRewardQuantity": 0,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 1,
+"breedingExperienceRewardQuantity": 30,
+"parents": [],
+"children": [
+{
+"parent": 21,
+"child": 35
+},
+{
+"parent": 22,
+"child": 40
+},
+{
+"parent": 23,
+"child": 77
+},
+{
+"parent": 18,
+"child": 33
+},
+{
+"parent": 3,
+"child": 34
+},
+{
+"parent": 17,
+"child": 36
+},
+{
+"parent": 16,
+"child": 37
+},
+{
+"parent": 10,
+"child": 38
+},
+{
+"parent": 15,
+"child": 39
+},
+{
+"parent": 19,
+"child": 41
+}
+]
+},
+{
+"id": 21,
+"nameId": 1166446,
+"colorId": 1173297,
+"speciesId": 1,
+"generation": 9,
+"geneticWeight": 90,
+"linkedItemGid": 33028,
+"extractionRewardQuantity": 9,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 250,
+"breedingExperienceRewardQuantity": 270,
+"parents": [
+{
+"parent1": 66,
+"parent2": 68
+}
+],
+"children": [
+{
+"parent": 22,
+"child": 59
+},
+{
+"parent": 23,
+"child": 80
+},
+{
+"parent": 20,
+"child": 35
+},
+{
+"parent": 18,
+"child": 43
+},
+{
+"parent": 3,
+"child": 50
+},
+{
+"parent": 17,
+"child": 55
+},
+{
+"parent": 16,
+"child": 56
+},
+{
+"parent": 10,
+"child": 57
+},
+{
+"parent": 15,
+"child": 58
+},
+{
+"parent": 19,
+"child": 60
+}
+]
+},
+{
+"id": 22,
+"nameId": 1166447,
+"colorId": 1173250,
+"speciesId": 1,
+"generation": 5,
+"geneticWeight": 90,
+"linkedItemGid": 33047,
+"extractionRewardQuantity": 5,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 15,
+"breedingExperienceRewardQuantity": 150,
+"parents": [
+{
+"parent1": 46,
+"parent2": 51
+}
+],
+"children": [
+{
+"parent": 23,
+"child": 86
+},
+{
+"parent": 20,
+"child": 40
+},
+{
+"parent": 18,
+"child": 48
+},
+{
+"parent": 3,
+"child": 53
+},
+{
+"parent": 21,
+"child": 59
+},
+{
+"parent": 17,
+"child": 64
+},
+{
+"parent": 16,
+"child": 67
+},
+{
+"parent": 10,
+"child": 70
+},
+{
+"parent": 15,
+"child": 72
+},
+{
+"parent": 19,
+"child": 76
+}
+]
+},
+{
+"id": 23,
+"nameId": 1166448,
+"colorId": 1173298,
+"speciesId": 1,
+"generation": 9,
+"geneticWeight": 90,
+"linkedItemGid": 33052,
+"extractionRewardQuantity": 9,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 250,
+"breedingExperienceRewardQuantity": 270,
+"parents": [
+{
+"parent1": 66,
+"parent2": 72
+}
+],
+"children": [
+{
+"parent": 20,
+"child": 77
+},
+{
+"parent": 18,
+"child": 78
+},
+{
+"parent": 3,
+"child": 79
+},
+{
+"parent": 21,
+"child": 80
+},
+{
+"parent": 17,
+"child": 82
+},
+{
+"parent": 16,
+"child": 83
+},
+{
+"parent": 10,
+"child": 84
+},
+{
+"parent": 15,
+"child": 85
+},
+{
+"parent": 22,
+"child": 86
+},
+{
+"parent": 19,
+"child": 87
+}
+]
+},
+{
+"id": 33,
+"nameId": 1166449,
+"colorId": 1173226,
+"speciesId": 1,
+"generation": 2,
+"geneticWeight": 20,
+"linkedItemGid": 33002,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 18,
+"parent2": 20
+}
+],
+"children": [
+{
+"parent": 46,
+"child": 3
+},
+{
+"parent": 38,
+"child": 17
+}
+]
+},
+{
+"id": 34,
+"nameId": 1166450,
+"colorId": 1173244,
+"speciesId": 1,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33003,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 3,
+"parent2": 20
+}
+],
+"children": []
+},
+{
+"id": 35,
+"nameId": 1166451,
+"colorId": 1173386,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33004,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 20,
+"parent2": 21
+}
+],
+"children": []
+},
+{
+"id": 36,
+"nameId": 1166452,
+"colorId": 1173245,
+"speciesId": 1,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33005,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 17,
+"parent2": 20
+}
+],
+"children": []
+},
+{
+"id": 37,
+"nameId": 1166453,
+"colorId": 1173282,
+"speciesId": 1,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33006,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 16,
+"parent2": 20
+}
+],
+"children": []
+},
+{
+"id": 38,
+"nameId": 1166636,
+"colorId": 1173351,
+"speciesId": 1,
+"generation": 2,
+"geneticWeight": 20,
+"linkedItemGid": 33009,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 10,
+"parent2": 20
+}
+],
+"children": [
+{
+"parent": 51,
+"child": 19
+},
+{
+"parent": 33,
+"child": 17
+}
+]
+},
+{
+"id": 39,
+"nameId": 1166637,
+"colorId": 1173283,
+"speciesId": 1,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33010,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 15,
+"parent2": 20
+}
+],
+"children": []
+},
+{
+"id": 40,
+"nameId": 1166638,
+"colorId": 1173368,
+"speciesId": 1,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33007,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 20,
+"parent2": 22
+}
+],
+"children": []
+},
+{
+"id": 41,
+"nameId": 1166639,
+"colorId": 1173251,
+"speciesId": 1,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33008,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 19,
+"parent2": 20
+}
+],
+"children": []
+},
+{
+"id": 42,
+"nameId": 1166640,
+"colorId": 1173354,
+"speciesId": 1,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33012,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 3,
+"parent2": 18
+}
+],
+"children": []
+},
+{
+"id": 43,
+"nameId": 1166641,
+"colorId": 1173387,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33013,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 18,
+"parent2": 21
+}
+],
+"children": []
+},
+{
+"id": 44,
+"nameId": 1166642,
+"colorId": 1173355,
+"speciesId": 1,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33014,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 17,
+"parent2": 18
+}
+],
+"children": []
+},
+{
+"id": 45,
+"nameId": 1166643,
+"colorId": 1173284,
+"speciesId": 1,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33015,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 16,
+"parent2": 18
+}
+],
+"children": []
+},
+{
+"id": 46,
+"nameId": 1166644,
+"colorId": 1173352,
+"speciesId": 1,
+"generation": 2,
+"geneticWeight": 20,
+"linkedItemGid": 33018,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 10,
+"parent2": 18
+}
+],
+"children": [
+{
+"parent": 51,
+"child": 22
+},
+{
+"parent": 33,
+"child": 3
+}
+]
+},
+{
+"id": 47,
+"nameId": 1166645,
+"colorId": 1173285,
+"speciesId": 1,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33019,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 15,
+"parent2": 18
+}
+],
+"children": []
+},
+{
+"id": 48,
+"nameId": 1166646,
+"colorId": 1173252,
+"speciesId": 1,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33016,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 18,
+"parent2": 22
+}
+],
+"children": []
+},
+{
+"id": 49,
+"nameId": 1166647,
+"colorId": 1173253,
+"speciesId": 1,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33017,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 18,
+"parent2": 19
+}
+],
+"children": []
+},
+{
+"id": 50,
+"nameId": 1166648,
+"colorId": 1173388,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33021,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 3,
+"parent2": 21
+}
+],
+"children": []
+},
+{
+"id": 51,
+"nameId": 1166649,
+"colorId": 1173356,
+"speciesId": 1,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33022,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 3,
+"parent2": 17
+}
+],
+"children": [
+{
+"parent": 38,
+"child": 19
+},
+{
+"parent": 46,
+"child": 22
+}
+]
+},
+{
+"id": 52,
+"nameId": 1166454,
+"colorId": 1173286,
+"speciesId": 1,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33027,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 3,
+"parent2": 15
+}
+],
+"children": []
+},
+{
+"id": 53,
+"nameId": 1166650,
+"colorId": 1173254,
+"speciesId": 1,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33024,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 3,
+"parent2": 22
+}
+],
+"children": [
+{
+"parent": 76,
+"child": 15
+}
+]
+},
+{
+"id": 54,
+"nameId": 1166651,
+"colorId": 1173255,
+"speciesId": 1,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33025,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 3,
+"parent2": 19
+}
+],
+"children": []
+},
+{
+"id": 55,
+"nameId": 1166455,
+"colorId": 1173389,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33029,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 17,
+"parent2": 21
+}
+],
+"children": []
+},
+{
+"id": 56,
+"nameId": 1166456,
+"colorId": 1173390,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33030,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 16,
+"parent2": 21
+}
+],
+"children": []
+},
+{
+"id": 57,
+"nameId": 1166457,
+"colorId": 1173391,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33033,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 10,
+"parent2": 21
+}
+],
+"children": []
+},
+{
+"id": 58,
+"nameId": 1166458,
+"colorId": 1173392,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33034,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 15,
+"parent2": 21
+}
+],
+"children": []
+},
+{
+"id": 59,
+"nameId": 1166459,
+"colorId": 1173393,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33031,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 21,
+"parent2": 22
+}
+],
+"children": []
+},
+{
+"id": 60,
+"nameId": 1166460,
+"colorId": 1173394,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33032,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 19,
+"parent2": 21
+}
+],
+"children": []
+},
+{
+"id": 61,
+"nameId": 1166461,
+"colorId": 1173287,
+"speciesId": 1,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33037,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 16,
+"parent2": 17
+}
+],
+"children": []
+},
+{
+"id": 62,
+"nameId": 1166462,
+"colorId": 1173246,
+"speciesId": 1,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33040,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 10,
+"parent2": 17
+}
+],
+"children": []
+},
+{
+"id": 63,
+"nameId": 1166463,
+"colorId": 1173288,
+"speciesId": 1,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33041,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 15,
+"parent2": 17
+}
+],
+"children": []
+},
+{
+"id": 64,
+"nameId": 1166464,
+"colorId": 1173256,
+"speciesId": 1,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33038,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 17,
+"parent2": 22
+}
+],
+"children": []
+},
+{
+"id": 65,
+"nameId": 1166465,
+"colorId": 1173257,
+"speciesId": 1,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33039,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 17,
+"parent2": 19
+}
+],
+"children": [
+{
+"parent": 76,
+"child": 16
+}
+]
+},
+{
+"id": 66,
+"nameId": 1166466,
+"colorId": 1173289,
+"speciesId": 1,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33046,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 15,
+"parent2": 16
+}
+],
+"children": [
+{
+"parent": 68,
+"child": 21
+},
+{
+"parent": 72,
+"child": 23
+}
+]
+},
+{
+"id": 67,
+"nameId": 1166467,
+"colorId": 1173290,
+"speciesId": 1,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33043,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 16,
+"parent2": 22
+}
+],
+"children": []
+},
+{
+"id": 68,
+"nameId": 1166468,
+"colorId": 1173291,
+"speciesId": 1,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33044,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 16,
+"parent2": 19
+}
+],
+"children": [
+{
+"parent": 66,
+"child": 21
+}
+]
+},
+{
+"id": 69,
+"nameId": 1166469,
+"colorId": 1173292,
+"speciesId": 1,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33068,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 10,
+"parent2": 15
+}
+],
+"children": []
+},
+{
+"id": 70,
+"nameId": 1166470,
+"colorId": 1173258,
+"speciesId": 1,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33049,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 10,
+"parent2": 22
+}
+],
+"children": []
+},
+{
+"id": 71,
+"nameId": 1166471,
+"colorId": 1173259,
+"speciesId": 1,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33051,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 10,
+"parent2": 19
+}
+],
+"children": []
+},
+{
+"id": 72,
+"nameId": 1166472,
+"colorId": 1173293,
+"speciesId": 1,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33066,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 15,
+"parent2": 22
+}
+],
+"children": [
+{
+"parent": 66,
+"child": 23
+}
+]
+},
+{
+"id": 73,
+"nameId": 1166473,
+"colorId": 1173294,
+"speciesId": 1,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33067,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 15,
+"parent2": 19
+}
+],
+"children": []
+},
+{
+"id": 76,
+"nameId": 1166474,
+"colorId": 1173260,
+"speciesId": 1,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33048,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 19,
+"parent2": 22
+}
+],
+"children": [
+{
+"parent": 53,
+"child": 15
+},
+{
+"parent": 65,
+"child": 16
+}
+]
+},
+{
+"id": 77,
+"nameId": 1166475,
+"colorId": 1173395,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33053,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 20,
+"parent2": 23
+}
+],
+"children": []
+},
+{
+"id": 78,
+"nameId": 1166476,
+"colorId": 1173396,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33054,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 18,
+"parent2": 23
+}
+],
+"children": []
+},
+{
+"id": 79,
+"nameId": 1166477,
+"colorId": 1173397,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33055,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 3,
+"parent2": 23
+}
+],
+"children": []
+},
+{
+"id": 80,
+"nameId": 1166478,
+"colorId": 1173398,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33056,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 21,
+"parent2": 23
+}
+],
+"children": []
+},
+{
+"id": 82,
+"nameId": 1166479,
+"colorId": 1173399,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33057,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 17,
+"parent2": 23
+}
+],
+"children": []
+},
+{
+"id": 83,
+"nameId": 1166480,
+"colorId": 1173400,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33058,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 16,
+"parent2": 23
+}
+],
+"children": []
+},
+{
+"id": 84,
+"nameId": 1166481,
+"colorId": 1173401,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33061,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 10,
+"parent2": 23
+}
+],
+"children": []
+},
+{
+"id": 85,
+"nameId": 1166482,
+"colorId": 1173402,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33062,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 15,
+"parent2": 23
+}
+],
+"children": []
+},
+{
+"id": 86,
+"nameId": 1166483,
+"colorId": 1173403,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33059,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 22,
+"parent2": 23
+}
+],
+"children": []
+},
+{
+"id": 87,
+"nameId": 1166484,
+"colorId": 1173404,
+"speciesId": 1,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33060,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 19,
+"parent2": 23
+}
+],
+"children": []
+},
+{
+"id": 88,
+"nameId": 1166485,
+"colorId": 1173221,
+"speciesId": 1,
+"generation": 0,
+"geneticWeight": 20,
+"linkedItemGid": 33035,
+"extractionRewardQuantity": 0,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 0,
+"parents": [],
+"children": []
+},
+{
+"id": 89,
+"nameId": 1166486,
+"colorId": 1173222,
+"speciesId": 1,
+"generation": 0,
+"geneticWeight": 20,
+"linkedItemGid": 33000,
+"extractionRewardQuantity": 0,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 0,
+"parents": [],
+"children": []
+},
+{
+"id": 90,
+"nameId": 1166487,
+"colorId": 1173227,
+"speciesId": 2,
+"generation": 1,
+"geneticWeight": 90,
+"linkedItemGid": 33096,
+"extractionRewardQuantity": 0,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 1,
+"breedingExperienceRewardQuantity": 30,
+"parents": [],
+"children": [
+{
+"parent": 91,
+"child": 107
+},
+{
+"parent": 92,
+"child": 106
+},
+{
+"parent": 93,
+"child": 104
+},
+{
+"parent": 94,
+"child": 105
+},
+{
+"parent": 95,
+"child": 112
+},
+{
+"parent": 96,
+"child": 118
+},
+{
+"parent": 97,
+"child": 123
+},
+{
+"parent": 98,
+"child": 165
+},
+{
+"parent": 99,
+"child": 147
+},
+{
+"parent": 100,
+"child": 157
+},
+{
+"parent": 297,
+"child": 305
+},
+{
+"parent": 298,
+"child": 319
+},
+{
+"parent": 299,
+"child": 332
+},
+{
+"parent": 300,
+"child": 344
+}
+]
+},
+{
+"id": 91,
+"nameId": 1166488,
+"colorId": 1173228,
+"speciesId": 2,
+"generation": 1,
+"geneticWeight": 90,
+"linkedItemGid": 33080,
+"extractionRewardQuantity": 0,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 1,
+"breedingExperienceRewardQuantity": 30,
+"parents": [],
+"children": [
+{
+"parent": 92,
+"child": 109
+},
+{
+"parent": 93,
+"child": 103
+},
+{
+"parent": 94,
+"child": 110
+},
+{
+"parent": 95,
+"child": 114
+},
+{
+"parent": 96,
+"child": 120
+},
+{
+"parent": 97,
+"child": 125
+},
+{
+"parent": 98,
+"child": 142
+},
+{
+"parent": 99,
+"child": 149
+},
+{
+"parent": 100,
+"child": 159
+},
+{
+"parent": 90,
+"child": 107
+},
+{
+"parent": 297,
+"child": 302
+},
+{
+"parent": 298,
+"child": 316
+},
+{
+"parent": 299,
+"child": 329
+},
+{
+"parent": 300,
+"child": 341
+}
+]
+},
+{
+"id": 92,
+"nameId": 1166489,
+"colorId": 1173229,
+"speciesId": 2,
+"generation": 1,
+"geneticWeight": 90,
+"linkedItemGid": 33088,
+"extractionRewardQuantity": 0,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 1,
+"breedingExperienceRewardQuantity": 30,
+"parents": [],
+"children": [
+{
+"parent": 93,
+"child": 102
+},
+{
+"parent": 96,
+"child": 119
+},
+{
+"parent": 97,
+"child": 124
+},
+{
+"parent": 98,
+"child": 141
+},
+{
+"parent": 99,
+"child": 148
+},
+{
+"parent": 100,
+"child": 158
+},
+{
+"parent": 94,
+"child": 108
+},
+{
+"parent": 95,
+"child": 113
+},
+{
+"parent": 90,
+"child": 106
+},
+{
+"parent": 91,
+"child": 109
+},
+{
+"parent": 297,
+"child": 303
+},
+{
+"parent": 298,
+"child": 317
+},
+{
+"parent": 299,
+"child": 330
+},
+{
+"parent": 300,
+"child": 342
+}
+]
+},
+{
+"id": 93,
+"nameId": 1166490,
+"colorId": 1173230,
+"speciesId": 2,
+"generation": 1,
+"geneticWeight": 90,
+"linkedItemGid": 33101,
+"extractionRewardQuantity": 0,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 1,
+"breedingExperienceRewardQuantity": 30,
+"parents": [],
+"children": [
+{
+"parent": 94,
+"child": 101
+},
+{
+"parent": 95,
+"child": 111
+},
+{
+"parent": 96,
+"child": 117
+},
+{
+"parent": 97,
+"child": 122
+},
+{
+"parent": 98,
+"child": 140
+},
+{
+"parent": 99,
+"child": 146
+},
+{
+"parent": 100,
+"child": 156
+},
+{
+"parent": 90,
+"child": 104
+},
+{
+"parent": 91,
+"child": 103
+},
+{
+"parent": 92,
+"child": 102
+},
+{
+"parent": 297,
+"child": 304
+},
+{
+"parent": 298,
+"child": 318
+},
+{
+"parent": 299,
+"child": 331
+},
+{
+"parent": 300,
+"child": 343
+}
+]
+},
+{
+"id": 94,
+"nameId": 1166491,
+"colorId": 1173231,
+"speciesId": 2,
+"generation": 1,
+"geneticWeight": 90,
+"linkedItemGid": 33072,
+"extractionRewardQuantity": 0,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 1,
+"breedingExperienceRewardQuantity": 30,
+"parents": [],
+"children": [
+{
+"parent": 95,
+"child": 115
+},
+{
+"parent": 96,
+"child": 121
+},
+{
+"parent": 97,
+"child": 126
+},
+{
+"parent": 98,
+"child": 145
+},
+{
+"parent": 99,
+"child": 150
+},
+{
+"parent": 100,
+"child": 160
+},
+{
+"parent": 90,
+"child": 105
+},
+{
+"parent": 91,
+"child": 110
+},
+{
+"parent": 93,
+"child": 101
+},
+{
+"parent": 92,
+"child": 108
+},
+{
+"parent": 297,
+"child": 301
+},
+{
+"parent": 298,
+"child": 315
+},
+{
+"parent": 299,
+"child": 328
+},
+{
+"parent": 300,
+"child": 340
+}
+]
+},
+{
+"id": 95,
+"nameId": 1166492,
+"colorId": 1173247,
+"speciesId": 2,
+"generation": 3,
+"geneticWeight": 90,
+"linkedItemGid": 33116,
+"extractionRewardQuantity": 3,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 4,
+"breedingExperienceRewardQuantity": 90,
+"parents": [
+{
+"parent1": 101,
+"parent2": 105
+},
+{
+"parent1": 101,
+"parent2": 108
+},
+{
+"parent1": 101,
+"parent2": 110
+},
+{
+"parent1": 105,
+"parent2": 108
+},
+{
+"parent1": 105,
+"parent2": 110
+},
+{
+"parent1": 108,
+"parent2": 110
+}
+],
+"children": [
+{
+"parent": 96,
+"child": 116
+},
+{
+"parent": 97,
+"child": 127
+},
+{
+"parent": 98,
+"child": 143
+},
+{
+"parent": 99,
+"child": 151
+},
+{
+"parent": 100,
+"child": 161
+},
+{
+"parent": 90,
+"child": 112
+},
+{
+"parent": 91,
+"child": 114
+},
+{
+"parent": 93,
+"child": 111
+},
+{
+"parent": 94,
+"child": 115
+},
+{
+"parent": 92,
+"child": 113
+},
+{
+"parent": 297,
+"child": 307
+},
+{
+"parent": 298,
+"child": 321
+},
+{
+"parent": 299,
+"child": 334
+},
+{
+"parent": 300,
+"child": 346
+}
+]
+},
+{
+"id": 96,
+"nameId": 1166493,
+"colorId": 1173248,
+"speciesId": 2,
+"generation": 3,
+"geneticWeight": 90,
+"linkedItemGid": 33069,
+"extractionRewardQuantity": 3,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 4,
+"breedingExperienceRewardQuantity": 90,
+"parents": [
+{
+"parent1": 102,
+"parent2": 107
+},
+{
+"parent1": 103,
+"parent2": 106
+},
+{
+"parent1": 104,
+"parent2": 109
+}
+],
+"children": [
+{
+"parent": 97,
+"child": 138
+},
+{
+"parent": 98,
+"child": 144
+},
+{
+"parent": 99,
+"child": 152
+},
+{
+"parent": 100,
+"child": 162
+},
+{
+"parent": 90,
+"child": 118
+},
+{
+"parent": 91,
+"child": 120
+},
+{
+"parent": 92,
+"child": 119
+},
+{
+"parent": 93,
+"child": 117
+},
+{
+"parent": 94,
+"child": 121
+},
+{
+"parent": 95,
+"child": 116
+},
+{
+"parent": 297,
+"child": 306
+},
+{
+"parent": 298,
+"child": 320
+},
+{
+"parent": 299,
+"child": 333
+},
+{
+"parent": 300,
+"child": 345
+}
+]
+},
+{
+"id": 97,
+"nameId": 1166494,
+"colorId": 1173261,
+"speciesId": 2,
+"generation": 5,
+"geneticWeight": 90,
+"linkedItemGid": 33094,
+"extractionRewardQuantity": 5,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 15,
+"breedingExperienceRewardQuantity": 150,
+"parents": [
+{
+"parent1": 115,
+"parent2": 120
+},
+{
+"parent1": 115,
+"parent2": 119
+},
+{
+"parent1": 115,
+"parent2": 118
+},
+{
+"parent1": 115,
+"parent2": 117
+},
+{
+"parent1": 116,
+"parent2": 120
+},
+{
+"parent1": 116,
+"parent2": 117
+},
+{
+"parent1": 116,
+"parent2": 119
+},
+{
+"parent1": 116,
+"parent2": 118
+}
+],
+"children": [
+{
+"parent": 98,
+"child": 139
+},
+{
+"parent": 99,
+"child": 153
+},
+{
+"parent": 100,
+"child": 163
+},
+{
+"parent": 90,
+"child": 123
+},
+{
+"parent": 91,
+"child": 125
+},
+{
+"parent": 92,
+"child": 124
+},
+{
+"parent": 93,
+"child": 122
+},
+{
+"parent": 94,
+"child": 126
+},
+{
+"parent": 95,
+"child": 127
+},
+{
+"parent": 96,
+"child": 138
+},
+{
+"parent": 297,
+"child": 308
+},
+{
+"parent": 298,
+"child": 322
+},
+{
+"parent": 299,
+"child": 335
+},
+{
+"parent": 300,
+"child": 347
+}
+]
+},
+{
+"id": 98,
+"nameId": 1166495,
+"colorId": 1173262,
+"speciesId": 2,
+"generation": 5,
+"geneticWeight": 90,
+"linkedItemGid": 33125,
+"extractionRewardQuantity": 5,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 15,
+"breedingExperienceRewardQuantity": 150,
+"parents": [
+{
+"parent1": 114,
+"parent2": 121
+},
+{
+"parent1": 112,
+"parent2": 121
+},
+{
+"parent1": 111,
+"parent2": 121
+},
+{
+"parent1": 114,
+"parent2": 116
+},
+{
+"parent1": 113,
+"parent2": 121
+},
+{
+"parent1": 113,
+"parent2": 116
+},
+{
+"parent1": 112,
+"parent2": 116
+},
+{
+"parent1": 111,
+"parent2": 116
+}
+],
+"children": [
+{
+"parent": 99,
+"child": 154
+},
+{
+"parent": 100,
+"child": 164
+},
+{
+"parent": 90,
+"child": 165
+},
+{
+"parent": 91,
+"child": 142
+},
+{
+"parent": 92,
+"child": 141
+},
+{
+"parent": 93,
+"child": 140
+},
+{
+"parent": 94,
+"child": 145
+},
+{
+"parent": 95,
+"child": 143
+},
+{
+"parent": 96,
+"child": 144
+},
+{
+"parent": 97,
+"child": 139
+},
+{
+"parent": 297,
+"child": 309
+},
+{
+"parent": 298,
+"child": 323
+},
+{
+"parent": 299,
+"child": 336
+},
+{
+"parent": 300,
+"child": 348
+}
+]
+},
+{
+"id": 99,
+"nameId": 1166496,
+"colorId": 1173295,
+"speciesId": 2,
+"generation": 7,
+"geneticWeight": 90,
+"linkedItemGid": 33105,
+"extractionRewardQuantity": 7,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 60,
+"breedingExperienceRewardQuantity": 210,
+"parents": [
+{
+"parent1": 125,
+"parent2": 140
+},
+{
+"parent1": 124,
+"parent2": 165
+},
+{
+"parent1": 123,
+"parent2": 141
+},
+{
+"parent1": 122,
+"parent2": 142
+}
+],
+"children": [
+{
+"parent": 100,
+"child": 155
+},
+{
+"parent": 90,
+"child": 147
+},
+{
+"parent": 91,
+"child": 149
+},
+{
+"parent": 92,
+"child": 148
+},
+{
+"parent": 93,
+"child": 146
+},
+{
+"parent": 94,
+"child": 150
+},
+{
+"parent": 95,
+"child": 151
+},
+{
+"parent": 96,
+"child": 152
+},
+{
+"parent": 97,
+"child": 153
+},
+{
+"parent": 98,
+"child": 154
+},
+{
+"parent": 297,
+"child": 311
+},
+{
+"parent": 298,
+"child": 325
+},
+{
+"parent": 299,
+"child": 338
+},
+{
+"parent": 300,
+"child": 350
+}
+]
+},
+{
+"id": 100,
+"nameId": 1166497,
+"colorId": 1173296,
+"speciesId": 2,
+"generation": 7,
+"geneticWeight": 90,
+"linkedItemGid": 33087,
+"extractionRewardQuantity": 7,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 60,
+"breedingExperienceRewardQuantity": 210,
+"parents": [
+{
+"parent1": 139,
+"parent2": 145
+},
+{
+"parent1": 139,
+"parent2": 144
+},
+{
+"parent1": 139,
+"parent2": 143
+},
+{
+"parent1": 138,
+"parent2": 139
+},
+{
+"parent1": 127,
+"parent2": 144
+},
+{
+"parent1": 126,
+"parent2": 144
+},
+{
+"parent1": 126,
+"parent2": 143
+},
+{
+"parent1": 126,
+"parent2": 139
+}
+],
+"children": [
+{
+"parent": 90,
+"child": 157
+},
+{
+"parent": 91,
+"child": 159
+},
+{
+"parent": 92,
+"child": 158
+},
+{
+"parent": 93,
+"child": 156
+},
+{
+"parent": 94,
+"child": 160
+},
+{
+"parent": 95,
+"child": 161
+},
+{
+"parent": 96,
+"child": 162
+},
+{
+"parent": 97,
+"child": 163
+},
+{
+"parent": 98,
+"child": 164
+},
+{
+"parent": 99,
+"child": 155
+},
+{
+"parent": 297,
+"child": 310
+},
+{
+"parent": 298,
+"child": 324
+},
+{
+"parent": 299,
+"child": 337
+},
+{
+"parent": 300,
+"child": 349
+}
+]
+},
+{
+"id": 101,
+"nameId": 1166498,
+"colorId": 1173234,
+"speciesId": 2,
+"generation": 2,
+"geneticWeight": 20,
+"linkedItemGid": 33079,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 93,
+"parent2": 94
+}
+],
+"children": [
+{
+"parent": 105,
+"child": 95
+},
+{
+"parent": 108,
+"child": 95
+},
+{
+"parent": 110,
+"child": 95
+}
+]
+},
+{
+"id": 102,
+"nameId": 1166499,
+"colorId": 1173235,
+"speciesId": 2,
+"generation": 2,
+"geneticWeight": 20,
+"linkedItemGid": 33093,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 92,
+"parent2": 93
+}
+],
+"children": [
+{
+"parent": 107,
+"child": 96
+}
+]
+},
+{
+"id": 103,
+"nameId": 1166500,
+"colorId": 1173236,
+"speciesId": 2,
+"generation": 2,
+"geneticWeight": 20,
+"linkedItemGid": 33086,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 91,
+"parent2": 93
+}
+],
+"children": [
+{
+"parent": 106,
+"child": 96
+}
+]
+},
+{
+"id": 104,
+"nameId": 1166501,
+"colorId": 1173237,
+"speciesId": 2,
+"generation": 2,
+"geneticWeight": 20,
+"linkedItemGid": 33100,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 90,
+"parent2": 93
+}
+],
+"children": [
+{
+"parent": 109,
+"child": 96
+}
+]
+},
+{
+"id": 105,
+"nameId": 1166502,
+"colorId": 1173238,
+"speciesId": 2,
+"generation": 2,
+"geneticWeight": 20,
+"linkedItemGid": 33078,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 90,
+"parent2": 94
+}
+],
+"children": [
+{
+"parent": 108,
+"child": 95
+},
+{
+"parent": 110,
+"child": 95
+},
+{
+"parent": 101,
+"child": 95
+}
+]
+},
+{
+"id": 106,
+"nameId": 1166503,
+"colorId": 1173239,
+"speciesId": 2,
+"generation": 2,
+"geneticWeight": 20,
+"linkedItemGid": 33092,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 90,
+"parent2": 92
+}
+],
+"children": [
+{
+"parent": 103,
+"child": 96
+}
+]
+},
+{
+"id": 107,
+"nameId": 1166504,
+"colorId": 1173240,
+"speciesId": 2,
+"generation": 2,
+"geneticWeight": 20,
+"linkedItemGid": 33085,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 90,
+"parent2": 91
+}
+],
+"children": [
+{
+"parent": 102,
+"child": 96
+}
+]
+},
+{
+"id": 108,
+"nameId": 1166505,
+"colorId": 1173241,
+"speciesId": 2,
+"generation": 2,
+"geneticWeight": 20,
+"linkedItemGid": 33076,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 92,
+"parent2": 94
+}
+],
+"children": [
+{
+"parent": 110,
+"child": 95
+},
+{
+"parent": 101,
+"child": 95
+},
+{
+"parent": 105,
+"child": 95
+}
+]
+},
+{
+"id": 109,
+"nameId": 1166506,
+"colorId": 1173242,
+"speciesId": 2,
+"generation": 2,
+"geneticWeight": 20,
+"linkedItemGid": 33083,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 91,
+"parent2": 92
+}
+],
+"children": [
+{
+"parent": 104,
+"child": 96
+}
+]
+},
+{
+"id": 110,
+"nameId": 1166507,
+"colorId": 1173243,
+"speciesId": 2,
+"generation": 2,
+"geneticWeight": 20,
+"linkedItemGid": 33074,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 91,
+"parent2": 94
+}
+],
+"children": [
+{
+"parent": 101,
+"child": 95
+},
+{
+"parent": 105,
+"child": 95
+},
+{
+"parent": 108,
+"child": 95
+}
+]
+},
+{
+"id": 111,
+"nameId": 1166508,
+"colorId": 1173357,
+"speciesId": 2,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33124,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 93,
+"parent2": 95
+}
+],
+"children": [
+{
+"parent": 121,
+"child": 98
+},
+{
+"parent": 116,
+"child": 98
+}
+]
+},
+{
+"id": 112,
+"nameId": 1166509,
+"colorId": 1173358,
+"speciesId": 2,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33123,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 90,
+"parent2": 95
+}
+],
+"children": [
+{
+"parent": 121,
+"child": 98
+},
+{
+"parent": 116,
+"child": 98
+}
+]
+},
+{
+"id": 113,
+"nameId": 1166510,
+"colorId": 1173359,
+"speciesId": 2,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33121,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 92,
+"parent2": 95
+}
+],
+"children": [
+{
+"parent": 121,
+"child": 98
+},
+{
+"parent": 116,
+"child": 98
+}
+]
+},
+{
+"id": 114,
+"nameId": 1166511,
+"colorId": 1173360,
+"speciesId": 2,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33119,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 91,
+"parent2": 95
+}
+],
+"children": [
+{
+"parent": 121,
+"child": 98
+},
+{
+"parent": 116,
+"child": 98
+}
+]
+},
+{
+"id": 115,
+"nameId": 1166512,
+"colorId": 1173361,
+"speciesId": 2,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33118,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 94,
+"parent2": 95
+}
+],
+"children": [
+{
+"parent": 120,
+"child": 97
+},
+{
+"parent": 119,
+"child": 97
+},
+{
+"parent": 118,
+"child": 97
+},
+{
+"parent": 117,
+"child": 97
+}
+]
+},
+{
+"id": 116,
+"nameId": 1166513,
+"colorId": 1173362,
+"speciesId": 2,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33117,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 95,
+"parent2": 96
+}
+],
+"children": [
+{
+"parent": 120,
+"child": 97
+},
+{
+"parent": 117,
+"child": 97
+},
+{
+"parent": 119,
+"child": 97
+},
+{
+"parent": 118,
+"child": 97
+},
+{
+"parent": 114,
+"child": 98
+},
+{
+"parent": 113,
+"child": 98
+},
+{
+"parent": 112,
+"child": 98
+},
+{
+"parent": 111,
+"child": 98
+}
+]
+},
+{
+"id": 117,
+"nameId": 1166514,
+"colorId": 1173363,
+"speciesId": 2,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33102,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 93,
+"parent2": 96
+}
+],
+"children": [
+{
+"parent": 115,
+"child": 97
+},
+{
+"parent": 116,
+"child": 97
+}
+]
+},
+{
+"id": 118,
+"nameId": 1166515,
+"colorId": 1173364,
+"speciesId": 2,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33097,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 90,
+"parent2": 96
+}
+],
+"children": [
+{
+"parent": 115,
+"child": 97
+},
+{
+"parent": 116,
+"child": 97
+}
+]
+},
+{
+"id": 119,
+"nameId": 1166516,
+"colorId": 1173365,
+"speciesId": 2,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33089,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 92,
+"parent2": 96
+}
+],
+"children": [
+{
+"parent": 115,
+"child": 97
+},
+{
+"parent": 116,
+"child": 97
+}
+]
+},
+{
+"id": 120,
+"nameId": 1166517,
+"colorId": 1173366,
+"speciesId": 2,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33081,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 91,
+"parent2": 96
+}
+],
+"children": [
+{
+"parent": 115,
+"child": 97
+},
+{
+"parent": 116,
+"child": 97
+}
+]
+},
+{
+"id": 121,
+"nameId": 1166518,
+"colorId": 1173367,
+"speciesId": 2,
+"generation": 4,
+"geneticWeight": 20,
+"linkedItemGid": 33073,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 94,
+"parent2": 96
+}
+],
+"children": [
+{
+"parent": 114,
+"child": 98
+},
+{
+"parent": 112,
+"child": 98
+},
+{
+"parent": 111,
+"child": 98
+},
+{
+"parent": 113,
+"child": 98
+}
+]
+},
+{
+"id": 122,
+"nameId": 1166519,
+"colorId": 1173265,
+"speciesId": 2,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33104,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 93,
+"parent2": 97
+}
+],
+"children": [
+{
+"parent": 142,
+"child": 99
+}
+]
+},
+{
+"id": 123,
+"nameId": 1166520,
+"colorId": 1173266,
+"speciesId": 2,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33099,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 90,
+"parent2": 97
+}
+],
+"children": [
+{
+"parent": 141,
+"child": 99
+}
+]
+},
+{
+"id": 124,
+"nameId": 1166521,
+"colorId": 1173267,
+"speciesId": 2,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33091,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 92,
+"parent2": 97
+}
+],
+"children": [
+{
+"parent": 165,
+"child": 99
+}
+]
+},
+{
+"id": 125,
+"nameId": 1166522,
+"colorId": 1173268,
+"speciesId": 2,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33084,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 91,
+"parent2": 97
+}
+],
+"children": [
+{
+"parent": 140,
+"child": 99
+}
+]
+},
+{
+"id": 126,
+"nameId": 1166523,
+"colorId": 1173269,
+"speciesId": 2,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33077,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 94,
+"parent2": 97
+}
+],
+"children": [
+{
+"parent": 144,
+"child": 100
+},
+{
+"parent": 143,
+"child": 100
+},
+{
+"parent": 139,
+"child": 100
+}
+]
+},
+{
+"id": 127,
+"nameId": 1166524,
+"colorId": 1173270,
+"speciesId": 2,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33122,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 95,
+"parent2": 97
+}
+],
+"children": [
+{
+"parent": 144,
+"child": 100
+}
+]
+},
+{
+"id": 138,
+"nameId": 1166525,
+"colorId": 1173271,
+"speciesId": 2,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33071,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 96,
+"parent2": 97
+}
+],
+"children": [
+{
+"parent": 139,
+"child": 100
+}
+]
+},
+{
+"id": 139,
+"nameId": 1166526,
+"colorId": 1173272,
+"speciesId": 2,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33131,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 97,
+"parent2": 98
+}
+],
+"children": [
+{
+"parent": 145,
+"child": 100
+},
+{
+"parent": 144,
+"child": 100
+},
+{
+"parent": 143,
+"child": 100
+},
+{
+"parent": 138,
+"child": 100
+},
+{
+"parent": 126,
+"child": 100
+}
+]
+},
+{
+"id": 140,
+"nameId": 1166527,
+"colorId": 1173273,
+"speciesId": 2,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33133,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 93,
+"parent2": 98
+}
+],
+"children": [
+{
+"parent": 125,
+"child": 99
+}
+]
+},
+{
+"id": 141,
+"nameId": 1166528,
+"colorId": 1173274,
+"speciesId": 2,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33130,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 92,
+"parent2": 98
+}
+],
+"children": [
+{
+"parent": 123,
+"child": 99
+}
+]
+},
+{
+"id": 142,
+"nameId": 1166529,
+"colorId": 1173275,
+"speciesId": 2,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33128,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 91,
+"parent2": 98
+}
+],
+"children": [
+{
+"parent": 122,
+"child": 99
+}
+]
+},
+{
+"id": 143,
+"nameId": 1166530,
+"colorId": 1173276,
+"speciesId": 2,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33134,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 95,
+"parent2": 98
+}
+],
+"children": [
+{
+"parent": 139,
+"child": 100
+},
+{
+"parent": 126,
+"child": 100
+}
+]
+},
+{
+"id": 144,
+"nameId": 1166531,
+"colorId": 1173277,
+"speciesId": 2,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33126,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 96,
+"parent2": 98
+}
+],
+"children": [
+{
+"parent": 139,
+"child": 100
+},
+{
+"parent": 127,
+"child": 100
+},
+{
+"parent": 126,
+"child": 100
+}
+]
+},
+{
+"id": 145,
+"nameId": 1166532,
+"colorId": 1173278,
+"speciesId": 2,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33127,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 94,
+"parent2": 98
+}
+],
+"children": [
+{
+"parent": 139,
+"child": 100
+}
+]
+},
+{
+"id": 146,
+"nameId": 1166533,
+"colorId": 1173299,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33113,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 93,
+"parent2": 99
+}
+],
+"children": [
+{
+"parent": 151,
+"child": 298
+},
+{
+"parent": 161,
+"child": 300
+}
+]
+},
+{
+"id": 147,
+"nameId": 1166534,
+"colorId": 1173300,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33112,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 90,
+"parent2": 99
+}
+],
+"children": [
+{
+"parent": 152,
+"child": 298
+},
+{
+"parent": 162,
+"child": 300
+}
+]
+},
+{
+"id": 148,
+"nameId": 1166535,
+"colorId": 1173369,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33110,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 92,
+"parent2": 99
+}
+],
+"children": [
+{
+"parent": 153,
+"child": 298
+},
+{
+"parent": 163,
+"child": 300
+}
+]
+},
+{
+"id": 149,
+"nameId": 1166536,
+"colorId": 1173370,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33108,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 91,
+"parent2": 99
+}
+],
+"children": [
+{
+"parent": 154,
+"child": 298
+},
+{
+"parent": 164,
+"child": 300
+}
+]
+},
+{
+"id": 150,
+"nameId": 1166537,
+"colorId": 1173371,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33107,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 94,
+"parent2": 99
+}
+],
+"children": [
+{
+"parent": 155,
+"child": 298
+},
+{
+"parent": 164,
+"child": 300
+}
+]
+},
+{
+"id": 151,
+"nameId": 1166538,
+"colorId": 1173372,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33114,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 95,
+"parent2": 99
+}
+],
+"children": [
+{
+"parent": 146,
+"child": 298
+},
+{
+"parent": 156,
+"child": 299
+}
+]
+},
+{
+"id": 152,
+"nameId": 1166539,
+"colorId": 1173373,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33106,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 96,
+"parent2": 99
+}
+],
+"children": [
+{
+"parent": 147,
+"child": 298
+},
+{
+"parent": 157,
+"child": 299
+}
+]
+},
+{
+"id": 153,
+"nameId": 1166540,
+"colorId": 1173374,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33111,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 97,
+"parent2": 99
+}
+],
+"children": [
+{
+"parent": 148,
+"child": 298
+},
+{
+"parent": 158,
+"child": 299
+},
+{
+"parent": 160,
+"child": 299
+}
+]
+},
+{
+"id": 154,
+"nameId": 1166541,
+"colorId": 1173375,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33115,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 98,
+"parent2": 99
+}
+],
+"children": [
+{
+"parent": 149,
+"child": 298
+},
+{
+"parent": 159,
+"child": 299
+}
+]
+},
+{
+"id": 155,
+"nameId": 1166542,
+"colorId": 1173376,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33109,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 99,
+"parent2": 100
+}
+],
+"children": [
+{
+"parent": 160,
+"child": 297
+},
+{
+"parent": 150,
+"child": 298
+}
+]
+},
+{
+"id": 156,
+"nameId": 1166543,
+"colorId": 1173377,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33103,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 93,
+"parent2": 100
+}
+],
+"children": [
+{
+"parent": 161,
+"child": 297
+},
+{
+"parent": 151,
+"child": 299
+}
+]
+},
+{
+"id": 157,
+"nameId": 1166544,
+"colorId": 1173378,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33098,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 90,
+"parent2": 100
+}
+],
+"children": [
+{
+"parent": 162,
+"child": 297
+},
+{
+"parent": 152,
+"child": 299
+}
+]
+},
+{
+"id": 158,
+"nameId": 1166545,
+"colorId": 1173379,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33090,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 92,
+"parent2": 100
+}
+],
+"children": [
+{
+"parent": 163,
+"child": 297
+},
+{
+"parent": 153,
+"child": 299
+}
+]
+},
+{
+"id": 159,
+"nameId": 1166546,
+"colorId": 1173380,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33082,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 91,
+"parent2": 100
+}
+],
+"children": [
+{
+"parent": 164,
+"child": 297
+},
+{
+"parent": 154,
+"child": 299
+}
+]
+},
+{
+"id": 160,
+"nameId": 1166547,
+"colorId": 1173381,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33075,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 94,
+"parent2": 100
+}
+],
+"children": [
+{
+"parent": 155,
+"child": 297
+},
+{
+"parent": 153,
+"child": 299
+}
+]
+},
+{
+"id": 161,
+"nameId": 1166548,
+"colorId": 1173382,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33120,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 95,
+"parent2": 100
+}
+],
+"children": [
+{
+"parent": 156,
+"child": 297
+},
+{
+"parent": 146,
+"child": 300
+}
+]
+},
+{
+"id": 162,
+"nameId": 1166549,
+"colorId": 1173383,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33070,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 96,
+"parent2": 100
+}
+],
+"children": [
+{
+"parent": 157,
+"child": 297
+},
+{
+"parent": 147,
+"child": 300
+}
+]
+},
+{
+"id": 163,
+"nameId": 1166550,
+"colorId": 1173384,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33095,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 97,
+"parent2": 100
+}
+],
+"children": [
+{
+"parent": 158,
+"child": 297
+},
+{
+"parent": 148,
+"child": 300
+}
+]
+},
+{
+"id": 164,
+"nameId": 1166551,
+"colorId": 1173385,
+"speciesId": 2,
+"generation": 8,
+"geneticWeight": 20,
+"linkedItemGid": 33129,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 98,
+"parent2": 100
+}
+],
+"children": [
+{
+"parent": 159,
+"child": 297
+},
+{
+"parent": 149,
+"child": 300
+},
+{
+"parent": 150,
+"child": 300
+}
+]
+},
+{
+"id": 165,
+"nameId": 1166552,
+"colorId": 1173279,
+"speciesId": 2,
+"generation": 6,
+"geneticWeight": 20,
+"linkedItemGid": 33132,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 90,
+"parent2": 98
+}
+],
+"children": [
+{
+"parent": 124,
+"child": 99
+}
+]
+},
+{
+"id": 176,
+"nameId": 1166553,
+"colorId": 1173140,
+"speciesId": 3,
+"generation": 1,
+"geneticWeight": 1,
+"linkedItemGid": 33176,
+"extractionRewardQuantity": 0,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 1,
+"breedingExperienceRewardQuantity": 30,
+"parents": [],
+"children": [
+{
+"parent": 177,
+"child": 196
+},
+{
+"parent": 178,
+"child": 192
+},
+{
+"parent": 179,
+"child": 194
+},
+{
+"parent": 180,
+"child": 206
+},
+{
+"parent": 181,
+"child": 199
+},
+{
+"parent": 182,
+"child": 212
+},
+{
+"parent": 183,
+"child": 217
+},
+{
+"parent": 184,
+"child": 221
+},
+{
+"parent": 185,
+"child": 228
+},
+{
+"parent": 186,
+"child": 237
+},
+{
+"parent": 187,
+"child": 241
+},
+{
+"parent": 188,
+"child": 255
+},
+{
+"parent": 189,
+"child": 266
+},
+{
+"parent": 190,
+"child": 278
+}
+]
+},
+{
+"id": 177,
+"nameId": 1166554,
+"colorId": 1173141,
+"speciesId": 3,
+"generation": 1,
+"geneticWeight": 1,
+"linkedItemGid": 33166,
+"extractionRewardQuantity": 0,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 1,
+"breedingExperienceRewardQuantity": 30,
+"parents": [],
+"children": [
+{
+"parent": 178,
+"child": 193
+},
+{
+"parent": 179,
+"child": 195
+},
+{
+"parent": 180,
+"child": 207
+},
+{
+"parent": 181,
+"child": 200
+},
+{
+"parent": 182,
+"child": 213
+},
+{
+"parent": 183,
+"child": 218
+},
+{
+"parent": 184,
+"child": 222
+},
+{
+"parent": 185,
+"child": 229
+},
+{
+"parent": 186,
+"child": 238
+},
+{
+"parent": 187,
+"child": 242
+},
+{
+"parent": 188,
+"child": 256
+},
+{
+"parent": 189,
+"child": 267
+},
+{
+"parent": 190,
+"child": 279
+},
+{
+"parent": 176,
+"child": 196
+}
+]
+},
+{
+"id": 178,
+"nameId": 1166652,
+"colorId": 1173410,
+"speciesId": 3,
+"generation": 1,
+"geneticWeight": 1,
+"linkedItemGid": 33202,
+"extractionRewardQuantity": 0,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 1,
+"breedingExperienceRewardQuantity": 30,
+"parents": [],
+"children": [
+{
+"parent": 179,
+"child": 191
+},
+{
+"parent": 180,
+"child": 204
+},
+{
+"parent": 181,
+"child": 197
+},
+{
+"parent": 182,
+"child": 210
+},
+{
+"parent": 183,
+"child": 215
+},
+{
+"parent": 184,
+"child": 219
+},
+{
+"parent": 185,
+"child": 226
+},
+{
+"parent": 186,
+"child": 235
+},
+{
+"parent": 187,
+"child": 239
+},
+{
+"parent": 188,
+"child": 253
+},
+{
+"parent": 189,
+"child": 264
+},
+{
+"parent": 190,
+"child": 276
+},
+{
+"parent": 176,
+"child": 192
+},
+{
+"parent": 177,
+"child": 193
+}
+]
+},
+{
+"id": 179,
+"nameId": 1166555,
+"colorId": 1173142,
+"speciesId": 3,
+"generation": 1,
+"geneticWeight": 1,
+"linkedItemGid": 33199,
+"extractionRewardQuantity": 0,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 1,
+"breedingExperienceRewardQuantity": 30,
+"parents": [],
+"children": [
+{
+"parent": 180,
+"child": 205
+},
+{
+"parent": 181,
+"child": 198
+},
+{
+"parent": 182,
+"child": 211
+},
+{
+"parent": 183,
+"child": 216
+},
+{
+"parent": 184,
+"child": 220
+},
+{
+"parent": 185,
+"child": 227
+},
+{
+"parent": 186,
+"child": 236
+},
+{
+"parent": 187,
+"child": 240
+},
+{
+"parent": 188,
+"child": 254
+},
+{
+"parent": 189,
+"child": 265
+},
+{
+"parent": 190,
+"child": 277
+},
+{
+"parent": 176,
+"child": 194
+},
+{
+"parent": 177,
+"child": 195
+},
+{
+"parent": 178,
+"child": 191
+}
+]
+},
+{
+"id": 180,
+"nameId": 1166653,
+"colorId": 1173411,
+"speciesId": 3,
+"generation": 3,
+"geneticWeight": 1,
+"linkedItemGid": 33216,
+"extractionRewardQuantity": 3,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 4,
+"breedingExperienceRewardQuantity": 90,
+"parents": [
+{
+"parent1": 191,
+"parent2": 192
+},
+{
+"parent1": 191,
+"parent2": 193
+},
+{
+"parent1": 192,
+"parent2": 193
+}
+],
+"children": [
+{
+"parent": 181,
+"child": 201
+},
+{
+"parent": 182,
+"child": 208
+},
+{
+"parent": 183,
+"child": 209
+},
+{
+"parent": 184,
+"child": 287
+},
+{
+"parent": 185,
+"child": 231
+},
+{
+"parent": 187,
+"child": 244
+},
+{
+"parent": 188,
+"child": 258
+},
+{
+"parent": 189,
+"child": 269
+},
+{
+"parent": 190,
+"child": 281
+},
+{
+"parent": 186,
+"child": 291
+},
+{
+"parent": 176,
+"child": 206
+},
+{
+"parent": 177,
+"child": 207
+},
+{
+"parent": 178,
+"child": 204
+},
+{
+"parent": 179,
+"child": 205
+}
+]
+},
+{
+"id": 181,
+"nameId": 1166556,
+"colorId": 1173143,
+"speciesId": 3,
+"generation": 3,
+"geneticWeight": 1,
+"linkedItemGid": 33135,
+"extractionRewardQuantity": 3,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 4,
+"breedingExperienceRewardQuantity": 90,
+"parents": [
+{
+"parent1": 193,
+"parent2": 195
+},
+{
+"parent1": 193,
+"parent2": 196
+},
+{
+"parent1": 195,
+"parent2": 196
+}
+],
+"children": [
+{
+"parent": 182,
+"child": 202
+},
+{
+"parent": 183,
+"child": 203
+},
+{
+"parent": 184,
+"child": 223
+},
+{
+"parent": 185,
+"child": 230
+},
+{
+"parent": 186,
+"child": 292
+},
+{
+"parent": 187,
+"child": 243
+},
+{
+"parent": 188,
+"child": 257
+},
+{
+"parent": 189,
+"child": 268
+},
+{
+"parent": 190,
+"child": 280
+},
+{
+"parent": 176,
+"child": 199
+},
+{
+"parent": 177,
+"child": 200
+},
+{
+"parent": 178,
+"child": 197
+},
+{
+"parent": 179,
+"child": 198
+},
+{
+"parent": 180,
+"child": 201
+}
+]
+},
+{
+"id": 182,
+"nameId": 1166557,
+"colorId": 1173144,
+"speciesId": 3,
+"generation": 3,
+"geneticWeight": 1,
+"linkedItemGid": 33178,
+"extractionRewardQuantity": 3,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 4,
+"breedingExperienceRewardQuantity": 90,
+"parents": [
+{
+"parent1": 192,
+"parent2": 196
+},
+{
+"parent1": 192,
+"parent2": 194
+},
+{
+"parent1": 194,
+"parent2": 196
+}
+],
+"children": [
+{
+"parent": 183,
+"child": 214
+},
+{
+"parent": 184,
+"child": 288
+},
+{
+"parent": 185,
+"child": 233
+},
+{
+"parent": 186,
+"child": 293
+},
+{
+"parent": 187,
+"child": 245
+},
+{
+"parent": 188,
+"child": 259
+},
+{
+"parent": 189,
+"child": 270
+},
+{
+"parent": 190,
+"child": 282
+},
+{
+"parent": 176,
+"child": 212
+},
+{
+"parent": 177,
+"child": 213
+},
+{
+"parent": 178,
+"child": 210
+},
+{
+"parent": 179,
+"child": 211
+},
+{
+"parent": 180,
+"child": 208
+},
+{
+"parent": 181,
+"child": 202
+}
+]
+},
+{
+"id": 183,
+"nameId": 1166437,
+"colorId": 1173223,
+"speciesId": 3,
+"generation": 3,
+"geneticWeight": 1,
+"linkedItemGid": 33250,
+"extractionRewardQuantity": 3,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 4,
+"breedingExperienceRewardQuantity": 90,
+"parents": [
+{
+"parent1": 191,
+"parent2": 195
+},
+{
+"parent1": 194,
+"parent2": 195
+},
+{
+"parent1": 191,
+"parent2": 194
+}
+],
+"children": [
+{
+"parent": 184,
+"child": 224
+},
+{
+"parent": 185,
+"child": 234
+},
+{
+"parent": 186,
+"child": 294
+},
+{
+"parent": 187,
+"child": 246
+},
+{
+"parent": 188,
+"child": 260
+},
+{
+"parent": 189,
+"child": 271
+},
+{
+"parent": 190,
+"child": 283
+},
+{
+"parent": 176,
+"child": 217
+},
+{
+"parent": 177,
+"child": 218
+},
+{
+"parent": 178,
+"child": 215
+},
+{
+"parent": 179,
+"child": 216
+},
+{
+"parent": 180,
+"child": 209
+},
+{
+"parent": 181,
+"child": 203
+},
+{
+"parent": 182,
+"child": 214
+}
+]
+},
+{
+"id": 184,
+"nameId": 1166654,
+"colorId": 1173412,
+"speciesId": 3,
+"generation": 5,
+"geneticWeight": 1,
+"linkedItemGid": 33206,
+"extractionRewardQuantity": 5,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 15,
+"breedingExperienceRewardQuantity": 150,
+"parents": [
+{
+"parent1": 197,
+"parent2": 201
+},
+{
+"parent1": 198,
+"parent2": 201
+},
+{
+"parent1": 199,
+"parent2": 201
+},
+{
+"parent1": 200,
+"parent2": 201
+},
+{
+"parent1": 201,
+"parent2": 203
+},
+{
+"parent1": 201,
+"parent2": 202
+},
+{
+"parent1": 201,
+"parent2": 204
+},
+{
+"parent1": 201,
+"parent2": 205
+},
+{
+"parent1": 201,
+"parent2": 206
+},
+{
+"parent1": 201,
+"parent2": 207
+},
+{
+"parent1": 201,
+"parent2": 208
+},
+{
+"parent1": 201,
+"parent2": 209
+}
+],
+"children": [
+{
+"parent": 185,
+"child": 225
+},
+{
+"parent": 186,
+"child": 295
+},
+{
+"parent": 187,
+"child": 247
+},
+{
+"parent": 188,
+"child": 261
+},
+{
+"parent": 189,
+"child": 272
+},
+{
+"parent": 190,
+"child": 284
+},
+{
+"parent": 176,
+"child": 221
+},
+{
+"parent": 177,
+"child": 222
+},
+{
+"parent": 178,
+"child": 219
+},
+{
+"parent": 179,
+"child": 220
+},
+{
+"parent": 180,
+"child": 287
+},
+{
+"parent": 181,
+"child": 223
+},
+{
+"parent": 182,
+"child": 288
+},
+{
+"parent": 183,
+"child": 224
+}
+]
+},
+{
+"id": 185,
+"nameId": 1166558,
+"colorId": 1173145,
+"speciesId": 3,
+"generation": 5,
+"geneticWeight": 1,
+"linkedItemGid": 33167,
+"extractionRewardQuantity": 5,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 15,
+"breedingExperienceRewardQuantity": 150,
+"parents": [
+{
+"parent1": 211,
+"parent2": 214
+},
+{
+"parent1": 212,
+"parent2": 214
+},
+{
+"parent1": 213,
+"parent2": 214
+},
+{
+"parent1": 214,
+"parent2": 216
+},
+{
+"parent1": 210,
+"parent2": 214
+},
+{
+"parent1": 208,
+"parent2": 214
+},
+{
+"parent1": 209,
+"parent2": 214
+},
+{
+"parent1": 203,
+"parent2": 214
+},
+{
+"parent1": 202,
+"parent2": 214
+},
+{
+"parent1": 214,
+"parent2": 215
+},
+{
+"parent1": 214,
+"parent2": 217
+},
+{
+"parent1": 214,
+"parent2": 218
+}
+],
+"children": [
+{
+"parent": 186,
+"child": 296
+},
+{
+"parent": 187,
+"child": 248
+},
+{
+"parent": 188,
+"child": 262
+},
+{
+"parent": 189,
+"child": 273
+},
+{
+"parent": 190,
+"child": 285
+},
+{
+"parent": 176,
+"child": 228
+},
+{
+"parent": 177,
+"child": 229
+},
+{
+"parent": 178,
+"child": 226
+},
+{
+"parent": 179,
+"child": 227
+},
+{
+"parent": 180,
+"child": 231
+},
+{
+"parent": 181,
+"child": 230
+},
+{
+"parent": 182,
+"child": 233
+},
+{
+"parent": 183,
+"child": 234
+},
+{
+"parent": 184,
+"child": 225
+}
+]
+},
+{
+"id": 186,
+"nameId": 1166559,
+"colorId": 1173146,
+"speciesId": 3,
+"generation": 7,
+"geneticWeight": 1,
+"linkedItemGid": 33155,
+"extractionRewardQuantity": 7,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 60,
+"breedingExperienceRewardQuantity": 210,
+"parents": [
+{
+"parent1": 219,
+"parent2": 231
+},
+{
+"parent1": 220,
+"parent2": 234
+},
+{
+"parent1": 221,
+"parent2": 233
+},
+{
+"parent1": 222,
+"parent2": 230
+},
+{
+"parent1": 223,
+"parent2": 229
+},
+{
+"parent1": 224,
+"parent2": 227
+},
+{
+"parent1": 226,
+"parent2": 287
+},
+{
+"parent1": 228,
+"parent2": 288
+}
+],
+"children": [
+{
+"parent": 187,
+"child": 249
+},
+{
+"parent": 188,
+"child": 263
+},
+{
+"parent": 189,
+"child": 274
+},
+{
+"parent": 190,
+"child": 286
+},
+{
+"parent": 176,
+"child": 237
+},
+{
+"parent": 177,
+"child": 238
+},
+{
+"parent": 178,
+"child": 235
+},
+{
+"parent": 179,
+"child": 236
+},
+{
+"parent": 180,
+"child": 291
+},
+{
+"parent": 181,
+"child": 292
+},
+{
+"parent": 182,
+"child": 293
+},
+{
+"parent": 183,
+"child": 294
+},
+{
+"parent": 184,
+"child": 295
+},
+{
+"parent": 185,
+"child": 296
+}
+]
+},
+{
+"id": 187,
+"nameId": 1166560,
+"colorId": 1173147,
+"speciesId": 3,
+"generation": 9,
+"geneticWeight": 1,
+"linkedItemGid": 33184,
+"extractionRewardQuantity": 9,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 250,
+"breedingExperienceRewardQuantity": 270,
+"parents": [
+{
+"parent1": 225,
+"parent2": 235
+},
+{
+"parent1": 291,
+"parent2": 295
+}
+],
+"children": [
+{
+"parent": 188,
+"child": 250
+},
+{
+"parent": 189,
+"child": 251
+},
+{
+"parent": 190,
+"child": 252
+},
+{
+"parent": 176,
+"child": 241
+},
+{
+"parent": 177,
+"child": 242
+},
+{
+"parent": 178,
+"child": 239
+},
+{
+"parent": 179,
+"child": 240
+},
+{
+"parent": 180,
+"child": 244
+},
+{
+"parent": 181,
+"child": 243
+},
+{
+"parent": 182,
+"child": 245
+},
+{
+"parent": 183,
+"child": 246
+},
+{
+"parent": 184,
+"child": 247
+},
+{
+"parent": 185,
+"child": 248
+},
+{
+"parent": 186,
+"child": 249
+}
+]
+},
+{
+"id": 188,
+"nameId": 1166655,
+"colorId": 1173413,
+"speciesId": 3,
+"generation": 9,
+"geneticWeight": 1,
+"linkedItemGid": 33223,
+"extractionRewardQuantity": 9,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 250,
+"breedingExperienceRewardQuantity": 270,
+"parents": [
+{
+"parent1": 225,
+"parent2": 236
+},
+{
+"parent1": 292,
+"parent2": 295
+}
+],
+"children": [
+{
+"parent": 189,
+"child": 289
+},
+{
+"parent": 190,
+"child": 290
+},
+{
+"parent": 176,
+"child": 255
+},
+{
+"parent": 177,
+"child": 256
+},
+{
+"parent": 178,
+"child": 253
+},
+{
+"parent": 179,
+"child": 254
+},
+{
+"parent": 180,
+"child": 258
+},
+{
+"parent": 181,
+"child": 257
+},
+{
+"parent": 182,
+"child": 259
+},
+{
+"parent": 183,
+"child": 260
+},
+{
+"parent": 184,
+"child": 261
+},
+{
+"parent": 185,
+"child": 262
+},
+{
+"parent": 186,
+"child": 263
+},
+{
+"parent": 187,
+"child": 250
+}
+]
+},
+{
+"id": 189,
+"nameId": 1166656,
+"colorId": 1173414,
+"speciesId": 3,
+"generation": 9,
+"geneticWeight": 1,
+"linkedItemGid": 33237,
+"extractionRewardQuantity": 9,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 250,
+"breedingExperienceRewardQuantity": 270,
+"parents": [
+{
+"parent1": 225,
+"parent2": 237
+},
+{
+"parent1": 294,
+"parent2": 296
+}
+],
+"children": [
+{
+"parent": 190,
+"child": 275
+},
+{
+"parent": 176,
+"child": 266
+},
+{
+"parent": 177,
+"child": 267
+},
+{
+"parent": 178,
+"child": 264
+},
+{
+"parent": 179,
+"child": 265
+},
+{
+"parent": 180,
+"child": 269
+},
+{
+"parent": 181,
+"child": 268
+},
+{
+"parent": 182,
+"child": 270
+},
+{
+"parent": 183,
+"child": 271
+},
+{
+"parent": 184,
+"child": 272
+},
+{
+"parent": 185,
+"child": 273
+},
+{
+"parent": 186,
+"child": 274
+},
+{
+"parent": 187,
+"child": 251
+},
+{
+"parent": 188,
+"child": 289
+}
+]
+},
+{
+"id": 190,
+"nameId": 1166561,
+"colorId": 1173148,
+"speciesId": 3,
+"generation": 9,
+"geneticWeight": 1,
+"linkedItemGid": 33143,
+"extractionRewardQuantity": 9,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 250,
+"breedingExperienceRewardQuantity": 270,
+"parents": [
+{
+"parent1": 225,
+"parent2": 238
+},
+{
+"parent1": 293,
+"parent2": 296
+}
+],
+"children": [
+{
+"parent": 176,
+"child": 278
+},
+{
+"parent": 177,
+"child": 279
+},
+{
+"parent": 178,
+"child": 276
+},
+{
+"parent": 179,
+"child": 277
+},
+{
+"parent": 180,
+"child": 281
+},
+{
+"parent": 181,
+"child": 280
+},
+{
+"parent": 182,
+"child": 282
+},
+{
+"parent": 183,
+"child": 283
+},
+{
+"parent": 184,
+"child": 284
+},
+{
+"parent": 185,
+"child": 285
+},
+{
+"parent": 186,
+"child": 286
+},
+{
+"parent": 187,
+"child": 252
+},
+{
+"parent": 188,
+"child": 290
+},
+{
+"parent": 189,
+"child": 275
+}
+]
+},
+{
+"id": 191,
+"nameId": 1166657,
+"colorId": 1173415,
+"speciesId": 3,
+"generation": 2,
+"geneticWeight": 1,
+"linkedItemGid": 33205,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 178,
+"parent2": 179
+}
+],
+"children": [
+{
+"parent": 192,
+"child": 180
+},
+{
+"parent": 193,
+"child": 180
+},
+{
+"parent": 195,
+"child": 183
+},
+{
+"parent": 194,
+"child": 183
+}
+]
+},
+{
+"id": 192,
+"nameId": 1166562,
+"colorId": 1173149,
+"speciesId": 3,
+"generation": 2,
+"geneticWeight": 1,
+"linkedItemGid": 33204,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 176,
+"parent2": 178
+}
+],
+"children": [
+{
+"parent": 193,
+"child": 180
+},
+{
+"parent": 196,
+"child": 182
+},
+{
+"parent": 194,
+"child": 182
+},
+{
+"parent": 191,
+"child": 180
+}
+]
+},
+{
+"id": 193,
+"nameId": 1166438,
+"colorId": 1173224,
+"speciesId": 3,
+"generation": 2,
+"geneticWeight": 1,
+"linkedItemGid": 33203,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 177,
+"parent2": 178
+}
+],
+"children": [
+{
+"parent": 195,
+"child": 181
+},
+{
+"parent": 196,
+"child": 181
+},
+{
+"parent": 191,
+"child": 180
+},
+{
+"parent": 192,
+"child": 180
+}
+]
+},
+{
+"id": 194,
+"nameId": 1166563,
+"colorId": 1173150,
+"speciesId": 3,
+"generation": 2,
+"geneticWeight": 1,
+"linkedItemGid": 33201,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 176,
+"parent2": 179
+}
+],
+"children": [
+{
+"parent": 195,
+"child": 183
+},
+{
+"parent": 196,
+"child": 182
+},
+{
+"parent": 192,
+"child": 182
+},
+{
+"parent": 191,
+"child": 183
+}
+]
+},
+{
+"id": 195,
+"nameId": 1166658,
+"colorId": 1173416,
+"speciesId": 3,
+"generation": 2,
+"geneticWeight": 1,
+"linkedItemGid": 33200,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 177,
+"parent2": 179
+}
+],
+"children": [
+{
+"parent": 196,
+"child": 181
+},
+{
+"parent": 191,
+"child": 183
+},
+{
+"parent": 193,
+"child": 181
+},
+{
+"parent": 194,
+"child": 183
+}
+]
+},
+{
+"id": 196,
+"nameId": 1166564,
+"colorId": 1173151,
+"speciesId": 3,
+"generation": 2,
+"geneticWeight": 1,
+"linkedItemGid": 33177,
+"extractionRewardQuantity": 2,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 2,
+"breedingExperienceRewardQuantity": 60,
+"parents": [
+{
+"parent1": 176,
+"parent2": 177
+}
+],
+"children": [
+{
+"parent": 192,
+"child": 182
+},
+{
+"parent": 193,
+"child": 181
+},
+{
+"parent": 194,
+"child": 182
+},
+{
+"parent": 195,
+"child": 181
+}
+]
+},
+{
+"id": 197,
+"nameId": 1166565,
+"colorId": 1173152,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33140,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 178,
+"parent2": 181
+}
+],
+"children": [
+{
+"parent": 201,
+"child": 184
+}
+]
+},
+{
+"id": 198,
+"nameId": 1166566,
+"colorId": 1173153,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33139,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 179,
+"parent2": 181
+}
+],
+"children": [
+{
+"parent": 201,
+"child": 184
+}
+]
+},
+{
+"id": 199,
+"nameId": 1166567,
+"colorId": 1173154,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33137,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 176,
+"parent2": 181
+}
+],
+"children": [
+{
+"parent": 201,
+"child": 184
+}
+]
+},
+{
+"id": 200,
+"nameId": 1166568,
+"colorId": 1173155,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33136,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 177,
+"parent2": 181
+}
+],
+"children": [
+{
+"parent": 201,
+"child": 184
+}
+]
+},
+{
+"id": 201,
+"nameId": 1166569,
+"colorId": 1173156,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33141,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 180,
+"parent2": 181
+}
+],
+"children": [
+{
+"parent": 203,
+"child": 184
+},
+{
+"parent": 202,
+"child": 184
+},
+{
+"parent": 204,
+"child": 184
+},
+{
+"parent": 205,
+"child": 184
+},
+{
+"parent": 206,
+"child": 184
+},
+{
+"parent": 207,
+"child": 184
+},
+{
+"parent": 208,
+"child": 184
+},
+{
+"parent": 209,
+"child": 184
+},
+{
+"parent": 197,
+"child": 184
+},
+{
+"parent": 198,
+"child": 184
+},
+{
+"parent": 199,
+"child": 184
+},
+{
+"parent": 200,
+"child": 184
+}
+]
+},
+{
+"id": 202,
+"nameId": 1166570,
+"colorId": 1173157,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33138,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 181,
+"parent2": 182
+}
+],
+"children": [
+{
+"parent": 214,
+"child": 185
+},
+{
+"parent": 201,
+"child": 184
+}
+]
+},
+{
+"id": 203,
+"nameId": 1166571,
+"colorId": 1173158,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33142,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 181,
+"parent2": 183
+}
+],
+"children": [
+{
+"parent": 214,
+"child": 185
+},
+{
+"parent": 201,
+"child": 184
+}
+]
+},
+{
+"id": 204,
+"nameId": 1166572,
+"colorId": 1173159,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33221,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 178,
+"parent2": 180
+}
+],
+"children": [
+{
+"parent": 201,
+"child": 184
+}
+]
+},
+{
+"id": 205,
+"nameId": 1166659,
+"colorId": 1173417,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33220,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 179,
+"parent2": 180
+}
+],
+"children": [
+{
+"parent": 201,
+"child": 184
+}
+]
+},
+{
+"id": 206,
+"nameId": 1166660,
+"colorId": 1173418,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33218,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 176,
+"parent2": 180
+}
+],
+"children": [
+{
+"parent": 201,
+"child": 184
+}
+]
+},
+{
+"id": 207,
+"nameId": 1166661,
+"colorId": 1173419,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33217,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 177,
+"parent2": 180
+}
+],
+"children": [
+{
+"parent": 201,
+"child": 184
+}
+]
+},
+{
+"id": 208,
+"nameId": 1166662,
+"colorId": 1173420,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33219,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 180,
+"parent2": 182
+}
+],
+"children": [
+{
+"parent": 214,
+"child": 185
+},
+{
+"parent": 201,
+"child": 184
+}
+]
+},
+{
+"id": 209,
+"nameId": 1166663,
+"colorId": 1173421,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33222,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 180,
+"parent2": 183
+}
+],
+"children": [
+{
+"parent": 214,
+"child": 185
+},
+{
+"parent": 201,
+"child": 184
+}
+]
+},
+{
+"id": 210,
+"nameId": 1166573,
+"colorId": 1173160,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33182,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 178,
+"parent2": 182
+}
+],
+"children": [
+{
+"parent": 214,
+"child": 185
+}
+]
+},
+{
+"id": 211,
+"nameId": 1166574,
+"colorId": 1173161,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33181,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 179,
+"parent2": 182
+}
+],
+"children": [
+{
+"parent": 214,
+"child": 185
+}
+]
+},
+{
+"id": 212,
+"nameId": 1166575,
+"colorId": 1173162,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33180,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 176,
+"parent2": 182
+}
+],
+"children": [
+{
+"parent": 214,
+"child": 185
+}
+]
+},
+{
+"id": 213,
+"nameId": 1166576,
+"colorId": 1173163,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33179,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 177,
+"parent2": 182
+}
+],
+"children": [
+{
+"parent": 214,
+"child": 185
+}
+]
+},
+{
+"id": 214,
+"nameId": 1166577,
+"colorId": 1173164,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33183,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 182,
+"parent2": 183
+}
+],
+"children": [
+{
+"parent": 216,
+"child": 185
+},
+{
+"parent": 215,
+"child": 185
+},
+{
+"parent": 217,
+"child": 185
+},
+{
+"parent": 218,
+"child": 185
+},
+{
+"parent": 211,
+"child": 185
+},
+{
+"parent": 212,
+"child": 185
+},
+{
+"parent": 213,
+"child": 185
+},
+{
+"parent": 210,
+"child": 185
+},
+{
+"parent": 208,
+"child": 185
+},
+{
+"parent": 209,
+"child": 185
+},
+{
+"parent": 203,
+"child": 185
+},
+{
+"parent": 202,
+"child": 185
+}
+]
+},
+{
+"id": 215,
+"nameId": 1166578,
+"colorId": 1173165,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33254,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 178,
+"parent2": 183
+}
+],
+"children": [
+{
+"parent": 214,
+"child": 185
+}
+]
+},
+{
+"id": 216,
+"nameId": 1166579,
+"colorId": 1173166,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33253,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 179,
+"parent2": 183
+}
+],
+"children": [
+{
+"parent": 214,
+"child": 185
+}
+]
+},
+{
+"id": 217,
+"nameId": 1166580,
+"colorId": 1173167,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33252,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 176,
+"parent2": 183
+}
+],
+"children": [
+{
+"parent": 214,
+"child": 185
+}
+]
+},
+{
+"id": 218,
+"nameId": 1166581,
+"colorId": 1173168,
+"speciesId": 3,
+"generation": 4,
+"geneticWeight": 1,
+"linkedItemGid": 33251,
+"extractionRewardQuantity": 4,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 8,
+"breedingExperienceRewardQuantity": 120,
+"parents": [
+{
+"parent1": 177,
+"parent2": 183
+}
+],
+"children": [
+{
+"parent": 214,
+"child": 185
+}
+]
+},
+{
+"id": 219,
+"nameId": 1166664,
+"colorId": 1173422,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33213,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 178,
+"parent2": 184
+}
+],
+"children": [
+{
+"parent": 231,
+"child": 186
+}
+]
+},
+{
+"id": 220,
+"nameId": 1166665,
+"colorId": 1173423,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33212,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 179,
+"parent2": 184
+}
+],
+"children": [
+{
+"parent": 234,
+"child": 186
+}
+]
+},
+{
+"id": 221,
+"nameId": 1166666,
+"colorId": 1173424,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33210,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 176,
+"parent2": 184
+}
+],
+"children": [
+{
+"parent": 233,
+"child": 186
+}
+]
+},
+{
+"id": 222,
+"nameId": 1166667,
+"colorId": 1173425,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33208,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 177,
+"parent2": 184
+}
+],
+"children": [
+{
+"parent": 230,
+"child": 186
+}
+]
+},
+{
+"id": 223,
+"nameId": 1166668,
+"colorId": 1173426,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33207,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 181,
+"parent2": 184
+}
+],
+"children": [
+{
+"parent": 229,
+"child": 186
+}
+]
+},
+{
+"id": 224,
+"nameId": 1166669,
+"colorId": 1173427,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33215,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 183,
+"parent2": 184
+}
+],
+"children": [
+{
+"parent": 227,
+"child": 186
+}
+]
+},
+{
+"id": 225,
+"nameId": 1166582,
+"colorId": 1173169,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33209,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 184,
+"parent2": 185
+}
+],
+"children": [
+{
+"parent": 235,
+"child": 187
+},
+{
+"parent": 236,
+"child": 188
+},
+{
+"parent": 237,
+"child": 189
+},
+{
+"parent": 238,
+"child": 190
+}
+]
+},
+{
+"id": 226,
+"nameId": 1166583,
+"colorId": 1173170,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33173,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 178,
+"parent2": 185
+}
+],
+"children": [
+{
+"parent": 287,
+"child": 186
+}
+]
+},
+{
+"id": 227,
+"nameId": 1166584,
+"colorId": 1173171,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33172,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 179,
+"parent2": 185
+}
+],
+"children": [
+{
+"parent": 224,
+"child": 186
+}
+]
+},
+{
+"id": 228,
+"nameId": 1166585,
+"colorId": 1173172,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33170,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 176,
+"parent2": 185
+}
+],
+"children": [
+{
+"parent": 288,
+"child": 186
+}
+]
+},
+{
+"id": 229,
+"nameId": 1166586,
+"colorId": 1173173,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33169,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 177,
+"parent2": 185
+}
+],
+"children": [
+{
+"parent": 223,
+"child": 186
+}
+]
+},
+{
+"id": 230,
+"nameId": 1166587,
+"colorId": 1173174,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33168,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 181,
+"parent2": 185
+}
+],
+"children": [
+{
+"parent": 222,
+"child": 186
+}
+]
+},
+{
+"id": 231,
+"nameId": 1166588,
+"colorId": 1173175,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33174,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 180,
+"parent2": 185
+}
+],
+"children": [
+{
+"parent": 219,
+"child": 186
+}
+]
+},
+{
+"id": 233,
+"nameId": 1166589,
+"colorId": 1173176,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33171,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 182,
+"parent2": 185
+}
+],
+"children": [
+{
+"parent": 221,
+"child": 186
+}
+]
+},
+{
+"id": 234,
+"nameId": 1166590,
+"colorId": 1173177,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33175,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 30,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 183,
+"parent2": 185
+}
+],
+"children": [
+{
+"parent": 220,
+"child": 186
+}
+]
+},
+{
+"id": 235,
+"nameId": 1166591,
+"colorId": 1173178,
+"speciesId": 3,
+"generation": 8,
+"geneticWeight": 1,
+"linkedItemGid": 33162,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 178,
+"parent2": 186
+}
+],
+"children": [
+{
+"parent": 225,
+"child": 187
+}
+]
+},
+{
+"id": 236,
+"nameId": 1166592,
+"colorId": 1173179,
+"speciesId": 3,
+"generation": 8,
+"geneticWeight": 1,
+"linkedItemGid": 33161,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 179,
+"parent2": 186
+}
+],
+"children": [
+{
+"parent": 225,
+"child": 188
+}
+]
+},
+{
+"id": 237,
+"nameId": 1166593,
+"colorId": 1173180,
+"speciesId": 3,
+"generation": 8,
+"geneticWeight": 1,
+"linkedItemGid": 33159,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 176,
+"parent2": 186
+}
+],
+"children": [
+{
+"parent": 225,
+"child": 189
+}
+]
+},
+{
+"id": 238,
+"nameId": 1166594,
+"colorId": 1173181,
+"speciesId": 3,
+"generation": 8,
+"geneticWeight": 1,
+"linkedItemGid": 33157,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 177,
+"parent2": 186
+}
+],
+"children": [
+{
+"parent": 225,
+"child": 190
+}
+]
+},
+{
+"id": 239,
+"nameId": 1166670,
+"colorId": 1173428,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33193,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 178,
+"parent2": 187
+}
+],
+"children": []
+},
+{
+"id": 240,
+"nameId": 1166595,
+"colorId": 1173182,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33192,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 179,
+"parent2": 187
+}
+],
+"children": []
+},
+{
+"id": 241,
+"nameId": 1166596,
+"colorId": 1173183,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33190,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 176,
+"parent2": 187
+}
+],
+"children": []
+},
+{
+"id": 242,
+"nameId": 1166597,
+"colorId": 1173184,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33188,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 177,
+"parent2": 187
+}
+],
+"children": []
+},
+{
+"id": 243,
+"nameId": 1166598,
+"colorId": 1173185,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33185,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 181,
+"parent2": 187
+}
+],
+"children": []
+},
+{
+"id": 244,
+"nameId": 1166599,
+"colorId": 1173186,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33195,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 180,
+"parent2": 187
+}
+],
+"children": []
+},
+{
+"id": 245,
+"nameId": 1166600,
+"colorId": 1173187,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33191,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 182,
+"parent2": 187
+}
+],
+"children": []
+},
+{
+"id": 246,
+"nameId": 1166601,
+"colorId": 1173188,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33198,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 183,
+"parent2": 187
+}
+],
+"children": []
+},
+{
+"id": 247,
+"nameId": 1166602,
+"colorId": 1173189,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33194,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 184,
+"parent2": 187
+}
+],
+"children": []
+},
+{
+"id": 248,
+"nameId": 1166603,
+"colorId": 1173190,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33189,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 185,
+"parent2": 187
+}
+],
+"children": []
+},
+{
+"id": 249,
+"nameId": 1166604,
+"colorId": 1173191,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33187,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 186,
+"parent2": 187
+}
+],
+"children": []
+},
+{
+"id": 250,
+"nameId": 1166605,
+"colorId": 1173192,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33196,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 187,
+"parent2": 188
+}
+],
+"children": []
+},
+{
+"id": 251,
+"nameId": 1166606,
+"colorId": 1173193,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33197,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 187,
+"parent2": 189
+}
+],
+"children": []
+},
+{
+"id": 252,
+"nameId": 1166607,
+"colorId": 1173194,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33186,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 187,
+"parent2": 190
+}
+],
+"children": []
+},
+{
+"id": 253,
+"nameId": 1166671,
+"colorId": 1173429,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33232,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 178,
+"parent2": 188
+}
+],
+"children": []
+},
+{
+"id": 254,
+"nameId": 1166672,
+"colorId": 1173430,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33231,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 179,
+"parent2": 188
+}
+],
+"children": []
+},
+{
+"id": 255,
+"nameId": 1166673,
+"colorId": 1173431,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33229,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 176,
+"parent2": 188
+}
+],
+"children": []
+},
+{
+"id": 256,
+"nameId": 1166674,
+"colorId": 1173432,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33227,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 177,
+"parent2": 188
+}
+],
+"children": []
+},
+{
+"id": 257,
+"nameId": 1166675,
+"colorId": 1173433,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33224,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 181,
+"parent2": 188
+}
+],
+"children": []
+},
+{
+"id": 258,
+"nameId": 1166676,
+"colorId": 1173434,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33234,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 180,
+"parent2": 188
+}
+],
+"children": []
+},
+{
+"id": 259,
+"nameId": 1166677,
+"colorId": 1173435,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33230,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 182,
+"parent2": 188
+}
+],
+"children": []
+},
+{
+"id": 260,
+"nameId": 1166678,
+"colorId": 1173436,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33236,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 183,
+"parent2": 188
+}
+],
+"children": []
+},
+{
+"id": 261,
+"nameId": 1166679,
+"colorId": 1173437,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33233,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 184,
+"parent2": 188
+}
+],
+"children": []
+},
+{
+"id": 262,
+"nameId": 1166680,
+"colorId": 1173438,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33228,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 185,
+"parent2": 188
+}
+],
+"children": []
+},
+{
+"id": 263,
+"nameId": 1166608,
+"colorId": 1173195,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33226,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 186,
+"parent2": 188
+}
+],
+"children": []
+},
+{
+"id": 264,
+"nameId": 1166609,
+"colorId": 1173196,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33246,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 178,
+"parent2": 189
+}
+],
+"children": []
+},
+{
+"id": 265,
+"nameId": 1166681,
+"colorId": 1173439,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33245,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 179,
+"parent2": 189
+}
+],
+"children": []
+},
+{
+"id": 266,
+"nameId": 1166682,
+"colorId": 1173440,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33243,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 176,
+"parent2": 189
+}
+],
+"children": []
+},
+{
+"id": 267,
+"nameId": 1166610,
+"colorId": 1173197,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33241,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 177,
+"parent2": 189
+}
+],
+"children": []
+},
+{
+"id": 268,
+"nameId": 1166683,
+"colorId": 1173441,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33238,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 181,
+"parent2": 189
+}
+],
+"children": []
+},
+{
+"id": 269,
+"nameId": 1166611,
+"colorId": 1173198,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33248,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 180,
+"parent2": 189
+}
+],
+"children": []
+},
+{
+"id": 270,
+"nameId": 1166684,
+"colorId": 1173442,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33244,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 182,
+"parent2": 189
+}
+],
+"children": []
+},
+{
+"id": 271,
+"nameId": 1166612,
+"colorId": 1173199,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33249,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 183,
+"parent2": 189
+}
+],
+"children": []
+},
+{
+"id": 272,
+"nameId": 1166613,
+"colorId": 1173200,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33247,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 184,
+"parent2": 189
+}
+],
+"children": []
+},
+{
+"id": 273,
+"nameId": 1166685,
+"colorId": 1173443,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33242,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 185,
+"parent2": 189
+}
+],
+"children": []
+},
+{
+"id": 274,
+"nameId": 1166686,
+"colorId": 1173444,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33240,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 186,
+"parent2": 189
+}
+],
+"children": []
+},
+{
+"id": 275,
+"nameId": 1166687,
+"colorId": 1173445,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33239,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 189,
+"parent2": 190
+}
+],
+"children": []
+},
+{
+"id": 276,
+"nameId": 1166614,
+"colorId": 1173201,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33151,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 178,
+"parent2": 190
+}
+],
+"children": []
+},
+{
+"id": 277,
+"nameId": 1166615,
+"colorId": 1173202,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33150,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 179,
+"parent2": 190
+}
+],
+"children": []
+},
+{
+"id": 278,
+"nameId": 1166616,
+"colorId": 1173203,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33148,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 176,
+"parent2": 190
+}
+],
+"children": []
+},
+{
+"id": 279,
+"nameId": 1166617,
+"colorId": 1173204,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33146,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 177,
+"parent2": 190
+}
+],
+"children": []
+},
+{
+"id": 280,
+"nameId": 1166618,
+"colorId": 1173205,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33144,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 181,
+"parent2": 190
+}
+],
+"children": []
+},
+{
+"id": 281,
+"nameId": 1166619,
+"colorId": 1173206,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33153,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 180,
+"parent2": 190
+}
+],
+"children": []
+},
+{
+"id": 282,
+"nameId": 1166620,
+"colorId": 1173207,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33149,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 182,
+"parent2": 190
+}
+],
+"children": []
+},
+{
+"id": 283,
+"nameId": 1166621,
+"colorId": 1173208,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33154,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 183,
+"parent2": 190
+}
+],
+"children": []
+},
+{
+"id": 284,
+"nameId": 1166622,
+"colorId": 1173209,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33152,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 184,
+"parent2": 190
+}
+],
+"children": []
+},
+{
+"id": 285,
+"nameId": 1166623,
+"colorId": 1173210,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33147,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 185,
+"parent2": 190
+}
+],
+"children": []
+},
+{
+"id": 286,
+"nameId": 1166624,
+"colorId": 1173211,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33145,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 186,
+"parent2": 190
+}
+],
+"children": []
+},
+{
+"id": 287,
+"nameId": 1166688,
+"colorId": 1173446,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33214,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 180,
+"parent2": 184
+}
+],
+"children": [
+{
+"parent": 226,
+"child": 186
+}
+]
+},
+{
+"id": 288,
+"nameId": 1166689,
+"colorId": 1173447,
+"speciesId": 3,
+"generation": 6,
+"geneticWeight": 1,
+"linkedItemGid": 33211,
+"extractionRewardQuantity": 6,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 180,
+"parents": [
+{
+"parent1": 182,
+"parent2": 184
+}
+],
+"children": [
+{
+"parent": 228,
+"child": 186
+}
+]
+},
+{
+"id": 289,
+"nameId": 1166625,
+"colorId": 1173212,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33235,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 188,
+"parent2": 189
+}
+],
+"children": []
+},
+{
+"id": 290,
+"nameId": 1166626,
+"colorId": 1173213,
+"speciesId": 3,
+"generation": 10,
+"geneticWeight": 1,
+"linkedItemGid": 33225,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 188,
+"parent2": 190
+}
+],
+"children": []
+},
+{
+"id": 291,
+"nameId": 1166627,
+"colorId": 1173214,
+"speciesId": 3,
+"generation": 8,
+"geneticWeight": 1,
+"linkedItemGid": 33164,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 180,
+"parent2": 186
+}
+],
+"children": [
+{
+"parent": 295,
+"child": 187
+}
+]
+},
+{
+"id": 292,
+"nameId": 1166628,
+"colorId": 1173215,
+"speciesId": 3,
+"generation": 8,
+"geneticWeight": 1,
+"linkedItemGid": 33156,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 181,
+"parent2": 186
+}
+],
+"children": [
+{
+"parent": 295,
+"child": 188
+}
+]
+},
+{
+"id": 293,
+"nameId": 1166629,
+"colorId": 1173216,
+"speciesId": 3,
+"generation": 8,
+"geneticWeight": 1,
+"linkedItemGid": 33160,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 182,
+"parent2": 186
+}
+],
+"children": [
+{
+"parent": 296,
+"child": 190
+}
+]
+},
+{
+"id": 294,
+"nameId": 1166630,
+"colorId": 1173217,
+"speciesId": 3,
+"generation": 8,
+"geneticWeight": 1,
+"linkedItemGid": 33165,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 183,
+"parent2": 186
+}
+],
+"children": [
+{
+"parent": 296,
+"child": 189
+}
+]
+},
+{
+"id": 295,
+"nameId": 1166631,
+"colorId": 1173218,
+"speciesId": 3,
+"generation": 8,
+"geneticWeight": 1,
+"linkedItemGid": 33163,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 184,
+"parent2": 186
+}
+],
+"children": [
+{
+"parent": 291,
+"child": 187
+},
+{
+"parent": 292,
+"child": 188
+}
+]
+},
+{
+"id": 296,
+"nameId": 1166632,
+"colorId": 1173225,
+"speciesId": 3,
+"generation": 8,
+"geneticWeight": 1,
+"linkedItemGid": 33158,
+"extractionRewardQuantity": 8,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 120,
+"breedingExperienceRewardQuantity": 240,
+"parents": [
+{
+"parent1": 185,
+"parent2": 186
+}
+],
+"children": [
+{
+"parent": 293,
+"child": 190
+},
+{
+"parent": 294,
+"child": 189
+}
+]
+},
+{
+"id": 297,
+"nameId": 1166804,
+"colorId": 1173405,
+"speciesId": 2,
+"generation": 9,
+"geneticWeight": 20,
+"linkedItemGid": 33255,
+"extractionRewardQuantity": 9,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 250,
+"breedingExperienceRewardQuantity": 270,
+"parents": [
+{
+"parent1": 156,
+"parent2": 161
+},
+{
+"parent1": 157,
+"parent2": 162
+},
+{
+"parent1": 158,
+"parent2": 163
+},
+{
+"parent1": 159,
+"parent2": 164
+},
+{
+"parent1": 160,
+"parent2": 155
+}
+],
+"children": [
+{
+"parent": 94,
+"child": 301
+},
+{
+"parent": 91,
+"child": 302
+},
+{
+"parent": 92,
+"child": 303
+},
+{
+"parent": 93,
+"child": 304
+},
+{
+"parent": 90,
+"child": 305
+},
+{
+"parent": 96,
+"child": 306
+},
+{
+"parent": 95,
+"child": 307
+},
+{
+"parent": 97,
+"child": 308
+},
+{
+"parent": 98,
+"child": 309
+},
+{
+"parent": 100,
+"child": 310
+},
+{
+"parent": 99,
+"child": 311
+},
+{
+"parent": 298,
+"child": 312
+},
+{
+"parent": 299,
+"child": 313
+},
+{
+"parent": 300,
+"child": 314
+}
+]
+},
+{
+"id": 298,
+"nameId": 1166805,
+"colorId": 1173309,
+"speciesId": 2,
+"generation": 9,
+"geneticWeight": 20,
+"linkedItemGid": 33256,
+"extractionRewardQuantity": 9,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 250,
+"breedingExperienceRewardQuantity": 270,
+"parents": [
+{
+"parent1": 146,
+"parent2": 151
+},
+{
+"parent1": 147,
+"parent2": 152
+},
+{
+"parent1": 148,
+"parent2": 153
+},
+{
+"parent1": 149,
+"parent2": 154
+},
+{
+"parent1": 150,
+"parent2": 155
+}
+],
+"children": [
+{
+"parent": 94,
+"child": 315
+},
+{
+"parent": 91,
+"child": 316
+},
+{
+"parent": 92,
+"child": 317
+},
+{
+"parent": 93,
+"child": 318
+},
+{
+"parent": 90,
+"child": 319
+},
+{
+"parent": 96,
+"child": 320
+},
+{
+"parent": 95,
+"child": 321
+},
+{
+"parent": 97,
+"child": 322
+},
+{
+"parent": 98,
+"child": 323
+},
+{
+"parent": 100,
+"child": 324
+},
+{
+"parent": 99,
+"child": 325
+},
+{
+"parent": 299,
+"child": 326
+},
+{
+"parent": 300,
+"child": 327
+},
+{
+"parent": 297,
+"child": 312
+}
+]
+},
+{
+"id": 299,
+"nameId": 1166806,
+"colorId": 1173310,
+"speciesId": 2,
+"generation": 9,
+"geneticWeight": 20,
+"linkedItemGid": 33257,
+"extractionRewardQuantity": 9,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 250,
+"breedingExperienceRewardQuantity": 270,
+"parents": [
+{
+"parent1": 156,
+"parent2": 151
+},
+{
+"parent1": 157,
+"parent2": 152
+},
+{
+"parent1": 158,
+"parent2": 153
+},
+{
+"parent1": 159,
+"parent2": 154
+},
+{
+"parent1": 160,
+"parent2": 153
+}
+],
+"children": [
+{
+"parent": 94,
+"child": 328
+},
+{
+"parent": 91,
+"child": 329
+},
+{
+"parent": 92,
+"child": 330
+},
+{
+"parent": 93,
+"child": 331
+},
+{
+"parent": 90,
+"child": 332
+},
+{
+"parent": 96,
+"child": 333
+},
+{
+"parent": 95,
+"child": 334
+},
+{
+"parent": 97,
+"child": 335
+},
+{
+"parent": 98,
+"child": 336
+},
+{
+"parent": 100,
+"child": 337
+},
+{
+"parent": 99,
+"child": 338
+},
+{
+"parent": 300,
+"child": 339
+},
+{
+"parent": 297,
+"child": 313
+},
+{
+"parent": 298,
+"child": 326
+}
+]
+},
+{
+"id": 300,
+"nameId": 1166807,
+"colorId": 1173311,
+"speciesId": 2,
+"generation": 9,
+"geneticWeight": 20,
+"linkedItemGid": 33258,
+"extractionRewardQuantity": 9,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 250,
+"breedingExperienceRewardQuantity": 270,
+"parents": [
+{
+"parent1": 146,
+"parent2": 161
+},
+{
+"parent1": 147,
+"parent2": 162
+},
+{
+"parent1": 148,
+"parent2": 163
+},
+{
+"parent1": 149,
+"parent2": 164
+},
+{
+"parent1": 150,
+"parent2": 164
+}
+],
+"children": [
+{
+"parent": 94,
+"child": 340
+},
+{
+"parent": 91,
+"child": 341
+},
+{
+"parent": 92,
+"child": 342
+},
+{
+"parent": 93,
+"child": 343
+},
+{
+"parent": 90,
+"child": 344
+},
+{
+"parent": 96,
+"child": 345
+},
+{
+"parent": 95,
+"child": 346
+},
+{
+"parent": 97,
+"child": 347
+},
+{
+"parent": 98,
+"child": 348
+},
+{
+"parent": 100,
+"child": 349
+},
+{
+"parent": 99,
+"child": 350
+},
+{
+"parent": 297,
+"child": 314
+},
+{
+"parent": 298,
+"child": 327
+},
+{
+"parent": 299,
+"child": 339
+}
+]
+},
+{
+"id": 301,
+"nameId": 1166808,
+"colorId": 1173312,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33259,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 297,
+"parent2": 94
+}
+],
+"children": []
+},
+{
+"id": 302,
+"nameId": 1166809,
+"colorId": 1173313,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33260,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 297,
+"parent2": 91
+}
+],
+"children": []
+},
+{
+"id": 303,
+"nameId": 1166810,
+"colorId": 1173314,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33261,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 297,
+"parent2": 92
+}
+],
+"children": []
+},
+{
+"id": 304,
+"nameId": 1166811,
+"colorId": 1173315,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33262,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 297,
+"parent2": 93
+}
+],
+"children": []
+},
+{
+"id": 305,
+"nameId": 1166812,
+"colorId": 1173316,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33263,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 297,
+"parent2": 90
+}
+],
+"children": []
+},
+{
+"id": 306,
+"nameId": 1166813,
+"colorId": 1173317,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33264,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 297,
+"parent2": 96
+}
+],
+"children": []
+},
+{
+"id": 307,
+"nameId": 1166814,
+"colorId": 1173318,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33265,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 297,
+"parent2": 95
+}
+],
+"children": []
+},
+{
+"id": 308,
+"nameId": 1166815,
+"colorId": 1173319,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33266,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 297,
+"parent2": 97
+}
+],
+"children": []
+},
+{
+"id": 309,
+"nameId": 1166816,
+"colorId": 1173320,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33267,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 297,
+"parent2": 98
+}
+],
+"children": []
+},
+{
+"id": 310,
+"nameId": 1166817,
+"colorId": 1173321,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33268,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 297,
+"parent2": 100
+}
+],
+"children": []
+},
+{
+"id": 311,
+"nameId": 1166818,
+"colorId": 1173322,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33269,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 297,
+"parent2": 99
+}
+],
+"children": []
+},
+{
+"id": 312,
+"nameId": 1166819,
+"colorId": 1173323,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33270,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 297,
+"parent2": 298
+}
+],
+"children": []
+},
+{
+"id": 313,
+"nameId": 1166820,
+"colorId": 1173324,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33271,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 297,
+"parent2": 299
+}
+],
+"children": []
+},
+{
+"id": 314,
+"nameId": 1166821,
+"colorId": 1173325,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33272,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 297,
+"parent2": 300
+}
+],
+"children": []
+},
+{
+"id": 315,
+"nameId": 1166822,
+"colorId": 1173326,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33273,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 298,
+"parent2": 94
+}
+],
+"children": []
+},
+{
+"id": 316,
+"nameId": 1166823,
+"colorId": 1173327,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33274,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 298,
+"parent2": 91
+}
+],
+"children": []
+},
+{
+"id": 317,
+"nameId": 1166824,
+"colorId": 1173328,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33275,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 298,
+"parent2": 92
+}
+],
+"children": []
+},
+{
+"id": 318,
+"nameId": 1166825,
+"colorId": 1173329,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33276,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 298,
+"parent2": 93
+}
+],
+"children": []
+},
+{
+"id": 319,
+"nameId": 1166826,
+"colorId": 1173330,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33277,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 298,
+"parent2": 90
+}
+],
+"children": []
+},
+{
+"id": 320,
+"nameId": 1166827,
+"colorId": 1173331,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33278,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 298,
+"parent2": 96
+}
+],
+"children": []
+},
+{
+"id": 321,
+"nameId": 1166828,
+"colorId": 1173332,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33279,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 298,
+"parent2": 95
+}
+],
+"children": []
+},
+{
+"id": 322,
+"nameId": 1166829,
+"colorId": 1173333,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33280,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 298,
+"parent2": 97
+}
+],
+"children": []
+},
+{
+"id": 323,
+"nameId": 1166830,
+"colorId": 1173334,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33281,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 298,
+"parent2": 98
+}
+],
+"children": []
+},
+{
+"id": 324,
+"nameId": 1166831,
+"colorId": 1173335,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33282,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 298,
+"parent2": 100
+}
+],
+"children": []
+},
+{
+"id": 325,
+"nameId": 1166832,
+"colorId": 1173336,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33283,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 298,
+"parent2": 99
+}
+],
+"children": []
+},
+{
+"id": 326,
+"nameId": 1166833,
+"colorId": 1173337,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33284,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 298,
+"parent2": 299
+}
+],
+"children": []
+},
+{
+"id": 327,
+"nameId": 1166834,
+"colorId": 1173338,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33285,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 298,
+"parent2": 300
+}
+],
+"children": []
+},
+{
+"id": 328,
+"nameId": 1166835,
+"colorId": 1173339,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33286,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 299,
+"parent2": 94
+}
+],
+"children": []
+},
+{
+"id": 329,
+"nameId": 1166836,
+"colorId": 1173340,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33287,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 299,
+"parent2": 91
+}
+],
+"children": []
+},
+{
+"id": 330,
+"nameId": 1166837,
+"colorId": 1173341,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33288,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 299,
+"parent2": 92
+}
+],
+"children": []
+},
+{
+"id": 331,
+"nameId": 1166838,
+"colorId": 1173342,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33289,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 299,
+"parent2": 93
+}
+],
+"children": []
+},
+{
+"id": 332,
+"nameId": 1166839,
+"colorId": 1173343,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33290,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 299,
+"parent2": 90
+}
+],
+"children": []
+},
+{
+"id": 333,
+"nameId": 1166840,
+"colorId": 1173344,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33291,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 299,
+"parent2": 96
+}
+],
+"children": []
+},
+{
+"id": 334,
+"nameId": 1166841,
+"colorId": 1173345,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33292,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 299,
+"parent2": 95
+}
+],
+"children": []
+},
+{
+"id": 335,
+"nameId": 1166842,
+"colorId": 1173346,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33293,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 299,
+"parent2": 97
+}
+],
+"children": []
+},
+{
+"id": 336,
+"nameId": 1166843,
+"colorId": 1173347,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33294,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 299,
+"parent2": 98
+}
+],
+"children": []
+},
+{
+"id": 337,
+"nameId": 1166844,
+"colorId": 1173348,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33295,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 299,
+"parent2": 100
+}
+],
+"children": []
+},
+{
+"id": 338,
+"nameId": 1166845,
+"colorId": 1173349,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33296,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 299,
+"parent2": 99
+}
+],
+"children": []
+},
+{
+"id": 339,
+"nameId": 1166846,
+"colorId": 1173406,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33297,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 299,
+"parent2": 300
+}
+],
+"children": []
+},
+{
+"id": 340,
+"nameId": 1166847,
+"colorId": 1173407,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33298,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 300,
+"parent2": 94
+}
+],
+"children": []
+},
+{
+"id": 341,
+"nameId": 1166848,
+"colorId": 1173408,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33299,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 300,
+"parent2": 91
+}
+],
+"children": []
+},
+{
+"id": 342,
+"nameId": 1166849,
+"colorId": 1173409,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33300,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 300,
+"parent2": 92
+}
+],
+"children": []
+},
+{
+"id": 343,
+"nameId": 1166850,
+"colorId": 1173301,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33301,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 300,
+"parent2": 93
+}
+],
+"children": []
+},
+{
+"id": 344,
+"nameId": 1166851,
+"colorId": 1173302,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33302,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 300,
+"parent2": 90
+}
+],
+"children": []
+},
+{
+"id": 345,
+"nameId": 1166852,
+"colorId": 1173303,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33303,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 300,
+"parent2": 96
+}
+],
+"children": []
+},
+{
+"id": 346,
+"nameId": 1166853,
+"colorId": 1173304,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33304,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 300,
+"parent2": 95
+}
+],
+"children": []
+},
+{
+"id": 347,
+"nameId": 1166854,
+"colorId": 1173305,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33305,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 300,
+"parent2": 97
+}
+],
+"children": []
+},
+{
+"id": 348,
+"nameId": 1166855,
+"colorId": 1173306,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33306,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 300,
+"parent2": 98
+}
+],
+"children": []
+},
+{
+"id": 349,
+"nameId": 1166856,
+"colorId": 1173307,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33307,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 300,
+"parent2": 100
+}
+],
+"children": []
+},
+{
+"id": 350,
+"nameId": 1166857,
+"colorId": 1173308,
+"speciesId": 2,
+"generation": 10,
+"geneticWeight": 20,
+"linkedItemGid": 33308,
+"extractionRewardQuantity": 10,
+"senileExtractionRewardQuantity": 1,
+"breedingTokenRewardQuantity": 0,
+"breedingExperienceRewardQuantity": 300,
+"parents": [
+{
+"parent1": 300,
+"parent2": 99
+}
+],
+"children": []
+}
+]
+}

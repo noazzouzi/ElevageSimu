@@ -10,6 +10,7 @@
 //   pour laisser une marge à l'alarme.
 import { GAUGE_LABELS, MATURITY_SERENITY_RANGE, MOUNT_STAT_MAX, TICK_SECONDS } from './constants'
 import { formatDuration, simulatePaddock, type SimMount } from './paddock'
+import { RULESETS, type Ruleset } from './rules'
 import type { FuelTier, GaugeId } from './types'
 
 export interface FertilityOptions {
@@ -20,6 +21,7 @@ export interface FertilityOptions {
   almanaxDoubled?: GaugeId | null
   /** Durée maximale planifiée (défaut : 7 jours). */
   maxSeconds?: number
+  rules?: Ruleset
 }
 
 export interface FertilityStep {
@@ -150,6 +152,7 @@ export function planFertility(input: SimMount[], opts: FertilityOptions): Fertil
       mounts,
       almanaxDoubled: opts.almanaxDoubled ?? null,
       maintainTier: maintain,
+      rules: opts.rules ?? RULESETS['3.6'],
       maxSeconds: maxSeconds - t,
       stopWhen: (ms) => {
         if (d.pushTarget !== undefined) {
@@ -211,7 +214,8 @@ function pushingContinues(d: Decision, ms: SimMount[]): boolean {
  */
 function switchWindow(d: Decision, opts: FertilityOptions, start: number, duration: number) {
   const up = d.gauges.includes('caresseur')
-  const rate = { 1: 10, 2: 20, 3: 30, 4: 40 }[opts.tier] * (opts.almanaxDoubled === (up ? 'caresseur' : 'baffeur') ? 2 : 1)
+  const rules = opts.rules ?? RULESETS['3.6']
+  const rate = rules.gaugeRatePerTick[opts.tier] * (opts.almanaxDoubled === (up ? 'caresseur' : 'baffeur') ? 2 : 1)
   // Zone visée : [-2000,-1] ou [0,2000]
   const target = d.pushTarget!
   const zone: [number, number] = target < 0 ? [MATURITY_SERENITY_RANGE[0], -1] : [0, MATURITY_SERENITY_RANGE[1]]

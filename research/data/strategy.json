@@ -1,0 +1,9245 @@
+{
+ "meta": {
+  "title": "ElevageSimu – stratégie d'élevage optimisée (Dofus 3.5+)",
+  "generated": "2026-10-01",
+  "rulesets": {
+   "current": "3.6",
+   "historical": "3.5",
+   "beta": "3.7"
+  },
+  "confidenceLegend": {
+   "high": "donnée du jeu, devblog, capture in-game",
+   "medium": "source communautaire fiable ou calcul sur modèle validé",
+   "low": "témoignage isolé, hypothèse"
+  },
+  "conditionDsl": "when = prédicat {field, op (lt|le|gt|ge|eq|between|in), value} ou {all:[…]} / {any:[…]} ; value peut référencer un autre champ (ex. 'pair.targetGeneration')",
+  "related": [
+   "research/strategy.md",
+   "research/data/mechanics.json",
+   "research/data/crafts.json",
+   "research/data/tree-*.json"
+  ],
+  "builder": "research/raw/strategy-evidence/build_strategy_json.py",
+  "verification": {
+   "date": "2026-10-02",
+   "by": "vérificateur adversarial",
+   "summary": "voir strategy.md § Vérification ; corrections : coût brisage Volkornes, 333→334, génétons 3.7 exacts, Muldo « Marine » = Aigue-marine, Extraits pour le brisage, almanax 01/04, facteurs de simulation, répartition des carburants, citation dragodinde.fr, sérénité du clone",
+   "note": "build_strategy_json.py n'a pas été modifié : le relancer écraserait ces corrections"
+  }
+ },
+ "phases": [
+  {
+   "id": "P0",
+   "title": "Préparation",
+   "jobLevelRange": [
+    0,
+    1
+   ],
+   "paddocks": 1,
+   "goals": [
+    "Choisir l'espèce et l'objectif (succès, génétons, revente, brisage)",
+    "Préparer filets universels et premiers carburants",
+    "Saisir les prix HDV de base dans l'application"
+   ],
+   "actions": [
+    "Choisir une espèce : Muldo (1 PM) ou Volkorne (1 PA) pour la valeur de revente et le brisage ; Dragodinde si l'on vise d'abord ses succès (zone de capture collée aux enclos).",
+    "Crafter ~20–30 Filets de capture universels (10 Bois de Frêne + 10 Fer ; 10 XP chacun au niveau 1).",
+    "Réunir des carburants palier 1 (Extraits) pour au moins 2 lots : ~20 000 points de Foudroyeur, d'Abreuvoir, de Dragofesse et de Mangeoire + ~5 000 de Caresseur/Baffeur.",
+    "Équiper un filet en consommable de combat (donne le sort Apprivoisement de monture)."
+   ],
+   "exitCriteria": [
+    "≥ 20 G1 capturées (équilibre de sexes par couleur)",
+    "carburants palier 1 pour 2 lots"
+   ],
+   "sources": [
+    "dpln_guide",
+    "crafts",
+    "dragodinde_fr"
+   ]
+  },
+  {
+   "id": "P1",
+   "title": "Démarrage (1 enclos)",
+   "jobLevelRange": [
+    1,
+    40
+   ],
+   "paddocks": 1,
+   "goals": [
+    "Succès de capture de l'espèce",
+    "Premières G2–G3",
+    "Éleveur 40 (2e enclos)",
+    "Montures au niveau ~40 « gratuitement »"
+   ],
+   "actions": [
+    "Capturer en équipe (chaque personnage lance son filet) ; challenges en mode drop.",
+    "Lot de 10 groupé par sérénité ; phase double (2 statistiques) la nuit au palier 1 ; traversée de 0 + 3e statistique + Mangeoire le jour.",
+    "Accoupler tous les couples G1 × G1 de recettes utiles (60 XP d'Éleveur chacun en 3.6).",
+    "Cloner les stériles G1 de même couleur ; capturer pour remplir les places libres.",
+    "Monter le métier : captures (30 XP) puis Minuscules/Petits/normal/Grands Extraits du niveau débloqué."
+   ],
+   "exitCriteria": [
+    "Éleveur ≥ 40",
+    "au moins une couleur G3 obtenue"
+   ],
+   "sources": [
+    "dpln_guide",
+    "yt_solomonk_muldo_aventure",
+    "crafts"
+   ]
+  },
+  {
+   "id": "P2",
+   "title": "Montée en régime (2 enclos)",
+   "jobLevelRange": [
+    40,
+    80
+   ],
+   "paddocks": 2,
+   "goals": [
+    "Atteindre G5",
+    "Éleveur 80 (3e enclos)",
+    "Clonage systématique"
+   ],
+   "actions": [
+    "Enclos 1 = groupe bleu (Foudroyeur + Abreuvoir), enclos 2 = groupe violet (Dragofesse + Abreuvoir).",
+    "Crafter des Gigantesques Extraits (niv. 45) : palier 1 le moins cher par point, pour toutes les nuits.",
+    "Philtres dès 55 : palier 2 en journée.",
+    "Produire plus de bicolores « goulots » (ex. Dragodinde Amande et Dorée) ; « stacker » avant de tenter G5.",
+    "Optimakina sur G4–G5 seulement si son prix < seuil (matingRules M-OPTI-01)."
+   ],
+   "exitCriteria": [
+    "Éleveur ≥ 80",
+    "première monocolore G5"
+   ],
+   "sources": [
+    "dpln_guide",
+    "yt_solomonk_fullsucces",
+    "sim"
+   ]
+  },
+  {
+   "id": "P3",
+   "title": "Production (3–4 enclos)",
+   "jobLevelRange": [
+    80,
+    120
+   ],
+   "paddocks": 3,
+   "goals": [
+    "Filet multiplicateur (100)",
+    "Éleveur 120 = 4 enclos (palier clé)",
+    "Atteindre G7"
+   ],
+   "actions": [
+    "Passer au Filet multiplicateur de [type] dès le niveau 100 (2 montures par lancer).",
+    "Potions dès 105 (palier 3) pour les sessions actives.",
+    "Enclos 3 = station de sérénité (Caresseur ou Baffeur + Mangeoire).",
+    "Optimakina systématique pour les cibles G ≥ 6 ; arbres propres (pas de génération ≥ cible dans les arbres).",
+    "Préparer les couples de haute génération pour le jour Takeza."
+   ],
+   "exitCriteria": [
+    "Éleveur ≥ 120",
+    "première monocolore G7"
+   ],
+   "sources": [
+    "dpln_guide",
+    "sim",
+    "dafous"
+   ]
+  },
+  {
+   "id": "P4",
+   "title": "Haute génération (4–5 enclos)",
+   "jobLevelRange": [
+    120,
+    160
+   ],
+   "paddocks": 4,
+   "goals": [
+    "Filet renforcé (150)",
+    "Élixirs (155)",
+    "Éleveur 160 (5e enclos)",
+    "Première G9"
+   ],
+   "actions": [
+    "Filet à [type] renforcé (cercle de rayon 3) : regrouper les montures avant de lancer.",
+    "Monter au niveau 60–100 les parents chers (G8) si les places d'enclos ne sont pas limitantes.",
+    "Garder les bébés ratés porteurs d'une G9 (G1 dont un parent est G9) pour les G10 (porteurs)."
+   ],
+   "exitCriteria": [
+    "Éleveur ≥ 160",
+    "première G9"
+   ],
+   "sources": [
+    "dpln_guide",
+    "mechanics",
+    "sim"
+   ]
+  },
+  {
+   "id": "P5",
+   "title": "Maîtrise (6 enclos)",
+   "jobLevelRange": [
+    160,
+    200
+   ],
+   "paddocks": 5,
+   "goals": [
+    "Éleveur 200 : 6 enclos + filet multiplicateur renforcé",
+    "G10 et succès G10",
+    "Génétons (×2 en 3.7)"
+   ],
+   "actions": [
+    "Filet multiplicateur renforcé : jusqu'à 16 montures par combat.",
+    "Croisements G9 × G1 (251 génétons) ou G9 × G9 (500) avec Optimakina ; porteurs pour les autres couleurs G10.",
+    "Dernier accouplement G10 × G10 avant de sortir une G10."
+   ],
+   "exitCriteria": [
+    "Éleveur 200",
+    "toutes les G10 visées"
+   ],
+   "sources": [
+    "dpln_guide",
+    "dragodinde_fr",
+    "mechanics"
+   ]
+  },
+  {
+   "id": "P6",
+   "title": "Croisière et rentabilité",
+   "jobLevelRange": [
+    200,
+    200
+   ],
+   "paddocks": 6,
+   "goals": [
+    "Marge positive stable",
+    "Boucle capture → génération → vente/extraction/brisage → recapture"
+   ],
+   "actions": [
+    "Mode génétons : maximiser les bébés qui dépassent leurs arbres (G8 × G8, G9 × G1, G9 × G9).",
+    "Vendre G8–G10 (Muldo/Volkorne niveau 100–200), ressources d'extraction, runes de brisage.",
+    "Recapturer chaque cycle les G1 consommées (proportions par couleur et sexe)."
+   ],
+   "exitCriteria": [
+    "marge hebdomadaire ≥ objectif fixé par l'utilisateur"
+   ],
+   "sources": [
+    "dragodinde_fr",
+    "yt_solomonk_volk10000",
+    "dafous"
+   ]
+  }
+ ],
+ "paddockRules": [
+  {
+   "id": "E-FULL-01",
+   "priority": 1,
+   "title": "Enclos plein de montures éligibles",
+   "when": {
+    "field": "paddock.eligibleMountsForActiveGauge",
+    "op": "lt",
+    "value": 7
+   },
+   "then": "Compléter l'enclos avec des montures qui ont besoin de la même jauge ; sinon remplacer la jauge par la Mangeoire ou la désactiver.",
+   "rationale": "La jauge consomme la même chose avec 1 ou 10 montures ; rendement = éligibles/10.",
+   "params": {
+    "efficiency": "eligible/10"
+   },
+   "sources": [
+    "dpln_guide",
+    "devblog2"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "E-GROUP-01",
+   "priority": 1,
+   "title": "Lots homogènes en sérénité",
+   "when": {
+    "field": "batch.serenitySpread",
+    "op": "gt",
+    "value": 2000
+   },
+   "then": "Scinder le lot : chaque lot doit tenir dans une fenêtre de 2 000 de sérénité.",
+   "rationale": "Un lot ≤ 2 000 de large traverse 0 sans qu'aucune monture ne sorte de la zone utile.",
+   "params": {
+    "maxSpread": 2000
+   },
+   "sources": [
+    "dpln_guide",
+    "mechanics"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "E-GAUGE-BLUE",
+   "priority": 2,
+   "title": "Groupe bleu : endurance + maturité",
+   "when": {
+    "field": "batch.serenity",
+    "op": "between",
+    "value": [
+     -2000,
+     -1
+    ]
+   },
+   "then": "Activer Foudroyeur + Abreuvoir jusqu'à 20 000/20 000 ; puis Caresseur + Mangeoire jusqu'à sérénité ≥ 0 ; puis Dragofesse + Mangeoire.",
+   "sources": [
+    "dpln_guide",
+    "mechanics"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "E-GAUGE-PURPLE",
+   "priority": 2,
+   "title": "Groupe violet : maturité + amour",
+   "when": {
+    "field": "batch.serenity",
+    "op": "between",
+    "value": [
+     0,
+     2000
+    ]
+   },
+   "then": "Activer Dragofesse + Abreuvoir ; puis Baffeur + Mangeoire jusqu'à sérénité ≤ −1 ; puis Foudroyeur + Mangeoire.",
+   "sources": [
+    "dpln_guide",
+    "mechanics"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "E-GAUGE-RED",
+   "priority": 2,
+   "title": "Groupe rouge : sérénité < −2 000",
+   "when": {
+    "field": "batch.serenity",
+    "op": "between",
+    "value": [
+     -5000,
+     -2001
+    ]
+   },
+   "then": "Foudroyeur + Caresseur (l'endurance monte pendant la remontée) ; dès [−2 000 ; −1] passer au groupe bleu.",
+   "sources": [
+    "dpln_guide",
+    "dofuselevage",
+    "mechanics"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "E-GAUGE-GREEN",
+   "priority": 2,
+   "title": "Groupe vert : sérénité > 2 000",
+   "when": {
+    "field": "batch.serenity",
+    "op": "between",
+    "value": [
+     2001,
+     5000
+    ]
+   },
+   "then": "Dragofesse + Baffeur ; dès [0 ; 2 000] passer au groupe violet.",
+   "sources": [
+    "dpln_guide",
+    "mechanics"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "E-XP-01",
+   "priority": 2,
+   "title": "Mangeoire en 2e jauge",
+   "when": {
+    "field": "paddock.activeGauges",
+    "op": "eq",
+    "value": 1
+   },
+   "then": "Activer la Mangeoire en 2e jauge (objectif niveau ~40 pour les parents ; plus pour les montures à vendre/briser).",
+   "rationale": "+0,15 %/niveau/parent ; 20 437 XP (niveau 40) ≈ la durée d'une phase de 20 000 points.",
+   "params": {
+    "defaultTargetLevel": 40
+   },
+   "sources": [
+    "dpln_guide",
+    "dragodinde_fr",
+    "yt_solomonk_calc"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "E-SER-ALARM",
+   "priority": 1,
+   "title": "Alarme obligatoire sur Baffeur/Caresseur",
+   "when": {
+    "field": "paddock.activeGauges",
+    "op": "in",
+    "value": [
+     "baffeur",
+     "caresseur"
+    ]
+   },
+   "then": "Calculer tick par tick l'heure où la monture la plus éloignée atteint la cible ; programmer une alarme ; couper la jauge à distance. Ne jamais laisser une jauge de sérénité active la nuit.",
+   "params": {
+    "formula": "ticks = points_à_parcourir / rythme_du_palier_courant (simulation tick par tick)",
+    "pointsPer1000": {
+     "T1": "17 min",
+     "T2": "8 min",
+     "T3": "6 min",
+     "T4": "4 min"
+    }
+   },
+   "sources": [
+    "dpln_guide",
+    "dpln_tool"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "E-SER-EXACT",
+   "priority": 3,
+   "title": "Remplir la jauge de sérénité au plus juste",
+   "when": {
+    "field": "paddock.activeGauges",
+    "op": "in",
+    "value": [
+     "baffeur",
+     "caresseur"
+    ]
+   },
+   "then": "Ne mettre dans la jauge que |s_cible − s_max| + une petite marge, pour qu'elle s'arrête d'elle-même.",
+   "sources": [
+    "mechanics"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "id": "E-TIER-NIGHT",
+   "priority": 2,
+   "title": "Nuit et absences : palier 1",
+   "when": {
+    "field": "player.absenceHours",
+    "op": "ge",
+    "value": 6
+   },
+   "then": "Mettre les lots en phase double et remplir les deux jauges de statistiques à 20 000–40 000 avec des Extraits (palier 1 : 5 h 33 par statistique ; 8 h délivrent 28 800 points depuis 40 000).",
+   "sources": [
+    "dpln_guide",
+    "guidactik",
+    "sim"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "E-TIER-DAY",
+   "priority": 3,
+   "title": "Journée : palier 2 (3 en session active)",
+   "when": {
+    "field": "player.present",
+    "op": "eq",
+    "value": true
+   },
+   "then": "Palier 2 par défaut (Philtres) ; palier 3 (Potions) si l'on reste présent ; palier 4 (Élixirs, 42 min) seulement en rush et si le prix au point le justifie.",
+   "sources": [
+    "dpln_guide",
+    "yt_solomonk_secret"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "id": "E-FUEL-CHEAPEST",
+   "priority": 2,
+   "title": "Carburant le moins cher au point",
+   "when": {
+    "field": "action",
+    "op": "eq",
+    "value": "refuel"
+   },
+   "then": "Pour chaque tranche de jauge, choisir la taille débloquée qui minimise prix/durabilité ; remplir chaque palier avec la famille minimale qui le permet (Extraits ≤ 40 000, Philtres ≤ 70 000, Potions ≤ 90 000, Élixirs ≤ 100 000) ; préférer les tailles qui tombent juste.",
+   "sources": [
+    "crafts",
+    "registre"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "E-ALMANAX-GAUGE",
+   "priority": 3,
+   "title": "Jours d'effet doublé",
+   "when": {
+    "field": "calendar.dayMonth",
+    "op": "in",
+    "value": [
+     "10/01",
+     "10/03",
+     "10/04",
+     "10/06",
+     "10/09",
+     "10/12"
+    ]
+   },
+   "then": "Programmer la phase correspondante (Abreuvoir, Foudroyeur, Baffeur, Mangeoire, Caresseur, Dragofesse) dans tous les enclos ce jour-là.",
+   "sources": [
+    "dofusdb",
+    "dpln_guide"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "id": "E-ABILITY-01",
+   "priority": 4,
+   "title": "Capacités de gain",
+   "when": {
+    "field": "mount.ability",
+    "op": "in",
+    "value": [
+     "Amoureuse",
+     "Endurante",
+     "Précoce",
+     "Sage"
+    ]
+   },
+   "then": "Regrouper les montures de même capacité dans un même enclos pour profiter du ×2 sur tout le lot ; Sage → montures à monter (revente/brisage).",
+   "sources": [
+    "dpln_guide"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "id": "E-FECUND-WAIT",
+   "priority": 3,
+   "title": "Lot fécond en attente",
+   "when": {
+    "field": "batch.allFecund",
+    "op": "eq",
+    "value": true
+   },
+   "then": "Sortir le lot vers l'étable (accouplement possible à distance) ou le laisser sous Mangeoire seule ; libérer les places pour un nouveau lot.",
+   "sources": [
+    "dpln_guide",
+    "dragodinde_fr"
+   ],
+   "confidence": "high"
+  }
+ ],
+ "paddockAllocationByCount": {
+  "1": "1 lot de 10 ; sérénité réglée lot par lot ; accoupler dès que 2 montures compatibles sont fécondes.",
+  "2": "E1 groupe bleu (Foudroyeur + Abreuvoir), E2 groupe violet (Dragofesse + Abreuvoir) ; changement d'enclos à la traversée de 0.",
+  "3": "E1 bleu, E2 violet, E3 station de sérénité (Caresseur/Baffeur + Mangeoire).",
+  "4": "2 bleus, 1 violet, 1 station ; ou 3 de production + 1 Mangeoire (revente/brisage).",
+  "5": "2 bleus, 2 violets, 1 station.",
+  "6": "2 bleus, 2 violets, 1 station Caresseur, 1 station Baffeur ; lots de 60."
+ },
+ "matingRules": [
+  {
+   "id": "M-CLEAN-01",
+   "priority": 1,
+   "title": "Arbres propres",
+   "when": {
+    "field": "pair.maxTreeGeneration",
+    "op": "ge",
+    "value": "pair.targetGeneration"
+   },
+   "then": "Éviter ce couple si une alternative existe : le bonus de cible est partagé avec les montures de l'arbre et le couple ne rapporte aucun généton.",
+   "example": "Orchidée × Pourpre (parents G6) : Orchidée et Pourpre 36,7 %, 0 généton ; avec une Pourpre standard : 42 %, 30 génétons (niv. 40/40).",
+   "sources": [
+    "mechanics",
+    "dpln_guide",
+    "sim"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "M-LEVEL-01",
+   "priority": 2,
+   "title": "Niveau des parents",
+   "when": {
+    "field": "pair.levelSum",
+    "op": "lt",
+    "value": 80
+   },
+   "then": "Amener chaque parent au niveau ~40 pendant la fécondation (Mangeoire en 2e jauge).",
+   "decision": "monter de ΔL si coût_XP(ΔL) < C_eff × 0,003·ΔL / p ; niveau 100 seulement pour les parents chers (G8/G9) ou quand les places ne limitent pas ; pour G9 × G1, monter la G1 (bon marché).",
+   "sources": [
+    "dpln_guide",
+    "dragodinde_fr",
+    "sim"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "id": "M-OPTI-01",
+   "priority": 2,
+   "title": "Optimakina",
+   "when": {
+    "field": "pair.targetGeneration",
+    "op": "ge",
+    "value": 2
+   },
+   "then": "Utiliser une Optimakina (génération ≥ génération cible) si prix_optimakina < C_eff × Δ / p (Δ = 0,10 ; 0,20 en 3.7). Systématique dès la cible G6 ; partout si les makinas basses générations sont bon marché.",
+   "params": {
+    "delta_3_6": 0.1,
+    "delta_3_7": 0.2
+   },
+   "simulation": "Optimakina à chaque accouplement : −40 à −65 % de captures, accouplements, fécondations et carburant pour une G9/G10 (niv. 40, clonage) ; limitée aux cibles ≥ G6 : −20 à −48 % pour 38 à 77 makinas.",
+   "sources": [
+    "dpln_guide",
+    "dafous",
+    "sim"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "id": "M-ANIMA-36",
+   "priority": 4,
+   "title": "Animakina (3.5/3.6)",
+   "when": {
+    "field": "ruleset",
+    "op": "in",
+    "value": [
+     "3.5",
+     "3.6"
+    ]
+   },
+   "then": "Ne pas l'utiliser sauf bébé destiné à rester longtemps (Sage pour revente) ; Reproducteur 5 % seulement ; capacités perdues au clonage. Garder les stocks : elles seront converties en « choix du sexe » en 3.7.",
+   "sources": [
+    "dpln_guide",
+    "devblog37"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "M-ANIMA-37",
+   "priority": 2,
+   "title": "Animakina (3.7) = choix du sexe",
+   "when": {
+    "field": "ruleset",
+    "op": "eq",
+    "value": "3.7"
+   },
+   "then": "L'utiliser quand la couleur du bébé visé a un déficit de sexe dans l'étable, ou pour garantir le sexe d'une G9/G10 nécessaire.",
+   "sources": [
+    "devblog37"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "M-KROMA-01",
+   "priority": 5,
+   "title": "Kromakina",
+   "when": {
+    "field": "baby.purpose",
+    "op": "eq",
+    "value": "vitrine"
+   },
+   "then": "Caméléone 100 % : uniquement pour des montures destinées à la vente comme apparat.",
+   "sources": [
+    "dpln_guide",
+    "dafous"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "M-100PCT",
+   "priority": 3,
+   "title": "Seuils de 100 % de cible",
+   "when": {
+    "field": "pair.isCritical",
+    "op": "eq",
+    "value": true
+   },
+   "then": "100 % si niveaux cumulés ≥ 400 avec Optimakina (3.6) ; ≥ 334 avec Optimakina 20 % (3.7) (333 donne 99,95 %) ; ≥ 267 avec Optimakina + Takeza (3.6) ; ≥ 200 avec Optimakina 20 % + Takeza (3.7).",
+   "sources": [
+    "dpln_guide",
+    "devblog37",
+    "dofusdb"
+   ],
+   "confidence": "high",
+   "params": {
+    "thresholds": {
+     "3.6_opti": 400,
+     "3.7_opti20": 334,
+     "3.6_opti_takeza": 267,
+     "3.7_opti20_takeza": 200
+    }
+   }
+  },
+  {
+   "id": "M-CLONE-01",
+   "priority": 1,
+   "title": "Clonage systématique",
+   "when": {
+    "field": "stable.steriles.sameGenerationPairs",
+    "op": "ge",
+    "value": 1
+   },
+   "then": "Cloner juste après les accouplements : 1) deux stériles de même couleur ; 2) couleur utile + couleur inutile (50 %) ; jamais deux inutiles ; même sexe si l'on a besoin d'un sexe précis.",
+   "rationale": "« 2 pour 2 » ; sans clonage une G7 demande ~15 000 captures (simulation).",
+   "sources": [
+    "dpln_guide",
+    "registre",
+    "sim"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "M-FREEBABY-01",
+   "priority": 1,
+   "title": "Bébé gratuit avant extraction",
+   "when": {
+    "all": [
+     {
+      "field": "mount.fertility",
+      "op": "eq",
+      "value": "Féconde"
+     },
+     {
+      "field": "mount.fate",
+      "op": "in",
+      "value": [
+       "extract",
+       "sell",
+       "break"
+      ]
+     }
+    ]
+   },
+   "then": "Accoupler d'abord les fécondes condamnées entre elles (sexes opposés, même espèce), puis extraire/vendre les stériles.",
+   "sources": [
+    "dragodinde_fr",
+    "dpln_guide"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "M-G10OUT-01",
+   "priority": 3,
+   "title": "Sortie des G10",
+   "when": {
+    "all": [
+     {
+      "field": "mount.generation",
+      "op": "eq",
+      "value": 10
+     },
+     {
+      "field": "mount.successValidated",
+      "op": "eq",
+      "value": true
+     }
+    ]
+   },
+   "then": "Dernier accouplement G10 × G10 si possible (~30–42 % de G10, peut-être une couleur manquante), puis vendre/extraire ; remplacer par des G1.",
+   "sources": [
+    "dragodinde_fr",
+    "sim"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "id": "M-CARRIER-01",
+   "priority": 2,
+   "title": "Porteurs (G10 à partir de G1)",
+   "when": {
+    "field": "mount.parentsMaxGeneration",
+    "op": "eq",
+    "value": 9
+   },
+   "then": "Garder ces montures (souvent des G1 nées d'un croisement G9 × G1 raté) et les croiser avec une monture d'une autre couleur : la cible devient la G10 « G9 et X » avec la même chance qu'un croisement standard ; les recycler par clonage.",
+   "example": "Dragodinde Dorée (parents Dorée + Émeraude) × Rousse sauvage : Émeraude et Rousse 42 % (niv. 40/40), Émeraude 15 %, 2 génétons.",
+   "sources": [
+    "mechanics",
+    "dpln_guide",
+    "sim"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "id": "M-STACK-01",
+   "priority": 2,
+   "title": "Accumuler avant de tenter",
+   "when": {
+    "field": "recipe.expectedAttemptsAvailable",
+    "op": "lt",
+    "value": 3
+   },
+   "then": "Ne pas tenter la génération suivante tout de suite : produire d'abord assez de parents pour ≥ 3 tentatives (à 42 %, 1 tentative échoue 58 % du temps).",
+   "sources": [
+    "yt_solomonk_fullsucces",
+    "yt_chikkin"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "id": "M-ORDER-01",
+   "priority": 1,
+   "title": "Ordre d'une session",
+   "when": {
+    "field": "session.phase",
+    "op": "eq",
+    "value": "breeding"
+   },
+   "then": "1) accouplements par génération (G2, G4, G6, G8, puis monocolores), 2) clonages, 3) captures, 4) extractions, 5) banque/havre-sac ; puis resynchroniser le plan sur les naissances réelles.",
+   "sources": [
+    "dragodinde_fr"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "id": "M-STABLE-01",
+   "priority": 1,
+   "title": "Accoupler depuis l'étable",
+   "when": {
+    "field": "mount.location",
+    "op": "in",
+    "value": [
+     "inventaire",
+     "enclos"
+    ]
+   },
+   "then": "Déplacer les deux montures dans l'étable avant d'accoupler/cloner.",
+   "sources": [
+    "dpln_guide"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "M-MAKGEN-01",
+   "priority": 1,
+   "title": "Génération de la makina",
+   "when": {
+    "field": "makina.generation",
+    "op": "lt",
+    "value": "pair.targetGeneration"
+   },
+   "then": "Makina inutilisable : prendre une makina de génération ≥ génération cible.",
+   "sources": [
+    "dpln_guide"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "M-PAIRS-01",
+   "priority": 2,
+   "title": "Appariement maximal",
+   "when": {
+    "field": "session.phase",
+    "op": "eq",
+    "value": "breeding"
+   },
+   "then": "Choisir les couples qui maximisent le nombre de croisements utiles de la session (appariement ♂/♀), priorité à la génération la plus haute et aux goulots.",
+   "sources": [
+    "registre",
+    "dragodinde_fr"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "id": "M-GENETON-01",
+   "priority": 3,
+   "title": "Génétons",
+   "when": {
+    "field": "objective",
+    "op": "eq",
+    "value": "genetons"
+   },
+   "then": "Privilégier les réussites qui dépassent les arbres avec des parents hauts (G8+G8 = 240, G9+G1 = 251, G9+G9 = 500 ; ≈ ×2 en 3.7 : G8+G8 = 500, G9+G1 = 502, G9+G9 = 1 000) ; en 3.6, si la 3.7 est imminente, reporter les gros accouplements G8/G9.",
+   "sources": [
+    "mechanics",
+    "devblog37"
+   ],
+   "confidence": "high",
+   "params": {
+    "tokensPerParentByGeneration": {
+     "3.5_3.6": {
+      "1": 1,
+      "2": 2,
+      "3": 4,
+      "4": 8,
+      "5": 15,
+      "6": 30,
+      "7": 60,
+      "8": 120,
+      "9": 250
+     },
+     "3.7beta": {
+      "1": 2,
+      "2": 4,
+      "3": 8,
+      "4": 15,
+      "5": 30,
+      "6": 60,
+      "7": 120,
+      "8": 250,
+      "9": 500
+     }
+    },
+    "source": "client 3.5.3.1→3.6.12.16 et 3.7.3.3-beta (raw/mechanics-evidence/client-data/breeding-constants-by-client-version.json)"
+   }
+  },
+  {
+   "id": "M-TAKEZA-01",
+   "priority": 2,
+   "title": "Jour Takeza",
+   "when": {
+    "field": "calendar.date",
+    "op": "in",
+    "value": [
+     "2026-10-12",
+     "2027-10-11",
+     "2028-10-09"
+    ]
+   },
+   "then": "Faire ce jour-là les accouplements à fort enjeu (+20 % de cible) ; préparer les couples féconds la veille.",
+   "sources": [
+    "dofusdb",
+    "dpln_guide"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "M-BABYDAY-01",
+   "priority": 4,
+   "title": "Jours de capacité offerte",
+   "when": {
+    "field": "calendar.dayMonth",
+    "op": "in",
+    "value": [
+     "10/02",
+     "10/07",
+     "10/10",
+     "10/11"
+    ]
+   },
+   "then": "Faire les accouplements dont on garde/vend les bébés (10/10 Sage : XP ×2).",
+   "sources": [
+    "dofusdb"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "M-BOTTLENECK-01",
+   "priority": 2,
+   "title": "Goulots de recettes",
+   "when": {
+    "field": "color.usedByRecipes",
+    "op": "ge",
+    "value": 2
+   },
+   "then": "Produire davantage de ces couleurs (ex. Dragodinde Amande et Dorée → Indigo et Ébène ; Ébène et Indigo → Orchidée et Pourpre ; Orchidée et Pourpre → Ivoire et Turquoise ; Ivoire et Turquoise → Prune et Émeraude).",
+   "sources": [
+    "yt_solomonk_fullsucces",
+    "trees"
+   ],
+   "confidence": "medium"
+  }
+ ],
+ "captureRules": [
+  {
+   "id": "C-NET-01",
+   "title": "Meilleur filet disponible",
+   "then": "Utiliser le filet le plus haut que le niveau d'Éleveur permet d'équiper (100 multiplicateur, 150 renforcé, 200 multiplicateur renforcé) ; garder des universels pour les montures isolées.",
+   "sources": [
+    "dpln_guide",
+    "yt_solomonk_volk10000"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "C-TEAM-01",
+   "title": "Un filet par personnage",
+   "then": "En équipe, chaque personnage lance son filet sur des montures différentes (4 × multiplicateur = 8 par combat ; 1 renforcé + 3 multiplicateurs ≈ 11).",
+   "sources": [
+    "dpln_guide",
+    "yt_solomonk_volk10000"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "C-AOE-01",
+   "title": "Regrouper avant un filet de zone",
+   "then": "Regrouper les montures (glyphes, attirances ; les Volkornes attirent eux-mêmes) puis lancer au centre du groupe (cercle de rayon 3) ; marquer au 1er tour.",
+   "sources": [
+    "yt_solomonk_volk10000",
+    "dpln_guide"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "id": "C-DROP-01",
+   "title": "Prospection",
+   "then": "Challenges en mode drop et prospection élevée : les ressources de monture (42 % de base ; Bave/Griffe 7,1 % ; Sueur 2 %) alimentent filets et makinas.",
+   "sources": [
+    "dpln_guide",
+    "crafts",
+    "yt_solomonk_muldo_aventure"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "C-MIX-01",
+   "title": "Couleurs selon l'arbre visé",
+   "then": "Capturer les G1 dans les proportions de l'arbre visé (multiplicité des G1 dans la recette) et non en parts égales.",
+   "example": "Muldo Ambre et Azur : ~120 Pourpre, 120 Doré, 40 Ébène (Solomonk/muldo-calculator).",
+   "sources": [
+    "yt_solomonk_calc",
+    "muldo_calc",
+    "sim"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "id": "C-SEX-01",
+   "title": "Sexe en déficit d'abord",
+   "then": "Pour chaque couleur, capturer en priorité le sexe en déficit dans l'étable.",
+   "sources": [
+    "dragodinde_fr"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "id": "C-FILL-01",
+   "title": "Remplir les places",
+   "then": "À chaque cycle, capturer de quoi remplir les places d'enclos libres (pas plus : une monture non fécondée immobilise de l'étable).",
+   "sources": [
+    "yt_solomonk_fullsucces",
+    "sim"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "id": "C-LOG-01",
+   "title": "Journal des captures",
+   "then": "Enregistrer couleur et sexe de chaque capture pour estimer les fréquences réelles par serveur (inconnues publiquement).",
+   "sources": [
+    "dofusdb"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "C-SUCCESS-01",
+   "title": "Succès de capture",
+   "then": "Faire d'abord les succès de capture (5 Muldos, 4 Volkornes, 3 Dragodindes) : ~10 minutes.",
+   "sources": [
+    "dpln_guide"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "C-MULTI-01",
+   "title": "Multi-compte",
+   "then": "Chaque compte a ses 6 enclos (60 places) ; un autre personnage du même compte n'en ajoute pas. Un compte principal avance les générations, les autres capturent et produisent N−1/N−2.",
+   "sources": [
+    "dpln_guide",
+    "devblog2",
+    "yt_solomonk_fullsucces"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "C-ALMANAX-01",
+   "title": "Almanax de capture",
+   "then": "11/09 : +75 % XP au Territoire des Dragodindes Sauvages ; 01/04 : +50 % XP/butin sur les créatures marines (la description DofusDB cite explicitement les « muldos sauvages »).",
+   "sources": [
+    "dofusdb"
+   ],
+   "confidence": "high"
+  },
+  {
+   "id": "C-BREAK-01",
+   "title": "Surplus de Muldos/Volkornes",
+   "then": "Monter vers le niveau 40–60 avec des Extraits de Mangeoire (niveau 53 = 39 360 XP ≈ 13 Extraits de 3 000 points par lot de 10, ≈ 13 000 kamas à 1 000 kamas l'Extrait, soit ≈ 1 300 kamas par monture ; ≈ 11 h au palier 1) puis briser : Ga PM (Muldo, 491 pour 1 020 brisés ≈ 48 %) ou Ga PA (Volkorne, 3 832 pour 10 000 ≈ 38 %, niv. ~53).",
+   "sources": [
+    "mechanics",
+    "yt_solomonk_muldo1000",
+    "yt_solomonk_muldo_kamas",
+    "yt_solomonk_volk10000"
+   ],
+   "confidence": "medium",
+   "params": {
+    "xpLevel53": 39360,
+    "extraitsPerBatchOf10": 13,
+    "costPerMountKamas": 1300,
+    "costDate": "2026-09",
+    "gaPmRate": 0.48,
+    "gaPaRate": 0.38
+   }
+  }
+ ],
+ "captureZones": [
+  {
+   "family": "Dragodinde",
+   "subareaId": 235,
+   "subarea": "Territoire des dragodindes sauvages",
+   "area": "Montagne des Koalaks",
+   "maps": 87,
+   "xRange": [
+    -23,
+    -11
+   ],
+   "yRange": [
+    -2,
+    9
+   ],
+   "nearestZaap": {
+    "name": "Village des Éleveurs",
+    "coords": [
+     -16,
+     1
+    ]
+   },
+   "monsters": [
+    {
+     "id": 171,
+     "name": "Dragodinde amande sauvage"
+    },
+    {
+     "id": 200,
+     "name": "Dragodinde rousse sauvage"
+    },
+    {
+     "id": 666,
+     "name": "Dragodinde dorée sauvage",
+     "note": "uniquement ici"
+    },
+    {
+     "id": 2379,
+     "name": "Draglida la Disparue",
+     "archimonster": true
+    },
+    {
+     "id": 2465,
+     "name": "Dragnoute l'Irascible",
+     "archimonster": true
+    }
+   ],
+   "levels": [
+    62,
+    70
+   ],
+   "hp": [
+    740,
+    900
+   ],
+   "sources": [
+    "dofusdb",
+    "dpln_species"
+   ],
+   "confidence": "high",
+   "mapsNote": "dont 5 cartes sans coordonnées (intérieurs) dans DofusDB map-positions",
+   "otherMonsters": [
+    {
+     "id": 4275,
+     "name": "Dragodingo",
+     "level": 80,
+     "note": "listé dans la sous-zone par DofusDB, pas une monture"
+    }
+   ]
+  },
+  {
+   "family": "Dragodinde",
+   "subareaId": 170,
+   "subarea": "Plaine des Scarafeuilles",
+   "area": "Amakna",
+   "maps": 82,
+   "xRange": [
+    -6,
+    5
+   ],
+   "yRange": [
+    21,
+    32
+   ],
+   "nearestZaap": {
+    "name": "Plaine des Scarafeuilles",
+    "coords": [
+     -1,
+     24
+    ]
+   },
+   "monsters": [
+    {
+     "id": 171,
+     "name": "Dragodinde amande sauvage"
+    },
+    {
+     "id": 200,
+     "name": "Dragodinde rousse sauvage"
+    }
+   ],
+   "levels": [
+    62,
+    70
+   ],
+   "note": "listée par DofusDB, probablement un reste d'avant la 3.5",
+   "sources": [
+    "dofusdb"
+   ],
+   "confidence": "low"
+  },
+  {
+   "family": "Muldo",
+   "subareaId": 1119,
+   "subarea": "Bassin des Muldos",
+   "area": "Baie de Sufokia",
+   "maps": 37,
+   "xRange": [
+    16,
+    22
+   ],
+   "yRange": [
+    18,
+    23
+   ],
+   "nearestZaap": {
+    "name": "Rivage sufokien",
+    "coords": [
+     10,
+     22
+    ]
+   },
+   "access": [
+    "barque du Territoire des Bandits [15,19] puis corde",
+    "échelle face au sous-marin de Sufokia [22,19]",
+    "scaphandre de l'atelier des éleveurs de Sufokia [19,23]"
+   ],
+   "monsters": [
+    {
+     "id": 4438,
+     "name": "Muldo doré sauvage"
+    },
+    {
+     "id": 4437,
+     "name": "Muldo pourpre sauvage"
+    },
+    {
+     "id": 4434,
+     "name": "Muldo indigo sauvage"
+    },
+    {
+     "id": 4435,
+     "name": "Muldo ébène sauvage"
+    },
+    {
+     "id": 4436,
+     "name": "Muldo orchidée sauvage"
+    }
+   ],
+   "levels": [
+    62,
+    70
+   ],
+   "hp": [
+    820,
+    1000
+   ],
+   "sources": [
+    "dofusdb",
+    "dpln_species"
+   ],
+   "confidence": "high",
+   "alternativeZaap": {
+    "name": "Sufokia",
+    "coords": [
+     13,
+     26
+    ],
+    "note": "distance comparable selon l'accès (scaphandre de l'atelier [19,23])",
+    "source": "dofusdb (hints)"
+   },
+   "mapsNote": "dont 5 cartes sans coordonnées (intérieurs) dans DofusDB map-positions"
+  },
+  {
+   "family": "Volkorne",
+   "subareaId": 886,
+   "subarea": "Haras de Brâkmar",
+   "area": "Brâkmar",
+   "maps": 45,
+   "xRange": [
+    -33,
+    -23
+   ],
+   "yRange": [
+    39,
+    45
+   ],
+   "nearestZaap": {
+    "name": "La Cuirasse",
+    "coords": [
+     -26,
+     37
+    ]
+   },
+   "access": [
+    "sortie sud de Brâkmar [-25,40]"
+   ],
+   "monsters": [
+    {
+     "id": 5308,
+     "name": "Volkorne orchidée sauvage"
+    },
+    {
+     "id": 5309,
+     "name": "Volkorne indigo sauvage"
+    },
+    {
+     "id": 5311,
+     "name": "Volkorne ébène sauvage"
+    },
+    {
+     "id": 5313,
+     "name": "Volkorne pourpre sauvage"
+    }
+   ],
+   "levels": [
+    62,
+    70
+   ],
+   "hp": [
+    820,
+    1000
+   ],
+   "sources": [
+    "dofusdb",
+    "dpln_species"
+   ],
+   "confidence": "high",
+   "mapsNote": "dont 5 cartes sans coordonnées (intérieurs) dans DofusDB map-positions"
+  }
+ ],
+ "nets": [
+  {
+   "name": "Filet de capture universel",
+   "jobLevel": 1,
+   "family": null,
+   "effect": "1 cible",
+   "mountsPerCast": [
+    1,
+    1
+   ],
+   "ingredients": "10 Bois de Frêne + 10 Fer",
+   "craftXpRatioPct": 50,
+   "indicativeCost": {
+    "kamas": 2000,
+    "date": "2026-04",
+    "source": "yt_solomonk_muldo_kamas",
+    "confidence": "low"
+   }
+  },
+  {
+   "name": "Filet multiplicateur de [type]",
+   "jobLevel": 100,
+   "effect": "1 cible ×2 (couleur identique, sexe non garanti)",
+   "mountsPerCast": [
+    2,
+    2
+   ],
+   "ingredients": "1 de chaque ressource de couleur + Bave/Griffe/Sueur + 5 Bois d'If + 5 Seigle/Viande Exsudative/Anguille",
+   "indicativeCost": {
+    "kamas": 1000,
+    "date": "2026-09",
+    "note": "ressources de monture droppées",
+    "source": "yt_solomonk_volk10000",
+    "confidence": "low"
+   }
+  },
+  {
+   "name": "Filet à [type] renforcé",
+   "jobLevel": 150,
+   "effect": "toutes les montures dans un cercle de rayon 3",
+   "mountsPerCast": [
+    1,
+    8
+   ],
+   "typicalMountsPerCast": 6,
+   "indicativeCost": {
+    "kamas": 2100,
+    "date": "2026-09",
+    "source": "yt_solomonk_volk10000",
+    "confidence": "low"
+   }
+  },
+  {
+   "name": "Filet multiplicateur de [type] renforcé",
+   "jobLevel": 200,
+   "effect": "zone de rayon 3 et ×2",
+   "mountsPerCast": [
+    2,
+    16
+   ],
+   "typicalMountsPerCast": 12
+  }
+ ],
+ "jobLevelingPlan": [
+  {
+   "from": 1,
+   "to": 5,
+   "xpNeeded": 200,
+   "recipes": [
+    "Filet de capture universel (niv. 1, 10 XP)"
+   ],
+   "craftsCumulative": 26,
+   "resourcesCumulative": 520,
+   "unlocks": [
+    "Extraits (niv. 5)"
+   ],
+   "alternatives": "7 captures"
+  },
+  {
+   "from": 5,
+   "to": 15,
+   "xpNeeded": 1900,
+   "recipes": [
+    "Minuscule Extrait (niv. 5)"
+   ],
+   "craftsCumulative": 790,
+   "resourcesCumulative": 2048,
+   "unlocks": [
+    "Petit Extrait (15)"
+   ],
+   "alternatives": "~63 captures ou 32 accouplements G1×G1"
+  },
+  {
+   "from": 15,
+   "to": 40,
+   "xpNeeded": 13500,
+   "recipes": [
+    "Petit Extrait (15)",
+    "Extrait (25)",
+    "Grand Extrait (35)"
+   ],
+   "craftsCumulative": 1739,
+   "resourcesCumulative": 3946,
+   "unlocks": [
+    "2e enclos (40)"
+   ],
+   "alternatives": "450 captures / 56 accouplements G4×G4"
+  },
+  {
+   "from": 40,
+   "to": 55,
+   "xpNeeded": 14100,
+   "recipes": [
+    "Gigantesque Extrait (45)"
+   ],
+   "craftsCumulative": 2317,
+   "resourcesCumulative": 5102,
+   "unlocks": [
+    "Philtres – palier 2 (55)"
+   ]
+  },
+  {
+   "from": 55,
+   "to": 80,
+   "xpNeeded": 33500,
+   "recipes": [
+    "Minuscule/Petit/Philtre (55–75)"
+   ],
+   "craftsCumulative": 3122,
+   "resourcesCumulative": 7517,
+   "unlocks": [
+    "3e enclos (80)"
+   ]
+  },
+  {
+   "from": 80,
+   "to": 100,
+   "xpNeeded": 35800,
+   "recipes": [
+    "Grand/Gigantesque Philtre (85–95)"
+   ],
+   "craftsCumulative": 3782,
+   "resourcesCumulative": 9497,
+   "unlocks": [
+    "Filet multiplicateur (100)"
+   ]
+  },
+  {
+   "from": 100,
+   "to": 120,
+   "xpNeeded": 43800,
+   "recipes": [
+    "Minuscule/Petite Potion (105–115)"
+   ],
+   "craftsCumulative": 4434,
+   "resourcesCumulative": 11903,
+   "unlocks": [
+    "4e enclos (120)",
+    "Potions – palier 3 (105)"
+   ]
+  },
+  {
+   "from": 120,
+   "to": 150,
+   "xpNeeded": 80700,
+   "recipes": [
+    "Potion/Grande/Gigantesque Potion (125–145)"
+   ],
+   "craftsCumulative": 5402,
+   "resourcesCumulative": 15775,
+   "unlocks": [
+    "Filet renforcé (150)"
+   ]
+  },
+  {
+   "from": 150,
+   "to": 160,
+   "xpNeeded": 30900,
+   "recipes": [
+    "Gigantesque Potion (145)",
+    "Minuscule Élixir (155)"
+   ],
+   "craftsCumulative": 5721,
+   "resourcesCumulative": 17175,
+   "unlocks": [
+    "Élixirs – palier 4 (155)",
+    "5e enclos (160)"
+   ]
+  },
+  {
+   "from": 160,
+   "to": 200,
+   "xpNeeded": 143600,
+   "recipes": [
+    "Élixirs (165–195)"
+   ],
+   "craftsCumulative": 6993,
+   "resourcesCumulative": 23535,
+   "unlocks": [
+    "6e enclos (200)",
+    "Filet multiplicateur renforcé (200)"
+   ]
+  }
+ ],
+ "jobLevelingNotes": {
+  "method": "Craft de la taille de carburant la plus récemment débloquée (une tous les 10 niveaux) ; formule d'XP du client (ratio 5 %) ; table DPLN 10·L·(L−1). Pack Tenmalexis/dafous vérifié : 26 filets + 6 996 carburants (23 106 + 520 = 23 626 ressources) → ≈ 398 380 XP = niveau 200, mais il manque 1 XP au passage 74 → 75 : prévoir 1 Petit Philtre de plus. Table XP métier = 10·L·(L−1) sauf niveau 3 (40 au lieu de 60).",
+  "xpSources": {
+   "craft": "L XP au niveau L (ratio 5 %), ≈ 47 % à L+9, ≈ 44 % à L+10",
+   "mating_3_6": "30 × (gen A + gen B) × bébés",
+   "capture": "30 par monture"
+  },
+  "chainXp": "Une chaîne jusqu'à une G9 (niveau 40) rapporte ~35 000–105 000 XP d'accouplement et 3 000–6 000 XP de capture (simulation).",
+  "variants": {
+   "rush": "acheter le pack complet (~23 600 ressources) ; ou version éco : 768 × le Minuscule Extrait le moins cher pour 1→15 puis la recette la moins chère de chaque palier",
+   "progressive": "captures + accouplements au début, crafts des carburants réellement consommés au palier débloqué, Optimakinas crafties à leur niveau"
+  },
+  "fuelMixDuringLeveling": {
+   "foudroyeur": 0.24,
+   "abreuvoir": 0.24,
+   "dragofesse": 0.24,
+   "mangeoire": 0.24,
+   "caresseur": 0.02,
+   "baffeur": 0.02
+  },
+  "almanax": [
+   "22/10 +50 % XP Éleveurs",
+   "01/05 +50 % XP tous métiers",
+   "10/05 −15 % d'ingrédients",
+   "10/08 25 % de double craft"
+  ],
+  "milestones": [
+   {
+    "level": 40,
+    "why": "2e enclos"
+   },
+   {
+    "level": 80,
+    "why": "3e enclos"
+   },
+   {
+    "level": 100,
+    "why": "filet multiplicateur"
+   },
+   {
+    "level": 120,
+    "why": "4e enclos (objectif minimal DPLN)"
+   },
+   {
+    "level": 150,
+    "why": "filet renforcé"
+   },
+   {
+    "level": 160,
+    "why": "5e enclos"
+   },
+   {
+    "level": 200,
+    "why": "6e enclos + filet multiplicateur renforcé"
+   }
+  ],
+  "sources": [
+   "dpln_guide",
+   "crafts",
+   "mechanics",
+   "yt_tenmalexis_pack",
+   "dafous",
+   "sim"
+  ],
+  "confidence": "high",
+  "fuelMixNote": "Par lot de 10 : 20 000 points par jauge de statistique + ≈ 20 000 de Mangeoire (niveau 40) + ≈ 2 500–3 000 de sérénité au total (Caresseur + Baffeur) ⇒ ≈ 24 % / 24 % / 24 % / 24 % / ≈ 1,5–2 % / ≈ 1,5–2 % (corrigé à la vérification : l'ancienne répartition 23/4 ne correspondait pas à l'hypothèse de 2 500 points)."
+ },
+ "mountFateGrid": [
+  {
+   "order": 1,
+   "if": "Féconde et utile à un croisement du plan, ou partenaire rare",
+   "do": "keep",
+   "label": "Garder"
+  },
+  {
+   "order": 2,
+   "if": "Féconde condamnée et une féconde de sexe opposé de même espèce l'est aussi",
+   "do": "mate_then_process",
+   "label": "Accoupler entre elles puis traiter les stériles"
+  },
+  {
+   "order": 3,
+   "if": "Stérile avec une autre stérile de même génération",
+   "do": "clone",
+   "label": "Cloner (même couleur d'abord)"
+  },
+  {
+   "order": 4,
+   "if": "Stérile isolée sans usage, génération ≥ 2",
+   "do": "max(sell, extract, break)",
+   "label": "Vendre / extraire / briser selon les prix"
+  },
+  {
+   "order": 5,
+   "if": "G10 dont le succès est validé",
+   "do": "last_g10_mating_then_sell_or_extract",
+   "label": "Dernier G10×G10 puis sortir"
+  },
+  {
+   "order": 6,
+   "if": "Surplus sans partenaire (ratio ♂/♀ bloquant)",
+   "do": "bank_or_sell",
+   "label": "Banque si réutilisée plus tard, sinon vente/extraction"
+  },
+  {
+   "order": 7,
+   "if": "Sénile (avant 3.5)",
+   "do": "equip_or_level_or_extract_1",
+   "label": "Équiper, monter, ou extraire (1 ressource)"
+  },
+  {
+   "order": 8,
+   "if": "Muldo/Volkorne G1 en surplus",
+   "do": "level_40_60_then_break",
+   "label": "Monter niv. 40–60 puis briser"
+  }
+ ],
+ "formulas": {
+  "mountPointCost": "prix_carburant / durabilité / montures_éligibles (≤ 10)",
+  "fecundityCostPerMount": "(60000 + points_sérénité_du_lot) / taille_lot × prix_point_moyen",
+  "xpCostToLevel": "max(0, XP(L) − XP_actuelle) / taille_lot × prix_point_mangeoire",
+  "captureCostPerMount": "prix_filet / montures_par_lancer − valeur_des_drops",
+  "targetChance": "min(1, 0.30 + 0.0015 × (niv_A + niv_B) + opti(0.10 | 0.20 en 3.7) + takeza(0.20)) ; 1 si aucune autre issue",
+  "expectedCostPerTargetBaby": "(C_A + C_B + makina − R) / p ; R = (1 − p) × valeur_moyenne_bébé_raté + valeur des 2 stériles",
+  "optimakinaWorthIt": "prix_optimakina < C_eff × Δ / p",
+  "levelWorthIt": "coût_XP(ΔL pour les 2 parents) < C_eff × 0.003 × ΔL / p",
+  "genetonValue": "max sur la boutique d'Eugène Éton (prix_HDV_objet / coût_en_génétons), objets échangeables seulement",
+  "sterileValue": "max(prix_vente, génération × prix_ressource_extraction, valeur_clone − coût_refécondation, valeur_brisage)",
+  "jobCraftXp": "floor(20·L / ((J−L)^1.1/10 + 1) × ratio/100) ; ratio 5 (carburants, makinas, filets spécifiques), 50 (filet universel) ; 0 si J − 100 > L",
+  "jobMatingXp": "k × (gen_A + gen_B) × nb_bébés ; k = 30 (3.6+), 10 (3.5)",
+  "jobCaptureXp": "30 par monture capturée",
+  "serenityEta": "simulation tick par tick : chaque tick de 10 s déplace la sérénité de 10/20/30/40 selon le palier courant de la jauge"
+ },
+ "genetonShop": [
+  {
+   "item": "Petits Parchemins de caractéristique (×6 types)",
+   "cost": 10
+  },
+  {
+   "item": "Aliton",
+   "cost": 10,
+   "exchangeable": false
+  },
+  {
+   "item": "Parchemins de caractéristique",
+   "cost": 50
+  },
+  {
+   "item": "Grands Parchemins de caractéristique",
+   "cost": 100
+  },
+  {
+   "item": "Tourmaline",
+   "cost": 130,
+   "exchangeable": true
+  },
+  {
+   "item": "Puissants Parchemins de caractéristique",
+   "cost": 160,
+   "exchangeable": true,
+   "observedPrice": [
+    {
+     "kamas": 20000,
+     "date": "2026-03",
+     "note": "lancement 3.5"
+    },
+    {
+     "kamas": 60000,
+     "date": "2026-09",
+     "note": "stable depuis plusieurs mois, pic 80–90 k",
+     "source": "yt_solomonk_volk10000"
+    }
+   ]
+  }
+ ],
+ "communityPricePoints": [
+  {
+   "what": "Rune Ga PM",
+   "kamas": 13400,
+   "date": "2026-04",
+   "source": "yt_solomonk_muldo_kamas",
+   "confidence": "low"
+  },
+  {
+   "what": "Rune Ga PA",
+   "kamas": 33000,
+   "date": "2026-09",
+   "source": "yt_solomonk_volk10000",
+   "confidence": "low"
+  },
+  {
+   "what": "Extrait de Mangeoire (3 000 points)",
+   "kamas": 900,
+   "date": "2026-04",
+   "source": "yt_solomonk_muldo_kamas",
+   "confidence": "low"
+  },
+  {
+   "what": "Extrait de Mangeoire (3 000 points)",
+   "kamas": 1000,
+   "date": "2026-05",
+   "source": "yt_solomonk_muldo1000",
+   "confidence": "low"
+  },
+  {
+   "what": "Filet de capture universel",
+   "kamas": 2000,
+   "date": "2026-04",
+   "source": "yt_solomonk_muldo_kamas",
+   "confidence": "low"
+  },
+  {
+   "what": "Filet multiplicateur (ressources de monture droppées)",
+   "kamas": 1000,
+   "date": "2026-09",
+   "source": "yt_solomonk_volk10000",
+   "confidence": "low"
+  },
+  {
+   "what": "Filet renforcé",
+   "kamas": 2100,
+   "date": "2026-09",
+   "source": "yt_solomonk_volk10000",
+   "confidence": "low"
+  },
+  {
+   "what": "Muldo G10 avec Aigue-marine (« Marine » dans la transcription ; « un muldo avec Marine niveau 200 ») 1 PM niveau 200",
+   "kamas": 15000000,
+   "date": "2026-04",
+   "source": "yt_solomonk_1mois",
+   "confidence": "low",
+   "note": "Aigue-marine = Muldo G9 (tree-muldo.json) ; la couleur exacte du bicolore n'est pas citée"
+  },
+  {
+   "what": "Puissant Parchemin de caractéristique",
+   "kamas": 60000,
+   "date": "2026-09",
+   "source": "yt_solomonk_volk10000",
+   "confidence": "low"
+  },
+  {
+   "what": "Morpion de Truchideur (ingrédient de potion de Mangeoire)",
+   "kamas": 6800,
+   "date": "2026-03",
+   "source": "yt_solomonk_calc",
+   "confidence": "low"
+  },
+  {
+   "what": "Marge hebdomadaire d'un éleveur (17–23/03/2026)",
+   "kamas": [
+    520000,
+    1240000
+   ],
+   "date": "2026-03",
+   "source": "dafous",
+   "confidence": "low"
+  },
+  {
+   "what": "Récolte d'un cycle (étable de 250 Muldos)",
+   "kamas": 3000000,
+   "date": "2026",
+   "source": "dragodinde_fr",
+   "confidence": "low"
+  },
+  {
+   "what": "Brisage de 10 000 Volkornes niv. ~53 : coût total (filets + Extraits de Mangeoire)",
+   "kamas": 17866700,
+   "perMountKamas": 1787,
+   "valueObtainedKamas": 121684259,
+   "ratio": 6.8,
+   "date": "2026-09",
+   "source": "yt_solomonk_volk10000",
+   "confidence": "low",
+   "note": "≈ 13 M d'Extraits de Mangeoire + ≈ 3,25 M de filets multiplicateurs + ≈ 1,2 M de filets renforcés ; « presque ×7 »"
+  },
+  {
+   "what": "Brisage de 1 020 Muldos (surtout niv. 53) : coût total",
+   "kamas": 3000000,
+   "valueObtainedKamas": 12000000,
+   "ratio": 4,
+   "date": "2026-05",
+   "source": "yt_solomonk_muldo1000",
+   "confidence": "low"
+  }
+ ],
+ "dailyRoutine": {
+  "twoSessions": [
+   {
+    "when": "matin",
+    "steps": [
+     "accouplements (par génération, makinas)",
+     "clonages",
+     "reposer bébés/clones/captures par sérénité",
+     "traversées de 0 (Caresseur/Baffeur + Mangeoire) avec alarme",
+     "3e statistique + Mangeoire, palier 2–3"
+    ]
+   },
+   {
+    "when": "midi (option)",
+    "steps": [
+     "couper les jauges de sérénité arrivées (à distance)",
+     "recharger paliers 2–3",
+     "captures pour les places libres"
+    ]
+   },
+   {
+    "when": "soir",
+    "steps": [
+     "accouplements des lots finis + clonages",
+     "nouveaux lots en phase double",
+     "jauges de statistiques à 20 000–40 000 en Extraits (palier 1)",
+     "aucune jauge de sérénité active la nuit"
+    ]
+   }
+  ],
+  "weekly": [
+   "audit carburants et filets",
+   "audit lignées (goulots, sexes, stériles isolées, G10 à sortir)",
+   "capture ciblée",
+   "ventes (G8–G10, ressources d'extraction, runes)",
+   "planning almanax"
+  ],
+  "sources": [
+   "dafous",
+   "dragodinde_fr",
+   "dpln_guide"
+  ]
+ },
+ "almanaxCalendar": [
+  {
+   "date": "2026-10-10",
+   "name": "Benjo – Montures sages",
+   "effect": "bébés Sage",
+   "use": "accouplements dont on garde/vend les bébés"
+  },
+  {
+   "date": "2026-10-12",
+   "name": "Takeza – Génération montante",
+   "effect": "+20 % génération cible",
+   "use": "accouplements à fort enjeu"
+  },
+  {
+   "date": "2026-10-22",
+   "name": "Expérience des métiers",
+   "effect": "+50 % XP Éleveurs",
+   "use": "crafts de montée"
+  },
+  {
+   "date": "2026-11-10",
+   "name": "Otoul – Montures précoces",
+   "effect": "bébés Précoce"
+  },
+  {
+   "date": "2026-12-10",
+   "name": "Foya – Efficacité des enclos",
+   "effect": "Dragofesse ×2",
+   "use": "phases d'amour"
+  },
+  {
+   "date": "2027-01-10",
+   "name": "Trôma",
+   "effect": "Abreuvoir ×2",
+   "use": "phases de maturité"
+  },
+  {
+   "date": "2027-02-10",
+   "name": "Meash",
+   "effect": "bébés Endurante"
+  },
+  {
+   "date": "2027-03-10",
+   "name": "Inndo",
+   "effect": "Foudroyeur ×2",
+   "use": "phases d'endurance"
+  },
+  {
+   "date": "2027-04-01",
+   "name": "Créatures marines",
+   "effect": "+50 % XP et butin (créatures marines)",
+   "use": "captures de Muldos (« muldos sauvages » cités dans la description DofusDB)",
+   "source": "dofusdb",
+   "confidence": "high"
+  },
+  {
+   "date": "2027-04-10",
+   "name": "Nunu",
+   "effect": "Baffeur ×2"
+  },
+  {
+   "date": "2027-05-01",
+   "name": "Fabrique Féérique",
+   "effect": "+50 % XP tous métiers",
+   "use": "crafts"
+  },
+  {
+   "date": "2027-05-10",
+   "name": "Loumi",
+   "effect": "−15 % d'ingrédients (Éleveurs)",
+   "use": "crafts chers"
+  },
+  {
+   "date": "2027-06-10",
+   "name": "Jibejan",
+   "effect": "Mangeoire ×2",
+   "use": "XP des montures"
+  },
+  {
+   "date": "2027-07-10",
+   "name": "Jihelair",
+   "effect": "bébés Amoureuse"
+  },
+  {
+   "date": "2027-08-10",
+   "name": "Rigamix",
+   "effect": "25 % de chances de double craft (Éleveurs)",
+   "use": "makinas, carburants chers"
+  },
+  {
+   "date": "2027-09-10",
+   "name": "Mau",
+   "effect": "Caresseur ×2"
+  },
+  {
+   "date": "2027-09-11",
+   "name": "Points d'expérience",
+   "effect": "+75 % XP au Territoire des Dragodindes Sauvages",
+   "use": "captures de Dragodindes"
+  },
+  {
+   "date": "2027-10-11",
+   "name": "Takeza",
+   "effect": "+20 % génération cible"
+  },
+  {
+   "date": "2027-10-22",
+   "name": "Expérience des métiers",
+   "effect": "+50 % XP Éleveurs"
+  }
+ ],
+ "version37": {
+  "status": "bêta depuis le 2026-09-17 (client 3.7.3.3) ; date live inconnue (probablement automne 2026, la 3.8 étant annoncée pour nov.–déc.)",
+  "confidenceDate": "low",
+  "changes": [
+   "carburants ×2 (durabilité)",
+   "jauges ×2 (80k/140k/180k/200k, ticks inchangés : palier 1 = 22 h 13)",
+   "génétons ≈ ×2 : barème par parent 2/4/8/15/30/60/120/250/500 de G1 à G9 (client 3.7.3.3 ; le barème 3.6 est décalé d'une génération, donc ×1,875 à ×2,08 selon la génération)",
+   "Optimakina +20 %",
+   "Animakina = choix du sexe (stocks convertis)",
+   "capacités aléatoires sans makina : Reproductrice 3 %, Sage 6 %, Précoce/Amoureuse/Endurante 8 %",
+   "étable 500",
+   "clone conserve la sérénité",
+   "recettes de makinas revues",
+   "PNJ de guilde : ressources d'élevage 15 → 30",
+   "fenêtre de confirmation au remplissage",
+   "relance rapide accouplement/clonage, transfert auto entre enclos, filtres de fertilité combinables"
+  ],
+  "strategyBefore37": [
+   "garder les Animakinas",
+   "reporter les gros accouplements G8/G9 si la sortie est proche (génétons ×2)",
+   "les stocks de carburants devraient doubler (non confirmé)"
+  ],
+  "sources": [
+   "devblog37",
+   "mechanics",
+   "crafts",
+   "guidactik"
+  ],
+  "tokensPerParentByGeneration": {
+   "1": 2,
+   "2": 4,
+   "3": 8,
+   "4": 15,
+   "5": 30,
+   "6": 60,
+   "7": 120,
+   "8": 250,
+   "9": 500
+  }
+ },
+ "simulation": {
+  "method": "Monte-Carlo, 40 tirages (5 pour G7 sans clonage), politique pilotée par la demande, clonage systématique (sauf mention), 1 cycle = 1/2 journée = 1 lot fécondé, captures limitées aux places libres ; modèle de probabilités validé (mechanics).",
+  "caveats": [
+   "joueur parfait (2 sessions/jour) : multiplier les durées par ~1,5–2",
+   "pas de porteurs ni d'achats/ventes",
+   "XP au-delà du niveau 40 à 3 XP/s en moyenne, dans les places d'enclos",
+   "niveau 200 : chiffres de captures gonflés par la politique de remplissage des places"
+  ],
+  "scenarioKeys": {
+   "L1_noopti_clone": "niveau 1, sans makina, clonage",
+   "L1_noopti_noclone": "niveau 1, sans clonage",
+   "L40_noopti_clone": "niveau 40",
+   "L40_opti_clone": "niveau 40 + Optimakina partout",
+   "L60_noopti_clone": "niveau 60",
+   "L40_noopti_clone_20slots": "niveau 40, 2 enclos",
+   "L100_noopti_clone": "niveau 100",
+   "L100_opti_clone": "niveau 100 + Optimakina",
+   "L200_opti_clone": "niveau 200 + Optimakina",
+   "L40_opti20_clone_v37": "3.7 : niveau 40 + Optimakina 20 % partout",
+   "L1_noopti": "niveau 1",
+   "L40_noopti": "niveau 40",
+   "L40_opti_from_G6": "niveau 40, Optimakina dès la cible G6",
+   "L40_opti_all": "niveau 40, Optimakina partout",
+   "mixed_L40_60_100_opti_from_G8": "niveaux 40/60/100 selon la génération, Optimakina dès G8",
+   "v37_L40_opti20_from_G6": "3.7 : niveau 40, Optimakina 20 % dès G6"
+  },
+  "grid1": {
+   "Dragodinde": {
+    "Dragodinde Ébène": {
+     "L1_noopti_clone": {
+      "captures": {
+       "mean": 19.5,
+       "p90": 25
+      },
+      "matings": {
+       "mean": 32.2,
+       "p90": 53
+      },
+      "clones": {
+       "mean": 31.0,
+       "p90": 52
+      },
+      "raises": {
+       "mean": 80.2,
+       "p90": 131
+      },
+      "cycles": {
+       "mean": 15.9,
+       "p90": 32
+      },
+      "genetons": {
+       "mean": 19.9,
+       "p90": 30
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L1_noopti_noclone": {
+      "captures": {
+       "mean": 76.3,
+       "p90": 89
+      },
+      "matings": {
+       "mean": 34.2,
+       "p90": 53
+      },
+      "clones": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "raises": {
+       "mean": 107.9,
+       "p90": 136
+      },
+      "cycles": {
+       "mean": 5.5,
+       "p90": 10
+      },
+      "genetons": {
+       "mean": 23.0,
+       "p90": 32
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone": {
+      "captures": {
+       "mean": 12.7,
+       "p90": 17
+      },
+      "matings": {
+       "mean": 14.4,
+       "p90": 22
+      },
+      "clones": {
+       "mean": 13.3,
+       "p90": 21
+      },
+      "raises": {
+       "mean": 38.8,
+       "p90": 55
+      },
+      "cycles": {
+       "mean": 12.0,
+       "p90": 21
+      },
+      "genetons": {
+       "mean": 14.4,
+       "p90": 20
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_opti_clone": {
+      "captures": {
+       "mean": 12.7,
+       "p90": 20
+      },
+      "matings": {
+       "mean": 12.9,
+       "p90": 24
+      },
+      "clones": {
+       "mean": 11.8,
+       "p90": 23
+      },
+      "raises": {
+       "mean": 35.8,
+       "p90": 62
+      },
+      "cycles": {
+       "mean": 12.9,
+       "p90": 21
+      },
+      "genetons": {
+       "mean": 15.1,
+       "p90": 22
+      },
+      "optimakinas": {
+       "mean": 12.9,
+       "p90": 24
+      }
+     },
+     "L60_noopti_clone": {
+      "captures": {
+       "mean": 12.4,
+       "p90": 19
+      },
+      "matings": {
+       "mean": 13.8,
+       "p90": 23
+      },
+      "clones": {
+       "mean": 12.8,
+       "p90": 22
+      },
+      "raises": {
+       "mean": 37.3,
+       "p90": 55
+      },
+      "cycles": {
+       "mean": 18.2,
+       "p90": 35
+      },
+      "genetons": {
+       "mean": 15.2,
+       "p90": 24
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone_20slots": {
+      "captures": {
+       "mean": 12.7,
+       "p90": 17
+      },
+      "matings": {
+       "mean": 14.4,
+       "p90": 22
+      },
+      "clones": {
+       "mean": 13.3,
+       "p90": 21
+      },
+      "raises": {
+       "mean": 38.8,
+       "p90": 55
+      },
+      "cycles": {
+       "mean": 12.0,
+       "p90": 21
+      },
+      "genetons": {
+       "mean": 14.4,
+       "p90": 20
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_noopti_clone": {
+      "captures": {
+       "mean": 10.4,
+       "p90": 14
+      },
+      "matings": {
+       "mean": 10.6,
+       "p90": 18
+      },
+      "clones": {
+       "mean": 9.5,
+       "p90": 17
+      },
+      "raises": {
+       "mean": 28.9,
+       "p90": 45
+      },
+      "cycles": {
+       "mean": 24.3,
+       "p90": 34
+      },
+      "genetons": {
+       "mean": 14.2,
+       "p90": 20
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_opti_clone": {
+      "captures": {
+       "mean": 9.9,
+       "p90": 15
+      },
+      "matings": {
+       "mean": 8.9,
+       "p90": 13
+      },
+      "clones": {
+       "mean": 7.8,
+       "p90": 12
+      },
+      "raises": {
+       "mean": 25.3,
+       "p90": 37
+      },
+      "cycles": {
+       "mean": 22.2,
+       "p90": 37
+      },
+      "genetons": {
+       "mean": 14.1,
+       "p90": 22
+      },
+      "optimakinas": {
+       "mean": 8.9,
+       "p90": 13
+      }
+     },
+     "L200_opti_clone": {
+      "captures": {
+       "mean": 8.3,
+       "p90": 12
+      },
+      "matings": {
+       "mean": 5.1,
+       "p90": 7
+      },
+      "clones": {
+       "mean": 4.1,
+       "p90": 6
+      },
+      "raises": {
+       "mean": 16.6,
+       "p90": 25
+      },
+      "cycles": {
+       "mean": 39.4,
+       "p90": 58
+      },
+      "genetons": {
+       "mean": 12.2,
+       "p90": 16
+      },
+      "optimakinas": {
+       "mean": 5.1,
+       "p90": 7
+      }
+     },
+     "L40_opti20_clone_v37": {
+      "captures": {
+       "mean": 10.8,
+       "p90": 19
+      },
+      "matings": {
+       "mean": 10.3,
+       "p90": 20
+      },
+      "clones": {
+       "mean": 9.2,
+       "p90": 19
+      },
+      "raises": {
+       "mean": 28.7,
+       "p90": 53
+      },
+      "cycles": {
+       "mean": 12.2,
+       "p90": 21
+      },
+      "genetons": {
+       "mean": 14.2,
+       "p90": 22
+      },
+      "optimakinas": {
+       "mean": 10.3,
+       "p90": 20
+      }
+     }
+    },
+    "Dragodinde Pourpre": {
+     "L1_noopti_clone": {
+      "captures": {
+       "mean": 83.2,
+       "p90": 91
+      },
+      "matings": {
+       "mean": 169.8,
+       "p90": 198
+      },
+      "clones": {
+       "mean": 168.0,
+       "p90": 197
+      },
+      "raises": {
+       "mean": 419.1,
+       "p90": 476
+      },
+      "cycles": {
+       "mean": 16.3,
+       "p90": 28
+      },
+      "genetons": {
+       "mean": 147.2,
+       "p90": 182
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L1_noopti_noclone": {
+      "captures": {
+       "mean": 735.3,
+       "p90": 1147
+      },
+      "matings": {
+       "mean": 603.5,
+       "p90": 1015
+      },
+      "clones": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "raises": {
+       "mean": 1337.1,
+       "p90": 2160
+      },
+      "cycles": {
+       "mean": 24.1,
+       "p90": 39
+      },
+      "genetons": {
+       "mean": 422.6,
+       "p90": 680
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone": {
+      "captures": {
+       "mean": 38.0,
+       "p90": 44
+      },
+      "matings": {
+       "mean": 78.4,
+       "p90": 127
+      },
+      "clones": {
+       "mean": 76.8,
+       "p90": 126
+      },
+      "raises": {
+       "mean": 191.4,
+       "p90": 297
+      },
+      "cycles": {
+       "mean": 21.5,
+       "p90": 38
+      },
+      "genetons": {
+       "mean": 98.2,
+       "p90": 132
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_opti_clone": {
+      "captures": {
+       "mean": 27.8,
+       "p90": 41
+      },
+      "matings": {
+       "mean": 52.9,
+       "p90": 80
+      },
+      "clones": {
+       "mean": 51.5,
+       "p90": 79
+      },
+      "raises": {
+       "mean": 130.8,
+       "p90": 205
+      },
+      "cycles": {
+       "mean": 26.5,
+       "p90": 43
+      },
+      "genetons": {
+       "mean": 85.0,
+       "p90": 120
+      },
+      "optimakinas": {
+       "mean": 52.9,
+       "p90": 80
+      }
+     },
+     "L60_noopti_clone": {
+      "captures": {
+       "mean": 28.0,
+       "p90": 39
+      },
+      "matings": {
+       "mean": 59.6,
+       "p90": 88
+      },
+      "clones": {
+       "mean": 58.2,
+       "p90": 87
+      },
+      "raises": {
+       "mean": 144.4,
+       "p90": 213
+      },
+      "cycles": {
+       "mean": 34.5,
+       "p90": 61
+      },
+      "genetons": {
+       "mean": 86.4,
+       "p90": 144
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone_20slots": {
+      "captures": {
+       "mean": 32.3,
+       "p90": 38
+      },
+      "matings": {
+       "mean": 73.2,
+       "p90": 107
+      },
+      "clones": {
+       "mean": 71.9,
+       "p90": 106
+      },
+      "raises": {
+       "mean": 176.1,
+       "p90": 247
+      },
+      "cycles": {
+       "mean": 22.5,
+       "p90": 37
+      },
+      "genetons": {
+       "mean": 91.6,
+       "p90": 136
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_noopti_clone": {
+      "captures": {
+       "mean": 21.7,
+       "p90": 32
+      },
+      "matings": {
+       "mean": 40.5,
+       "p90": 65
+      },
+      "clones": {
+       "mean": 39.2,
+       "p90": 64
+      },
+      "raises": {
+       "mean": 100.2,
+       "p90": 159
+      },
+      "cycles": {
+       "mean": 55.4,
+       "p90": 94
+      },
+      "genetons": {
+       "mean": 81.0,
+       "p90": 126
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_opti_clone": {
+      "captures": {
+       "mean": 18.9,
+       "p90": 28
+      },
+      "matings": {
+       "mean": 31.6,
+       "p90": 48
+      },
+      "clones": {
+       "mean": 30.3,
+       "p90": 47
+      },
+      "raises": {
+       "mean": 79.6,
+       "p90": 121
+      },
+      "cycles": {
+       "mean": 52.8,
+       "p90": 88
+      },
+      "genetons": {
+       "mean": 72.4,
+       "p90": 104
+      },
+      "optimakinas": {
+       "mean": 31.6,
+       "p90": 48
+      }
+     },
+     "L200_opti_clone": {
+      "captures": {
+       "mean": 17.2,
+       "p90": 23
+      },
+      "matings": {
+       "mean": 20.8,
+       "p90": 26
+      },
+      "clones": {
+       "mean": 19.8,
+       "p90": 25
+      },
+      "raises": {
+       "mean": 56.8,
+       "p90": 73
+      },
+      "cycles": {
+       "mean": 124.7,
+       "p90": 179
+      },
+      "genetons": {
+       "mean": 73.2,
+       "p90": 90
+      },
+      "optimakinas": {
+       "mean": 20.8,
+       "p90": 26
+      }
+     },
+     "L40_opti20_clone_v37": {
+      "captures": {
+       "mean": 20.1,
+       "p90": 29
+      },
+      "matings": {
+       "mean": 35.6,
+       "p90": 51
+      },
+      "clones": {
+       "mean": 34.2,
+       "p90": 49
+      },
+      "raises": {
+       "mean": 88.7,
+       "p90": 129
+      },
+      "cycles": {
+       "mean": 23.2,
+       "p90": 37
+      },
+      "genetons": {
+       "mean": 73.0,
+       "p90": 114
+      },
+      "optimakinas": {
+       "mean": 35.6,
+       "p90": 51
+      }
+     }
+    },
+    "Dragodinde Turquoise": {
+     "L1_noopti_clone": {
+      "captures": {
+       "mean": 183.5,
+       "p90": 228
+      },
+      "matings": {
+       "mean": 726.4,
+       "p90": 911
+      },
+      "clones": {
+       "mean": 724.1,
+       "p90": 909
+      },
+      "raises": {
+       "mean": 1627.5,
+       "p90": 2018
+      },
+      "cycles": {
+       "mean": 36.7,
+       "p90": 50
+      },
+      "genetons": {
+       "mean": 865.9,
+       "p90": 1070
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L1_noopti_noclone": {
+      "captures": {
+       "mean": 16995.2,
+       "p90": 21712
+      },
+      "matings": {
+       "mean": 15041.4,
+       "p90": 18018
+      },
+      "clones": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "raises": {
+       "mean": 32017.4,
+       "p90": 39720
+      },
+      "cycles": {
+       "mean": 544.6,
+       "p90": 663
+      },
+      "genetons": {
+       "mean": 11122.0,
+       "p90": 12969
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone": {
+      "captures": {
+       "mean": 99.3,
+       "p90": 110
+      },
+      "matings": {
+       "mean": 278.5,
+       "p90": 343
+      },
+      "clones": {
+       "mean": 276.2,
+       "p90": 338
+      },
+      "raises": {
+       "mean": 649.9,
+       "p90": 794
+      },
+      "cycles": {
+       "mean": 28.0,
+       "p90": 45
+      },
+      "genetons": {
+       "mean": 575.0,
+       "p90": 771
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_opti_clone": {
+      "captures": {
+       "mean": 66.2,
+       "p90": 80
+      },
+      "matings": {
+       "mean": 165.0,
+       "p90": 223
+      },
+      "clones": {
+       "mean": 163.0,
+       "p90": 220
+      },
+      "raises": {
+       "mean": 390.0,
+       "p90": 511
+      },
+      "cycles": {
+       "mean": 31.4,
+       "p90": 47
+      },
+      "genetons": {
+       "mean": 483.9,
+       "p90": 669
+      },
+      "optimakinas": {
+       "mean": 165.0,
+       "p90": 223
+      }
+     },
+     "L60_noopti_clone": {
+      "captures": {
+       "mean": 77.5,
+       "p90": 86
+      },
+      "matings": {
+       "mean": 195.8,
+       "p90": 278
+      },
+      "clones": {
+       "mean": 193.3,
+       "p90": 275
+      },
+      "raises": {
+       "mean": 462.7,
+       "p90": 625
+      },
+      "cycles": {
+       "mean": 46.9,
+       "p90": 67
+      },
+      "genetons": {
+       "mean": 536.1,
+       "p90": 769
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone_20slots": {
+      "captures": {
+       "mean": 65.1,
+       "p90": 81
+      },
+      "matings": {
+       "mean": 240.9,
+       "p90": 368
+      },
+      "clones": {
+       "mean": 238.7,
+       "p90": 365
+      },
+      "raises": {
+       "mean": 539.5,
+       "p90": 819
+      },
+      "cycles": {
+       "mean": 42.8,
+       "p90": 66
+      },
+      "genetons": {
+       "mean": 535.0,
+       "p90": 724
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_noopti_clone": {
+      "captures": {
+       "mean": 46.0,
+       "p90": 66
+      },
+      "matings": {
+       "mean": 125.1,
+       "p90": 189
+      },
+      "clones": {
+       "mean": 122.8,
+       "p90": 187
+      },
+      "raises": {
+       "mean": 290.5,
+       "p90": 444
+      },
+      "cycles": {
+       "mean": 76.3,
+       "p90": 114
+      },
+      "genetons": {
+       "mean": 460.2,
+       "p90": 621
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_opti_clone": {
+      "captures": {
+       "mean": 34.4,
+       "p90": 46
+      },
+      "matings": {
+       "mean": 88.2,
+       "p90": 127
+      },
+      "clones": {
+       "mean": 85.9,
+       "p90": 124
+      },
+      "raises": {
+       "mean": 205.9,
+       "p90": 289
+      },
+      "cycles": {
+       "mean": 78.2,
+       "p90": 108
+      },
+      "genetons": {
+       "mean": 431.1,
+       "p90": 612
+      },
+      "optimakinas": {
+       "mean": 88.2,
+       "p90": 127
+      }
+     },
+     "L200_opti_clone": {
+      "captures": {
+       "mean": 26.3,
+       "p90": 34
+      },
+      "matings": {
+       "mean": 51.6,
+       "p90": 70
+      },
+      "clones": {
+       "mean": 49.1,
+       "p90": 67
+      },
+      "raises": {
+       "mean": 126.0,
+       "p90": 169
+      },
+      "cycles": {
+       "mean": 200.9,
+       "p90": 281
+      },
+      "genetons": {
+       "mean": 410.1,
+       "p90": 525
+      },
+      "optimakinas": {
+       "mean": 51.6,
+       "p90": 70
+      }
+     },
+     "L40_opti20_clone_v37": {
+      "captures": {
+       "mean": 41.0,
+       "p90": 55
+      },
+      "matings": {
+       "mean": 109.8,
+       "p90": 148
+      },
+      "clones": {
+       "mean": 107.6,
+       "p90": 146
+      },
+      "raises": {
+       "mean": 255.7,
+       "p90": 347
+      },
+      "cycles": {
+       "mean": 34.2,
+       "p90": 51
+      },
+      "genetons": {
+       "mean": 417.6,
+       "p90": 519
+      },
+      "optimakinas": {
+       "mean": 109.8,
+       "p90": 148
+      }
+     }
+    },
+    "Dragodinde Émeraude": {
+     "L1_noopti_clone": {
+      "captures": {
+       "mean": 637.6,
+       "p90": 808
+      },
+      "matings": {
+       "mean": 3394.1,
+       "p90": 4081
+      },
+      "clones": {
+       "mean": 3391.7,
+       "p90": 4079
+      },
+      "raises": {
+       "mean": 7392.6,
+       "p90": 8920
+      },
+      "cycles": {
+       "mean": 138.6,
+       "p90": 173
+      },
+      "genetons": {
+       "mean": 5259.8,
+       "p90": 6192
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone": {
+      "captures": {
+       "mean": 188.1,
+       "p90": 219
+      },
+      "matings": {
+       "mean": 820.6,
+       "p90": 1022
+      },
+      "clones": {
+       "mean": 818.4,
+       "p90": 1019
+      },
+      "raises": {
+       "mean": 1813.4,
+       "p90": 2240
+      },
+      "cycles": {
+       "mean": 56.0,
+       "p90": 80
+      },
+      "genetons": {
+       "mean": 2991.4,
+       "p90": 4018
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_opti_clone": {
+      "captures": {
+       "mean": 111.3,
+       "p90": 120
+      },
+      "matings": {
+       "mean": 377.7,
+       "p90": 468
+      },
+      "clones": {
+       "mean": 375.2,
+       "p90": 465
+      },
+      "raises": {
+       "mean": 854.9,
+       "p90": 1033
+      },
+      "cycles": {
+       "mean": 40.5,
+       "p90": 58
+      },
+      "genetons": {
+       "mean": 2198.2,
+       "p90": 2971
+      },
+      "optimakinas": {
+       "mean": 377.7,
+       "p90": 468
+      }
+     },
+     "L60_noopti_clone": {
+      "captures": {
+       "mean": 143.8,
+       "p90": 162
+      },
+      "matings": {
+       "mean": 527.0,
+       "p90": 657
+      },
+      "clones": {
+       "mean": 524.5,
+       "p90": 654
+      },
+      "raises": {
+       "mean": 1184.1,
+       "p90": 1446
+      },
+      "cycles": {
+       "mean": 69.5,
+       "p90": 103
+      },
+      "genetons": {
+       "mean": 2447.5,
+       "p90": 3092
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone_20slots": {
+      "captures": {
+       "mean": 133.6,
+       "p90": 183
+      },
+      "matings": {
+       "mean": 667.0,
+       "p90": 842
+      },
+      "clones": {
+       "mean": 664.4,
+       "p90": 839
+      },
+      "raises": {
+       "mean": 1451.9,
+       "p90": 1799
+      },
+      "cycles": {
+       "mean": 86.5,
+       "p90": 115
+      },
+      "genetons": {
+       "mean": 2499.0,
+       "p90": 3177
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_noopti_clone": {
+      "captures": {
+       "mean": 87.0,
+       "p90": 104
+      },
+      "matings": {
+       "mean": 293.1,
+       "p90": 398
+      },
+      "clones": {
+       "mean": 290.5,
+       "p90": 395
+      },
+      "raises": {
+       "mean": 661.0,
+       "p90": 875
+      },
+      "cycles": {
+       "mean": 109.3,
+       "p90": 188
+      },
+      "genetons": {
+       "mean": 2292.3,
+       "p90": 3285
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_opti_clone": {
+      "captures": {
+       "mean": 63.8,
+       "p90": 87
+      },
+      "matings": {
+       "mean": 217.2,
+       "p90": 301
+      },
+      "clones": {
+       "mean": 214.7,
+       "p90": 298
+      },
+      "raises": {
+       "mean": 488.5,
+       "p90": 678
+      },
+      "cycles": {
+       "mean": 128.6,
+       "p90": 189
+      },
+      "genetons": {
+       "mean": 2254.3,
+       "p90": 3089
+      },
+      "optimakinas": {
+       "mean": 217.2,
+       "p90": 301
+      }
+     },
+     "L200_opti_clone": {
+      "captures": {
+       "mean": 49.5,
+       "p90": 80
+      },
+      "matings": {
+       "mean": 143.8,
+       "p90": 264
+      },
+      "clones": {
+       "mean": 140.9,
+       "p90": 261
+      },
+      "raises": {
+       "mean": 333.1,
+       "p90": 602
+      },
+      "cycles": {
+       "mean": 418.6,
+       "p90": 768
+      },
+      "genetons": {
+       "mean": 2888.7,
+       "p90": 5410
+      },
+      "optimakinas": {
+       "mean": 143.8,
+       "p90": 264
+      }
+     },
+     "L40_opti20_clone_v37": {
+      "captures": {
+       "mean": 74.5,
+       "p90": 86
+      },
+      "matings": {
+       "mean": 235.8,
+       "p90": 320
+      },
+      "clones": {
+       "mean": 233.3,
+       "p90": 316
+      },
+      "raises": {
+       "mean": 536.7,
+       "p90": 710
+      },
+      "cycles": {
+       "mean": 47.5,
+       "p90": 64
+      },
+      "genetons": {
+       "mean": 1982.2,
+       "p90": 2635
+      },
+      "optimakinas": {
+       "mean": 235.8,
+       "p90": 320
+      }
+     }
+    },
+    "Dragodinde Amande et Émeraude": {
+     "L1_noopti_clone": {
+      "captures": {
+       "mean": 1150.9,
+       "p90": 1639
+      },
+      "matings": {
+       "mean": 6343.3,
+       "p90": 8118
+      },
+      "clones": {
+       "mean": 6340.1,
+       "p90": 8114
+      },
+      "raises": {
+       "mean": 13784.1,
+       "p90": 17810
+      },
+      "cycles": {
+       "mean": 236.3,
+       "p90": 303
+      },
+      "genetons": {
+       "mean": 9774.6,
+       "p90": 11845
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone": {
+      "captures": {
+       "mean": 246.9,
+       "p90": 304
+      },
+      "matings": {
+       "mean": 1130.5,
+       "p90": 1361
+      },
+      "clones": {
+       "mean": 1127.6,
+       "p90": 1358
+      },
+      "raises": {
+       "mean": 2486.6,
+       "p90": 3024
+      },
+      "cycles": {
+       "mean": 58.0,
+       "p90": 73
+      },
+      "genetons": {
+       "mean": 4093.1,
+       "p90": 5057
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_opti_clone": {
+      "captures": {
+       "mean": 137.1,
+       "p90": 160
+      },
+      "matings": {
+       "mean": 470.9,
+       "p90": 566
+      },
+      "clones": {
+       "mean": 468.1,
+       "p90": 562
+      },
+      "raises": {
+       "mean": 1064.5,
+       "p90": 1251
+      },
+      "cycles": {
+       "mean": 47.9,
+       "p90": 63
+      },
+      "genetons": {
+       "mean": 3168.8,
+       "p90": 4246
+      },
+      "optimakinas": {
+       "mean": 470.9,
+       "p90": 566
+      }
+     },
+     "L60_noopti_clone": {
+      "captures": {
+       "mean": 164.2,
+       "p90": 190
+      },
+      "matings": {
+       "mean": 642.0,
+       "p90": 783
+      },
+      "clones": {
+       "mean": 639.6,
+       "p90": 780
+      },
+      "raises": {
+       "mean": 1433.5,
+       "p90": 1751
+      },
+      "cycles": {
+       "mean": 73.8,
+       "p90": 101
+      },
+      "genetons": {
+       "mean": 3511.9,
+       "p90": 4672
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone_20slots": {
+      "captures": {
+       "mean": 166.9,
+       "p90": 210
+      },
+      "matings": {
+       "mean": 874.6,
+       "p90": 1086
+      },
+      "clones": {
+       "mean": 871.5,
+       "p90": 1084
+      },
+      "raises": {
+       "mean": 1897.5,
+       "p90": 2326
+      },
+      "cycles": {
+       "mean": 107.4,
+       "p90": 138
+      },
+      "genetons": {
+       "mean": 3629.5,
+       "p90": 5135
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_noopti_clone": {
+      "captures": {
+       "mean": 84.3,
+       "p90": 103
+      },
+      "matings": {
+       "mean": 279.9,
+       "p90": 386
+      },
+      "clones": {
+       "mean": 277.2,
+       "p90": 382
+      },
+      "raises": {
+       "mean": 632.7,
+       "p90": 838
+      },
+      "cycles": {
+       "mean": 100.3,
+       "p90": 143
+      },
+      "genetons": {
+       "mean": 2793.2,
+       "p90": 4031
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_opti_clone": {
+      "captures": {
+       "mean": 61.2,
+       "p90": 80
+      },
+      "matings": {
+       "mean": 224.2,
+       "p90": 303
+      },
+      "clones": {
+       "mean": 221.3,
+       "p90": 301
+      },
+      "raises": {
+       "mean": 498.8,
+       "p90": 657
+      },
+      "cycles": {
+       "mean": 150.9,
+       "p90": 209
+      },
+      "genetons": {
+       "mean": 3058.6,
+       "p90": 4322
+      },
+      "optimakinas": {
+       "mean": 224.2,
+       "p90": 303
+      }
+     },
+     "L200_opti_clone": {
+      "captures": {
+       "mean": 47.3,
+       "p90": 63
+      },
+      "matings": {
+       "mean": 129.2,
+       "p90": 209
+      },
+      "clones": {
+       "mean": 126.5,
+       "p90": 206
+      },
+      "raises": {
+       "mean": 302.1,
+       "p90": 507
+      },
+      "cycles": {
+       "mean": 492.2,
+       "p90": 635
+      },
+      "genetons": {
+       "mean": 3479.8,
+       "p90": 5381
+      },
+      "optimakinas": {
+       "mean": 129.2,
+       "p90": 209
+      }
+     },
+     "L40_opti20_clone_v37": {
+      "captures": {
+       "mean": 81.8,
+       "p90": 91
+      },
+      "matings": {
+       "mean": 253.7,
+       "p90": 340
+      },
+      "clones": {
+       "mean": 251.0,
+       "p90": 336
+      },
+      "raises": {
+       "mean": 579.0,
+       "p90": 753
+      },
+      "cycles": {
+       "mean": 51.8,
+       "p90": 74
+      },
+      "genetons": {
+       "mean": 2609.0,
+       "p90": 3406
+      },
+      "optimakinas": {
+       "mean": 253.7,
+       "p90": 340
+      }
+     }
+    }
+   },
+   "Muldo": {
+    "Muldo Roux": {
+     "L1_noopti_clone": {
+      "captures": {
+       "mean": 16.9,
+       "p90": 21
+      },
+      "matings": {
+       "mean": 24.1,
+       "p90": 41
+      },
+      "clones": {
+       "mean": 22.8,
+       "p90": 40
+      },
+      "raises": {
+       "mean": 62.2,
+       "p90": 108
+      },
+      "cycles": {
+       "mean": 11.6,
+       "p90": 25
+      },
+      "genetons": {
+       "mean": 16.2,
+       "p90": 26
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L1_noopti_noclone": {
+      "captures": {
+       "mean": 73.3,
+       "p90": 82
+      },
+      "matings": {
+       "mean": 30.9,
+       "p90": 48
+      },
+      "clones": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "raises": {
+       "mean": 102.1,
+       "p90": 127
+      },
+      "cycles": {
+       "mean": 5.6,
+       "p90": 8
+      },
+      "genetons": {
+       "mean": 21.9,
+       "p90": 30
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone": {
+      "captures": {
+       "mean": 12.4,
+       "p90": 19
+      },
+      "matings": {
+       "mean": 16.9,
+       "p90": 30
+      },
+      "clones": {
+       "mean": 15.7,
+       "p90": 29
+      },
+      "raises": {
+       "mean": 43.4,
+       "p90": 73
+      },
+      "cycles": {
+       "mean": 13.3,
+       "p90": 24
+      },
+      "genetons": {
+       "mean": 15.2,
+       "p90": 24
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_opti_clone": {
+      "captures": {
+       "mean": 13.2,
+       "p90": 22
+      },
+      "matings": {
+       "mean": 13.9,
+       "p90": 28
+      },
+      "clones": {
+       "mean": 12.8,
+       "p90": 26
+      },
+      "raises": {
+       "mean": 38.2,
+       "p90": 71
+      },
+      "cycles": {
+       "mean": 13.8,
+       "p90": 29
+      },
+      "genetons": {
+       "mean": 15.8,
+       "p90": 24
+      },
+      "optimakinas": {
+       "mean": 13.9,
+       "p90": 28
+      }
+     },
+     "L60_noopti_clone": {
+      "captures": {
+       "mean": 12.2,
+       "p90": 18
+      },
+      "matings": {
+       "mean": 13.3,
+       "p90": 22
+      },
+      "clones": {
+       "mean": 12.3,
+       "p90": 20
+      },
+      "raises": {
+       "mean": 36.5,
+       "p90": 54
+      },
+      "cycles": {
+       "mean": 17.8,
+       "p90": 29
+      },
+      "genetons": {
+       "mean": 13.7,
+       "p90": 18
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone_20slots": {
+      "captures": {
+       "mean": 12.4,
+       "p90": 19
+      },
+      "matings": {
+       "mean": 16.9,
+       "p90": 30
+      },
+      "clones": {
+       "mean": 15.7,
+       "p90": 29
+      },
+      "raises": {
+       "mean": 43.4,
+       "p90": 73
+      },
+      "cycles": {
+       "mean": 13.3,
+       "p90": 24
+      },
+      "genetons": {
+       "mean": 15.2,
+       "p90": 24
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_noopti_clone": {
+      "captures": {
+       "mean": 10.9,
+       "p90": 15
+      },
+      "matings": {
+       "mean": 10.6,
+       "p90": 18
+      },
+      "clones": {
+       "mean": 9.6,
+       "p90": 17
+      },
+      "raises": {
+       "mean": 29.9,
+       "p90": 48
+      },
+      "cycles": {
+       "mean": 25.4,
+       "p90": 42
+      },
+      "genetons": {
+       "mean": 13.5,
+       "p90": 18
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_opti_clone": {
+      "captures": {
+       "mean": 10.5,
+       "p90": 15
+      },
+      "matings": {
+       "mean": 8.5,
+       "p90": 12
+      },
+      "clones": {
+       "mean": 7.5,
+       "p90": 11
+      },
+      "raises": {
+       "mean": 25.4,
+       "p90": 34
+      },
+      "cycles": {
+       "mean": 24.3,
+       "p90": 36
+      },
+      "genetons": {
+       "mean": 13.5,
+       "p90": 20
+      },
+      "optimakinas": {
+       "mean": 8.5,
+       "p90": 12
+      }
+     },
+     "L200_opti_clone": {
+      "captures": {
+       "mean": 8.6,
+       "p90": 12
+      },
+      "matings": {
+       "mean": 5.1,
+       "p90": 7
+      },
+      "clones": {
+       "mean": 4.1,
+       "p90": 6
+      },
+      "raises": {
+       "mean": 16.8,
+       "p90": 24
+      },
+      "cycles": {
+       "mean": 38.9,
+       "p90": 62
+      },
+      "genetons": {
+       "mean": 12.2,
+       "p90": 16
+      },
+      "optimakinas": {
+       "mean": 5.1,
+       "p90": 7
+      }
+     },
+     "L40_opti20_clone_v37": {
+      "captures": {
+       "mean": 11.2,
+       "p90": 16
+      },
+      "matings": {
+       "mean": 9.8,
+       "p90": 19
+      },
+      "clones": {
+       "mean": 8.7,
+       "p90": 18
+      },
+      "raises": {
+       "mean": 28.5,
+       "p90": 51
+      },
+      "cycles": {
+       "mean": 12.6,
+       "p90": 18
+      },
+      "genetons": {
+       "mean": 13.8,
+       "p90": 22
+      },
+      "optimakinas": {
+       "mean": 9.8,
+       "p90": 19
+      }
+     }
+    },
+    "Muldo Ivoire": {
+     "L1_noopti_clone": {
+      "captures": {
+       "mean": 87.1,
+       "p90": 96
+      },
+      "matings": {
+       "mean": 187.6,
+       "p90": 239
+      },
+      "clones": {
+       "mean": 185.9,
+       "p90": 237
+      },
+      "raises": {
+       "mean": 450.7,
+       "p90": 552
+      },
+      "cycles": {
+       "mean": 19.9,
+       "p90": 32
+      },
+      "genetons": {
+       "mean": 166.4,
+       "p90": 188
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L1_noopti_noclone": {
+      "captures": {
+       "mean": 897.7,
+       "p90": 1500
+      },
+      "matings": {
+       "mean": 747.6,
+       "p90": 1363
+      },
+      "clones": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "raises": {
+       "mean": 1624.4,
+       "p90": 2824
+      },
+      "cycles": {
+       "mean": 35.5,
+       "p90": 83
+      },
+      "genetons": {
+       "mean": 536.4,
+       "p90": 944
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone": {
+      "captures": {
+       "mean": 44.0,
+       "p90": 53
+      },
+      "matings": {
+       "mean": 82.2,
+       "p90": 125
+      },
+      "clones": {
+       "mean": 80.7,
+       "p90": 123
+      },
+      "raises": {
+       "mean": 202.4,
+       "p90": 312
+      },
+      "cycles": {
+       "mean": 22.7,
+       "p90": 38
+      },
+      "genetons": {
+       "mean": 108.0,
+       "p90": 146
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_opti_clone": {
+      "captures": {
+       "mean": 34.9,
+       "p90": 51
+      },
+      "matings": {
+       "mean": 57.1,
+       "p90": 95
+      },
+      "clones": {
+       "mean": 55.6,
+       "p90": 93
+      },
+      "raises": {
+       "mean": 143.4,
+       "p90": 227
+      },
+      "cycles": {
+       "mean": 25.2,
+       "p90": 41
+      },
+      "genetons": {
+       "mean": 96.3,
+       "p90": 153
+      },
+      "optimakinas": {
+       "mean": 57.1,
+       "p90": 95
+      }
+     },
+     "L60_noopti_clone": {
+      "captures": {
+       "mean": 38.2,
+       "p90": 52
+      },
+      "matings": {
+       "mean": 70.5,
+       "p90": 100
+      },
+      "clones": {
+       "mean": 68.8,
+       "p90": 98
+      },
+      "raises": {
+       "mean": 172.9,
+       "p90": 237
+      },
+      "cycles": {
+       "mean": 40.8,
+       "p90": 65
+      },
+      "genetons": {
+       "mean": 110.0,
+       "p90": 145
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone_20slots": {
+      "captures": {
+       "mean": 43.9,
+       "p90": 57
+      },
+      "matings": {
+       "mean": 88.1,
+       "p90": 130
+      },
+      "clones": {
+       "mean": 86.5,
+       "p90": 128
+      },
+      "raises": {
+       "mean": 213.7,
+       "p90": 320
+      },
+      "cycles": {
+       "mean": 26.3,
+       "p90": 44
+      },
+      "genetons": {
+       "mean": 112.5,
+       "p90": 141
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_noopti_clone": {
+      "captures": {
+       "mean": 31.1,
+       "p90": 40
+      },
+      "matings": {
+       "mean": 49.4,
+       "p90": 71
+      },
+      "clones": {
+       "mean": 47.6,
+       "p90": 69
+      },
+      "raises": {
+       "mean": 124.9,
+       "p90": 171
+      },
+      "cycles": {
+       "mean": 56.6,
+       "p90": 77
+      },
+      "genetons": {
+       "mean": 99.1,
+       "p90": 133
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_opti_clone": {
+      "captures": {
+       "mean": 27.9,
+       "p90": 41
+      },
+      "matings": {
+       "mean": 35.5,
+       "p90": 58
+      },
+      "clones": {
+       "mean": 33.8,
+       "p90": 57
+      },
+      "raises": {
+       "mean": 95.0,
+       "p90": 150
+      },
+      "cycles": {
+       "mean": 54.6,
+       "p90": 83
+      },
+      "genetons": {
+       "mean": 89.7,
+       "p90": 133
+      },
+      "optimakinas": {
+       "mean": 35.5,
+       "p90": 58
+      }
+     },
+     "L200_opti_clone": {
+      "captures": {
+       "mean": 23.6,
+       "p90": 35
+      },
+      "matings": {
+       "mean": 21.6,
+       "p90": 32
+      },
+      "clones": {
+       "mean": 19.8,
+       "p90": 30
+      },
+      "raises": {
+       "mean": 64.0,
+       "p90": 99
+      },
+      "cycles": {
+       "mean": 127.1,
+       "p90": 195
+      },
+      "genetons": {
+       "mean": 84.6,
+       "p90": 125
+      },
+      "optimakinas": {
+       "mean": 21.6,
+       "p90": 32
+      }
+     },
+     "L40_opti20_clone_v37": {
+      "captures": {
+       "mean": 27.6,
+       "p90": 37
+      },
+      "matings": {
+       "mean": 37.0,
+       "p90": 55
+      },
+      "clones": {
+       "mean": 35.5,
+       "p90": 54
+      },
+      "raises": {
+       "mean": 97.6,
+       "p90": 133
+      },
+      "cycles": {
+       "mean": 23.2,
+       "p90": 31
+      },
+      "genetons": {
+       "mean": 83.0,
+       "p90": 113
+      },
+      "optimakinas": {
+       "mean": 37.0,
+       "p90": 55
+      }
+     }
+    },
+    "Muldo Prune": {
+     "L1_noopti_clone": {
+      "captures": {
+       "mean": 184.0,
+       "p90": 203
+      },
+      "matings": {
+       "mean": 714.3,
+       "p90": 890
+      },
+      "clones": {
+       "mean": 712.2,
+       "p90": 887
+      },
+      "raises": {
+       "mean": 1576.9,
+       "p90": 1919
+      },
+      "cycles": {
+       "mean": 39.5,
+       "p90": 64
+      },
+      "genetons": {
+       "mean": 870.4,
+       "p90": 1035
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L1_noopti_noclone": {
+      "captures": {
+       "mean": 14178.0,
+       "p90": 14785
+      },
+      "matings": {
+       "mean": 12645.4,
+       "p90": 14098
+      },
+      "clones": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "raises": {
+       "mean": 26501.2,
+       "p90": 28526
+      },
+      "cycles": {
+       "mean": 445.2,
+       "p90": 489
+      },
+      "genetons": {
+       "mean": 9483.2,
+       "p90": 10943
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone": {
+      "captures": {
+       "mean": 103.5,
+       "p90": 108
+      },
+      "matings": {
+       "mean": 259.1,
+       "p90": 325
+      },
+      "clones": {
+       "mean": 257.1,
+       "p90": 321
+      },
+      "raises": {
+       "mean": 605.3,
+       "p90": 729
+      },
+      "cycles": {
+       "mean": 32.9,
+       "p90": 52
+      },
+      "genetons": {
+       "mean": 550.6,
+       "p90": 718
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_opti_clone": {
+      "captures": {
+       "mean": 63.1,
+       "p90": 81
+      },
+      "matings": {
+       "mean": 135.3,
+       "p90": 201
+      },
+      "clones": {
+       "mean": 133.6,
+       "p90": 199
+      },
+      "raises": {
+       "mean": 323.6,
+       "p90": 468
+      },
+      "cycles": {
+       "mean": 36.2,
+       "p90": 53
+      },
+      "genetons": {
+       "mean": 412.4,
+       "p90": 547
+      },
+      "optimakinas": {
+       "mean": 135.3,
+       "p90": 201
+      }
+     },
+     "L60_noopti_clone": {
+      "captures": {
+       "mean": 81.1,
+       "p90": 98
+      },
+      "matings": {
+       "mean": 184.1,
+       "p90": 253
+      },
+      "clones": {
+       "mean": 182.0,
+       "p90": 251
+      },
+      "raises": {
+       "mean": 435.9,
+       "p90": 576
+      },
+      "cycles": {
+       "mean": 54.8,
+       "p90": 92
+      },
+      "genetons": {
+       "mean": 485.0,
+       "p90": 651
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone_20slots": {
+      "captures": {
+       "mean": 80.5,
+       "p90": 105
+      },
+      "matings": {
+       "mean": 246.5,
+       "p90": 337
+      },
+      "clones": {
+       "mean": 244.7,
+       "p90": 335
+      },
+      "raises": {
+       "mean": 558.2,
+       "p90": 779
+      },
+      "cycles": {
+       "mean": 48.0,
+       "p90": 72
+      },
+      "genetons": {
+       "mean": 506.4,
+       "p90": 702
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_noopti_clone": {
+      "captures": {
+       "mean": 49.5,
+       "p90": 69
+      },
+      "matings": {
+       "mean": 101.2,
+       "p90": 147
+      },
+      "clones": {
+       "mean": 99.2,
+       "p90": 145
+      },
+      "raises": {
+       "mean": 243.6,
+       "p90": 354
+      },
+      "cycles": {
+       "mean": 77.5,
+       "p90": 111
+      },
+      "genetons": {
+       "mean": 384.7,
+       "p90": 534
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_opti_clone": {
+      "captures": {
+       "mean": 49.1,
+       "p90": 70
+      },
+      "matings": {
+       "mean": 85.0,
+       "p90": 124
+      },
+      "clones": {
+       "mean": 83.0,
+       "p90": 122
+      },
+      "raises": {
+       "mean": 212.9,
+       "p90": 305
+      },
+      "cycles": {
+       "mean": 98.5,
+       "p90": 147
+      },
+      "genetons": {
+       "mean": 409.1,
+       "p90": 612
+      },
+      "optimakinas": {
+       "mean": 85.0,
+       "p90": 124
+      }
+     },
+     "L200_opti_clone": {
+      "captures": {
+       "mean": 45.9,
+       "p90": 66
+      },
+      "matings": {
+       "mean": 56.0,
+       "p90": 81
+      },
+      "clones": {
+       "mean": 54.0,
+       "p90": 80
+      },
+      "raises": {
+       "mean": 154.9,
+       "p90": 226
+      },
+      "cycles": {
+       "mean": 252.6,
+       "p90": 373
+      },
+      "genetons": {
+       "mean": 475.3,
+       "p90": 727
+      },
+      "optimakinas": {
+       "mean": 56.0,
+       "p90": 81
+      }
+     },
+     "L40_opti20_clone_v37": {
+      "captures": {
+       "mean": 47.9,
+       "p90": 67
+      },
+      "matings": {
+       "mean": 92.7,
+       "p90": 136
+      },
+      "clones": {
+       "mean": 90.9,
+       "p90": 134
+      },
+      "raises": {
+       "mean": 225.8,
+       "p90": 334
+      },
+      "cycles": {
+       "mean": 39.5,
+       "p90": 56
+      },
+      "genetons": {
+       "mean": 360.5,
+       "p90": 462
+      },
+      "optimakinas": {
+       "mean": 92.7,
+       "p90": 136
+      }
+     }
+    },
+    "Muldo Corail": {
+     "L1_noopti_clone": {
+      "captures": {
+       "mean": 389.4,
+       "p90": 464
+      },
+      "matings": {
+       "mean": 1717.8,
+       "p90": 2183
+      },
+      "clones": {
+       "mean": 1715.6,
+       "p90": 2181
+      },
+      "raises": {
+       "mean": 3726.6,
+       "p90": 4653
+      },
+      "cycles": {
+       "mean": 72.3,
+       "p90": 96
+      },
+      "genetons": {
+       "mean": 3036.4,
+       "p90": 3986
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone": {
+      "captures": {
+       "mean": 182.8,
+       "p90": 201
+      },
+      "matings": {
+       "mean": 617.1,
+       "p90": 714
+      },
+      "clones": {
+       "mean": 614.9,
+       "p90": 712
+      },
+      "raises": {
+       "mean": 1381.8,
+       "p90": 1591
+      },
+      "cycles": {
+       "mean": 41.3,
+       "p90": 64
+      },
+      "genetons": {
+       "mean": 2081.1,
+       "p90": 2651
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_opti_clone": {
+      "captures": {
+       "mean": 108.1,
+       "p90": 129
+      },
+      "matings": {
+       "mean": 266.7,
+       "p90": 377
+      },
+      "clones": {
+       "mean": 264.5,
+       "p90": 375
+      },
+      "raises": {
+       "mean": 623.7,
+       "p90": 852
+      },
+      "cycles": {
+       "mean": 36.0,
+       "p90": 55
+      },
+      "genetons": {
+       "mean": 1585.9,
+       "p90": 1988
+      },
+      "optimakinas": {
+       "mean": 266.7,
+       "p90": 377
+      }
+     },
+     "L60_noopti_clone": {
+      "captures": {
+       "mean": 128.3,
+       "p90": 145
+      },
+      "matings": {
+       "mean": 390.7,
+       "p90": 551
+      },
+      "clones": {
+       "mean": 388.5,
+       "p90": 549
+      },
+      "raises": {
+       "mean": 882.1,
+       "p90": 1223
+      },
+      "cycles": {
+       "mean": 64.7,
+       "p90": 103
+      },
+      "genetons": {
+       "mean": 1859.6,
+       "p90": 2620
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone_20slots": {
+      "captures": {
+       "mean": 130.1,
+       "p90": 158
+      },
+      "matings": {
+       "mean": 482.7,
+       "p90": 609
+      },
+      "clones": {
+       "mean": 480.5,
+       "p90": 607
+      },
+      "raises": {
+       "mean": 1063.2,
+       "p90": 1325
+      },
+      "cycles": {
+       "mean": 63.4,
+       "p90": 86
+      },
+      "genetons": {
+       "mean": 1764.3,
+       "p90": 2379
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_noopti_clone": {
+      "captures": {
+       "mean": 78.3,
+       "p90": 100
+      },
+      "matings": {
+       "mean": 199.1,
+       "p90": 278
+      },
+      "clones": {
+       "mean": 196.7,
+       "p90": 276
+      },
+      "raises": {
+       "mean": 461.7,
+       "p90": 638
+      },
+      "cycles": {
+       "mean": 98.3,
+       "p90": 139
+      },
+      "genetons": {
+       "mean": 1628.8,
+       "p90": 2137
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_opti_clone": {
+      "captures": {
+       "mean": 60.3,
+       "p90": 80
+      },
+      "matings": {
+       "mean": 134.9,
+       "p90": 179
+      },
+      "clones": {
+       "mean": 132.6,
+       "p90": 178
+      },
+      "raises": {
+       "mean": 319.9,
+       "p90": 417
+      },
+      "cycles": {
+       "mean": 106.9,
+       "p90": 144
+      },
+      "genetons": {
+       "mean": 1485.9,
+       "p90": 1910
+      },
+      "optimakinas": {
+       "mean": 134.9,
+       "p90": 179
+      }
+     },
+     "L200_opti_clone": {
+      "captures": {
+       "mean": 91.8,
+       "p90": 163
+      },
+      "matings": {
+       "mean": 173.6,
+       "p90": 335
+      },
+      "clones": {
+       "mean": 171.2,
+       "p90": 333
+      },
+      "raises": {
+       "mean": 432.7,
+       "p90": 830
+      },
+      "cycles": {
+       "mean": 541.4,
+       "p90": 907
+      },
+      "genetons": {
+       "mean": 4134.4,
+       "p90": 8941
+      },
+      "optimakinas": {
+       "mean": 173.6,
+       "p90": 335
+      }
+     },
+     "L40_opti20_clone_v37": {
+      "captures": {
+       "mean": 71.2,
+       "p90": 95
+      },
+      "matings": {
+       "mean": 167.8,
+       "p90": 237
+      },
+      "clones": {
+       "mean": 165.4,
+       "p90": 233
+      },
+      "raises": {
+       "mean": 394.9,
+       "p90": 535
+      },
+      "cycles": {
+       "mean": 45.0,
+       "p90": 68
+      },
+      "genetons": {
+       "mean": 1511.3,
+       "p90": 2099
+      },
+      "optimakinas": {
+       "mean": 167.8,
+       "p90": 237
+      }
+     }
+    },
+    "Muldo Corail et Doré": {
+     "L1_noopti_clone": {
+      "captures": {
+       "mean": 504.9,
+       "p90": 628
+      },
+      "matings": {
+       "mean": 2313.8,
+       "p90": 2953
+      },
+      "clones": {
+       "mean": 2311.4,
+       "p90": 2950
+      },
+      "raises": {
+       "mean": 4998.8,
+       "p90": 6397
+      },
+      "cycles": {
+       "mean": 93.7,
+       "p90": 122
+      },
+      "genetons": {
+       "mean": 5154.9,
+       "p90": 6815
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone": {
+      "captures": {
+       "mean": 228.4,
+       "p90": 255
+      },
+      "matings": {
+       "mean": 818.4,
+       "p90": 931
+      },
+      "clones": {
+       "mean": 815.9,
+       "p90": 928
+      },
+      "raises": {
+       "mean": 1818.0,
+       "p90": 2060
+      },
+      "cycles": {
+       "mean": 46.8,
+       "p90": 65
+      },
+      "genetons": {
+       "mean": 3346.3,
+       "p90": 4094
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_opti_clone": {
+      "captures": {
+       "mean": 119.3,
+       "p90": 126
+      },
+      "matings": {
+       "mean": 322.1,
+       "p90": 373
+      },
+      "clones": {
+       "mean": 320.1,
+       "p90": 370
+      },
+      "raises": {
+       "mean": 743.6,
+       "p90": 850
+      },
+      "cycles": {
+       "mean": 39.1,
+       "p90": 65
+      },
+      "genetons": {
+       "mean": 2269.2,
+       "p90": 2877
+      },
+      "optimakinas": {
+       "mean": 322.1,
+       "p90": 373
+      }
+     },
+     "L60_noopti_clone": {
+      "captures": {
+       "mean": 158.4,
+       "p90": 170
+      },
+      "matings": {
+       "mean": 474.9,
+       "p90": 562
+      },
+      "clones": {
+       "mean": 472.6,
+       "p90": 559
+      },
+      "raises": {
+       "mean": 1078.8,
+       "p90": 1244
+      },
+      "cycles": {
+       "mean": 59.0,
+       "p90": 98
+      },
+      "genetons": {
+       "mean": 2614.3,
+       "p90": 3382
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone_20slots": {
+      "captures": {
+       "mean": 169.8,
+       "p90": 193
+      },
+      "matings": {
+       "mean": 655.3,
+       "p90": 803
+      },
+      "clones": {
+       "mean": 652.9,
+       "p90": 801
+      },
+      "raises": {
+       "mean": 1438.7,
+       "p90": 1731
+      },
+      "cycles": {
+       "mean": 84.4,
+       "p90": 108
+      },
+      "genetons": {
+       "mean": 2899.8,
+       "p90": 3707
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_noopti_clone": {
+      "captures": {
+       "mean": 79.4,
+       "p90": 96
+      },
+      "matings": {
+       "mean": 197.4,
+       "p90": 268
+      },
+      "clones": {
+       "mean": 195.1,
+       "p90": 265
+      },
+      "raises": {
+       "mean": 459.4,
+       "p90": 602
+      },
+      "cycles": {
+       "mean": 102.0,
+       "p90": 141
+      },
+      "genetons": {
+       "mean": 2171.9,
+       "p90": 2988
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_opti_clone": {
+      "captures": {
+       "mean": 62.6,
+       "p90": 80
+      },
+      "matings": {
+       "mean": 150.9,
+       "p90": 224
+      },
+      "clones": {
+       "mean": 148.3,
+       "p90": 222
+      },
+      "raises": {
+       "mean": 354.0,
+       "p90": 520
+      },
+      "cycles": {
+       "mean": 142.8,
+       "p90": 196
+      },
+      "genetons": {
+       "mean": 2469.4,
+       "p90": 3570
+      },
+      "optimakinas": {
+       "mean": 150.9,
+       "p90": 224
+      }
+     },
+     "L200_opti_clone": {
+      "captures": {
+       "mean": 70.0,
+       "p90": 111
+      },
+      "matings": {
+       "mean": 123.8,
+       "p90": 197
+      },
+      "clones": {
+       "mean": 121.3,
+       "p90": 194
+      },
+      "raises": {
+       "mean": 314.2,
+       "p90": 492
+      },
+      "cycles": {
+       "mean": 478.1,
+       "p90": 747
+      },
+      "genetons": {
+       "mean": 4989.3,
+       "p90": 10665
+      },
+      "optimakinas": {
+       "mean": 123.8,
+       "p90": 197
+      }
+     },
+     "L40_opti20_clone_v37": {
+      "captures": {
+       "mean": 75.2,
+       "p90": 92
+      },
+      "matings": {
+       "mean": 179.3,
+       "p90": 231
+      },
+      "clones": {
+       "mean": 176.6,
+       "p90": 228
+      },
+      "raises": {
+       "mean": 420.0,
+       "p90": 529
+      },
+      "cycles": {
+       "mean": 52.1,
+       "p90": 80
+      },
+      "genetons": {
+       "mean": 2026.8,
+       "p90": 2805
+      },
+      "optimakinas": {
+       "mean": 179.3,
+       "p90": 231
+      }
+     }
+    }
+   },
+   "Volkorne": {
+    "Volkorne Roux": {
+     "L1_noopti_clone": {
+      "captures": {
+       "mean": 17.4,
+       "p90": 24
+      },
+      "matings": {
+       "mean": 22.5,
+       "p90": 41
+      },
+      "clones": {
+       "mean": 21.2,
+       "p90": 40
+      },
+      "raises": {
+       "mean": 59.6,
+       "p90": 100
+      },
+      "cycles": {
+       "mean": 11.2,
+       "p90": 19
+      },
+      "genetons": {
+       "mean": 15.6,
+       "p90": 20
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L1_noopti_noclone": {
+      "captures": {
+       "mean": 74.8,
+       "p90": 85
+      },
+      "matings": {
+       "mean": 33.6,
+       "p90": 58
+      },
+      "clones": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "raises": {
+       "mean": 106.1,
+       "p90": 136
+      },
+      "cycles": {
+       "mean": 5.2,
+       "p90": 8
+      },
+      "genetons": {
+       "mean": 22.8,
+       "p90": 34
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone": {
+      "captures": {
+       "mean": 12.0,
+       "p90": 18
+      },
+      "matings": {
+       "mean": 14.8,
+       "p90": 24
+      },
+      "clones": {
+       "mean": 13.7,
+       "p90": 23
+      },
+      "raises": {
+       "mean": 39.4,
+       "p90": 61
+      },
+      "cycles": {
+       "mean": 12.2,
+       "p90": 21
+      },
+      "genetons": {
+       "mean": 13.8,
+       "p90": 20
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_opti_clone": {
+      "captures": {
+       "mean": 11.1,
+       "p90": 14
+      },
+      "matings": {
+       "mean": 11.8,
+       "p90": 19
+      },
+      "clones": {
+       "mean": 10.6,
+       "p90": 18
+      },
+      "raises": {
+       "mean": 32.2,
+       "p90": 48
+      },
+      "cycles": {
+       "mean": 11.5,
+       "p90": 19
+      },
+      "genetons": {
+       "mean": 13.9,
+       "p90": 20
+      },
+      "optimakinas": {
+       "mean": 11.8,
+       "p90": 19
+      }
+     },
+     "L60_noopti_clone": {
+      "captures": {
+       "mean": 10.9,
+       "p90": 14
+      },
+      "matings": {
+       "mean": 12.7,
+       "p90": 26
+      },
+      "clones": {
+       "mean": 11.7,
+       "p90": 25
+      },
+      "raises": {
+       "mean": 34.1,
+       "p90": 61
+      },
+      "cycles": {
+       "mean": 15.9,
+       "p90": 29
+      },
+      "genetons": {
+       "mean": 13.0,
+       "p90": 18
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone_20slots": {
+      "captures": {
+       "mean": 12.0,
+       "p90": 18
+      },
+      "matings": {
+       "mean": 14.8,
+       "p90": 24
+      },
+      "clones": {
+       "mean": 13.7,
+       "p90": 23
+      },
+      "raises": {
+       "mean": 39.4,
+       "p90": 61
+      },
+      "cycles": {
+       "mean": 12.2,
+       "p90": 21
+      },
+      "genetons": {
+       "mean": 13.8,
+       "p90": 20
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_noopti_clone": {
+      "captures": {
+       "mean": 10.3,
+       "p90": 14
+      },
+      "matings": {
+       "mean": 10.0,
+       "p90": 16
+      },
+      "clones": {
+       "mean": 9.0,
+       "p90": 15
+      },
+      "raises": {
+       "mean": 28.0,
+       "p90": 44
+      },
+      "cycles": {
+       "mean": 23.0,
+       "p90": 35
+      },
+      "genetons": {
+       "mean": 13.8,
+       "p90": 20
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_opti_clone": {
+      "captures": {
+       "mean": 9.5,
+       "p90": 14
+      },
+      "matings": {
+       "mean": 7.9,
+       "p90": 12
+      },
+      "clones": {
+       "mean": 6.8,
+       "p90": 11
+      },
+      "raises": {
+       "mean": 23.1,
+       "p90": 34
+      },
+      "cycles": {
+       "mean": 20.7,
+       "p90": 28
+      },
+      "genetons": {
+       "mean": 13.0,
+       "p90": 18
+      },
+      "optimakinas": {
+       "mean": 7.9,
+       "p90": 12
+      }
+     },
+     "L200_opti_clone": {
+      "captures": {
+       "mean": 8.5,
+       "p90": 12
+      },
+      "matings": {
+       "mean": 5.3,
+       "p90": 8
+      },
+      "clones": {
+       "mean": 4.3,
+       "p90": 7
+      },
+      "raises": {
+       "mean": 17.2,
+       "p90": 25
+      },
+      "cycles": {
+       "mean": 38.5,
+       "p90": 48
+      },
+      "genetons": {
+       "mean": 12.7,
+       "p90": 18
+      },
+      "optimakinas": {
+       "mean": 5.3,
+       "p90": 8
+      }
+     },
+     "L40_opti20_clone_v37": {
+      "captures": {
+       "mean": 10.4,
+       "p90": 15
+      },
+      "matings": {
+       "mean": 8.8,
+       "p90": 15
+      },
+      "clones": {
+       "mean": 7.8,
+       "p90": 14
+      },
+      "raises": {
+       "mean": 25.7,
+       "p90": 42
+      },
+      "cycles": {
+       "mean": 10.9,
+       "p90": 17
+      },
+      "genetons": {
+       "mean": 12.8,
+       "p90": 20
+      },
+      "optimakinas": {
+       "mean": 8.8,
+       "p90": 15
+      }
+     }
+    },
+    "Volkorne Prune": {
+     "L1_noopti_clone": {
+      "captures": {
+       "mean": 86.3,
+       "p90": 94
+      },
+      "matings": {
+       "mean": 225.6,
+       "p90": 321
+      },
+      "clones": {
+       "mean": 224.0,
+       "p90": 320
+      },
+      "raises": {
+       "mean": 531.1,
+       "p90": 717
+      },
+      "cycles": {
+       "mean": 31.3,
+       "p90": 57
+      },
+      "genetons": {
+       "mean": 201.7,
+       "p90": 276
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L1_noopti_noclone": {
+      "captures": {
+       "mean": 1056.2,
+       "p90": 1475
+      },
+      "matings": {
+       "mean": 900.6,
+       "p90": 1301
+      },
+      "clones": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "raises": {
+       "mean": 1946.4,
+       "p90": 2760
+      },
+      "cycles": {
+       "mean": 36.7,
+       "p90": 56
+      },
+      "genetons": {
+       "mean": 652.0,
+       "p90": 953
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone": {
+      "captures": {
+       "mean": 45.7,
+       "p90": 61
+      },
+      "matings": {
+       "mean": 108.9,
+       "p90": 178
+      },
+      "clones": {
+       "mean": 107.3,
+       "p90": 177
+      },
+      "raises": {
+       "mean": 258.4,
+       "p90": 404
+      },
+      "cycles": {
+       "mean": 31.8,
+       "p90": 58
+      },
+      "genetons": {
+       "mean": 145.2,
+       "p90": 204
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_opti_clone": {
+      "captures": {
+       "mean": 32.2,
+       "p90": 42
+      },
+      "matings": {
+       "mean": 65.9,
+       "p90": 102
+      },
+      "clones": {
+       "mean": 64.4,
+       "p90": 101
+      },
+      "raises": {
+       "mean": 159.7,
+       "p90": 236
+      },
+      "cycles": {
+       "mean": 30.0,
+       "p90": 54
+      },
+      "genetons": {
+       "mean": 118.0,
+       "p90": 167
+      },
+      "optimakinas": {
+       "mean": 65.9,
+       "p90": 102
+      }
+     },
+     "L60_noopti_clone": {
+      "captures": {
+       "mean": 35.0,
+       "p90": 44
+      },
+      "matings": {
+       "mean": 79.8,
+       "p90": 107
+      },
+      "clones": {
+       "mean": 78.2,
+       "p90": 105
+      },
+      "raises": {
+       "mean": 189.9,
+       "p90": 250
+      },
+      "cycles": {
+       "mean": 44.2,
+       "p90": 70
+      },
+      "genetons": {
+       "mean": 128.0,
+       "p90": 162
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone_20slots": {
+      "captures": {
+       "mean": 42.0,
+       "p90": 59
+      },
+      "matings": {
+       "mean": 104.7,
+       "p90": 167
+      },
+      "clones": {
+       "mean": 103.1,
+       "p90": 166
+      },
+      "raises": {
+       "mean": 245.6,
+       "p90": 383
+      },
+      "cycles": {
+       "mean": 31.5,
+       "p90": 57
+      },
+      "genetons": {
+       "mean": 146.4,
+       "p90": 215
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_noopti_clone": {
+      "captures": {
+       "mean": 31.1,
+       "p90": 38
+      },
+      "matings": {
+       "mean": 62.4,
+       "p90": 83
+      },
+      "clones": {
+       "mean": 61.1,
+       "p90": 82
+      },
+      "raises": {
+       "mean": 151.2,
+       "p90": 193
+      },
+      "cycles": {
+       "mean": 69.7,
+       "p90": 93
+      },
+      "genetons": {
+       "mean": 128.6,
+       "p90": 172
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_opti_clone": {
+      "captures": {
+       "mean": 30.2,
+       "p90": 40
+      },
+      "matings": {
+       "mean": 52.8,
+       "p90": 84
+      },
+      "clones": {
+       "mean": 51.3,
+       "p90": 81
+      },
+      "raises": {
+       "mean": 131.9,
+       "p90": 199
+      },
+      "cycles": {
+       "mean": 76.6,
+       "p90": 112
+      },
+      "genetons": {
+       "mean": 134.5,
+       "p90": 205
+      },
+      "optimakinas": {
+       "mean": 52.8,
+       "p90": 84
+      }
+     },
+     "L200_opti_clone": {
+      "captures": {
+       "mean": 27.0,
+       "p90": 43
+      },
+      "matings": {
+       "mean": 35.9,
+       "p90": 64
+      },
+      "clones": {
+       "mean": 34.4,
+       "p90": 63
+      },
+      "raises": {
+       "mean": 96.2,
+       "p90": 173
+      },
+      "cycles": {
+       "mean": 177.9,
+       "p90": 276
+      },
+      "genetons": {
+       "mean": 139.3,
+       "p90": 246
+      },
+      "optimakinas": {
+       "mean": 35.9,
+       "p90": 64
+      }
+     },
+     "L40_opti20_clone_v37": {
+      "captures": {
+       "mean": 30.7,
+       "p90": 43
+      },
+      "matings": {
+       "mean": 60.2,
+       "p90": 95
+      },
+      "clones": {
+       "mean": 58.7,
+       "p90": 93
+      },
+      "raises": {
+       "mean": 146.6,
+       "p90": 229
+      },
+      "cycles": {
+       "mean": 33.8,
+       "p90": 48
+      },
+      "genetons": {
+       "mean": 128.9,
+       "p90": 184
+      },
+      "optimakinas": {
+       "mean": 60.2,
+       "p90": 95
+      }
+     }
+    },
+    "Volkorne Doré": {
+     "L1_noopti_clone": {
+      "captures": {
+       "mean": 203.8,
+       "p90": 225
+      },
+      "matings": {
+       "mean": 921.0,
+       "p90": 1017
+      },
+      "clones": {
+       "mean": 919.0,
+       "p90": 1015
+      },
+      "raises": {
+       "mean": 2021.9,
+       "p90": 2223
+      },
+      "cycles": {
+       "mean": 45.6,
+       "p90": 55
+      },
+      "genetons": {
+       "mean": 1058.0,
+       "p90": 1198
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L1_noopti_noclone": {
+      "captures": {
+       "mean": 18315.8,
+       "p90": 20670
+      },
+      "matings": {
+       "mean": 16500.8,
+       "p90": 19191
+      },
+      "clones": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "raises": {
+       "mean": 34656.0,
+       "p90": 39660
+      },
+      "cycles": {
+       "mean": 578.6,
+       "p90": 662
+      },
+      "genetons": {
+       "mean": 12423.8,
+       "p90": 14372
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone": {
+      "captures": {
+       "mean": 101.1,
+       "p90": 111
+      },
+      "matings": {
+       "mean": 328.5,
+       "p90": 393
+      },
+      "clones": {
+       "mean": 326.5,
+       "p90": 391
+      },
+      "raises": {
+       "mean": 746.0,
+       "p90": 875
+      },
+      "cycles": {
+       "mean": 40.9,
+       "p90": 58
+      },
+      "genetons": {
+       "mean": 655.9,
+       "p90": 816
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_opti_clone": {
+      "captures": {
+       "mean": 76.3,
+       "p90": 95
+      },
+      "matings": {
+       "mean": 237.9,
+       "p90": 301
+      },
+      "clones": {
+       "mean": 236.0,
+       "p90": 299
+      },
+      "raises": {
+       "mean": 539.8,
+       "p90": 689
+      },
+      "cycles": {
+       "mean": 54.5,
+       "p90": 78
+      },
+      "genetons": {
+       "mean": 610.3,
+       "p90": 781
+      },
+      "optimakinas": {
+       "mean": 237.9,
+       "p90": 301
+      }
+     },
+     "L60_noopti_clone": {
+      "captures": {
+       "mean": 81.5,
+       "p90": 99
+      },
+      "matings": {
+       "mean": 254.6,
+       "p90": 333
+      },
+      "clones": {
+       "mean": 252.7,
+       "p90": 331
+      },
+      "raises": {
+       "mean": 578.9,
+       "p90": 738
+      },
+      "cycles": {
+       "mean": 68.2,
+       "p90": 96
+      },
+      "genetons": {
+       "mean": 619.5,
+       "p90": 813
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone_20slots": {
+      "captures": {
+       "mean": 83.2,
+       "p90": 100
+      },
+      "matings": {
+       "mean": 308.6,
+       "p90": 406
+      },
+      "clones": {
+       "mean": 306.7,
+       "p90": 405
+      },
+      "raises": {
+       "mean": 688.6,
+       "p90": 897
+      },
+      "cycles": {
+       "mean": 53.5,
+       "p90": 69
+      },
+      "genetons": {
+       "mean": 622.7,
+       "p90": 762
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_noopti_clone": {
+      "captures": {
+       "mean": 62.1,
+       "p90": 87
+      },
+      "matings": {
+       "mean": 173.8,
+       "p90": 258
+      },
+      "clones": {
+       "mean": 171.8,
+       "p90": 256
+      },
+      "raises": {
+       "mean": 400.8,
+       "p90": 581
+      },
+      "cycles": {
+       "mean": 114.9,
+       "p90": 167
+      },
+      "genetons": {
+       "mean": 575.5,
+       "p90": 832
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_opti_clone": {
+      "captures": {
+       "mean": 58.0,
+       "p90": 83
+      },
+      "matings": {
+       "mean": 140.2,
+       "p90": 207
+      },
+      "clones": {
+       "mean": 138.3,
+       "p90": 205
+      },
+      "raises": {
+       "mean": 331.2,
+       "p90": 483
+      },
+      "cycles": {
+       "mean": 132.9,
+       "p90": 192
+      },
+      "genetons": {
+       "mean": 548.9,
+       "p90": 805
+      },
+      "optimakinas": {
+       "mean": 140.2,
+       "p90": 207
+      }
+     },
+     "L200_opti_clone": {
+      "captures": {
+       "mean": 63.5,
+       "p90": 111
+      },
+      "matings": {
+       "mean": 114.3,
+       "p90": 219
+      },
+      "clones": {
+       "mean": 112.4,
+       "p90": 218
+      },
+      "raises": {
+       "mean": 289.2,
+       "p90": 531
+      },
+      "cycles": {
+       "mean": 455.3,
+       "p90": 872
+      },
+      "genetons": {
+       "mean": 791.6,
+       "p90": 1544
+      },
+      "optimakinas": {
+       "mean": 114.3,
+       "p90": 219
+      }
+     },
+     "L40_opti20_clone_v37": {
+      "captures": {
+       "mean": 60.6,
+       "p90": 83
+      },
+      "matings": {
+       "mean": 164.7,
+       "p90": 224
+      },
+      "clones": {
+       "mean": 162.9,
+       "p90": 223
+      },
+      "raises": {
+       "mean": 381.8,
+       "p90": 513
+      },
+      "cycles": {
+       "mean": 57.5,
+       "p90": 79
+      },
+      "genetons": {
+       "mean": 545.5,
+       "p90": 714
+      },
+      "optimakinas": {
+       "mean": 164.7,
+       "p90": 224
+      }
+     }
+    },
+    "Volkorne Jade": {
+     "L1_noopti_clone": {
+      "captures": {
+       "mean": 718.2,
+       "p90": 831
+      },
+      "matings": {
+       "mean": 3653.0,
+       "p90": 4238
+      },
+      "clones": {
+       "mean": 3650.3,
+       "p90": 4236
+      },
+      "raises": {
+       "mean": 7935.9,
+       "p90": 9180
+      },
+      "cycles": {
+       "mean": 138.8,
+       "p90": 166
+      },
+      "genetons": {
+       "mean": 4800.5,
+       "p90": 5420
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone": {
+      "captures": {
+       "mean": 197.6,
+       "p90": 228
+      },
+      "matings": {
+       "mean": 774.7,
+       "p90": 860
+      },
+      "clones": {
+       "mean": 772.1,
+       "p90": 859
+      },
+      "raises": {
+       "mean": 1721.5,
+       "p90": 1919
+      },
+      "cycles": {
+       "mean": 46.5,
+       "p90": 63
+      },
+      "genetons": {
+       "mean": 2020.7,
+       "p90": 2354
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_opti_clone": {
+      "captures": {
+       "mean": 105.7,
+       "p90": 123
+      },
+      "matings": {
+       "mean": 346.7,
+       "p90": 466
+      },
+      "clones": {
+       "mean": 344.1,
+       "p90": 462
+      },
+      "raises": {
+       "mean": 784.0,
+       "p90": 1037
+      },
+      "cycles": {
+       "mean": 51.8,
+       "p90": 84
+      },
+      "genetons": {
+       "mean": 1507.0,
+       "p90": 1957
+      },
+      "optimakinas": {
+       "mean": 346.7,
+       "p90": 466
+      }
+     },
+     "L60_noopti_clone": {
+      "captures": {
+       "mean": 131.3,
+       "p90": 148
+      },
+      "matings": {
+       "mean": 473.6,
+       "p90": 627
+      },
+      "clones": {
+       "mean": 470.9,
+       "p90": 624
+      },
+      "raises": {
+       "mean": 1060.7,
+       "p90": 1371
+      },
+      "cycles": {
+       "mean": 74.3,
+       "p90": 110
+      },
+      "genetons": {
+       "mean": 1720.7,
+       "p90": 2404
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone_20slots": {
+      "captures": {
+       "mean": 162.4,
+       "p90": 181
+      },
+      "matings": {
+       "mean": 686.0,
+       "p90": 807
+      },
+      "clones": {
+       "mean": 683.3,
+       "p90": 804
+      },
+      "raises": {
+       "mean": 1509.6,
+       "p90": 1756
+      },
+      "cycles": {
+       "mean": 90.8,
+       "p90": 117
+      },
+      "genetons": {
+       "mean": 1926.5,
+       "p90": 2385
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_noopti_clone": {
+      "captures": {
+       "mean": 85.3,
+       "p90": 110
+      },
+      "matings": {
+       "mean": 263.1,
+       "p90": 348
+      },
+      "clones": {
+       "mean": 260.4,
+       "p90": 346
+      },
+      "raises": {
+       "mean": 596.4,
+       "p90": 779
+      },
+      "cycles": {
+       "mean": 129.3,
+       "p90": 180
+      },
+      "genetons": {
+       "mean": 1458.0,
+       "p90": 2139
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_opti_clone": {
+      "captures": {
+       "mean": 74.7,
+       "p90": 104
+      },
+      "matings": {
+       "mean": 217.8,
+       "p90": 312
+      },
+      "clones": {
+       "mean": 215.2,
+       "p90": 308
+      },
+      "raises": {
+       "mean": 496.8,
+       "p90": 706
+      },
+      "cycles": {
+       "mean": 174.7,
+       "p90": 253
+      },
+      "genetons": {
+       "mean": 1654.0,
+       "p90": 2171
+      },
+      "optimakinas": {
+       "mean": 217.8,
+       "p90": 312
+      }
+     },
+     "L200_opti_clone": {
+      "captures": {
+       "mean": 73.5,
+       "p90": 113
+      },
+      "matings": {
+       "mean": 151.2,
+       "p90": 237
+      },
+      "clones": {
+       "mean": 149.0,
+       "p90": 235
+      },
+      "raises": {
+       "mean": 372.6,
+       "p90": 581
+      },
+      "cycles": {
+       "mean": 533.8,
+       "p90": 822
+      },
+      "genetons": {
+       "mean": 2288.0,
+       "p90": 4350
+      },
+      "optimakinas": {
+       "mean": 151.2,
+       "p90": 237
+      }
+     },
+     "L40_opti20_clone_v37": {
+      "captures": {
+       "mean": 86.1,
+       "p90": 114
+      },
+      "matings": {
+       "mean": 267.6,
+       "p90": 423
+      },
+      "clones": {
+       "mean": 265.2,
+       "p90": 421
+      },
+      "raises": {
+       "mean": 606.6,
+       "p90": 940
+      },
+      "cycles": {
+       "mean": 73.5,
+       "p90": 112
+      },
+      "genetons": {
+       "mean": 1534.6,
+       "p90": 2496
+      },
+      "optimakinas": {
+       "mean": 267.6,
+       "p90": 423
+      }
+     }
+    },
+    "Volkorne Jade et Pourpre": {
+     "L1_noopti_clone": {
+      "captures": {
+       "mean": 1437.7,
+       "p90": 1654
+      },
+      "matings": {
+       "mean": 7571.4,
+       "p90": 8665
+      },
+      "clones": {
+       "mean": 7567.9,
+       "p90": 8660
+      },
+      "raises": {
+       "mean": 16417.2,
+       "p90": 18752
+      },
+      "cycles": {
+       "mean": 276.5,
+       "p90": 316
+      },
+      "genetons": {
+       "mean": 9728.4,
+       "p90": 10956
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone": {
+      "captures": {
+       "mean": 281.0,
+       "p90": 303
+      },
+      "matings": {
+       "mean": 1208.5,
+       "p90": 1301
+      },
+      "clones": {
+       "mean": 1205.4,
+       "p90": 1299
+      },
+      "raises": {
+       "mean": 2659.0,
+       "p90": 2847
+      },
+      "cycles": {
+       "mean": 57.1,
+       "p90": 71
+      },
+      "genetons": {
+       "mean": 3493.2,
+       "p90": 4090
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_opti_clone": {
+      "captures": {
+       "mean": 123.7,
+       "p90": 144
+      },
+      "matings": {
+       "mean": 416.6,
+       "p90": 531
+      },
+      "clones": {
+       "mean": 413.3,
+       "p90": 526
+      },
+      "raises": {
+       "mean": 940.0,
+       "p90": 1161
+      },
+      "cycles": {
+       "mean": 45.6,
+       "p90": 70
+      },
+      "genetons": {
+       "mean": 2215.6,
+       "p90": 2977
+      },
+      "optimakinas": {
+       "mean": 416.6,
+       "p90": 531
+      }
+     },
+     "L60_noopti_clone": {
+      "captures": {
+       "mean": 163.1,
+       "p90": 184
+      },
+      "matings": {
+       "mean": 594.8,
+       "p90": 714
+      },
+      "clones": {
+       "mean": 591.5,
+       "p90": 711
+      },
+      "raises": {
+       "mean": 1332.0,
+       "p90": 1559
+      },
+      "cycles": {
+       "mean": 65.0,
+       "p90": 79
+      },
+      "genetons": {
+       "mean": 2454.3,
+       "p90": 2932
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L40_noopti_clone_20slots": {
+      "captures": {
+       "mean": 230.3,
+       "p90": 261
+      },
+      "matings": {
+       "mean": 1002.4,
+       "p90": 1208
+      },
+      "clones": {
+       "mean": 999.6,
+       "p90": 1206
+      },
+      "raises": {
+       "mean": 2200.7,
+       "p90": 2621
+      },
+      "cycles": {
+       "mean": 118.6,
+       "p90": 150
+      },
+      "genetons": {
+       "mean": 3013.1,
+       "p90": 3542
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_noopti_clone": {
+      "captures": {
+       "mean": 95.3,
+       "p90": 133
+      },
+      "matings": {
+       "mean": 308.4,
+       "p90": 463
+      },
+      "clones": {
+       "mean": 305.1,
+       "p90": 459
+      },
+      "raises": {
+       "mean": 694.4,
+       "p90": 1031
+      },
+      "cycles": {
+       "mean": 128.9,
+       "p90": 195
+      },
+      "genetons": {
+       "mean": 2238.1,
+       "p90": 3370
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      }
+     },
+     "L100_opti_clone": {
+      "captures": {
+       "mean": 73.7,
+       "p90": 94
+      },
+      "matings": {
+       "mean": 215.1,
+       "p90": 283
+      },
+      "clones": {
+       "mean": 211.8,
+       "p90": 280
+      },
+      "raises": {
+       "mean": 491.4,
+       "p90": 643
+      },
+      "cycles": {
+       "mean": 175.2,
+       "p90": 242
+      },
+      "genetons": {
+       "mean": 2182.9,
+       "p90": 3054
+      },
+      "optimakinas": {
+       "mean": 215.1,
+       "p90": 283
+      }
+     },
+     "L200_opti_clone": {
+      "captures": {
+       "mean": 74.3,
+       "p90": 116
+      },
+      "matings": {
+       "mean": 156.2,
+       "p90": 286
+      },
+      "clones": {
+       "mean": 153.1,
+       "p90": 282
+      },
+      "raises": {
+       "mean": 382.6,
+       "p90": 683
+      },
+      "cycles": {
+       "mean": 545.3,
+       "p90": 813
+      },
+      "genetons": {
+       "mean": 3423.0,
+       "p90": 7099
+      },
+      "optimakinas": {
+       "mean": 156.2,
+       "p90": 286
+      }
+     },
+     "L40_opti20_clone_v37": {
+      "captures": {
+       "mean": 92.7,
+       "p90": 111
+      },
+      "matings": {
+       "mean": 289.5,
+       "p90": 379
+      },
+      "clones": {
+       "mean": 286.1,
+       "p90": 375
+      },
+      "raises": {
+       "mean": 654.8,
+       "p90": 843
+      },
+      "cycles": {
+       "mean": 67.9,
+       "p90": 101
+      },
+      "genetons": {
+       "mean": 2188.9,
+       "p90": 3130
+      },
+      "optimakinas": {
+       "mean": 289.5,
+       "p90": 379
+      }
+     }
+    }
+   }
+  },
+  "grid2_withFuel": {
+   "Dragodinde": {
+    "Dragodinde Pourpre": {
+     "L1_noopti": {
+      "captures": {
+       "mean": 83.2,
+       "p90": 91
+      },
+      "matings": {
+       "mean": 169.8,
+       "p90": 198
+      },
+      "clones": {
+       "mean": 168.0,
+       "p90": 197
+      },
+      "raises": {
+       "mean": 419.1,
+       "p90": 476
+      },
+      "cycles": {
+       "mean": 16.3,
+       "p90": 28
+      },
+      "genetons": {
+       "mean": 147.2,
+       "p90": 182
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 2640330.0,
+       "p90": 2998800
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_noopti": {
+      "captures": {
+       "mean": 38.0,
+       "p90": 44
+      },
+      "matings": {
+       "mean": 78.4,
+       "p90": 127
+      },
+      "clones": {
+       "mean": 76.8,
+       "p90": 126
+      },
+      "raises": {
+       "mean": 191.4,
+       "p90": 297
+      },
+      "cycles": {
+       "mean": 21.5,
+       "p90": 38
+      },
+      "genetons": {
+       "mean": 98.2,
+       "p90": 132
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 1206135.0,
+       "p90": 1871100
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_from_G6": {
+      "captures": {
+       "mean": 38.0,
+       "p90": 44
+      },
+      "matings": {
+       "mean": 78.4,
+       "p90": 127
+      },
+      "clones": {
+       "mean": 76.8,
+       "p90": 126
+      },
+      "raises": {
+       "mean": 191.4,
+       "p90": 297
+      },
+      "cycles": {
+       "mean": 21.5,
+       "p90": 38
+      },
+      "genetons": {
+       "mean": 98.2,
+       "p90": 132
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 1206135.0,
+       "p90": 1871100
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_all": {
+      "captures": {
+       "mean": 27.8,
+       "p90": 41
+      },
+      "matings": {
+       "mean": 52.9,
+       "p90": 80
+      },
+      "clones": {
+       "mean": 51.5,
+       "p90": 79
+      },
+      "raises": {
+       "mean": 130.8,
+       "p90": 205
+      },
+      "cycles": {
+       "mean": 26.5,
+       "p90": 43
+      },
+      "genetons": {
+       "mean": 85.0,
+       "p90": 120
+      },
+      "optimakinas": {
+       "mean": 52.9,
+       "p90": 80
+      },
+      "stat_fuel_points": {
+       "mean": 823882.5,
+       "p90": 1291500
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "mixed_L40_60_100_opti_from_G8": {
+      "captures": {
+       "mean": 38.0,
+       "p90": 44
+      },
+      "matings": {
+       "mean": 78.4,
+       "p90": 127
+      },
+      "clones": {
+       "mean": 76.8,
+       "p90": 126
+      },
+      "raises": {
+       "mean": 191.4,
+       "p90": 297
+      },
+      "cycles": {
+       "mean": 21.5,
+       "p90": 38
+      },
+      "genetons": {
+       "mean": 98.2,
+       "p90": 132
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 1206135.0,
+       "p90": 1871100
+      },
+      "xp_fuel_points": {
+       "mean": 3852.8,
+       "p90": 6421.4
+      }
+     },
+     "v37_L40_opti20_from_G6": {
+      "captures": {
+       "mean": 38.0,
+       "p90": 44
+      },
+      "matings": {
+       "mean": 78.4,
+       "p90": 127
+      },
+      "clones": {
+       "mean": 76.8,
+       "p90": 126
+      },
+      "raises": {
+       "mean": 191.4,
+       "p90": 297
+      },
+      "cycles": {
+       "mean": 21.5,
+       "p90": 38
+      },
+      "genetons": {
+       "mean": 98.2,
+       "p90": 132
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 1206135.0,
+       "p90": 1871100
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     }
+    },
+    "Dragodinde Émeraude": {
+     "L1_noopti": {
+      "captures": {
+       "mean": 637.6,
+       "p90": 808
+      },
+      "matings": {
+       "mean": 3394.1,
+       "p90": 4081
+      },
+      "clones": {
+       "mean": 3391.7,
+       "p90": 4079
+      },
+      "raises": {
+       "mean": 7392.6,
+       "p90": 8920
+      },
+      "cycles": {
+       "mean": 138.6,
+       "p90": 173
+      },
+      "genetons": {
+       "mean": 5259.8,
+       "p90": 6192
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 46573537.5,
+       "p90": 56196000
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_noopti": {
+      "captures": {
+       "mean": 188.1,
+       "p90": 219
+      },
+      "matings": {
+       "mean": 820.6,
+       "p90": 1022
+      },
+      "clones": {
+       "mean": 818.4,
+       "p90": 1019
+      },
+      "raises": {
+       "mean": 1813.4,
+       "p90": 2240
+      },
+      "cycles": {
+       "mean": 56.0,
+       "p90": 80
+      },
+      "genetons": {
+       "mean": 2991.4,
+       "p90": 4018
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 11424420.0,
+       "p90": 14112000
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_from_G6": {
+      "captures": {
+       "mean": 150.1,
+       "p90": 166
+      },
+      "matings": {
+       "mean": 590.9,
+       "p90": 729
+      },
+      "clones": {
+       "mean": 588.5,
+       "p90": 726
+      },
+      "raises": {
+       "mean": 1318.0,
+       "p90": 1585
+      },
+      "cycles": {
+       "mean": 49.4,
+       "p90": 68
+      },
+      "genetons": {
+       "mean": 2399.3,
+       "p90": 3301
+      },
+      "optimakinas": {
+       "mean": 64.6,
+       "p90": 96
+      },
+      "stat_fuel_points": {
+       "mean": 8303715.0,
+       "p90": 9985500
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_all": {
+      "captures": {
+       "mean": 111.3,
+       "p90": 120
+      },
+      "matings": {
+       "mean": 377.7,
+       "p90": 468
+      },
+      "clones": {
+       "mean": 375.2,
+       "p90": 465
+      },
+      "raises": {
+       "mean": 854.9,
+       "p90": 1033
+      },
+      "cycles": {
+       "mean": 40.5,
+       "p90": 58
+      },
+      "genetons": {
+       "mean": 2198.2,
+       "p90": 2971
+      },
+      "optimakinas": {
+       "mean": 377.7,
+       "p90": 468
+      },
+      "stat_fuel_points": {
+       "mean": 5385870.0,
+       "p90": 6507900
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "mixed_L40_60_100_opti_from_G8": {
+      "captures": {
+       "mean": 133.5,
+       "p90": 143
+      },
+      "matings": {
+       "mean": 514.0,
+       "p90": 647
+      },
+      "clones": {
+       "mean": 511.5,
+       "p90": 646
+      },
+      "raises": {
+       "mean": 1147.9,
+       "p90": 1410
+      },
+      "cycles": {
+       "mean": 71.2,
+       "p90": 106
+      },
+      "genetons": {
+       "mean": 2232.6,
+       "p90": 3052
+      },
+      "optimakinas": {
+       "mean": 10.2,
+       "p90": 17
+      },
+      "stat_fuel_points": {
+       "mean": 7231927.5,
+       "p90": 8883000
+      },
+      "xp_fuel_points": {
+       "mean": 442156.9,
+       "p90": 742556.1999999997
+      }
+     },
+     "v37_L40_opti20_from_G6": {
+      "captures": {
+       "mean": 117.0,
+       "p90": 138
+      },
+      "matings": {
+       "mean": 425.9,
+       "p90": 569
+      },
+      "clones": {
+       "mean": 423.5,
+       "p90": 567
+      },
+      "raises": {
+       "mean": 958.4,
+       "p90": 1251
+      },
+      "cycles": {
+       "mean": 46.9,
+       "p90": 73
+      },
+      "genetons": {
+       "mean": 2033.9,
+       "p90": 3062
+      },
+      "optimakinas": {
+       "mean": 44.3,
+       "p90": 74
+      },
+      "stat_fuel_points": {
+       "mean": 6037920.0,
+       "p90": 7881300
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     }
+    },
+    "Dragodinde Amande et Émeraude": {
+     "L1_noopti": {
+      "captures": {
+       "mean": 1150.9,
+       "p90": 1639
+      },
+      "matings": {
+       "mean": 6343.3,
+       "p90": 8118
+      },
+      "clones": {
+       "mean": 6340.1,
+       "p90": 8114
+      },
+      "raises": {
+       "mean": 13784.1,
+       "p90": 17810
+      },
+      "cycles": {
+       "mean": 236.3,
+       "p90": 303
+      },
+      "genetons": {
+       "mean": 9774.6,
+       "p90": 11845
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 86839672.5,
+       "p90": 112203000
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_noopti": {
+      "captures": {
+       "mean": 246.9,
+       "p90": 304
+      },
+      "matings": {
+       "mean": 1130.5,
+       "p90": 1361
+      },
+      "clones": {
+       "mean": 1127.6,
+       "p90": 1358
+      },
+      "raises": {
+       "mean": 2486.6,
+       "p90": 3024
+      },
+      "cycles": {
+       "mean": 58.0,
+       "p90": 73
+      },
+      "genetons": {
+       "mean": 4093.1,
+       "p90": 5057
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 15665737.5,
+       "p90": 19051200
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_from_G6": {
+      "captures": {
+       "mean": 166.6,
+       "p90": 191
+      },
+      "matings": {
+       "mean": 654.5,
+       "p90": 769
+      },
+      "clones": {
+       "mean": 651.9,
+       "p90": 767
+      },
+      "raises": {
+       "mean": 1460.8,
+       "p90": 1696
+      },
+      "cycles": {
+       "mean": 54.6,
+       "p90": 73
+      },
+      "genetons": {
+       "mean": 3085.2,
+       "p90": 3638
+      },
+      "optimakinas": {
+       "mean": 77.2,
+       "p90": 101
+      },
+      "stat_fuel_points": {
+       "mean": 9203040.0,
+       "p90": 10684800
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_all": {
+      "captures": {
+       "mean": 137.1,
+       "p90": 160
+      },
+      "matings": {
+       "mean": 470.9,
+       "p90": 566
+      },
+      "clones": {
+       "mean": 468.1,
+       "p90": 562
+      },
+      "raises": {
+       "mean": 1064.5,
+       "p90": 1251
+      },
+      "cycles": {
+       "mean": 47.9,
+       "p90": 63
+      },
+      "genetons": {
+       "mean": 3168.8,
+       "p90": 4246
+      },
+      "optimakinas": {
+       "mean": 470.9,
+       "p90": 566
+      },
+      "stat_fuel_points": {
+       "mean": 6706035.0,
+       "p90": 7881300
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "mixed_L40_60_100_opti_from_G8": {
+      "captures": {
+       "mean": 143.1,
+       "p90": 160
+      },
+      "matings": {
+       "mean": 564.2,
+       "p90": 676
+      },
+      "clones": {
+       "mean": 561.2,
+       "p90": 673
+      },
+      "raises": {
+       "mean": 1256.5,
+       "p90": 1485
+      },
+      "cycles": {
+       "mean": 82.7,
+       "p90": 122
+      },
+      "genetons": {
+       "mean": 2982.9,
+       "p90": 3730
+      },
+      "optimakinas": {
+       "mean": 13.6,
+       "p90": 22
+      },
+      "stat_fuel_points": {
+       "mean": 7915950.0,
+       "p90": 9355500
+      },
+      "xp_fuel_points": {
+       "mean": 512165.3,
+       "p90": 718309.5999999997
+      }
+     },
+     "v37_L40_opti20_from_G6": {
+      "captures": {
+       "mean": 122.8,
+       "p90": 136
+      },
+      "matings": {
+       "mean": 450.5,
+       "p90": 605
+      },
+      "clones": {
+       "mean": 447.6,
+       "p90": 602
+      },
+      "raises": {
+       "mean": 1012.6,
+       "p90": 1316
+      },
+      "cycles": {
+       "mean": 54.5,
+       "p90": 77
+      },
+      "genetons": {
+       "mean": 2648.4,
+       "p90": 3683
+      },
+      "optimakinas": {
+       "mean": 53.3,
+       "p90": 80
+      },
+      "stat_fuel_points": {
+       "mean": 6379222.5,
+       "p90": 8290800
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     }
+    }
+   },
+   "Muldo": {
+    "Muldo Ivoire": {
+     "L1_noopti": {
+      "captures": {
+       "mean": 87.1,
+       "p90": 96
+      },
+      "matings": {
+       "mean": 187.6,
+       "p90": 239
+      },
+      "clones": {
+       "mean": 185.9,
+       "p90": 237
+      },
+      "raises": {
+       "mean": 450.7,
+       "p90": 552
+      },
+      "cycles": {
+       "mean": 19.9,
+       "p90": 32
+      },
+      "genetons": {
+       "mean": 166.4,
+       "p90": 188
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 2839252.5,
+       "p90": 3477600
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_noopti": {
+      "captures": {
+       "mean": 44.0,
+       "p90": 53
+      },
+      "matings": {
+       "mean": 82.2,
+       "p90": 125
+      },
+      "clones": {
+       "mean": 80.7,
+       "p90": 123
+      },
+      "raises": {
+       "mean": 202.4,
+       "p90": 312
+      },
+      "cycles": {
+       "mean": 22.7,
+       "p90": 38
+      },
+      "genetons": {
+       "mean": 108.0,
+       "p90": 146
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 1275277.5,
+       "p90": 1965600
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_from_G6": {
+      "captures": {
+       "mean": 44.0,
+       "p90": 53
+      },
+      "matings": {
+       "mean": 82.2,
+       "p90": 125
+      },
+      "clones": {
+       "mean": 80.7,
+       "p90": 123
+      },
+      "raises": {
+       "mean": 202.4,
+       "p90": 312
+      },
+      "cycles": {
+       "mean": 22.7,
+       "p90": 38
+      },
+      "genetons": {
+       "mean": 108.0,
+       "p90": 146
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 1275277.5,
+       "p90": 1965600
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_all": {
+      "captures": {
+       "mean": 34.9,
+       "p90": 51
+      },
+      "matings": {
+       "mean": 57.1,
+       "p90": 95
+      },
+      "clones": {
+       "mean": 55.6,
+       "p90": 93
+      },
+      "raises": {
+       "mean": 143.4,
+       "p90": 227
+      },
+      "cycles": {
+       "mean": 25.2,
+       "p90": 41
+      },
+      "genetons": {
+       "mean": 96.3,
+       "p90": 153
+      },
+      "optimakinas": {
+       "mean": 57.1,
+       "p90": 95
+      },
+      "stat_fuel_points": {
+       "mean": 903262.5,
+       "p90": 1430100
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "mixed_L40_60_100_opti_from_G8": {
+      "captures": {
+       "mean": 44.0,
+       "p90": 53
+      },
+      "matings": {
+       "mean": 82.2,
+       "p90": 125
+      },
+      "clones": {
+       "mean": 80.7,
+       "p90": 123
+      },
+      "raises": {
+       "mean": 202.4,
+       "p90": 312
+      },
+      "cycles": {
+       "mean": 22.7,
+       "p90": 38
+      },
+      "genetons": {
+       "mean": 108.0,
+       "p90": 146
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 1275277.5,
+       "p90": 1965600
+      },
+      "xp_fuel_points": {
+       "mean": 3291.0,
+       "p90": 3210.7
+      }
+     },
+     "v37_L40_opti20_from_G6": {
+      "captures": {
+       "mean": 44.0,
+       "p90": 53
+      },
+      "matings": {
+       "mean": 82.2,
+       "p90": 125
+      },
+      "clones": {
+       "mean": 80.7,
+       "p90": 123
+      },
+      "raises": {
+       "mean": 202.4,
+       "p90": 312
+      },
+      "cycles": {
+       "mean": 22.7,
+       "p90": 38
+      },
+      "genetons": {
+       "mean": 108.0,
+       "p90": 146
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 1275277.5,
+       "p90": 1965600
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     }
+    },
+    "Muldo Corail": {
+     "L1_noopti": {
+      "captures": {
+       "mean": 389.4,
+       "p90": 464
+      },
+      "matings": {
+       "mean": 1717.8,
+       "p90": 2183
+      },
+      "clones": {
+       "mean": 1715.6,
+       "p90": 2181
+      },
+      "raises": {
+       "mean": 3726.6,
+       "p90": 4653
+      },
+      "cycles": {
+       "mean": 72.3,
+       "p90": 96
+      },
+      "genetons": {
+       "mean": 3036.4,
+       "p90": 3986
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 23477265.0,
+       "p90": 29313900
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_noopti": {
+      "captures": {
+       "mean": 182.8,
+       "p90": 201
+      },
+      "matings": {
+       "mean": 617.1,
+       "p90": 714
+      },
+      "clones": {
+       "mean": 614.9,
+       "p90": 712
+      },
+      "raises": {
+       "mean": 1381.8,
+       "p90": 1591
+      },
+      "cycles": {
+       "mean": 41.3,
+       "p90": 64
+      },
+      "genetons": {
+       "mean": 2081.1,
+       "p90": 2651
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 8705655.0,
+       "p90": 10023300
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_from_G6": {
+      "captures": {
+       "mean": 134.4,
+       "p90": 152
+      },
+      "matings": {
+       "mean": 408.3,
+       "p90": 488
+      },
+      "clones": {
+       "mean": 406.1,
+       "p90": 486
+      },
+      "raises": {
+       "mean": 924.2,
+       "p90": 1086
+      },
+      "cycles": {
+       "mean": 41.7,
+       "p90": 63
+      },
+      "genetons": {
+       "mean": 1653.1,
+       "p90": 2350
+      },
+      "optimakinas": {
+       "mean": 49.7,
+       "p90": 77
+      },
+      "stat_fuel_points": {
+       "mean": 5822460.0,
+       "p90": 6841800
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_all": {
+      "captures": {
+       "mean": 108.1,
+       "p90": 129
+      },
+      "matings": {
+       "mean": 266.7,
+       "p90": 377
+      },
+      "clones": {
+       "mean": 264.5,
+       "p90": 375
+      },
+      "raises": {
+       "mean": 623.7,
+       "p90": 852
+      },
+      "cycles": {
+       "mean": 36.0,
+       "p90": 55
+      },
+      "genetons": {
+       "mean": 1585.9,
+       "p90": 1988
+      },
+      "optimakinas": {
+       "mean": 266.7,
+       "p90": 377
+      },
+      "stat_fuel_points": {
+       "mean": 3929152.5,
+       "p90": 5367600
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "mixed_L40_60_100_opti_from_G8": {
+      "captures": {
+       "mean": 126.5,
+       "p90": 147
+      },
+      "matings": {
+       "mean": 388.3,
+       "p90": 500
+      },
+      "clones": {
+       "mean": 386.1,
+       "p90": 498
+      },
+      "raises": {
+       "mean": 878.1,
+       "p90": 1115
+      },
+      "cycles": {
+       "mean": 55.6,
+       "p90": 77
+      },
+      "genetons": {
+       "mean": 1631.1,
+       "p90": 2131
+      },
+      "optimakinas": {
+       "mean": 10.8,
+       "p90": 17
+      },
+      "stat_fuel_points": {
+       "mean": 5531872.5,
+       "p90": 7024500
+      },
+      "xp_fuel_points": {
+       "mean": 317395.1,
+       "p90": 454645.4000000002
+      }
+     },
+     "v37_L40_opti20_from_G6": {
+      "captures": {
+       "mean": 114.6,
+       "p90": 142
+      },
+      "matings": {
+       "mean": 336.7,
+       "p90": 472
+      },
+      "clones": {
+       "mean": 334.5,
+       "p90": 470
+      },
+      "raises": {
+       "mean": 764.2,
+       "p90": 1036
+      },
+      "cycles": {
+       "mean": 49.8,
+       "p90": 71
+      },
+      "genetons": {
+       "mean": 1617.4,
+       "p90": 2038
+      },
+      "optimakinas": {
+       "mean": 43.3,
+       "p90": 63
+      },
+      "stat_fuel_points": {
+       "mean": 4814617.5,
+       "p90": 6526800
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     }
+    },
+    "Muldo Corail et Doré": {
+     "L1_noopti": {
+      "captures": {
+       "mean": 504.9,
+       "p90": 628
+      },
+      "matings": {
+       "mean": 2313.8,
+       "p90": 2953
+      },
+      "clones": {
+       "mean": 2311.4,
+       "p90": 2950
+      },
+      "raises": {
+       "mean": 4998.8,
+       "p90": 6397
+      },
+      "cycles": {
+       "mean": 93.7,
+       "p90": 122
+      },
+      "genetons": {
+       "mean": 5154.9,
+       "p90": 6815
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 31492282.5,
+       "p90": 40301100
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_noopti": {
+      "captures": {
+       "mean": 228.4,
+       "p90": 255
+      },
+      "matings": {
+       "mean": 818.4,
+       "p90": 931
+      },
+      "clones": {
+       "mean": 815.9,
+       "p90": 928
+      },
+      "raises": {
+       "mean": 1818.0,
+       "p90": 2060
+      },
+      "cycles": {
+       "mean": 46.8,
+       "p90": 65
+      },
+      "genetons": {
+       "mean": 3346.3,
+       "p90": 4094
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 11453557.5,
+       "p90": 12978000
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_from_G6": {
+      "captures": {
+       "mean": 153.6,
+       "p90": 173
+      },
+      "matings": {
+       "mean": 489.0,
+       "p90": 584
+      },
+      "clones": {
+       "mean": 486.5,
+       "p90": 581
+      },
+      "raises": {
+       "mean": 1101.5,
+       "p90": 1270
+      },
+      "cycles": {
+       "mean": 43.4,
+       "p90": 65
+      },
+      "genetons": {
+       "mean": 2525.8,
+       "p90": 3210
+      },
+      "optimakinas": {
+       "mean": 61.6,
+       "p90": 84
+      },
+      "stat_fuel_points": {
+       "mean": 6939292.5,
+       "p90": 8001000
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_all": {
+      "captures": {
+       "mean": 119.3,
+       "p90": 126
+      },
+      "matings": {
+       "mean": 322.1,
+       "p90": 373
+      },
+      "clones": {
+       "mean": 320.1,
+       "p90": 370
+      },
+      "raises": {
+       "mean": 743.6,
+       "p90": 850
+      },
+      "cycles": {
+       "mean": 39.1,
+       "p90": 65
+      },
+      "genetons": {
+       "mean": 2269.2,
+       "p90": 2877
+      },
+      "optimakinas": {
+       "mean": 322.1,
+       "p90": 373
+      },
+      "stat_fuel_points": {
+       "mean": 4684995.0,
+       "p90": 5355000
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "mixed_L40_60_100_opti_from_G8": {
+      "captures": {
+       "mean": 131.6,
+       "p90": 150
+      },
+      "matings": {
+       "mean": 419.0,
+       "p90": 529
+      },
+      "clones": {
+       "mean": 416.4,
+       "p90": 526
+      },
+      "raises": {
+       "mean": 942.9,
+       "p90": 1165
+      },
+      "cycles": {
+       "mean": 71.0,
+       "p90": 100
+      },
+      "genetons": {
+       "mean": 2370.3,
+       "p90": 3299
+      },
+      "optimakinas": {
+       "mean": 17.6,
+       "p90": 27
+      },
+      "stat_fuel_points": {
+       "mean": 5940427.5,
+       "p90": 7339500
+      },
+      "xp_fuel_points": {
+       "mean": 383493.8,
+       "p90": 569178.3999999999
+      }
+     },
+     "v37_L40_opti20_from_G6": {
+      "captures": {
+       "mean": 115.0,
+       "p90": 138
+      },
+      "matings": {
+       "mean": 342.3,
+       "p90": 424
+      },
+      "clones": {
+       "mean": 339.3,
+       "p90": 422
+      },
+      "raises": {
+       "mean": 776.5,
+       "p90": 963
+      },
+      "cycles": {
+       "mean": 54.2,
+       "p90": 77
+      },
+      "genetons": {
+       "mean": 2212.3,
+       "p90": 3106
+      },
+      "optimakinas": {
+       "mean": 47.2,
+       "p90": 67
+      },
+      "stat_fuel_points": {
+       "mean": 4891635.0,
+       "p90": 6066900
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     }
+    }
+   },
+   "Volkorne": {
+    "Volkorne Prune": {
+     "L1_noopti": {
+      "captures": {
+       "mean": 86.3,
+       "p90": 94
+      },
+      "matings": {
+       "mean": 225.6,
+       "p90": 321
+      },
+      "clones": {
+       "mean": 224.0,
+       "p90": 320
+      },
+      "raises": {
+       "mean": 531.1,
+       "p90": 717
+      },
+      "cycles": {
+       "mean": 31.3,
+       "p90": 57
+      },
+      "genetons": {
+       "mean": 201.7,
+       "p90": 276
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 3345772.5,
+       "p90": 4517100
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_noopti": {
+      "captures": {
+       "mean": 45.7,
+       "p90": 61
+      },
+      "matings": {
+       "mean": 108.9,
+       "p90": 178
+      },
+      "clones": {
+       "mean": 107.3,
+       "p90": 177
+      },
+      "raises": {
+       "mean": 258.4,
+       "p90": 404
+      },
+      "cycles": {
+       "mean": 31.8,
+       "p90": 58
+      },
+      "genetons": {
+       "mean": 145.2,
+       "p90": 204
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 1628077.5,
+       "p90": 2545200
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_from_G6": {
+      "captures": {
+       "mean": 45.7,
+       "p90": 61
+      },
+      "matings": {
+       "mean": 108.9,
+       "p90": 178
+      },
+      "clones": {
+       "mean": 107.3,
+       "p90": 177
+      },
+      "raises": {
+       "mean": 258.4,
+       "p90": 404
+      },
+      "cycles": {
+       "mean": 31.8,
+       "p90": 58
+      },
+      "genetons": {
+       "mean": 145.2,
+       "p90": 204
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 1628077.5,
+       "p90": 2545200
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_all": {
+      "captures": {
+       "mean": 32.2,
+       "p90": 42
+      },
+      "matings": {
+       "mean": 65.9,
+       "p90": 102
+      },
+      "clones": {
+       "mean": 64.4,
+       "p90": 101
+      },
+      "raises": {
+       "mean": 159.7,
+       "p90": 236
+      },
+      "cycles": {
+       "mean": 30.0,
+       "p90": 54
+      },
+      "genetons": {
+       "mean": 118.0,
+       "p90": 167
+      },
+      "optimakinas": {
+       "mean": 65.9,
+       "p90": 102
+      },
+      "stat_fuel_points": {
+       "mean": 1005795.0,
+       "p90": 1486800
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "mixed_L40_60_100_opti_from_G8": {
+      "captures": {
+       "mean": 45.7,
+       "p90": 61
+      },
+      "matings": {
+       "mean": 108.9,
+       "p90": 178
+      },
+      "clones": {
+       "mean": 107.3,
+       "p90": 177
+      },
+      "raises": {
+       "mean": 258.4,
+       "p90": 404
+      },
+      "cycles": {
+       "mean": 31.8,
+       "p90": 58
+      },
+      "genetons": {
+       "mean": 145.2,
+       "p90": 204
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 1628077.5,
+       "p90": 2545200
+      },
+      "xp_fuel_points": {
+       "mean": 3291.0,
+       "p90": 3210.7
+      }
+     },
+     "v37_L40_opti20_from_G6": {
+      "captures": {
+       "mean": 45.7,
+       "p90": 61
+      },
+      "matings": {
+       "mean": 108.9,
+       "p90": 178
+      },
+      "clones": {
+       "mean": 107.3,
+       "p90": 177
+      },
+      "raises": {
+       "mean": 258.4,
+       "p90": 404
+      },
+      "cycles": {
+       "mean": 31.8,
+       "p90": 58
+      },
+      "genetons": {
+       "mean": 145.2,
+       "p90": 204
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 1628077.5,
+       "p90": 2545200
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     }
+    },
+    "Volkorne Jade": {
+     "L1_noopti": {
+      "captures": {
+       "mean": 718.2,
+       "p90": 831
+      },
+      "matings": {
+       "mean": 3653.0,
+       "p90": 4238
+      },
+      "clones": {
+       "mean": 3650.3,
+       "p90": 4236
+      },
+      "raises": {
+       "mean": 7935.9,
+       "p90": 9180
+      },
+      "cycles": {
+       "mean": 138.8,
+       "p90": 166
+      },
+      "genetons": {
+       "mean": 4800.5,
+       "p90": 5420
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 49996012.5,
+       "p90": 57834000
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_noopti": {
+      "captures": {
+       "mean": 197.6,
+       "p90": 228
+      },
+      "matings": {
+       "mean": 774.7,
+       "p90": 860
+      },
+      "clones": {
+       "mean": 772.1,
+       "p90": 859
+      },
+      "raises": {
+       "mean": 1721.5,
+       "p90": 1919
+      },
+      "cycles": {
+       "mean": 46.5,
+       "p90": 63
+      },
+      "genetons": {
+       "mean": 2020.7,
+       "p90": 2354
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 10845450.0,
+       "p90": 12089700
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_from_G6": {
+      "captures": {
+       "mean": 136.3,
+       "p90": 156
+      },
+      "matings": {
+       "mean": 515.8,
+       "p90": 599
+      },
+      "clones": {
+       "mean": 513.4,
+       "p90": 597
+      },
+      "raises": {
+       "mean": 1150.2,
+       "p90": 1304
+      },
+      "cycles": {
+       "mean": 49.2,
+       "p90": 71
+      },
+      "genetons": {
+       "mean": 1558.8,
+       "p90": 2076
+      },
+      "optimakinas": {
+       "mean": 37.8,
+       "p90": 59
+      },
+      "stat_fuel_points": {
+       "mean": 7246417.5,
+       "p90": 8215200
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_all": {
+      "captures": {
+       "mean": 105.7,
+       "p90": 123
+      },
+      "matings": {
+       "mean": 346.7,
+       "p90": 466
+      },
+      "clones": {
+       "mean": 344.1,
+       "p90": 462
+      },
+      "raises": {
+       "mean": 784.0,
+       "p90": 1037
+      },
+      "cycles": {
+       "mean": 51.8,
+       "p90": 84
+      },
+      "genetons": {
+       "mean": 1507.0,
+       "p90": 1957
+      },
+      "optimakinas": {
+       "mean": 346.7,
+       "p90": 466
+      },
+      "stat_fuel_points": {
+       "mean": 4939042.5,
+       "p90": 6533100
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "mixed_L40_60_100_opti_from_G8": {
+      "captures": {
+       "mean": 133.5,
+       "p90": 162
+      },
+      "matings": {
+       "mean": 517.7,
+       "p90": 674
+      },
+      "clones": {
+       "mean": 515.2,
+       "p90": 672
+      },
+      "raises": {
+       "mean": 1150.9,
+       "p90": 1480
+      },
+      "cycles": {
+       "mean": 65.0,
+       "p90": 95
+      },
+      "genetons": {
+       "mean": 1570.6,
+       "p90": 2107
+      },
+      "optimakinas": {
+       "mean": 6.3,
+       "p90": 11
+      },
+      "stat_fuel_points": {
+       "mean": 7250512.5,
+       "p90": 9324000
+      },
+      "xp_fuel_points": {
+       "mean": 239783.6,
+       "p90": 388881.5000000001
+      }
+     },
+     "v37_L40_opti20_from_G6": {
+      "captures": {
+       "mean": 116.9,
+       "p90": 137
+      },
+      "matings": {
+       "mean": 461.6,
+       "p90": 659
+      },
+      "clones": {
+       "mean": 459.2,
+       "p90": 656
+      },
+      "raises": {
+       "mean": 1022.2,
+       "p90": 1436
+      },
+      "cycles": {
+       "mean": 68.8,
+       "p90": 113
+      },
+      "genetons": {
+       "mean": 1630.2,
+       "p90": 2211
+      },
+      "optimakinas": {
+       "mean": 35.3,
+       "p90": 56
+      },
+      "stat_fuel_points": {
+       "mean": 6439860.0,
+       "p90": 9046800
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     }
+    },
+    "Volkorne Jade et Pourpre": {
+     "L1_noopti": {
+      "captures": {
+       "mean": 1437.7,
+       "p90": 1654
+      },
+      "matings": {
+       "mean": 7571.4,
+       "p90": 8665
+      },
+      "clones": {
+       "mean": 7567.9,
+       "p90": 8660
+      },
+      "raises": {
+       "mean": 16417.2,
+       "p90": 18752
+      },
+      "cycles": {
+       "mean": 276.5,
+       "p90": 316
+      },
+      "genetons": {
+       "mean": 9728.4,
+       "p90": 10956
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 103428360.0,
+       "p90": 118137600
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_noopti": {
+      "captures": {
+       "mean": 281.0,
+       "p90": 303
+      },
+      "matings": {
+       "mean": 1208.5,
+       "p90": 1301
+      },
+      "clones": {
+       "mean": 1205.4,
+       "p90": 1299
+      },
+      "raises": {
+       "mean": 2659.0,
+       "p90": 2847
+      },
+      "cycles": {
+       "mean": 57.1,
+       "p90": 71
+      },
+      "genetons": {
+       "mean": 3493.2,
+       "p90": 4090
+      },
+      "optimakinas": {
+       "mean": 0.0,
+       "p90": 0
+      },
+      "stat_fuel_points": {
+       "mean": 16751542.5,
+       "p90": 17936100
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_from_G6": {
+      "captures": {
+       "mean": 160.8,
+       "p90": 184
+      },
+      "matings": {
+       "mean": 625.9,
+       "p90": 720
+      },
+      "clones": {
+       "mean": 622.6,
+       "p90": 716
+      },
+      "raises": {
+       "mean": 1389.7,
+       "p90": 1571
+      },
+      "cycles": {
+       "mean": 44.2,
+       "p90": 64
+      },
+      "genetons": {
+       "mean": 2194.2,
+       "p90": 2672
+      },
+      "optimakinas": {
+       "mean": 46.4,
+       "p90": 66
+      },
+      "stat_fuel_points": {
+       "mean": 8754952.5,
+       "p90": 9897300
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "L40_opti_all": {
+      "captures": {
+       "mean": 123.7,
+       "p90": 144
+      },
+      "matings": {
+       "mean": 416.6,
+       "p90": 531
+      },
+      "clones": {
+       "mean": 413.3,
+       "p90": 526
+      },
+      "raises": {
+       "mean": 940.0,
+       "p90": 1161
+      },
+      "cycles": {
+       "mean": 45.6,
+       "p90": 70
+      },
+      "genetons": {
+       "mean": 2215.6,
+       "p90": 2977
+      },
+      "optimakinas": {
+       "mean": 416.6,
+       "p90": 531
+      },
+      "stat_fuel_points": {
+       "mean": 5922157.5,
+       "p90": 7314300
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     },
+     "mixed_L40_60_100_opti_from_G8": {
+      "captures": {
+       "mean": 145.8,
+       "p90": 165
+      },
+      "matings": {
+       "mean": 572.1,
+       "p90": 732
+      },
+      "clones": {
+       "mean": 569.0,
+       "p90": 728
+      },
+      "raises": {
+       "mean": 1268.1,
+       "p90": 1594
+      },
+      "cycles": {
+       "mean": 65.8,
+       "p90": 91
+      },
+      "genetons": {
+       "mean": 2188.1,
+       "p90": 2827
+      },
+      "optimakinas": {
+       "mean": 11.2,
+       "p90": 16
+      },
+      "stat_fuel_points": {
+       "mean": 7988872.5,
+       "p90": 10042200
+      },
+      "xp_fuel_points": {
+       "mean": 292169.0,
+       "p90": 401724.30000000016
+      }
+     },
+     "v37_L40_opti20_from_G6": {
+      "captures": {
+       "mean": 123.6,
+       "p90": 145
+      },
+      "matings": {
+       "mean": 454.9,
+       "p90": 590
+      },
+      "clones": {
+       "mean": 451.5,
+       "p90": 587
+      },
+      "raises": {
+       "mean": 1015.3,
+       "p90": 1285
+      },
+      "cycles": {
+       "mean": 53.9,
+       "p90": 80
+      },
+      "genetons": {
+       "mean": 1969.6,
+       "p90": 2855
+      },
+      "optimakinas": {
+       "mean": 37.6,
+       "p90": 58
+      },
+      "stat_fuel_points": {
+       "mean": 6396547.5,
+       "p90": 8095500
+      },
+      "xp_fuel_points": {
+       "mean": 0.0,
+       "p90": 0.0
+      }
+     }
+    }
+   }
+  },
+  "deterministic": {
+   "fecundity_batch_by_tier": {
+    "1": {
+     "one_stat": "5h33",
+     "serenity_1000": "0h17",
+     "batch_total_grouped": "11h23",
+     "batch_seconds": 41000
+    },
+    "2": {
+     "one_stat": "2h47",
+     "serenity_1000": "0h08",
+     "batch_total_grouped": "5h42",
+     "batch_seconds": 20500
+    },
+    "3": {
+     "one_stat": "1h51",
+     "serenity_1000": "0h06",
+     "batch_total_grouped": "3h48",
+     "batch_seconds": 13667
+    },
+    "4": {
+     "one_stat": "1h23",
+     "serenity_1000": "0h04",
+     "batch_total_grouped": "2h51",
+     "batch_seconds": 10250
+    }
+   },
+   "points_delivered_8h": {
+    "start_20000": 20000,
+    "start_40000": 28800,
+    "start_70000": 43800,
+    "start_90000": 57140,
+    "start_100000": 64640
+   },
+   "points_delivered_12h": {
+    "start_20000": 20000,
+    "start_40000": 40000,
+    "start_70000": 58200,
+    "start_90000": 71540,
+    "start_100000": 79040
+   },
+   "level_cost_benefit": {
+    "1": {
+     "xp": 0,
+     "paddock_points_for_10_mounts": 0,
+     "bonus_per_parent_pct": 0.15,
+     "pair_bonus_pct_if_both": 0.3,
+     "hours_T2": 0.0,
+     "hours_T4": 0.0
+    },
+    "10": {
+     "xp": 809,
+     "paddock_points_for_10_mounts": 809,
+     "bonus_per_parent_pct": 1.5,
+     "pair_bonus_pct_if_both": 3.0,
+     "hours_T2": 0.1,
+     "hours_T4": 0.1
+    },
+    "20": {
+     "xp": 4067,
+     "paddock_points_for_10_mounts": 4067,
+     "bonus_per_parent_pct": 3.0,
+     "pair_bonus_pct_if_both": 6.0,
+     "hours_T2": 0.6,
+     "hours_T4": 0.3
+    },
+    "30": {
+     "xp": 10457,
+     "paddock_points_for_10_mounts": 10457,
+     "bonus_per_parent_pct": 4.5,
+     "pair_bonus_pct_if_both": 9.0,
+     "hours_T2": 1.5,
+     "hours_T4": 0.7
+    },
+    "40": {
+     "xp": 20437,
+     "paddock_points_for_10_mounts": 20437,
+     "bonus_per_parent_pct": 6.0,
+     "pair_bonus_pct_if_both": 12.0,
+     "hours_T2": 2.8,
+     "hours_T4": 1.4
+    },
+    "50": {
+     "xp": 34365,
+     "paddock_points_for_10_mounts": 34365,
+     "bonus_per_parent_pct": 7.5,
+     "pair_bonus_pct_if_both": 15.0,
+     "hours_T2": 4.8,
+     "hours_T4": 2.4
+    },
+    "60": {
+     "xp": 52544,
+     "paddock_points_for_10_mounts": 52544,
+     "bonus_per_parent_pct": 9.0,
+     "pair_bonus_pct_if_both": 18.0,
+     "hours_T2": 7.3,
+     "hours_T4": 3.6
+    },
+    "80": {
+     "xp": 102685,
+     "paddock_points_for_10_mounts": 102685,
+     "bonus_per_parent_pct": 12.0,
+     "pair_bonus_pct_if_both": 24.0,
+     "hours_T2": 14.3,
+     "hours_T4": 7.1
+    },
+    "100": {
+     "xp": 172668,
+     "paddock_points_for_10_mounts": 172668,
+     "bonus_per_parent_pct": 15.0,
+     "pair_bonus_pct_if_both": 30.0,
+     "hours_T2": 24.0,
+     "hours_T4": 12.0
+    },
+    "120": {
+     "xp": 264013,
+     "paddock_points_for_10_mounts": 264013,
+     "bonus_per_parent_pct": 18.0,
+     "pair_bonus_pct_if_both": 36.0,
+     "hours_T2": 36.7,
+     "hours_T4": 18.3
+    },
+    "150": {
+     "xp": 443944,
+     "paddock_points_for_10_mounts": 443944,
+     "bonus_per_parent_pct": 22.5,
+     "pair_bonus_pct_if_both": 45.0,
+     "hours_T2": 61.7,
+     "hours_T4": 30.8
+    },
+    "200": {
+     "xp": 867582,
+     "paddock_points_for_10_mounts": 867582,
+     "bonus_per_parent_pct": 30.0,
+     "pair_bonus_pct_if_both": 60.0,
+     "hours_T2": 120.5,
+     "hours_T4": 60.2
+    }
+   }
+  },
+  "keyFindings": [
+   "Clonage indispensable : sans lui une G7 demande ~14 000–18 000 captures au niveau 1 (×77 à ×92 par rapport au clonage).",
+   "Niveau 40 ≈ ÷2 à ÷5 sur captures, accouplements et carburant pour une G9 par rapport au niveau 1 (÷2 à ÷6 en incluant les G10 ; Muldo ÷2–3, Dragodinde/Volkorne ÷3–5).",
+   "Optimakina partout : −41 à −65 % sur captures, accouplements, fécondations et carburant, au prix d'une makina par accouplement ; la durée (demi-journées) varie de −28 % à +13 % ; dès G6 seulement : −20 à −48 % pour 38 à 77 makinas.",
+   "Niveau 100 : moins de captures mais plus lent (places immobilisées par l'XP).",
+   "G9 : ~105–200 captures, ~270–820 accouplements, ~4–11 M de points de carburant, ~36–56 demi-journées à 6 enclos (joueur parfait).",
+   "G10 la moins chère ≈ G9 + 10 à 25 % (Optimakina partout) ou + 25 à 56 % (sans makina) en captures/accouplements/carburant ; durée −12 % à +23 %."
+  ],
+  "sources": [
+   "sim",
+   "mechanics"
+  ],
+  "confidence": "medium"
+ },
+ "toolsReview": [
+  {
+   "tool": "DPLN Gestion d'enclos",
+   "source": "dpln_tool",
+   "features": [
+    "6 enclos × 10 montures",
+    "2 jauges, Baffeur/Caresseur exclusifs",
+    "boutons T1/T2/T3/T4 max",
+    "valeur de départ par monture",
+    "capacité ×2",
+    "sérénité cible (Caresseur 0, Baffeur −1)",
+    "niveau cible Mangeoire (table XP 1–200)",
+    "simulation tick par tick",
+    "compte à rebours et heure d'arrivée",
+    "alerte sonore",
+    "avertissement « jauge vide avant la fin »",
+    "bannière almanax (actif + à venir)",
+    "sauvegarde locale"
+   ],
+   "missing": [
+    "éligibilité par zone de sérénité",
+    "coûts",
+    "planification de lots et d'accouplements"
+   ]
+  },
+  {
+   "tool": "dragodinde.fr",
+   "source": "dragodinde_fr",
+   "features": [
+    "étable par compteurs (total + mâles)",
+    "import par capture d'écran via LLM",
+    "modes Succès / Génétons",
+    "plan par étapes : Reproduire, Plan d'action (captures par couleur/sexe/proportion, retraits), taux de réussite",
+    "banque IN/OUT",
+    "resynchronisation"
+   ],
+   "missing": [
+    "généalogies individuelles",
+    "coûts en kamas"
+   ],
+   "errors": [
+    "guide Muldo : énergie, « 2 reproductions par monture »",
+    "maturité entre −1 000 et +1 000"
+   ]
+  },
+  {
+   "tool": "Registre des Abysses",
+   "source": "registre",
+   "features": [
+    "cheptel avec généalogie",
+    "synchronisation OCR",
+    "GPS d'appariement ♂/♀ maximisant les couples utiles",
+    "assistant de clonage",
+    "noms générés pour renommage en jeu",
+    "calculateur de carburant (moins cher pour 1 000 points, rentabilité/heure)",
+    "valeur du cheptel, prix communautaires par serveur",
+    "partage public, forum"
+   ],
+   "missing": [
+    "ordonnancement des enclos et alarmes",
+    "porteurs"
+   ]
+  },
+  {
+   "tool": "muldo-calculator",
+   "source": "muldo_calc",
+   "features": [
+    "cascade de bébés attendus",
+    "paramètres niveau/Optimakina/clonage/Reproducteur par génération",
+    "Veilleur des Enclos"
+   ],
+   "missing": [
+    "recyclage des bébés ratés",
+    "Dragodindes/Volkornes"
+   ]
+  },
+  {
+   "tool": "dofuselevage.fr",
+   "source": "dofuselevage",
+   "features": [
+    "simulateur de reproduction",
+    "roadmap succès génération en génération",
+    "calculateur de fécondité (ordre optimal, conversion en carburants)",
+    "calculateur d'XP"
+   ],
+   "errors": [
+    "niveaux de filets 100/150 inversés",
+    "amour à partir de 1"
+   ]
+  },
+  {
+   "tool": "dafous.app",
+   "source": "dafous",
+   "features": [
+    "simulateur en cascade",
+    "arbres",
+    "enclos & carburants",
+    "almanax",
+    "checklists",
+    "pack métier 1→200",
+    "journal .xls"
+   ],
+   "errors": [
+    "partage égal entre cibles",
+    "XP d'accouplement 10 (3.5)"
+   ]
+  },
+  {
+   "tool": "FabEnclos",
+   "source": "fabenclos",
+   "features": [
+    "plan de captures et croisements vers une cible",
+    "multi-éleveurs"
+   ],
+   "errors": [
+    "le niveau ne changerait pas le bébé (faux)"
+   ]
+  }
+ ],
+ "disagreements": [
+  {
+   "topic": "Niveau idéal des parents",
+   "A": "dragodinde.fr : calculs « pour des parents montés au niveau 40 avant reproduction », niveau visé 40 à 90, « monter les parents plus haut que nécessaire fait perdre du temps d'XP pour rien »",
+   "B": "next-stage : au moins 100 ; Solomonk : 50–60",
+   "retained": "40 par défaut, 100 pour les parents chers"
+  },
+  {
+   "topic": "Zone de maturité",
+   "A": "dragodinde.fr/next-stage : ±1 000",
+   "B": "client/DPLN/devblog : ±2 000",
+   "retained": "±2 000"
+  },
+  {
+   "topic": "Niveaux des filets",
+   "A": "devblog II/dofuselevage : renforcé 100, multiplicateur 150",
+   "B": "jeu/DPLN : multiplicateur 100, renforcé 150",
+   "retained": "jeu"
+  },
+  {
+   "topic": "XP d'accouplement",
+   "A": "dafous/next-stage : 10",
+   "B": "client 3.6/DPLN : 30",
+   "retained": "30 (3.6)"
+  },
+  {
+   "topic": "Génétons échangeables",
+   "A": "DPLN/devblog : liés au compte",
+   "B": "DofusDB (effet 983 « Échangeable : date »), dragodinde.fr",
+   "retained": "à vérifier"
+  },
+  {
+   "topic": "Brisage des montures",
+   "A": "devblog II : impossible",
+   "B": "Solomonk-e : démontré (11 000 montures)",
+   "retained": "possible (3.5/3.6)"
+  },
+  {
+   "topic": "Optimakina",
+   "A": "dafous : Gen 7+ seulement",
+   "B": "simulation : partout si bon marché",
+   "retained": "règle de prix"
+  },
+  {
+   "topic": "Barème de crafts",
+   "A": "dofus-portals (dofustool)",
+   "B": "formule du jeu (~7 000 crafts 1→200)",
+   "retained": "formule"
+  },
+  {
+   "topic": "Génétons en 3.7",
+   "A": "résumés communautaires/ce document (v1) : « doublés »",
+   "B": "client 3.7.3.3 : barème décalé d'une génération (2/4/8/15/30/60/120/250/500)",
+   "retained": "client (≈ ×2, exact par génération)"
+  },
+  {
+   "topic": "Coût du brisage de 10 000 Volkornes",
+   "A": "strategy.md v1 : ≈ 3,1 M",
+   "B": "Solomonk-e (fGqEPyQoBgk) : ≈ 17,9 M (1 787 kamas/Volkorne), valeur ≈ 121,7 M, « presque ×7 »",
+   "retained": "vidéo (≈ 17,9 M)"
+  }
+ ],
+ "commonMistakes": [
+  {
+   "id": "X01",
+   "mistake": "Laisser un Baffeur/Caresseur actif sans surveillance",
+   "consequence": "montures à ±5 000, phases à refaire",
+   "fix": "alarme + coupure à distance (E-SER-ALARM)",
+   "sources": [
+    "dpln_guide"
+   ]
+  },
+  {
+   "id": "X02",
+   "mistake": "Enclos à moitié vide avec une jauge active",
+   "consequence": "rendement du carburant = éligibles/10",
+   "fix": "E-FULL-01",
+   "sources": [
+    "dpln_guide",
+    "dafous",
+    "yt_solomonk_muldo_aventure"
+   ]
+  },
+  {
+   "id": "X03",
+   "mistake": "Jauge incompatible avec la sérénité du lot",
+   "consequence": "rien n'avance",
+   "fix": "tables de groupes",
+   "sources": [
+    "dafous"
+   ]
+  },
+  {
+   "id": "X04",
+   "mistake": "Lot hétérogène (> 2 000 d'écart de sérénité)",
+   "consequence": "des montures sortent de la zone utile",
+   "fix": "E-GROUP-01",
+   "sources": [
+    "mechanics"
+   ]
+  },
+  {
+   "id": "X05",
+   "mistake": "Palier 4 permanent et Élixirs pour tout",
+   "consequence": "coût au point maximal, jauge vide en 42 min",
+   "fix": "E-TIER-NIGHT / E-TIER-DAY",
+   "sources": [
+    "dpln_guide",
+    "yt_solomonk_secret"
+   ]
+  },
+  {
+   "id": "X06",
+   "mistake": "Monter tous les parents au niveau 200",
+   "consequence": "60–150 h d'XP par lot, places bloquées",
+   "fix": "M-LEVEL-01",
+   "sources": [
+    "dpln_guide",
+    "devblog2",
+    "sim"
+   ]
+  },
+  {
+   "id": "X07",
+   "mistake": "Ne pas cloner, vendre toutes les stériles",
+   "consequence": "×80 à ×100 de captures dès la G7",
+   "fix": "M-CLONE-01",
+   "sources": [
+    "dpln_guide",
+    "sim"
+   ]
+  },
+  {
+   "id": "X08",
+   "mistake": "Extraire/vendre une monture utile à une lignée",
+   "consequence": "rupture de chaîne",
+   "fix": "grille de décision",
+   "sources": [
+    "dafous",
+    "dpln_guide"
+   ]
+  },
+  {
+   "id": "X09",
+   "mistake": "Extraire deux fécondes sans les accoupler d'abord",
+   "consequence": "bébé et XP perdus",
+   "fix": "M-FREEBABY-01",
+   "sources": [
+    "dragodinde_fr"
+   ]
+  },
+  {
+   "id": "X10",
+   "mistake": "Oublier l'Optimakina en haute génération",
+   "consequence": "jusqu'à ~2× plus de tentatives",
+   "fix": "M-OPTI-01",
+   "sources": [
+    "dafous",
+    "sim"
+   ]
+  },
+  {
+   "id": "X11",
+   "mistake": "Makina de génération < génération cible",
+   "consequence": "inutilisable",
+   "fix": "M-MAKGEN-01",
+   "sources": [
+    "dpln_guide"
+   ]
+  },
+  {
+   "id": "X12",
+   "mistake": "Parents dont l'arbre contient une génération ≥ cible",
+   "consequence": "bonus partagé, 0 généton",
+   "fix": "M-CLEAN-01",
+   "sources": [
+    "dpln_guide",
+    "mechanics"
+   ]
+  },
+  {
+   "id": "X13",
+   "mistake": "Tenter une génération avec un seul couple",
+   "consequence": "~58 % d'échec à 42 %",
+   "fix": "M-STACK-01",
+   "sources": [
+    "yt_chikkin",
+    "yt_solomonk_fullsucces"
+   ]
+  },
+  {
+   "id": "X14",
+   "mistake": "Ignorer les sexes à la capture",
+   "consequence": "couleurs bloquées (ex. 80 ♂ / 40 ♀)",
+   "fix": "C-SEX-01",
+   "sources": [
+    "dragodinde_fr"
+   ]
+  },
+  {
+   "id": "X15",
+   "mistake": "Garder ses G10 après les succès",
+   "consequence": "places bloquées, génétons en baisse",
+   "fix": "M-G10OUT-01",
+   "sources": [
+    "dragodinde_fr"
+   ]
+  },
+  {
+   "id": "X16",
+   "mistake": "Accoupler depuis l'inventaire ou un enclos",
+   "consequence": "impossible",
+   "fix": "M-STABLE-01",
+   "sources": [
+    "dpln_guide"
+   ]
+  },
+  {
+   "id": "X17",
+   "mistake": "Acheter au prix fort ressources de filets/carburants",
+   "consequence": "rentabilité détruite",
+   "fix": "droppers soi-même, acheter hors pic",
+   "sources": [
+    "yt_solomonk_muldo_kamas",
+    "yt_solomonk_secret"
+   ]
+  },
+  {
+   "id": "X18",
+   "mistake": "Suivre de vieux tutoriels (gestation, fatigue, énergie, « 2 reproductions », dorées plus lentes)",
+   "consequence": "plans faux",
+   "fix": "règles 3.5+ uniquement",
+   "sources": [
+    "dpln_guide",
+    "nextstage",
+    "dragodinde_fr"
+   ]
+  },
+  {
+   "id": "X19",
+   "mistake": "Compter sur les montures d'avant la 3.5",
+   "consequence": "séniles : ni accouplement ni clonage",
+   "fix": "les extraire ou les équiper",
+   "sources": [
+    "dpln_guide"
+   ]
+  },
+  {
+   "id": "X20",
+   "mistake": "Consommer ses Animakinas juste avant la 3.7",
+   "consequence": "perte d'un futur outil de choix du sexe",
+   "fix": "M-ANIMA-36",
+   "sources": [
+    "devblog37"
+   ]
+  }
+ ],
+ "openQuestions": [
+  "Fréquences des couleurs sauvages, taille des groupes, réapparition",
+  "XP de capture des doublons (filet multiplicateur)",
+  "Niveau conservé au clonage ?",
+  "Génétons liés au compte ou échangeables après délai ?",
+  "Effet exact des jours « effet doublé » et cumul avec une capacité",
+  "Archimonstres Draglida/Dragnoute capturables ?",
+  "Date de sortie 3.7, conversion des stocks de carburants et d'Animakinas",
+  "Prix réels des makinas basses générations (décide de « Optimakina partout »)",
+  "PNJ de guilde vendant des ressources d'élevage : DPLN MAJ 3.5 indique des Neurones de dragodinde chez l'Amateur de Guildaton à 15 Guildatons (3 achats/semaine, 6 si guilde niv. 13) ; reste à confirmer que ce sont bien elles que la 3.7 passe à 30 et s'il y en a d'autres",
+  "Rendement du brisage selon niveau et couleur",
+  "Valeur de la sérénité d'un clone en 3.5/3.6 : DPLN dit « réinitialisée », le devblog II « jauges à 0 » ; 0 ou aléatoire ?"
+ ],
+ "sources": [
+  {
+   "id": "dpln_guide",
+   "title": "Guide de l'éleveur (édition 2026), Dofus pour les Noobs",
+   "url": "https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html",
+   "date": "2026-03-02",
+   "type": "guide",
+   "local": "research/raw/guide-eleveur-dpln.txt"
+  },
+  {
+   "id": "dpln_tool",
+   "title": "Gestion d'enclos (outil DPLN)",
+   "url": "https://www.dofuspourlesnoobs.com/gestion-d-enclos.html",
+   "type": "tool",
+   "local": "research/raw/strategy-evidence/enclos-calculator.deobf.js"
+  },
+  {
+   "id": "dpln_species",
+   "title": "DPLN : Les Dragodindes / Les Muldos / Les Volkornes",
+   "url": "https://www.dofuspourlesnoobs.com/les-dragodindes.html",
+   "type": "guide",
+   "local": "research/raw/strategy-evidence/pages/dpln-*.txt"
+  },
+  {
+   "id": "devblog2",
+   "title": "Devblog élevage partie II (Ankama)",
+   "url": "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1762596-devblog-elevage-monture-partie-ii",
+   "date": "2025-04-28",
+   "type": "official",
+   "local": "research/raw/mechanics-evidence/texts/devblog-elevage-partie-II-2025-04-28.txt"
+  },
+  {
+   "id": "devblog37",
+   "title": "Devblog 3.7 – confort, lisibilité, ajustements (Ankama)",
+   "url": "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1771790-maj-3-7-confort-jeu-lisibilite-ajustements",
+   "date": "2026-09-16",
+   "type": "official",
+   "local": "research/raw/mechanics-evidence/texts/devblog-3.7-elevage-2026-09-16.txt"
+  },
+  {
+   "id": "dofusdb",
+   "title": "DofusDB API (monsters, subareas, map-positions, hints, items, effects, almanax, almanax-calendars)",
+   "url": "https://api.dofusdb.fr",
+   "type": "game-data",
+   "local": "research/raw/strategy-evidence/wild-mount-*.json"
+  },
+  {
+   "id": "mechanics",
+   "title": "Recherche interne : mécaniques + modèle de probabilités validé",
+   "url": null,
+   "type": "internal",
+   "local": "research/mechanics.md ; research/raw/mechanics-evidence/breeding_model_reference.py"
+  },
+  {
+   "id": "crafts",
+   "title": "Recherche interne : recettes, XP de craft, ingrédients",
+   "url": null,
+   "type": "internal",
+   "local": "research/crafts.md"
+  },
+  {
+   "id": "trees",
+   "title": "Recherche interne : arbres Dragodinde/Muldo/Volkorne",
+   "url": null,
+   "type": "internal",
+   "local": "research/tree-*.md"
+  },
+  {
+   "id": "dragodinde_fr",
+   "title": "dragodinde.fr – planner et guides (kamas, succès, mode d'emploi)",
+   "url": "https://dragodinde.fr/",
+   "type": "tool",
+   "local": "research/raw/strategy-evidence/dragodinde-fr/"
+  },
+  {
+   "id": "dofuselevage",
+   "title": "dofuselevage.fr – guide et outils",
+   "url": "https://dofuselevage.fr/tools",
+   "type": "tool",
+   "local": "research/raw/strategy-evidence/pages/dofuselevage-*.txt"
+  },
+  {
+   "id": "dafous",
+   "title": "dafous.app – guide éleveur et outil élevage",
+   "url": "https://dafous.app/en/guides/guide-eleveur.html",
+   "type": "guide",
+   "local": "research/raw/strategy-evidence/pages/dafous-*.txt"
+  },
+  {
+   "id": "registre",
+   "title": "Registre des Abysses",
+   "url": "https://registre-des-abysses.pages.dev/",
+   "type": "tool",
+   "local": "research/raw/strategy-evidence/tools/registre-abysses/"
+  },
+  {
+   "id": "fabenclos",
+   "title": "FabEnclos",
+   "url": "https://enclos.le-fab.fr/",
+   "type": "tool",
+   "local": "research/raw/strategy-evidence/tools/fabenclos/"
+  },
+  {
+   "id": "muldo_calc",
+   "title": "Muldo breeding calculator (Chikkin Sama)",
+   "url": "https://tt405907.github.io/muldo-calculator/",
+   "type": "tool",
+   "local": "research/raw/strategy-evidence/tools/muldo-calculator/"
+  },
+  {
+   "id": "dofus_portals",
+   "title": "dofus-portals.fr – Comment monter Éleveur",
+   "url": "https://dofus-portals.fr/comment-monter-eleveur/",
+   "type": "guide"
+  },
+  {
+   "id": "nextstage",
+   "title": "Next Stage – Tuto élevage de dragodinde",
+   "url": "https://www.next-stage.fr/2026/04/tuto-elevage-dragodinde-dofus-guide-complet-a-z.html",
+   "date": "2026-04",
+   "type": "guide"
+  },
+  {
+   "id": "guidactik",
+   "title": "Guidactik – Guide complet de l'élevage sur DOFUS 3 ; roadmap 2026",
+   "url": "https://guidactik.com/dofus/guide-complet-de-lelevage-sur-dofus-3/",
+   "type": "guide"
+  },
+  {
+   "id": "astuces_kamas",
+   "title": "Astuces Kamas – Éleveur : élevage rentable",
+   "url": "https://dofus-astuces-kamas.com/blog/astuces-kamas-eleveur",
+   "date": "2026-09-14",
+   "type": "guide"
+  },
+  {
+   "id": "yt_solomonk_calc",
+   "title": "Solomonk-e – Le meilleur outil pour optimiser ton élevage (de Muldos)",
+   "url": "https://www.youtube.com/watch?v=MSFc68m3JYg",
+   "date": "2026-03-15",
+   "type": "video",
+   "local": "research/raw/strategy-evidence/youtube/MSFc68m3JYg-solomonke-muldo-calculator.txt"
+  },
+  {
+   "id": "yt_solomonk_fullsucces",
+   "title": "Solomonk-e – Si je voulais faire le full succès élevage",
+   "url": "https://www.youtube.com/watch?v=Yoz63BNQZ0o",
+   "date": "2026-03",
+   "type": "video",
+   "local": "research/raw/strategy-evidence/youtube/Yoz63BNQZ0o-solomonke-full-succes.txt"
+  },
+  {
+   "id": "yt_solomonk_muldo_kamas",
+   "title": "Solomonk-e – Des millions de kamas (presque) sans jouer avec les Muldos",
+   "url": "https://www.youtube.com/watch?v=41ka94FXdM0",
+   "date": "2026-04",
+   "type": "video"
+  },
+  {
+   "id": "yt_solomonk_secret",
+   "title": "Solomonk-e – Ma technique (pas si) secrète pour faire des kamas",
+   "url": "https://www.youtube.com/watch?v=er35rckGDFM",
+   "date": "2026-03",
+   "type": "video"
+  },
+  {
+   "id": "yt_solomonk_volk10000",
+   "title": "Solomonk-e – Je brise 10 000 Volkornes",
+   "url": "https://www.youtube.com/watch?v=fGqEPyQoBgk",
+   "date": "2026-09",
+   "type": "video"
+  },
+  {
+   "id": "yt_solomonk_muldo1000",
+   "title": "Solomonk-e – Je brise 1 000 Muldos",
+   "url": "https://www.youtube.com/watch?v=KFzrg1-MRGQ",
+   "date": "2026-05",
+   "type": "video"
+  },
+  {
+   "id": "yt_solomonk_1mois",
+   "title": "Solomonk-e – Mon avis honnête après un mois",
+   "url": "https://www.youtube.com/watch?v=z8TYzeV8g-o",
+   "date": "2026-04",
+   "type": "video"
+  },
+  {
+   "id": "yt_solomonk_parchemins",
+   "title": "Solomonk-e – L'impact économique de la refonte (parchemins)",
+   "url": "https://www.youtube.com/watch?v=a_Meh5-rqWk",
+   "date": "2026-02",
+   "type": "video"
+  },
+  {
+   "id": "yt_solomonk_muldo_aventure",
+   "title": "Solomonk-e – Aventure Muldo #1 et #2",
+   "url": "https://www.youtube.com/watch?v=EfTZZYsSVeY",
+   "date": "2026-03/04",
+   "type": "video"
+  },
+  {
+   "id": "yt_solomonk_ankama",
+   "title": "Solomonk-e – Ankama répond à la communauté élevage",
+   "url": "https://www.youtube.com/watch?v=9IkAMTg4lw8",
+   "date": "2026-05",
+   "type": "video"
+  },
+  {
+   "id": "yt_tenmalexis_pack",
+   "title": "Tenmalexis – Le PACK pour monter Éleveur 200",
+   "url": "https://www.youtube.com/watch?v=DPBN9vN5AFE",
+   "date": "2026-03-01",
+   "type": "video"
+  },
+  {
+   "id": "yt_laniyelle",
+   "title": "Laniyelle – Guide ultime de l'élevage",
+   "url": "https://www.youtube.com/watch?v=9DOVGqb_rXg",
+   "date": "2026-03-04",
+   "type": "video"
+  },
+  {
+   "id": "yt_chikkin",
+   "title": "Chikkin Sama – Élevage = contenu de bot ?",
+   "url": "https://www.youtube.com/watch?v=dhQ0-67UYXs",
+   "date": "2026-04",
+   "type": "video"
+  },
+  {
+   "id": "sim",
+   "title": "Simulation Monte-Carlo de cette recherche (pyramide)",
+   "url": null,
+   "type": "internal",
+   "local": "research/raw/strategy-evidence/sim/"
+  },
+  {
+   "id": "dpln_maj35",
+   "title": "DPLN – Mise à jour 3.5 (Amateur de Guildaton : Neurones de dragodinde)",
+   "url": "https://www.dofuspourlesnoobs.com/mise-a-jour-305.html",
+   "type": "guide",
+   "local": "research/raw/strategy-evidence/pages/dpln-maj35.txt"
+  }
+ ]
+}

@@ -1,0 +1,7751 @@
+{
+ "meta": {
+  "title": "ElevageSimu – constantes et modèle des mécaniques d'élevage Dofus 3.5+",
+  "generatedAt": "2026-10-01",
+  "liveClientVersion": "3.6.12.16",
+  "betaClientVersion": "3.7.3.3",
+  "confidenceLegend": {
+   "high": "donnée client Ankama / devblog officiel / reproduit exactement des captures in-game",
+   "medium": "source communautaire fiable (DPLN) ou déduction cohérente non contredite",
+   "low": "hypothèse / extrapolation non vérifiée"
+  },
+  "rulesetKeys": {
+   "3.5": "live 03/03/2026 → 22/06/2026",
+   "3.6": "live depuis 23/06/2026 (actuel au 2026-10-01)",
+   "3.7beta": "bêta depuis 17/09/2026, pas encore live au 2026-10-01"
+  },
+  "companionFiles": [
+   "research/mechanics.md",
+   "research/raw/mechanics-evidence/breeding_model_reference.py",
+   "research/raw/mechanics-evidence/client-data/*"
+  ],
+  "verification": {
+   "date": "2026-10-02",
+   "by": "agent vérificateur adversarial",
+   "summary": "Voir la section « ## Vérification » de research/mechanics.md. Modèle de probabilités, constantes client et tables recoupés ; corrections : nombre de pourcentages validés (24, pas 12), bonus Almanax de saison mal lu, noms de Mérydes pris pour des mois, capture +300 XP datée à tort de la 3.6, précision sur l'équivalence Registre des Abysses, niveau de métier 110 déduit, date de bêta 3.5 rétrogradée en medium.",
+   "independentChecks": [
+    "client 3.5.6.7 retéléchargé depuis le CDN Ankama (RidesData, PaddockGaugesData)",
+    "DofusDB API (effects, items, almanax-calendars, version)",
+    "pages DPLN tableaux d'expérience / MAJ 3.5 / MAJ 3.6",
+    "code de registre-des-abysses.pages.dev",
+    "dofuselevage.fr/guide",
+    "PR GitHub Wallaka/dofus-efficiency#56",
+    "cytrus.json"
+   ]
+  }
+ },
+ "timeline": [
+  {
+   "date": "2025-02-27",
+   "event": "Devblog élevage partie I (pistes, version abandonnée sur plusieurs points)",
+   "source": "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1761570-devblog-elevage-monture",
+   "confidence": "high"
+  },
+  {
+   "date": "2025-04-28",
+   "event": "Devblog élevage partie II (design final ; prévu pour 3.3, repoussé à 3.5)",
+   "source": "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1762596-devblog-elevage-monture-partie-ii (devblog Ankama 28/04/2025)",
+   "confidence": "high"
+  },
+  {
+   "date": "2026-02-11",
+   "event": "Bêta 3.5 ouverte",
+   "source": "https://www.dofus.com/fr/mmorpg/actualites/news/1767498-maj-3-5-disponible-serveur-beta",
+   "confidence": "medium",
+   "note": "non revérifiée : dofus.com renvoie 403 au vérificateur"
+  },
+  {
+   "date": "2026-03-03",
+   "event": "3.5 en ligne : refonte de l'élevage",
+   "source": "https://www.dofus.com/fr/mmorpg/actualites/news/1767665-maj-3-5-ligne ; https://www.dofuspourlesnoobs.com/mise-a-jour-305.html (« jusqu'au Mardi 3 mars avant la maintenance »)",
+   "confidence": "high"
+  },
+  {
+   "date": "2026-03..2026-06",
+   "event": "Patchs 3.5.3.1 → 3.5.6.7 : aucune modification des données client d'élevage (jauges, poids génétiques, génétons, XP d'accouplement = 10/génération)",
+   "source": "clients 3.5.3.1/3.5.4.2/3.5.5.3/3.5.6.7 décodés (raw/mechanics-evidence/client-data/breeding-constants-by-client-version.json)",
+   "confidence": "high"
+  },
+  {
+   "date": "2026-06-23",
+   "event": "3.6 en ligne. Seul changement d'élevage visible côté client : XP métier d'accouplement ×3 (10 → 30 par génération et par parent). Ajout de succès de monstres (bestiaire) « Muldos sauvages » / « Volkornes sauvages ». RidesData 3.5.6.7 vs 3.6.12.16 revérifié : seule l'XP d'accouplement change.",
+   "source": "https://www.dofus.com/fr/mmorpg/actualites/news/1770358-maj-3-6-raid-not-dead-maintenant-ligne ; client 3.6.2.1 vs 3.5.6.7 ; https://www.dofuspourlesnoobs.com/mise-a-jour-306.html (DPLN : Vulkania « le 1er juillet, une semaine après la sortie de cette mise à jour »)",
+   "confidence": "high"
+  },
+  {
+   "date": "2026-09-16",
+   "event": "Devblog 3.7 : ajustements élevage (voir changes37)",
+   "source": "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1771790-maj-3-7-confort-jeu-lisibilite-ajustements (devblog Ankama 16/09/2026)",
+   "confidence": "high"
+  },
+  {
+   "date": "2026-09-17",
+   "event": "Bêta 3.7 ouverte (client 3.7.3.3 confirme jauges ×2, carburants ×2, génétons ×2, Optimakina 20 %, Animakina = choix du sexe)",
+   "source": "https://www.jeuxend.com/blog/dofus-3-7-date-sortie-beta-calendrier ; client Dofus 3.7.3.3-beta (cytrus CDN, raw/dofus-client) ; https://cytrus.cdn.ankama.com/cytrus.json (2026-10-02 : beta 6.0_3.7.3.3, dofus3 6.0_3.6.12.16)",
+   "confidence": "high"
+  }
+ ],
+ "paddock": {
+  "paddockCount": 6,
+  "slotsPerPaddock": 10,
+  "unlockJobLevels": [
+   {
+    "paddock": 1,
+    "nameFr": "Enclos du débutant",
+    "map": "[-18,0]",
+    "jobLevel": 1
+   },
+   {
+    "paddock": 2,
+    "nameFr": "Enclos du novice",
+    "map": "[-19,0]",
+    "jobLevel": 40
+   },
+   {
+    "paddock": 3,
+    "nameFr": "Enclos de l'apprenti",
+    "map": "[-20,0]",
+    "jobLevel": 80
+   },
+   {
+    "paddock": 4,
+    "nameFr": "Enclos de l'initié",
+    "map": "[-20,2]",
+    "jobLevel": 120
+   },
+   {
+    "paddock": 5,
+    "nameFr": "Enclos du vétéran",
+    "map": "[-19,2]",
+    "jobLevel": 160
+   },
+   {
+    "paddock": 6,
+    "nameFr": "Enclos de maître",
+    "map": "[-18,2]",
+    "jobLevel": 200
+   }
+  ],
+  "unlockRule": "Enclos liés au compte ; on prend le niveau d'Éleveur le plus haut parmi les personnages du compte sur le serveur (déblocage, pas partage de niveau).",
+  "allPaddocksIdentical": true,
+  "stableCapacity": {
+   "3.5": 250,
+   "3.6": 250,
+   "3.7beta": 500
+  },
+  "mustBePhysicallyOnPaddockMapToAddRemoveMounts": true,
+  "remoteActions": [
+   "remplir les jauges",
+   "activer/désactiver les jauges",
+   "déposer/retirer de l'étable",
+   "accoupler",
+   "cloner",
+   "extraire"
+  ],
+  "matingRequiresMountsInStable": true,
+  "sources": [
+   "https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html (guide DPLN, MAJ 02/03/2026)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1762596-devblog-elevage-monture-partie-ii (devblog Ankama 28/04/2025)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1771790-maj-3-7-confort-jeu-lisibilite-ajustements (devblog Ankama 16/09/2026)"
+  ],
+  "confidence": "high"
+ },
+ "gauges": {
+  "tickSeconds": 10,
+  "maxActiveGauges": 2,
+  "mutuallyExclusive": [
+   [
+    "SLAPPER",
+    "PATTER"
+   ]
+  ],
+  "ids": {
+   "SLAPPER": {
+    "id": 1,
+    "fr": "Baffeur",
+    "effect": "sérénité -",
+    "stat": "serenity"
+   },
+   "PATTER": {
+    "id": 2,
+    "fr": "Caresseur",
+    "effect": "sérénité +",
+    "stat": "serenity"
+   },
+   "BLASTER": {
+    "id": 3,
+    "fr": "Foudroyeur",
+    "effect": "endurance +",
+    "stat": "endurance",
+    "renamed3_7": "endurance"
+   },
+   "DRINKING_TROUGH": {
+    "id": 4,
+    "fr": "Abreuvoir",
+    "effect": "maturité +",
+    "stat": "maturity",
+    "renamed3_7": "maturité (supposé)"
+   },
+   "DRAGO_BUTT": {
+    "id": 5,
+    "fr": "Dragofesse",
+    "effect": "amour +",
+    "stat": "love",
+    "renamed3_7": "amour"
+   },
+   "FEEDER": {
+    "id": 6,
+    "fr": "Mangeoire",
+    "effect": "XP +",
+    "stat": "xp"
+   }
+  },
+  "tiers": {
+   "3.5": [
+    {
+     "tier": 1,
+     "min": 0,
+     "max": 40000,
+     "width": 40000,
+     "consumptionPerTick": 10,
+     "drainSeconds": 40000.0,
+     "drainHuman": "11h06m40s"
+    },
+    {
+     "tier": 2,
+     "min": 40001,
+     "max": 70000,
+     "width": 30000,
+     "consumptionPerTick": 20,
+     "drainSeconds": 15000.0,
+     "drainHuman": "4h10m00s"
+    },
+    {
+     "tier": 3,
+     "min": 70001,
+     "max": 90000,
+     "width": 20000,
+     "consumptionPerTick": 30,
+     "drainSeconds": 6666.7,
+     "drainHuman": "1h51m07s"
+    },
+    {
+     "tier": 4,
+     "min": 90001,
+     "max": 100000,
+     "width": 10000,
+     "consumptionPerTick": 40,
+     "drainSeconds": 2500.0,
+     "drainHuman": "0h41m40s"
+    }
+   ],
+   "3.6": [
+    {
+     "tier": 1,
+     "min": 0,
+     "max": 40000,
+     "width": 40000,
+     "consumptionPerTick": 10,
+     "drainSeconds": 40000.0,
+     "drainHuman": "11h06m40s"
+    },
+    {
+     "tier": 2,
+     "min": 40001,
+     "max": 70000,
+     "width": 30000,
+     "consumptionPerTick": 20,
+     "drainSeconds": 15000.0,
+     "drainHuman": "4h10m00s"
+    },
+    {
+     "tier": 3,
+     "min": 70001,
+     "max": 90000,
+     "width": 20000,
+     "consumptionPerTick": 30,
+     "drainSeconds": 6666.7,
+     "drainHuman": "1h51m07s"
+    },
+    {
+     "tier": 4,
+     "min": 90001,
+     "max": 100000,
+     "width": 10000,
+     "consumptionPerTick": 40,
+     "drainSeconds": 2500.0,
+     "drainHuman": "0h41m40s"
+    }
+   ],
+   "3.7beta": [
+    {
+     "tier": 1,
+     "min": 0,
+     "max": 80000,
+     "width": 80000,
+     "consumptionPerTick": 10,
+     "drainSeconds": 80000.0,
+     "drainHuman": "22h13m20s"
+    },
+    {
+     "tier": 2,
+     "min": 80001,
+     "max": 140000,
+     "width": 60000,
+     "consumptionPerTick": 20,
+     "drainSeconds": 30000.0,
+     "drainHuman": "8h20m00s"
+    },
+    {
+     "tier": 3,
+     "min": 140001,
+     "max": 180000,
+     "width": 40000,
+     "consumptionPerTick": 30,
+     "drainSeconds": 13333.3,
+     "drainHuman": "3h42m13s"
+    },
+    {
+     "tier": 4,
+     "min": 180001,
+     "max": 200000,
+     "width": 20000,
+     "consumptionPerTick": 40,
+     "drainSeconds": 5000.0,
+     "drainHuman": "1h23m20s"
+    }
+   ]
+  },
+  "capacity": {
+   "3.5": 100000,
+   "3.6": 100000,
+   "3.7beta": 200000
+  },
+  "fullDrainSeconds": {
+   "3.6": 64167,
+   "3.5": 64167,
+   "3.7beta": 128333
+  },
+  "tierOfValue": "tier = plus petit palier i tel que value <= tierMax[i] (40 000 → palier 1 ; 40 001 → palier 2). Source devblog II : « dès que la jauge descendra sous les 70 001 points, la jauge passera au tier 2 ».",
+  "tickRule": "Toutes les 10 s, pour chaque jauge ACTIVE : si value>0 et au moins une monture de l'enclos peut en profiter, consumed=min(rate(tier(value)), value) ; value-=consumed ; CHAQUE monture éligible gagne consumed (×2 si capacité correspondante). La consommation ne dépend pas du nombre de montures (1 ou 10).",
+  "noConsumptionWhen": [
+   "aucune monture dans l'enclos",
+   "aucune monture ne peut profiter de la jauge (stat déjà max, sérénité hors zone, sérénité déjà à ±5000 pour baffeur/caresseur, niveau 200 pour mangeoire)"
+  ],
+  "eligibility": {
+   "BLASTER": "endurance<20000 ET -5000<=sérénité<=-1",
+   "DRINKING_TROUGH": "maturité<20000 ET -2000<=sérénité<=2000",
+   "DRAGO_BUTT": "amour<20000 ET 0<=sérénité<=5000",
+   "SLAPPER": "sérénité>-5000",
+   "PATTER": "sérénité<5000",
+   "FEEDER": "niveau<200"
+  },
+  "serenityClamp": [
+   -5000,
+   5000
+  ],
+  "statGainPerTickByTier": [
+   10,
+   20,
+   30,
+   40
+  ],
+  "timeToFillOneStat_0_to_20000": {
+   "tier1": {
+    "ticks": 2000,
+    "human": "5h33m20s",
+    "withAbilityHuman": "2h46m40s"
+   },
+   "tier2": {
+    "ticks": 1000,
+    "human": "2h46m40s",
+    "withAbilityHuman": "1h23m20s"
+   },
+   "tier3": {
+    "ticks": 667,
+    "human": "1h51m10s",
+    "withAbilityHuman": "0h55m40s"
+   },
+   "tier4": {
+    "ticks": 500,
+    "human": "1h23m20s",
+    "withAbilityHuman": "0h41m40s"
+   }
+  },
+  "sources": [
+   "client Dofus 3.6.12.16 (cytrus CDN, raw/dofus-client)",
+   "client Dofus 3.7.3.3-beta (cytrus CDN, raw/dofus-client)",
+   "https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html (guide DPLN, MAJ 02/03/2026)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1762596-devblog-elevage-monture-partie-ii (devblog Ankama 28/04/2025)"
+  ],
+  "confidence": "high",
+  "notes": [
+   "Valeurs DPLN de vidage (11h06, 4h09, 1h51, 42 min, total 17h48) cohérentes avec le calcul.",
+   "Règle « pas de consommation si aucune monture ne peut en profiter » : devblog II (stat pleine) + DPLN (« ne peuvent pas en profiter ») — confiance medium pour le cas « sérénité hors zone ».",
+   "Almanax « effet doublé » : modélisé comme gain ×2 par monture, consommation inchangée (confiance low)."
+  ],
+  "fullDrainTicksExact": {
+   "3.5": 6416,
+   "3.6": 6416,
+   "3.7beta": 12833,
+   "note": "Simulation par ticks entiers (consommation min(rate(tier(v)), v)) : 6416 ticks = 64160 s (17h49m20) en 3.5/3.6, 12833 ticks = 128330 s en 3.7 bêta ; fullDrainSeconds (64167 / 128333) est l'approximation continue. Ajouté par la critique de complétude 2026-10-02."
+  }
+ },
+ "mountStats": {
+  "enduranceMax": 20000,
+  "maturityMax": 20000,
+  "loveMax": 20000,
+  "serenityRange": [
+   -5000,
+   5000
+  ],
+  "serenityZones": {
+   "endurance": {
+    "min": -5000,
+    "max": -1
+   },
+   "maturity": {
+    "min": -2000,
+    "max": 2000
+   },
+   "love": {
+    "min": 0,
+    "max": 5000,
+    "clientMaxMood": 5001
+   }
+  },
+  "clientRideGauges": {
+   "1_love": {
+    "maxValue": 20000,
+    "minMood": 0,
+    "maxMood": 5001
+   },
+   "2_maturity": {
+    "maxValue": 20000,
+    "minMood": -2000,
+    "maxMood": 2000
+   },
+   "3_endurance": {
+    "maxValue": 20000,
+    "minMood": -5000,
+    "maxMood": -1
+   }
+  },
+  "smileys": {
+   "vert :D": "amour seul (sérénité > 2000)",
+   "violet :)": "amour + maturité (0..2000)",
+   "bleu :(": "endurance + maturité (-2000..-1)",
+   "rouge :C": "endurance seule (< -2000)"
+  },
+  "serenityDoesNotChangeWhenGainingStats": true,
+  "noFatigueNoEnergy": true,
+  "initialState": {
+   "level": 1,
+   "endurance": 0,
+   "maturity": 0,
+   "love": 0,
+   "serenity": "aléatoire (distribution inconnue ; hypothèse uniforme [-5000,5000])",
+   "fertility": "Fertile"
+  },
+  "fertilityStates": {
+   "Fertile": "peut être accouplée après avoir rempli les 3 jauges",
+   "Féconde": "endurance=maturité=amour=20000 → accouplement possible",
+   "Stérile": "après accouplement ; clonable/extractible",
+   "Sénile": "montures possédées avant 3.5 : ni accouplement ni clonage ; XP et équipement OK ; extraction = 1 ressource"
+  },
+  "sources": [
+   "client Dofus 3.6.12.16 (cytrus CDN, raw/dofus-client)",
+   "https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html (guide DPLN, MAJ 02/03/2026)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1762596-devblog-elevage-monture-partie-ii (devblog Ankama 28/04/2025)",
+   "https://dofuselevage.fr/guide (contredit : amour dès 1 ; le client dit 0)"
+  ],
+  "confidence": "high"
+ },
+ "abilities": {
+  "list": {
+   "Amoureuse": "gain d'amour ×2",
+   "Endurante": "gain d'endurance ×2",
+   "Précoce": "gain de maturité ×2",
+   "Sage": "gain d'XP ×2",
+   "Reproducteur": "+1 bébé à l'accouplement (mâle ou femelle ; 2 reproducteurs = toujours +1 seulement)",
+   "Caméléone": "couleurs adaptées au personnage (cosmétique)"
+  },
+  "notInherited": true,
+  "lostOnCloning": true,
+  "acquisition": {
+   "3.5": "uniquement via makina (Animakina aléatoire, Kromakina = Caméléone 100 %) ou Almanax",
+   "3.6": "idem 3.5",
+   "3.7beta": "capacité aléatoire possible SANS makina : Reproductrice 3 %, Sage 6 %, Précoce 8 %, Amoureuse 8 %, Endurante 8 % (67 % aucune) ; Animakina = choix du sexe ; Kromakina inchangée"
+  },
+  "sources": [
+   "https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html (guide DPLN, MAJ 02/03/2026)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1762596-devblog-elevage-monture-partie-ii (devblog Ankama 28/04/2025)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1771790-maj-3-7-confort-jeu-lisibilite-ajustements (devblog Ankama 16/09/2026)"
+  ],
+  "confidence": "high",
+  "nameVariants": {
+   "Reproducteur": [
+    "Reproducteur (DPLN)",
+    "Reproductrice (devblog 3.7, dofuselevage.fr, ancien système)"
+   ],
+   "note": "Nom exact du texte client non extrait ; makinas.naturalAbilityOdds_3_7beta utilise « Reproductrice » (orthographe du devblog) = même capacité que « Reproducteur »."
+  }
+ },
+ "fuels": {
+  "families": [
+   {
+    "family": "Extrait",
+    "tier": 1,
+    "cap_3_5": 40000,
+    "cap_3_7beta": 80000,
+    "levels": [
+     5,
+     15,
+     25,
+     35,
+     45
+    ]
+   },
+   {
+    "family": "Philtre",
+    "tier": 2,
+    "cap_3_5": 70000,
+    "cap_3_7beta": 140000,
+    "levels": [
+     55,
+     65,
+     75,
+     85,
+     95
+    ]
+   },
+   {
+    "family": "Potion",
+    "tier": 3,
+    "cap_3_5": 90000,
+    "cap_3_7beta": 180000,
+    "levels": [
+     105,
+     115,
+     125,
+     135,
+     145
+    ]
+   },
+   {
+    "family": "Élixir",
+    "tier": 4,
+    "cap_3_5": 100000,
+    "cap_3_7beta": 200000,
+    "levels": [
+     155,
+     165,
+     175,
+     185,
+     195
+    ]
+   }
+  ],
+  "sizes": [
+   {
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "amount_3_7beta": 2000
+   },
+   {
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "amount_3_7beta": 4000
+   },
+   {
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "amount_3_7beta": 6000
+   },
+   {
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "amount_3_7beta": 8000
+   },
+   {
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "amount_3_7beta": 10000
+   }
+  ],
+  "useRule": "Utilisable seulement si value < cap de la famille ; nouvelle valeur = min(cap, value+amount) (le surplus est perdu — confiance medium : effet « Jauge +X (Max cap) », fenêtre de confirmation anti-gaspillage ajoutée en 3.7). Un carburant de famille supérieure peut remplir les paliers inférieurs.",
+  "jobLevelNotRequiredToUse": true,
+  "effectEncoding": "effet client 3810..3820 : value = quantité ; diceSide = cap/100 (400 → 40 000) ; Élixir diceSide 0 = pas de cap (capacité max).",
+  "npcAdeleVage": {
+   "map": "[-18,1]",
+   "currency": {
+    "itemId": 33511,
+    "name": "Poussière d'élevage"
+   },
+   "sellsOnlyGigantesque": true,
+   "prices": {
+    "Gigantesque Extrait": 50,
+    "Gigantesque Philtre": 200,
+    "Gigantesque Potion": 800,
+    "Gigantesque Élixir": 3200
+   },
+   "dustPerGaugePoint": {
+    "Extrait": 0.01,
+    "Philtre": 0.04,
+    "Potion": 0.16,
+    "Élixir": 0.64
+   },
+   "source": "https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html (guide DPLN, MAJ 02/03/2026) + capture Adèle Vage",
+   "confidence": "high (3.5/3.6) ; inconnu pour 3.7 (quantités doublées mais prix non annoncés)"
+  },
+  "dustCompensation": "0,55 poussière par point de durabilité restant des anciens objets d'élevage (arrondi au supérieur), versé au passage en 3.5 ; la poussière n'est pas craftable (compensation uniquement).",
+  "items": [
+   {
+    "itemId": 33312,
+    "name": "Minuscule Extrait de Foudroyeur",
+    "level": 5,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Extrait",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33311,
+    "name": "Minuscule Extrait de Dragofesse",
+    "level": 5,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Extrait",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33313,
+    "name": "Minuscule Extrait d'Abreuvoir",
+    "level": 5,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Extrait",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33314,
+    "name": "Minuscule Extrait de Mangeoire",
+    "level": 5,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Extrait",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33310,
+    "name": "Minuscule Extrait de Caresseur",
+    "level": 5,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Extrait",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33309,
+    "name": "Minuscule Extrait de Baffeur",
+    "level": 5,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Extrait",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33318,
+    "name": "Petit Extrait de Foudroyeur",
+    "level": 15,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Extrait",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33317,
+    "name": "Petit Extrait de Dragofesse",
+    "level": 15,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Extrait",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33319,
+    "name": "Petit Extrait d'Abreuvoir",
+    "level": 15,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Extrait",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33320,
+    "name": "Petit Extrait de Mangeoire",
+    "level": 15,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Extrait",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33316,
+    "name": "Petit Extrait de Caresseur",
+    "level": 15,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Extrait",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33315,
+    "name": "Petit Extrait de Baffeur",
+    "level": 15,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Extrait",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33329,
+    "name": "Extrait de Foudroyeur",
+    "level": 25,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Extrait",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33328,
+    "name": "Extrait de Dragofesse",
+    "level": 25,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Extrait",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33330,
+    "name": "Extrait d'Abreuvoir",
+    "level": 25,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Extrait",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33331,
+    "name": "Extrait de Mangeoire",
+    "level": 25,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Extrait",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33327,
+    "name": "Extrait de Caresseur",
+    "level": 25,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Extrait",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33326,
+    "name": "Extrait de Baffeur",
+    "level": 25,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Extrait",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33339,
+    "name": "Grand Extrait de Foudroyeur",
+    "level": 35,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Extrait",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33338,
+    "name": "Grand Extrait de Dragofesse",
+    "level": 35,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Extrait",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33340,
+    "name": "Grand Extrait d'Abreuvoir",
+    "level": 35,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Extrait",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33341,
+    "name": "Grand Extrait de Mangeoire",
+    "level": 35,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Extrait",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33337,
+    "name": "Grand Extrait de Caresseur",
+    "level": 35,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Extrait",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33336,
+    "name": "Grand Extrait de Baffeur",
+    "level": 35,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Extrait",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33350,
+    "name": "Gigantesque Extrait de Foudroyeur",
+    "level": 45,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Extrait",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33349,
+    "name": "Gigantesque Extrait de Dragofesse",
+    "level": 45,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Extrait",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33351,
+    "name": "Gigantesque Extrait d'Abreuvoir",
+    "level": 45,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Extrait",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33352,
+    "name": "Gigantesque Extrait de Mangeoire",
+    "level": 45,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Extrait",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33348,
+    "name": "Gigantesque Extrait de Caresseur",
+    "level": 45,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Extrait",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33347,
+    "name": "Gigantesque Extrait de Baffeur",
+    "level": 45,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Extrait",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 40000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 80000
+   },
+   {
+    "itemId": 33360,
+    "name": "Minuscule Philtre de Foudroyeur",
+    "level": 55,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Philtre",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33359,
+    "name": "Minuscule Philtre de Dragofesse",
+    "level": 55,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Philtre",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33361,
+    "name": "Minuscule Philtre d'Abreuvoir",
+    "level": 55,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Philtre",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33362,
+    "name": "Minuscule Philtre de Mangeoire",
+    "level": 55,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Philtre",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33358,
+    "name": "Minuscule Philtre de Caresseur",
+    "level": 55,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Philtre",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33357,
+    "name": "Minuscule Philtre de Baffeur",
+    "level": 55,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Philtre",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33371,
+    "name": "Petit Philtre de Foudroyeur",
+    "level": 65,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Philtre",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33370,
+    "name": "Petit Philtre de Dragofesse",
+    "level": 65,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Philtre",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33372,
+    "name": "Petit Philtre d'Abreuvoir",
+    "level": 65,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Philtre",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33373,
+    "name": "Petit Philtre de Mangeoire",
+    "level": 65,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Philtre",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33369,
+    "name": "Petit Philtre de Caresseur",
+    "level": 65,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Philtre",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33368,
+    "name": "Petit Philtre de Baffeur",
+    "level": 65,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Philtre",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33381,
+    "name": "Philtre de Foudroyeur",
+    "level": 75,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Philtre",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33380,
+    "name": "Philtre de Dragofesse",
+    "level": 75,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Philtre",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33382,
+    "name": "Philtre d'Abreuvoir",
+    "level": 75,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Philtre",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33383,
+    "name": "Philtre de Mangeoire",
+    "level": 75,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Philtre",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33379,
+    "name": "Philtre de Caresseur",
+    "level": 75,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Philtre",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33378,
+    "name": "Philtre de Baffeur",
+    "level": 75,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Philtre",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33392,
+    "name": "Grand Philtre de Foudroyeur",
+    "level": 85,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Philtre",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33391,
+    "name": "Grand Philtre de Dragofesse",
+    "level": 85,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Philtre",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33393,
+    "name": "Grand Philtre d'Abreuvoir",
+    "level": 85,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Philtre",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33394,
+    "name": "Grand Philtre de Mangeoire",
+    "level": 85,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Philtre",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33390,
+    "name": "Grand Philtre de Caresseur",
+    "level": 85,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Philtre",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33389,
+    "name": "Grand Philtre de Baffeur",
+    "level": 85,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Philtre",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33402,
+    "name": "Gigantesque Philtre de Foudroyeur",
+    "level": 95,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Philtre",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33401,
+    "name": "Gigantesque Philtre de Dragofesse",
+    "level": 95,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Philtre",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33403,
+    "name": "Gigantesque Philtre d'Abreuvoir",
+    "level": 95,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Philtre",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33404,
+    "name": "Gigantesque Philtre de Mangeoire",
+    "level": 95,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Philtre",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33400,
+    "name": "Gigantesque Philtre de Caresseur",
+    "level": 95,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Philtre",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33399,
+    "name": "Gigantesque Philtre de Baffeur",
+    "level": 95,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Philtre",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 70000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 140000
+   },
+   {
+    "itemId": 33413,
+    "name": "Minuscule Potion de Foudroyeur",
+    "level": 105,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Potion",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33412,
+    "name": "Minuscule Potion de Dragofesse",
+    "level": 105,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Potion",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33414,
+    "name": "Minuscule Potion d'Abreuvoir",
+    "level": 105,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Potion",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33415,
+    "name": "Minuscule Potion de Mangeoire",
+    "level": 105,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Potion",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33411,
+    "name": "Minuscule Potion de Caresseur",
+    "level": 105,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Potion",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33410,
+    "name": "Minuscule Potion de Baffeur",
+    "level": 105,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Potion",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33423,
+    "name": "Petite Potion de Foudroyeur",
+    "level": 115,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Potion",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33422,
+    "name": "Petite Potion de Dragofesse",
+    "level": 115,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Potion",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33424,
+    "name": "Petite Potion d'Abreuvoir",
+    "level": 115,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Potion",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33425,
+    "name": "Petite Potion de Mangeoire",
+    "level": 115,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Potion",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33421,
+    "name": "Petite Potion de Caresseur",
+    "level": 115,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Potion",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33420,
+    "name": "Petite Potion de Baffeur",
+    "level": 115,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Potion",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33434,
+    "name": "Potion de Foudroyeur",
+    "level": 125,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Potion",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33433,
+    "name": "Potion de Dragofesse",
+    "level": 125,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Potion",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33435,
+    "name": "Potion d'Abreuvoir",
+    "level": 125,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Potion",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33436,
+    "name": "Potion de Mangeoire",
+    "level": 125,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Potion",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33432,
+    "name": "Potion de Caresseur",
+    "level": 125,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Potion",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33431,
+    "name": "Potion de Baffeur",
+    "level": 125,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Potion",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33444,
+    "name": "Grande Potion de Foudroyeur",
+    "level": 135,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Potion",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33443,
+    "name": "Grande Potion de Dragofesse",
+    "level": 135,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Potion",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33445,
+    "name": "Grande Potion d'Abreuvoir",
+    "level": 135,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Potion",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33446,
+    "name": "Grande Potion de Mangeoire",
+    "level": 135,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Potion",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33442,
+    "name": "Grande Potion de Caresseur",
+    "level": 135,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Potion",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33441,
+    "name": "Grande Potion de Baffeur",
+    "level": 135,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Potion",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33455,
+    "name": "Gigantesque Potion de Foudroyeur",
+    "level": 145,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Potion",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33454,
+    "name": "Gigantesque Potion de Dragofesse",
+    "level": 145,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Potion",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33456,
+    "name": "Gigantesque Potion d'Abreuvoir",
+    "level": 145,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Potion",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33457,
+    "name": "Gigantesque Potion de Mangeoire",
+    "level": 145,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Potion",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33453,
+    "name": "Gigantesque Potion de Caresseur",
+    "level": 145,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Potion",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33452,
+    "name": "Gigantesque Potion de Baffeur",
+    "level": 145,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Potion",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 90000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 180000
+   },
+   {
+    "itemId": 33465,
+    "name": "Minuscule Élixir de Foudroyeur",
+    "level": 155,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Élixir",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33464,
+    "name": "Minuscule Élixir de Dragofesse",
+    "level": 155,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Élixir",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33466,
+    "name": "Minuscule Élixir d'Abreuvoir",
+    "level": 155,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Élixir",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33467,
+    "name": "Minuscule Élixir de Mangeoire",
+    "level": 155,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Élixir",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33463,
+    "name": "Minuscule Élixir de Caresseur",
+    "level": 155,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Élixir",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33462,
+    "name": "Minuscule Élixir de Baffeur",
+    "level": 155,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Élixir",
+    "size": "Minuscule",
+    "amount_3_5": 1000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 2000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33474,
+    "name": "Petit Élixir de Foudroyeur",
+    "level": 165,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Élixir",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33473,
+    "name": "Petit Élixir de Dragofesse",
+    "level": 165,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Élixir",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33475,
+    "name": "Petit Élixir d'Abreuvoir",
+    "level": 165,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Élixir",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33476,
+    "name": "Petit Élixir de Mangeoire",
+    "level": 165,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Élixir",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33472,
+    "name": "Petit Élixir de Caresseur",
+    "level": 165,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Élixir",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33471,
+    "name": "Petit Élixir de Baffeur",
+    "level": 165,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Élixir",
+    "size": "Petit",
+    "amount_3_5": 2000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 4000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33483,
+    "name": "Élixir de Foudroyeur",
+    "level": 175,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Élixir",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33482,
+    "name": "Élixir de Dragofesse",
+    "level": 175,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Élixir",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33484,
+    "name": "Élixir d'Abreuvoir",
+    "level": 175,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Élixir",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33485,
+    "name": "Élixir de Mangeoire",
+    "level": 175,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Élixir",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33481,
+    "name": "Élixir de Caresseur",
+    "level": 175,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Élixir",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33480,
+    "name": "Élixir de Baffeur",
+    "level": 175,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Élixir",
+    "size": "Normal",
+    "amount_3_5": 3000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 6000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33492,
+    "name": "Grand Élixir de Foudroyeur",
+    "level": 185,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Élixir",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33491,
+    "name": "Grand Élixir de Dragofesse",
+    "level": 185,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Élixir",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33493,
+    "name": "Grand Élixir d'Abreuvoir",
+    "level": 185,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Élixir",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33494,
+    "name": "Grand Élixir de Mangeoire",
+    "level": 185,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Élixir",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33490,
+    "name": "Grand Élixir de Caresseur",
+    "level": 185,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Élixir",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33489,
+    "name": "Grand Élixir de Baffeur",
+    "level": 185,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Élixir",
+    "size": "Grand",
+    "amount_3_5": 4000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 8000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33501,
+    "name": "Gigantesque Élixir de Foudroyeur",
+    "level": 195,
+    "gauge": "BLASTER",
+    "gaugeFr": "Foudroyeur",
+    "family": "Élixir",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33500,
+    "name": "Gigantesque Élixir de Dragofesse",
+    "level": 195,
+    "gauge": "DRAGO_BUTT",
+    "gaugeFr": "Dragofesse",
+    "family": "Élixir",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33502,
+    "name": "Gigantesque Élixir d'Abreuvoir",
+    "level": 195,
+    "gauge": "DRINKING_TROUGH",
+    "gaugeFr": "Abreuvoir",
+    "family": "Élixir",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33503,
+    "name": "Gigantesque Élixir de Mangeoire",
+    "level": 195,
+    "gauge": "FEEDER",
+    "gaugeFr": "Mangeoire",
+    "family": "Élixir",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33499,
+    "name": "Gigantesque Élixir de Caresseur",
+    "level": 195,
+    "gauge": "PATTER",
+    "gaugeFr": "Caresseur",
+    "family": "Élixir",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 200000
+   },
+   {
+    "itemId": 33498,
+    "name": "Gigantesque Élixir de Baffeur",
+    "level": 195,
+    "gauge": "SLAPPER",
+    "gaugeFr": "Baffeur",
+    "family": "Élixir",
+    "size": "Gigantesque",
+    "amount_3_5": 5000,
+    "cap_3_5": 100000,
+    "amount_3_7beta": 10000,
+    "cap_3_7beta": 200000
+   }
+  ],
+  "sources": [
+   "client Dofus 3.6.12.16 (cytrus CDN, raw/dofus-client)",
+   "client Dofus 3.7.3.3-beta (cytrus CDN, raw/dofus-client)",
+   "https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html (guide DPLN, MAJ 02/03/2026)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1762596-devblog-elevage-monture-partie-ii (devblog Ankama 28/04/2025)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1771790-maj-3-7-confort-jeu-lisibilite-ajustements (devblog Ankama 16/09/2026)"
+  ],
+  "confidence": "high",
+  "sizeNameNote": "Noms en jeu (DofusDB) : la taille normale n'a pas de préfixe (« Extrait de Dragofesse ») et les Potions sont au féminin (« Petite Potion de … », « Grande Potion de … »). Afficher fuels.items[].name."
+ },
+ "makinas": {
+  "types": {
+   "Animakina": {
+    "3.5": "capacité aléatoire : Amoureuse 27 %, Endurante 27 %, Précoce 27 %, Sage 14 %, Reproducteur 5 %",
+    "3.7beta": "choix du sexe du bébé (effet client 4069) ; stocks existants convertis"
+   },
+   "Kromakina": {
+    "all": "capacité Caméléone 100 %"
+   },
+   "Optimakina": {
+    "3.5": "+10 % génération cible",
+    "3.6": "+10 %",
+    "3.7beta": "+20 %"
+   }
+  },
+  "animakinaOdds_3_5": {
+   "Amoureuse": 0.27,
+   "Endurante": 0.27,
+   "Précoce": 0.27,
+   "Sage": 0.14,
+   "Reproducteur": 0.05
+  },
+  "naturalAbilityOdds_3_7beta": {
+   "Reproductrice": 0.03,
+   "Sage": 0.06,
+   "Précoce": 0.08,
+   "Amoureuse": 0.08,
+   "Endurante": 0.08,
+   "none": 0.67
+  },
+  "optimakinaBonus": {
+   "3.5": 0.1,
+   "3.6": 0.1,
+   "3.7beta": 0.2
+  },
+  "onePerMating": true,
+  "optional": true,
+  "generationRule": "makina.generation >= génération cible de l'accouplement (une makina de génération supérieure est acceptée) ; une makina par espèce et par génération 2..10",
+  "effectEncoding": "3837 = génération (value), 3838 = bonus génération cible (value %), 3839 = Caméléone, 3840..3844 = capacités Animakina (5/14/27/27/27), 4069 = choix du sexe (3.7)",
+  "levelPattern": "génération g : Kromakina Dragodinde/Volkorne/Muldo, Animakina D/V/M, Optimakina D/V/M aux niveaux 20(g-2)+17,19,21,23,25,27,29,31,33 pour g=2..8 ; g=9 : 155..171 ; g=10 : 173..189",
+  "recipesChangedIn3_7beta": "74 recettes de makinas modifiées (raw/mechanics-evidence/client-data/eleveur-recipes-3.7.3.3-beta.json)",
+  "items": [
+   {
+    "itemId": 33321,
+    "name": "Kromakina Dragodinde de Génération 2",
+    "type": "Kromakina",
+    "species": "Dragodinde",
+    "generation": 2,
+    "level": 17,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      2
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      2
+     ]
+    ]
+   },
+   {
+    "itemId": 33322,
+    "name": "Kromakina Volkorne de Génération 2",
+    "type": "Kromakina",
+    "species": "Volkorne",
+    "generation": 2,
+    "level": 19,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      2
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      2
+     ]
+    ]
+   },
+   {
+    "itemId": 33323,
+    "name": "Kromakina Muldo de Génération 2",
+    "type": "Kromakina",
+    "species": "Muldo",
+    "generation": 2,
+    "level": 21,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      2
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      2
+     ]
+    ]
+   },
+   {
+    "itemId": 33324,
+    "name": "Animakina Dragodinde de Génération 2",
+    "type": "Animakina",
+    "species": "Dragodinde",
+    "generation": 2,
+    "level": 23,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      2
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      2
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33325,
+    "name": "Animakina Volkorne de Génération 2",
+    "type": "Animakina",
+    "species": "Volkorne",
+    "generation": 2,
+    "level": 25,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      2
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      2
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33332,
+    "name": "Animakina Muldo de Génération 2",
+    "type": "Animakina",
+    "species": "Muldo",
+    "generation": 2,
+    "level": 27,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      2
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      2
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33333,
+    "name": "Optimakina Dragodinde de Génération 2",
+    "type": "Optimakina",
+    "species": "Dragodinde",
+    "generation": 2,
+    "level": 29,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      2
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      2
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33334,
+    "name": "Optimakina Volkorne de Génération 2",
+    "type": "Optimakina",
+    "species": "Volkorne",
+    "generation": 2,
+    "level": 31,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      2
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      2
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33335,
+    "name": "Optimakina Muldo de Génération 2",
+    "type": "Optimakina",
+    "species": "Muldo",
+    "generation": 2,
+    "level": 33,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      2
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      2
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33342,
+    "name": "Kromakina Dragodinde de Génération 3",
+    "type": "Kromakina",
+    "species": "Dragodinde",
+    "generation": 3,
+    "level": 37,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      3
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      3
+     ]
+    ]
+   },
+   {
+    "itemId": 33343,
+    "name": "Kromakina Volkorne de Génération 3",
+    "type": "Kromakina",
+    "species": "Volkorne",
+    "generation": 3,
+    "level": 39,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      3
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      3
+     ]
+    ]
+   },
+   {
+    "itemId": 33344,
+    "name": "Kromakina Muldo de Génération 3",
+    "type": "Kromakina",
+    "species": "Muldo",
+    "generation": 3,
+    "level": 41,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      3
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      3
+     ]
+    ]
+   },
+   {
+    "itemId": 33345,
+    "name": "Animakina Dragodinde de Génération 3",
+    "type": "Animakina",
+    "species": "Dragodinde",
+    "generation": 3,
+    "level": 43,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      3
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      3
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33346,
+    "name": "Animakina Volkorne de Génération 3",
+    "type": "Animakina",
+    "species": "Volkorne",
+    "generation": 3,
+    "level": 45,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      3
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      3
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33353,
+    "name": "Animakina Muldo de Génération 3",
+    "type": "Animakina",
+    "species": "Muldo",
+    "generation": 3,
+    "level": 47,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      3
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      3
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33354,
+    "name": "Optimakina Dragodinde de Génération 3",
+    "type": "Optimakina",
+    "species": "Dragodinde",
+    "generation": 3,
+    "level": 49,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      3
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      3
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33355,
+    "name": "Optimakina Volkorne de Génération 3",
+    "type": "Optimakina",
+    "species": "Volkorne",
+    "generation": 3,
+    "level": 51,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      3
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      3
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33356,
+    "name": "Optimakina Muldo de Génération 3",
+    "type": "Optimakina",
+    "species": "Muldo",
+    "generation": 3,
+    "level": 53,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      3
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      3
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33363,
+    "name": "Kromakina Dragodinde de Génération 4",
+    "type": "Kromakina",
+    "species": "Dragodinde",
+    "generation": 4,
+    "level": 57,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      4
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      4
+     ]
+    ]
+   },
+   {
+    "itemId": 33364,
+    "name": "Kromakina Volkorne de Génération 4",
+    "type": "Kromakina",
+    "species": "Volkorne",
+    "generation": 4,
+    "level": 59,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      4
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      4
+     ]
+    ]
+   },
+   {
+    "itemId": 33365,
+    "name": "Kromakina Muldo de Génération 4",
+    "type": "Kromakina",
+    "species": "Muldo",
+    "generation": 4,
+    "level": 61,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      4
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      4
+     ]
+    ]
+   },
+   {
+    "itemId": 33366,
+    "name": "Animakina Dragodinde de Génération 4",
+    "type": "Animakina",
+    "species": "Dragodinde",
+    "generation": 4,
+    "level": 63,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      4
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      4
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33367,
+    "name": "Animakina Volkorne de Génération 4",
+    "type": "Animakina",
+    "species": "Volkorne",
+    "generation": 4,
+    "level": 65,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      4
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      4
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33374,
+    "name": "Animakina Muldo de Génération 4",
+    "type": "Animakina",
+    "species": "Muldo",
+    "generation": 4,
+    "level": 67,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      4
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      4
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33375,
+    "name": "Optimakina Dragodinde de Génération 4",
+    "type": "Optimakina",
+    "species": "Dragodinde",
+    "generation": 4,
+    "level": 69,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      4
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      4
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33376,
+    "name": "Optimakina Volkorne de Génération 4",
+    "type": "Optimakina",
+    "species": "Volkorne",
+    "generation": 4,
+    "level": 71,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      4
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      4
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33377,
+    "name": "Optimakina Muldo de Génération 4",
+    "type": "Optimakina",
+    "species": "Muldo",
+    "generation": 4,
+    "level": 73,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      4
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      4
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33384,
+    "name": "Kromakina Dragodinde de Génération 5",
+    "type": "Kromakina",
+    "species": "Dragodinde",
+    "generation": 5,
+    "level": 77,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      5
+     ]
+    ]
+   },
+   {
+    "itemId": 33385,
+    "name": "Kromakina Volkorne de Génération 5",
+    "type": "Kromakina",
+    "species": "Volkorne",
+    "generation": 5,
+    "level": 79,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      5
+     ]
+    ]
+   },
+   {
+    "itemId": 33386,
+    "name": "Kromakina Muldo de Génération 5",
+    "type": "Kromakina",
+    "species": "Muldo",
+    "generation": 5,
+    "level": 81,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      5
+     ]
+    ]
+   },
+   {
+    "itemId": 33387,
+    "name": "Animakina Dragodinde de Génération 5",
+    "type": "Animakina",
+    "species": "Dragodinde",
+    "generation": 5,
+    "level": 83,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      5
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      5
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33388,
+    "name": "Animakina Volkorne de Génération 5",
+    "type": "Animakina",
+    "species": "Volkorne",
+    "generation": 5,
+    "level": 85,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      5
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      5
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33395,
+    "name": "Animakina Muldo de Génération 5",
+    "type": "Animakina",
+    "species": "Muldo",
+    "generation": 5,
+    "level": 87,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      5
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      5
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33396,
+    "name": "Optimakina Dragodinde de Génération 5",
+    "type": "Optimakina",
+    "species": "Dragodinde",
+    "generation": 5,
+    "level": 89,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      5
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      5
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33397,
+    "name": "Optimakina Volkorne de Génération 5",
+    "type": "Optimakina",
+    "species": "Volkorne",
+    "generation": 5,
+    "level": 91,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      5
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      5
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33398,
+    "name": "Optimakina Muldo de Génération 5",
+    "type": "Optimakina",
+    "species": "Muldo",
+    "generation": 5,
+    "level": 93,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      5
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      5
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33405,
+    "name": "Kromakina Dragodinde de Génération 6",
+    "type": "Kromakina",
+    "species": "Dragodinde",
+    "generation": 6,
+    "level": 97,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      6
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      6
+     ]
+    ]
+   },
+   {
+    "itemId": 33406,
+    "name": "Kromakina Volkorne de Génération 6",
+    "type": "Kromakina",
+    "species": "Volkorne",
+    "generation": 6,
+    "level": 99,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      6
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      6
+     ]
+    ]
+   },
+   {
+    "itemId": 33407,
+    "name": "Kromakina Muldo de Génération 6",
+    "type": "Kromakina",
+    "species": "Muldo",
+    "generation": 6,
+    "level": 101,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      6
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      6
+     ]
+    ]
+   },
+   {
+    "itemId": 33408,
+    "name": "Animakina Dragodinde de Génération 6",
+    "type": "Animakina",
+    "species": "Dragodinde",
+    "generation": 6,
+    "level": 103,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      6
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      6
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33409,
+    "name": "Animakina Volkorne de Génération 6",
+    "type": "Animakina",
+    "species": "Volkorne",
+    "generation": 6,
+    "level": 105,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      6
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      6
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33416,
+    "name": "Animakina Muldo de Génération 6",
+    "type": "Animakina",
+    "species": "Muldo",
+    "generation": 6,
+    "level": 107,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      6
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      6
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33417,
+    "name": "Optimakina Dragodinde de Génération 6",
+    "type": "Optimakina",
+    "species": "Dragodinde",
+    "generation": 6,
+    "level": 109,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      6
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      6
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33418,
+    "name": "Optimakina Volkorne de Génération 6",
+    "type": "Optimakina",
+    "species": "Volkorne",
+    "generation": 6,
+    "level": 111,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      6
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      6
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33419,
+    "name": "Optimakina Muldo de Génération 6",
+    "type": "Optimakina",
+    "species": "Muldo",
+    "generation": 6,
+    "level": 113,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      6
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      6
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33426,
+    "name": "Kromakina Dragodinde de Génération 7",
+    "type": "Kromakina",
+    "species": "Dragodinde",
+    "generation": 7,
+    "level": 117,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      7
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      7
+     ]
+    ]
+   },
+   {
+    "itemId": 33427,
+    "name": "Kromakina Volkorne de Génération 7",
+    "type": "Kromakina",
+    "species": "Volkorne",
+    "generation": 7,
+    "level": 119,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      7
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      7
+     ]
+    ]
+   },
+   {
+    "itemId": 33428,
+    "name": "Kromakina Muldo de Génération 7",
+    "type": "Kromakina",
+    "species": "Muldo",
+    "generation": 7,
+    "level": 121,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      7
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      7
+     ]
+    ]
+   },
+   {
+    "itemId": 33429,
+    "name": "Animakina Dragodinde de Génération 7",
+    "type": "Animakina",
+    "species": "Dragodinde",
+    "generation": 7,
+    "level": 123,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      7
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      7
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33430,
+    "name": "Animakina Volkorne de Génération 7",
+    "type": "Animakina",
+    "species": "Volkorne",
+    "generation": 7,
+    "level": 125,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      7
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      7
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33437,
+    "name": "Animakina Muldo de Génération 7",
+    "type": "Animakina",
+    "species": "Muldo",
+    "generation": 7,
+    "level": 127,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      7
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      7
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33438,
+    "name": "Optimakina Dragodinde de Génération 7",
+    "type": "Optimakina",
+    "species": "Dragodinde",
+    "generation": 7,
+    "level": 129,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      7
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      7
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33439,
+    "name": "Optimakina Volkorne de Génération 7",
+    "type": "Optimakina",
+    "species": "Volkorne",
+    "generation": 7,
+    "level": 131,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      7
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      7
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33440,
+    "name": "Optimakina Muldo de Génération 7",
+    "type": "Optimakina",
+    "species": "Muldo",
+    "generation": 7,
+    "level": 133,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      7
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      7
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33447,
+    "name": "Kromakina Dragodinde de Génération 8",
+    "type": "Kromakina",
+    "species": "Dragodinde",
+    "generation": 8,
+    "level": 137,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      8
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      8
+     ]
+    ]
+   },
+   {
+    "itemId": 33448,
+    "name": "Kromakina Volkorne de Génération 8",
+    "type": "Kromakina",
+    "species": "Volkorne",
+    "generation": 8,
+    "level": 139,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      8
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      8
+     ]
+    ]
+   },
+   {
+    "itemId": 33449,
+    "name": "Kromakina Muldo de Génération 8",
+    "type": "Kromakina",
+    "species": "Muldo",
+    "generation": 8,
+    "level": 141,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      8
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      8
+     ]
+    ]
+   },
+   {
+    "itemId": 33450,
+    "name": "Animakina Dragodinde de Génération 8",
+    "type": "Animakina",
+    "species": "Dragodinde",
+    "generation": 8,
+    "level": 143,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      8
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      8
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33451,
+    "name": "Animakina Volkorne de Génération 8",
+    "type": "Animakina",
+    "species": "Volkorne",
+    "generation": 8,
+    "level": 145,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      8
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      8
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33458,
+    "name": "Animakina Muldo de Génération 8",
+    "type": "Animakina",
+    "species": "Muldo",
+    "generation": 8,
+    "level": 147,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      8
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      8
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33459,
+    "name": "Optimakina Dragodinde de Génération 8",
+    "type": "Optimakina",
+    "species": "Dragodinde",
+    "generation": 8,
+    "level": 149,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      8
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      8
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33460,
+    "name": "Optimakina Volkorne de Génération 8",
+    "type": "Optimakina",
+    "species": "Volkorne",
+    "generation": 8,
+    "level": 151,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      8
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      8
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33461,
+    "name": "Optimakina Muldo de Génération 8",
+    "type": "Optimakina",
+    "species": "Muldo",
+    "generation": 8,
+    "level": 153,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      8
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      8
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33468,
+    "name": "Kromakina Dragodinde de Génération 9",
+    "type": "Kromakina",
+    "species": "Dragodinde",
+    "generation": 9,
+    "level": 155,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      9
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      9
+     ]
+    ]
+   },
+   {
+    "itemId": 33469,
+    "name": "Kromakina Volkorne de Génération 9",
+    "type": "Kromakina",
+    "species": "Volkorne",
+    "generation": 9,
+    "level": 157,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      9
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      9
+     ]
+    ]
+   },
+   {
+    "itemId": 33536,
+    "name": "Kromakina Muldo de Génération 9",
+    "type": "Kromakina",
+    "species": "Muldo",
+    "generation": 9,
+    "level": 159,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      9
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      9
+     ]
+    ]
+   },
+   {
+    "itemId": 33470,
+    "name": "Animakina Dragodinde de Génération 9",
+    "type": "Animakina",
+    "species": "Dragodinde",
+    "generation": 9,
+    "level": 161,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      9
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      9
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33477,
+    "name": "Animakina Volkorne de Génération 9",
+    "type": "Animakina",
+    "species": "Volkorne",
+    "generation": 9,
+    "level": 163,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      9
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      9
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33537,
+    "name": "Animakina Muldo de Génération 9",
+    "type": "Animakina",
+    "species": "Muldo",
+    "generation": 9,
+    "level": 165,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      9
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      9
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33478,
+    "name": "Optimakina Dragodinde de Génération 9",
+    "type": "Optimakina",
+    "species": "Dragodinde",
+    "generation": 9,
+    "level": 167,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      9
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      9
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33479,
+    "name": "Optimakina Volkorne de Génération 9",
+    "type": "Optimakina",
+    "species": "Volkorne",
+    "generation": 9,
+    "level": 169,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      9
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      9
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33538,
+    "name": "Optimakina Muldo de Génération 9",
+    "type": "Optimakina",
+    "species": "Muldo",
+    "generation": 9,
+    "level": 171,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      9
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      9
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33486,
+    "name": "Kromakina Dragodinde de Génération 10",
+    "type": "Kromakina",
+    "species": "Dragodinde",
+    "generation": 10,
+    "level": 173,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      1,
+      10
+     ]
+    ]
+   },
+   {
+    "itemId": 33487,
+    "name": "Kromakina Volkorne de Génération 10",
+    "type": "Kromakina",
+    "species": "Volkorne",
+    "generation": 10,
+    "level": 175,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      3,
+      10
+     ]
+    ]
+   },
+   {
+    "itemId": 33539,
+    "name": "Kromakina Muldo de Génération 10",
+    "type": "Kromakina",
+    "species": "Muldo",
+    "generation": 10,
+    "level": 177,
+    "effects_3_6": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3839,
+      0,
+      0,
+      1
+     ],
+     [
+      3837,
+      0,
+      2,
+      10
+     ]
+    ]
+   },
+   {
+    "itemId": 33488,
+    "name": "Animakina Dragodinde de Génération 10",
+    "type": "Animakina",
+    "species": "Dragodinde",
+    "generation": 10,
+    "level": 179,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      10
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      10
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33495,
+    "name": "Animakina Volkorne de Génération 10",
+    "type": "Animakina",
+    "species": "Volkorne",
+    "generation": 10,
+    "level": 181,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      10
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      10
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33540,
+    "name": "Animakina Muldo de Génération 10",
+    "type": "Animakina",
+    "species": "Muldo",
+    "generation": 10,
+    "level": 183,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      10
+     ],
+     [
+      3843,
+      0,
+      0,
+      27
+     ],
+     [
+      3842,
+      0,
+      0,
+      27
+     ],
+     [
+      3844,
+      0,
+      0,
+      27
+     ],
+     [
+      3841,
+      0,
+      0,
+      14
+     ],
+     [
+      3840,
+      0,
+      0,
+      5
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      10
+     ],
+     [
+      4069,
+      0,
+      0,
+      0
+     ]
+    ]
+   },
+   {
+    "itemId": 33496,
+    "name": "Optimakina Dragodinde de Génération 10",
+    "type": "Optimakina",
+    "species": "Dragodinde",
+    "generation": 10,
+    "level": 185,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      1,
+      10
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      1,
+      10
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33497,
+    "name": "Optimakina Volkorne de Génération 10",
+    "type": "Optimakina",
+    "species": "Volkorne",
+    "generation": 10,
+    "level": 187,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      3,
+      10
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      3,
+      10
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   },
+   {
+    "itemId": 33541,
+    "name": "Optimakina Muldo de Génération 10",
+    "type": "Optimakina",
+    "species": "Muldo",
+    "generation": 10,
+    "level": 189,
+    "effects_3_6": [
+     [
+      3837,
+      0,
+      2,
+      10
+     ],
+     [
+      3838,
+      0,
+      0,
+      10
+     ]
+    ],
+    "effects_3_7beta": [
+     [
+      3837,
+      0,
+      2,
+      10
+     ],
+     [
+      3838,
+      0,
+      0,
+      20
+     ]
+    ]
+   }
+  ],
+  "sources": [
+   "client Dofus 3.6.12.16 (cytrus CDN, raw/dofus-client)",
+   "client Dofus 3.7.3.3-beta (cytrus CDN, raw/dofus-client)",
+   "https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html (guide DPLN, MAJ 02/03/2026)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1762596-devblog-elevage-monture-partie-ii (devblog Ankama 28/04/2025)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1771790-maj-3-7-confort-jeu-lisibilite-ajustements (devblog Ankama 16/09/2026)"
+  ],
+  "confidence": "high"
+ },
+ "breeding": {
+  "requirements": [
+   "2 montures Féconde",
+   "sexes opposés",
+   "même espèce (Dragodinde/Muldo/Volkorne)",
+   "toutes deux dans l'étable (pas inventaire ni enclos)",
+   "aucun niveau minimum"
+  ],
+  "babies": {
+   "base": 1,
+   "withReproducteur": 2,
+   "reproducteurStacks": false
+  },
+  "babyState": {
+   "level": 1,
+   "endurance": 0,
+   "maturity": 0,
+   "love": 0,
+   "serenity": "aléatoire",
+   "sex": "aléatoire 50/50 (hypothèse ; choisi via Animakina en 3.7)",
+   "fertility": "Fertile",
+   "tree": "ses 2 parents (et leurs propres parents ne comptent plus)"
+  },
+  "parentsAfter": "Stérile (les deux)",
+  "targetBonus": {
+   "formula": "B = min(1, base + perLevel*(level1+level2) + optimakina + takeza)",
+   "base": 0.3,
+   "perLevel": 0.0015,
+   "optimakina": {
+    "3.5": 0.1,
+    "3.6": 0.1,
+    "3.7beta": 0.2
+   },
+   "takezaAlmanax": 0.2,
+   "cap": 1.0,
+   "sources": [
+    "https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html (guide DPLN, MAJ 02/03/2026)",
+    "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1762596-devblog-elevage-monture-partie-ii (devblog Ankama 28/04/2025)",
+    "Almanax Takeza (DofusDB almanax-calendars id 47)",
+    "captures in-game du guide DPLN (raw/mechanics-evidence/screenshots)"
+   ],
+   "confidence": "high"
+  },
+  "offspringModel": {
+   "status": "Modèle reconstitué (aucune formule officielle publiée). Reproduit EXACTEMENT (à 0,01 % près) les 4 captures in-game disponibles (24 pourcentages visibles sur 5 captures : EX1, EX1-opti, EX2, EX3, EX4 + génétons ; pour EX3/EX4 l'arbre d'un parent et la somme des niveaux sont déduits des pourcentages, donc seules les 16 valeurs d'EX1/EX2 sont des prédictions sans paramètre libre).",
+   "algorithm": [
+    "1. Arbre de chaque parent X : membres = {X (position self), père de X, mère de X (position parent)} ; une monture capturée n'a que self.",
+    "2. Poids brut d'un membre m : w(m) = positionWeight(pos) × geneticWeight(m) ; positionWeight self=10, parent=6 ; les doublons s'additionnent.",
+    "3. Normalisation par arbre : pX(m) = w(m)/Σw (chaque arbre pèse 1).",
+    "4. Masse naturelle W : chaque membre de A reçoit pA(m), chaque membre de B reçoit pB(m) (une couleur présente dans les deux arbres cumule) ; pour chaque couple (a∈A, b∈B, a≠b) ayant un croisement c (RidesData.parents), W(c) += pA(a)×pB(b). Pas de croisement interne à un arbre.",
+    "5. D = W/ΣW (distribution naturelle).",
+    "6. Génération cible G = génération max parmi les issues de D (membres ET croisements). T = issues de génération G ; O = les autres.",
+    "7. B = targetBonus ; si O vide → B = 1.",
+    "8. P(t∈T) = B × D(t)/D(T) ; P(o∈O) = (1−B) × D(o)/D(O).",
+    "9. Affichage in-game : pourcentages arrondis à 2 décimales (zéros finaux masqués)."
+   ],
+   "positionWeights": {
+    "self": 10,
+    "parent": 6,
+    "legacyOrigin": "poids Dofus Mag 5 (10 / 6 / 3 / 1) tronqués à 2 niveaux"
+   },
+   "geneticWeightSource": "RidesData.geneticWeight (client) : Dragodinde/Muldo monocolores = 90, bicolores = 20, Dragodinde Dorée = 20, Muldos G9 (Aigue-marine, Ambre, Azur, Corail) = 20, Volkornes = 1 (tous égaux), spéciales G0 = 20",
+   "crossingWeightFactor": 1.0,
+   "crossingWeightFactorNote": "Validé uniquement pour des croisements dont l'enfant a geneticWeight 20 (bicolores). Pour un enfant monocolore (GW 90, générations impaires) le facteur 1 est une hypothèse (même structure que le modèle communautaire indépendant « Registre des Abysses »).",
+   "targetSplitEqualsNaturalRatio": true,
+   "openPoints": [
+    "Si D(T) naturel > B (ex. parents déjà de la génération cible), le jeu impose-t-il exactement B ou max(B, D(T)) ? Non observé ; défaut = exactement B.",
+    "Avec Reproducteur, 2 tirages indépendants supposés.",
+    "Génétons avec 2 bébés : par bébé ou une fois ? inconnu."
+   ],
+   "referenceImplementation": "research/raw/mechanics-evidence/breeding_model_reference.py",
+   "confidence": "high (structure + constantes validées sur 4 exemples) ; medium pour les cas non couverts listés"
+  },
+  "validationExamples": [
+   {
+    "id": "EX1",
+    "source": "captures in-game du guide DPLN (raw/mechanics-evidence/screenshots) ex1-*.jpg",
+    "species": "Dragodinde",
+    "parentA": {
+     "rideId": 19,
+     "name": "Dragodinde Pourpre",
+     "generation": 5,
+     "level": 200,
+     "parents": []
+    },
+    "parentB": {
+     "rideId": 21,
+     "name": "Dragodinde Émeraude",
+     "generation": 9,
+     "level": 1,
+     "parents": [
+      66,
+      68
+     ],
+     "parentsNames": [
+      "Dragodinde Ivoire et Turquoise",
+      "Dragodinde Ivoire et Pourpre"
+     ]
+    },
+    "optimakina": false,
+    "observed": {
+     "Dragodinde Émeraude et Pourpre": 60.15,
+     "Dragodinde Pourpre": 19.92,
+     "Dragodinde Émeraude": 15.73,
+     "Dragodinde Ivoire et Turquoise": 2.1,
+     "Dragodinde Ivoire et Pourpre": 2.1
+    },
+    "observedGenetonsTarget": 265,
+    "model": {
+     "Dragodinde Émeraude et Pourpre": 60.15,
+     "Dragodinde Pourpre": 19.925,
+     "Dragodinde Émeraude": 15.73,
+     "Dragodinde Ivoire et Turquoise": 2.097,
+     "Dragodinde Ivoire et Pourpre": 2.097
+    }
+   },
+   {
+    "id": "EX1-opti",
+    "source": "captures in-game du guide DPLN (raw/mechanics-evidence/screenshots)",
+    "same": "EX1",
+    "optimakina": true,
+    "observed": {
+     "Dragodinde Émeraude et Pourpre": 70.15,
+     "Dragodinde Pourpre": 14.92,
+     "Dragodinde Émeraude": 11.78,
+     "Dragodinde Ivoire et Turquoise": 1.57,
+     "Dragodinde Ivoire et Pourpre": 1.57
+    },
+    "model": {
+     "Dragodinde Émeraude et Pourpre": 70.15,
+     "Dragodinde Pourpre": 14.925,
+     "Dragodinde Émeraude": 11.783,
+     "Dragodinde Ivoire et Turquoise": 1.571,
+     "Dragodinde Ivoire et Pourpre": 1.571
+    }
+   },
+   {
+    "id": "EX2",
+    "source": "captures in-game du guide DPLN (raw/mechanics-evidence/screenshots) ex2-muldo-*.jpg",
+    "species": "Muldo",
+    "parentA": {
+     "rideId": 108,
+     "name": "Muldo Doré et Indigo",
+     "generation": 2,
+     "level": 1,
+     "parents": [
+      94,
+      92
+     ]
+    },
+    "parentB": {
+     "rideId": 93,
+     "name": "Muldo Pourpre",
+     "generation": 1,
+     "level": 1,
+     "parents": [
+      93,
+      298
+     ],
+     "parentsNames": [
+      "Muldo Pourpre",
+      "Muldo Corail"
+     ]
+    },
+    "optimakina": false,
+    "babies": 2,
+    "observed": {
+     "Muldo Corail et Doré": 15.15,
+     "Muldo Corail et Indigo": 15.15,
+     "Muldo Pourpre": 23.15,
+     "Muldo Indigo": 10.58,
+     "Muldo Doré": 10.58,
+     "Muldo Indigo et Pourpre": 9.77,
+     "Muldo Doré et Pourpre": 9.77,
+     "Muldo Corail": 1.93,
+     "Muldo Doré et Indigo": "masqué (≈3,9 par complément)"
+    },
+    "observedGenetonsTarget": 3,
+    "observedJobXp": 60,
+    "model": {
+     "Muldo Corail et Doré": 15.15,
+     "Muldo Corail et Indigo": 15.15,
+     "Muldo Pourpre": 23.153,
+     "Muldo Indigo": 10.582,
+     "Muldo Doré": 10.582,
+     "Muldo Indigo et Pourpre": 9.768,
+     "Muldo Doré et Pourpre": 9.768,
+     "Muldo Doré et Indigo": 3.919,
+     "Muldo Corail": 1.929
+    },
+    "note": "XP +60 = (20+10)×2 bébés → barème 10 XP/génération (bêta / 3.5)."
+   },
+   {
+    "id": "EX3",
+    "source": "captures in-game du guide DPLN (raw/mechanics-evidence/screenshots) ex3-*.jpg",
+    "species": "Dragodinde",
+    "parentA": {
+     "rideId": 66,
+     "name": "Dragodinde Ivoire et Turquoise",
+     "generation": 8,
+     "parents": [
+      66,
+      68
+     ],
+     "parentsInferred": true
+    },
+    "parentB": {
+     "rideId": 68,
+     "name": "Dragodinde Ivoire et Pourpre",
+     "generation": 8,
+     "parents": []
+    },
+    "levelSumInferred": 144,
+    "observed": {
+     "Dragodinde Émeraude": 51.6,
+     "Dragodinde Ivoire et Pourpre": 30.8,
+     "Dragodinde Ivoire et Turquoise": 17.6
+    },
+    "observedGenetonsTarget": 240,
+    "model": {
+     "Dragodinde Émeraude": 51.6,
+     "Dragodinde Ivoire et Pourpre": 30.8,
+     "Dragodinde Ivoire et Turquoise": 17.6
+    },
+    "note": "Arbre de l'Ivoire et Turquoise non affiché ; {Ivoire et Turquoise, Ivoire et Pourpre} est le seul arbre cohérent avec le ratio exact 4/11 – 7/11 (et avec EX4)."
+   },
+   {
+    "id": "EX4",
+    "source": "captures in-game du guide DPLN (raw/mechanics-evidence/screenshots) ex4-*.png",
+    "species": "Dragodinde",
+    "parentA": {
+     "rideId": 66,
+     "name": "Dragodinde Ivoire et Turquoise",
+     "parents": [
+      66,
+      68
+     ],
+     "parentsInferred": true
+    },
+    "parentB": {
+     "rideId": 19,
+     "name": "Dragodinde Pourpre",
+     "parents": []
+    },
+    "levelSumInferred": 272,
+    "observed": {
+     "Dragodinde Ivoire et Turquoise": 51.49,
+     "Dragodinde Ivoire et Pourpre": 19.31,
+     "Dragodinde Pourpre": 29.2
+    },
+    "observedGenetonsTarget": 0,
+    "model": {
+     "Dragodinde Ivoire et Turquoise": 51.491,
+     "Dragodinde Ivoire et Pourpre": 19.309,
+     "Dragodinde Pourpre": 29.2
+    },
+    "note": "Génération cible = génération max des arbres (8) : bonus appliqué quand même, 0 généton.",
+    "consistencyNote": "Vérification : si la Pourpre est celle d'EX1 (niv. 200), l'Ivoire et Turquoise est niv. 72 et l'Ivoire et Pourpre d'EX3 aussi niv. 72 (144−72) : sommes déduites compatibles."
+   }
+  ],
+  "communityModelsCompared": [
+   {
+    "name": "dofuselevage.fr simulateur",
+    "url": "https://dofuselevage.fr/tools/reproduction/muldo",
+    "model": "poids parent 8 / grand-parent 3, issues {a,b,croisement} pondérées par 1/gen^0,55, sans geneticWeight",
+    "verdict": "ne reproduit pas les captures (approximation)"
+   },
+   {
+    "name": "Registre des Abysses",
+    "url": "https://registre-des-abysses.pages.dev/",
+    "model": "u = (2 si la couleur figure dans une liste d'exceptions, sinon 9 si génération impaire, sinon 2) × (5 self / 3 parent) ; masse ajoutée par couple u(a)u(b) aux deux membres et au croisement (code p=h=>d.includes(h)?2:o(h)%2===1?9:2, assets/index-*.js, vérifié le 2026-10-02)",
+    "verdict": "mathématiquement équivalent au modèle retenu (9:2 = 90:20, 5:3 = 10:6) À CONDITION que la liste d'exceptions contienne la Dragodinde Dorée et les Muldos G9 (GW client 20) ; sans elle, EX2 (Corail G9) ne serait pas reproduit"
+   }
+  ],
+  "geneticWeightByRideId": {
+   "3": 90,
+   "9": 20,
+   "10": 90,
+   "11": 20,
+   "12": 20,
+   "15": 90,
+   "16": 90,
+   "17": 90,
+   "18": 20,
+   "19": 90,
+   "20": 90,
+   "21": 90,
+   "22": 90,
+   "23": 90,
+   "33": 20,
+   "34": 20,
+   "35": 20,
+   "36": 20,
+   "37": 20,
+   "38": 20,
+   "39": 20,
+   "40": 20,
+   "41": 20,
+   "42": 20,
+   "43": 20,
+   "44": 20,
+   "45": 20,
+   "46": 20,
+   "47": 20,
+   "48": 20,
+   "49": 20,
+   "50": 20,
+   "51": 20,
+   "52": 20,
+   "53": 20,
+   "54": 20,
+   "55": 20,
+   "56": 20,
+   "57": 20,
+   "58": 20,
+   "59": 20,
+   "60": 20,
+   "61": 20,
+   "62": 20,
+   "63": 20,
+   "64": 20,
+   "65": 20,
+   "66": 20,
+   "67": 20,
+   "68": 20,
+   "69": 20,
+   "70": 20,
+   "71": 20,
+   "72": 20,
+   "73": 20,
+   "76": 20,
+   "77": 20,
+   "78": 20,
+   "79": 20,
+   "80": 20,
+   "82": 20,
+   "83": 20,
+   "84": 20,
+   "85": 20,
+   "86": 20,
+   "87": 20,
+   "88": 20,
+   "89": 20,
+   "90": 90,
+   "91": 90,
+   "92": 90,
+   "93": 90,
+   "94": 90,
+   "95": 90,
+   "96": 90,
+   "97": 90,
+   "98": 90,
+   "99": 90,
+   "100": 90,
+   "101": 20,
+   "102": 20,
+   "103": 20,
+   "104": 20,
+   "105": 20,
+   "106": 20,
+   "107": 20,
+   "108": 20,
+   "109": 20,
+   "110": 20,
+   "111": 20,
+   "112": 20,
+   "113": 20,
+   "114": 20,
+   "115": 20,
+   "116": 20,
+   "117": 20,
+   "118": 20,
+   "119": 20,
+   "120": 20,
+   "121": 20,
+   "122": 20,
+   "123": 20,
+   "124": 20,
+   "125": 20,
+   "126": 20,
+   "127": 20,
+   "138": 20,
+   "139": 20,
+   "140": 20,
+   "141": 20,
+   "142": 20,
+   "143": 20,
+   "144": 20,
+   "145": 20,
+   "146": 20,
+   "147": 20,
+   "148": 20,
+   "149": 20,
+   "150": 20,
+   "151": 20,
+   "152": 20,
+   "153": 20,
+   "154": 20,
+   "155": 20,
+   "156": 20,
+   "157": 20,
+   "158": 20,
+   "159": 20,
+   "160": 20,
+   "161": 20,
+   "162": 20,
+   "163": 20,
+   "164": 20,
+   "165": 20,
+   "176": 1,
+   "177": 1,
+   "178": 1,
+   "179": 1,
+   "180": 1,
+   "181": 1,
+   "182": 1,
+   "183": 1,
+   "184": 1,
+   "185": 1,
+   "186": 1,
+   "187": 1,
+   "188": 1,
+   "189": 1,
+   "190": 1,
+   "191": 1,
+   "192": 1,
+   "193": 1,
+   "194": 1,
+   "195": 1,
+   "196": 1,
+   "197": 1,
+   "198": 1,
+   "199": 1,
+   "200": 1,
+   "201": 1,
+   "202": 1,
+   "203": 1,
+   "204": 1,
+   "205": 1,
+   "206": 1,
+   "207": 1,
+   "208": 1,
+   "209": 1,
+   "210": 1,
+   "211": 1,
+   "212": 1,
+   "213": 1,
+   "214": 1,
+   "215": 1,
+   "216": 1,
+   "217": 1,
+   "218": 1,
+   "219": 1,
+   "220": 1,
+   "221": 1,
+   "222": 1,
+   "223": 1,
+   "224": 1,
+   "225": 1,
+   "226": 1,
+   "227": 1,
+   "228": 1,
+   "229": 1,
+   "230": 1,
+   "231": 1,
+   "233": 1,
+   "234": 1,
+   "235": 1,
+   "236": 1,
+   "237": 1,
+   "238": 1,
+   "239": 1,
+   "240": 1,
+   "241": 1,
+   "242": 1,
+   "243": 1,
+   "244": 1,
+   "245": 1,
+   "246": 1,
+   "247": 1,
+   "248": 1,
+   "249": 1,
+   "250": 1,
+   "251": 1,
+   "252": 1,
+   "253": 1,
+   "254": 1,
+   "255": 1,
+   "256": 1,
+   "257": 1,
+   "258": 1,
+   "259": 1,
+   "260": 1,
+   "261": 1,
+   "262": 1,
+   "263": 1,
+   "264": 1,
+   "265": 1,
+   "266": 1,
+   "267": 1,
+   "268": 1,
+   "269": 1,
+   "270": 1,
+   "271": 1,
+   "272": 1,
+   "273": 1,
+   "274": 1,
+   "275": 1,
+   "276": 1,
+   "277": 1,
+   "278": 1,
+   "279": 1,
+   "280": 1,
+   "281": 1,
+   "282": 1,
+   "283": 1,
+   "284": 1,
+   "285": 1,
+   "286": 1,
+   "287": 1,
+   "288": 1,
+   "289": 1,
+   "290": 1,
+   "291": 1,
+   "292": 1,
+   "293": 1,
+   "294": 1,
+   "295": 1,
+   "296": 1,
+   "297": 20,
+   "298": 20,
+   "299": 20,
+   "300": 20,
+   "301": 20,
+   "302": 20,
+   "303": 20,
+   "304": 20,
+   "305": 20,
+   "306": 20,
+   "307": 20,
+   "308": 20,
+   "309": 20,
+   "310": 20,
+   "311": 20,
+   "312": 20,
+   "313": 20,
+   "314": 20,
+   "315": 20,
+   "316": 20,
+   "317": 20,
+   "318": 20,
+   "319": 20,
+   "320": 20,
+   "321": 20,
+   "322": 20,
+   "323": 20,
+   "324": 20,
+   "325": 20,
+   "326": 20,
+   "327": 20,
+   "328": 20,
+   "329": 20,
+   "330": 20,
+   "331": 20,
+   "332": 20,
+   "333": 20,
+   "334": 20,
+   "335": 20,
+   "336": 20,
+   "337": 20,
+   "338": 20,
+   "339": 20,
+   "340": 20,
+   "341": 20,
+   "342": 20,
+   "343": 20,
+   "344": 20,
+   "345": 20,
+   "346": 20,
+   "347": 20,
+   "348": 20,
+   "349": 20,
+   "350": 20
+  },
+  "jobXp": {
+   "formula": "XP = (xpParent1 + xpParent2) × nbBébés ; xpParent = perGeneration × génération",
+   "perGeneration": {
+    "3.5": 10,
+    "3.6": 30,
+    "3.7beta": 30
+   },
+   "gen0": 0,
+   "sources": [
+    "clients 3.5.3.1…3.6.12.16 (RidesData.breedingExperienceRewardQuantity)",
+    "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1762596-devblog-elevage-monture-partie-ii (devblog Ankama 28/04/2025) — formule (xp mère + xp père) × nb bébés",
+    "captures in-game du guide DPLN (raw/mechanics-evidence/screenshots)",
+    "client 3.5.6.7 retéléchargé (cytrus CDN, manifeste 6.0_3.5.6.7) par le vérificateur le 2026-10-02 : RidesData identique à 3.6.12.16 sauf breedingExperienceRewardQuantity (10×gén vs 30×gén)"
+   ],
+   "confidence": "high",
+   "note": "La 3.5 live utilisait 10/génération (clients 3.5.3.1→3.5.6.7 ; 3.5.6.7 retéléchargé et revérifié le 2026-10-02). Les deux captures DPLN datent de la bêta 3.5 et montrent les deux barèmes : +60 pour G2×G1 avec 2 bébés (k=10) et +300 pour G5×G5 (k=30, valeur aussi écrite dans le texte DPLN) ; le barème a changé pendant la bêta. La capture +300 n'est pas une capture 3.6. Valeur affichée par le client (le serveur fait foi)."
+  }
+ },
+ "genetons": {
+  "itemId": 33512,
+  "rule": "Gagnés seulement si le bébé est d'une génération STRICTEMENT supérieure à toutes les montures des deux arbres (2 parents + 4 grands-parents). Montant = somme des valeurs des 2 parents selon LEUR génération. 0 sinon, même si c'est la génération cible.",
+  "perParentGeneration": {
+   "3.5": {
+    "1": 1,
+    "2": 2,
+    "3": 4,
+    "4": 8,
+    "5": 15,
+    "6": 30,
+    "7": 60,
+    "8": 120,
+    "9": 250,
+    "10": 0
+   },
+   "3.6": {
+    "1": 1,
+    "2": 2,
+    "3": 4,
+    "4": 8,
+    "5": 15,
+    "6": 30,
+    "7": 60,
+    "8": 120,
+    "9": 250,
+    "10": 0
+   },
+   "3.7beta": {
+    "1": 2,
+    "2": 4,
+    "3": 8,
+    "4": 15,
+    "5": 30,
+    "6": 60,
+    "7": 120,
+    "8": 250,
+    "9": 500,
+    "10": 0
+   }
+  },
+  "exceptions": [
+   {
+    "rideIds": [
+     287,
+     288
+    ],
+    "names": [
+     "Volkorne Prune et Roux",
+     "Volkorne Prune et Ivoire"
+    ],
+    "generation": 6,
+    "tokens": 0,
+    "note": "valeur 0 dans le client 3.5→3.7 (probable bug de données)"
+   }
+  ],
+  "accountBound": true,
+  "shopEugeneEton": {
+   "map": "[-18,1]",
+   "prices": {
+    "Petit Parchemin (Agilité/Force/Sagesse/Vitalité/Chance/Intelligence)": 10,
+    "Aliton": 10,
+    "Parchemin (x6)": 50,
+    "Grand Parchemin (x6)": 100,
+    "Tourmaline": 130,
+    "Puissant Parchemin (x6)": 160
+   },
+   "3.7beta": "+ cosmétiques colorisables Dragodinde/Muldo/Volkorne",
+   "source": "https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html (guide DPLN, MAJ 02/03/2026) (capture du PNJ)",
+   "confidence": "high"
+  },
+  "sources": [
+   "client Dofus 3.6.12.16 (cytrus CDN, raw/dofus-client)",
+   "client Dofus 3.7.3.3-beta (cytrus CDN, raw/dofus-client)",
+   "https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html (guide DPLN, MAJ 02/03/2026)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1762596-devblog-elevage-monture-partie-ii (devblog Ankama 28/04/2025)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1771790-maj-3-7-confort-jeu-lisibilite-ajustements (devblog Ankama 16/09/2026)"
+  ],
+  "confidence": "high"
+ },
+ "cloning": {
+  "inputs": "2 montures de même espèce et même génération (couleurs différentes possibles), stériles, fertiles ou fécondes ; pas séniles",
+  "output": "1 des 2 montures, au hasard 50/50 ; Fertile ; conserve couleur, sexe, nom, généalogie ; jauges remises à 0 ; capacité perdue",
+  "serenityAfter": {
+   "3.5": "réinitialisée (aléatoire, supposé)",
+   "3.6": "idem",
+   "3.7beta": "conserve la sérénité de la monture clonée"
+  },
+  "levelAfter": "non précisé par le jeu (texte in-game ne liste pas le niveau) — hypothèse : niveau/XP conservés (confiance low)",
+  "sources": [
+   "https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html (guide DPLN, MAJ 02/03/2026)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1762596-devblog-elevage-monture-partie-ii (devblog Ankama 28/04/2025)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1771790-maj-3-7-confort-jeu-lisibilite-ajustements (devblog Ankama 16/09/2026)",
+   "texte in-game de l'interface de clonage (capture)"
+  ],
+  "confidence": "high (sauf niveau)"
+ },
+ "extraction": {
+  "resources": {
+   "Dragodinde": {
+    "itemId": 33515,
+    "name": "Neurone de dragodinde"
+   },
+   "Muldo": {
+    "itemId": 17864,
+    "name": "Ambre de muldo"
+   },
+   "Volkorne": {
+    "itemId": 19975,
+    "name": "Corne de volkorne"
+   }
+  },
+  "quantity": "= génération (G1 → 0, non extractible ; G10 → 10) ; sénile → 1 ; spéciales G0 → 0 (sénile 1)",
+  "destroysMount": true,
+  "sources": [
+   "client Dofus 3.6.12.16 (cytrus CDN, raw/dofus-client) RidesData.extractionRewardQuantity",
+   "https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html (guide DPLN, MAJ 02/03/2026)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1762596-devblog-elevage-monture-partie-ii (devblog Ankama 28/04/2025)"
+  ],
+  "confidence": "high"
+ },
+ "capture": {
+  "spell": "Apprivoisement de monture : 1 PA, 7 PO sans ligne de vue, 1 fois par combat ; filet consommé au lancer ; état « Capturé » jusqu'à la fin ; combat perdu = filet perdu ; capture 100 % si victoire",
+  "nets": [
+   {
+    "name": "Filet de capture universel",
+    "itemId": 32521,
+    "jobLevel": 1,
+    "species": "toutes",
+    "effect": "1 monture ciblée"
+   },
+   {
+    "name": "Filet multiplicateur de [espèce]",
+    "itemIds": [
+     32525,
+     32526,
+     32527
+    ],
+    "jobLevel": 100,
+    "effect": "1 monture ciblée, dupliquée (×2, sexe pas forcément identique)"
+   },
+   {
+    "name": "Filet à [espèce] renforcé",
+    "itemIds": [
+     32522,
+     32523,
+     32524
+    ],
+    "jobLevel": 150,
+    "effect": "zone cercle rayon 3"
+   },
+   {
+    "name": "Filet multiplicateur de [espèce] renforcé",
+    "itemIds": [
+     32528,
+     32529,
+     32530
+    ],
+    "jobLevel": 200,
+    "effect": "zone + ×2"
+   }
+  ],
+  "netLevelsNote": "Niveaux confirmés par DofusDB/client (multiplicateur 100, renforcé 150). Le devblog II et dofuselevage.fr inversaient 100/150 (obsolète).",
+  "equipRequiresJobLevel": true,
+  "capturedMount": {
+   "generation": 1,
+   "level": 1,
+   "stats": 0,
+   "serenity": "aléatoire"
+  },
+  "wildMonsterLevel": 60,
+  "zones": {
+   "Dragodinde": "Territoire des dragodindes sauvages (Montagne des Koalaks)",
+   "Muldo": "Bassin des Muldos (nord de Sufokia)",
+   "Volkorne": "Haras de Brâkmar (sud de Brâkmar)"
+  },
+  "jobXpPerCapturedMount": 30,
+  "jobXpNote": "DPLN : 30 XP par monture capturée (dupliquées incluses ? non précisé) — confiance medium",
+  "sources": [
+   "https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html (guide DPLN, MAJ 02/03/2026)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1762596-devblog-elevage-monture-partie-ii (devblog Ankama 28/04/2025)",
+   "DofusDB recipes jobId 79"
+  ],
+  "confidence": "high",
+  "wildMonsterLevelDofusDB": [
+   62,
+   70
+  ],
+  "wildMonsterLevelNote": "DPLN écrit « monstres de niveau 60 » ; DofusDB donne des grades 62-70 (archimonstres Draglida 55-67, Dragnoute 60-72) — ajouté par la critique de complétude 2026-10-02 (cohérence avec crafts.json/strategy.json).",
+  "captureMonsterIds": {
+   "Dragodinde": {
+    "Amande": 171,
+    "Rousse": 200,
+    "Dorée": 666
+   },
+   "Muldo": {
+    "Indigo": 4434,
+    "Ébène": 4435,
+    "Orchidée": 4436,
+    "Pourpre": 4437,
+    "Doré": 4438
+   },
+   "Volkorne": {
+    "Orchidée": 5308,
+    "Indigo": 5309,
+    "Ébène": 5311,
+    "Pourpre": 5313
+   },
+   "source": "DofusDB monsters (raw/strategy-evidence/wild-mount-monsters.json)"
+  }
+ },
+ "mountXp": {
+  "source": "Table DPLN « XP Monture » (https://www.dofuspourlesnoobs.com/tableaux-dexpeacuterience.html, identique à la table embarquée dans leur outil Gestion d'enclos) ; recoupe 172 668 (niv. 100) et 867 582 (niv. 200) du guide ; devblog II annonçait ~172 900 / ~868 900 (avant-projet).",
+  "confidence": "medium-high",
+  "cumulativeXpToReachLevel": {
+   "1": 0,
+   "2": 19,
+   "3": 49,
+   "4": 96,
+   "5": 161,
+   "6": 246,
+   "7": 353,
+   "8": 481,
+   "9": 633,
+   "10": 809,
+   "11": 1011,
+   "12": 1238,
+   "13": 1491,
+   "14": 1772,
+   "15": 2081,
+   "16": 2419,
+   "17": 2786,
+   "18": 3182,
+   "19": 3609,
+   "20": 4067,
+   "21": 4557,
+   "22": 5078,
+   "23": 5632,
+   "24": 6219,
+   "25": 6839,
+   "26": 7493,
+   "27": 8182,
+   "28": 8905,
+   "29": 9664,
+   "30": 10457,
+   "31": 11287,
+   "32": 12154,
+   "33": 13057,
+   "34": 13997,
+   "35": 14974,
+   "36": 15990,
+   "37": 17043,
+   "38": 18135,
+   "39": 19266,
+   "40": 20437,
+   "41": 21646,
+   "42": 22896,
+   "43": 24186,
+   "44": 25516,
+   "45": 26887,
+   "46": 28299,
+   "47": 29753,
+   "48": 31248,
+   "49": 32785,
+   "50": 34365,
+   "51": 35987,
+   "52": 37652,
+   "53": 39360,
+   "54": 41111,
+   "55": 42906,
+   "56": 44745,
+   "57": 46628,
+   "58": 48555,
+   "59": 50527,
+   "60": 52544,
+   "61": 54607,
+   "62": 56714,
+   "63": 58868,
+   "64": 61067,
+   "65": 63312,
+   "66": 65604,
+   "67": 67942,
+   "68": 70327,
+   "69": 72760,
+   "70": 75239,
+   "71": 77766,
+   "72": 80341,
+   "73": 82964,
+   "74": 85635,
+   "75": 88355,
+   "76": 91123,
+   "77": 93940,
+   "78": 96806,
+   "79": 99721,
+   "80": 102685,
+   "81": 105700,
+   "82": 108764,
+   "83": 111878,
+   "84": 115042,
+   "85": 118257,
+   "86": 121523,
+   "87": 124840,
+   "88": 128207,
+   "89": 131626,
+   "90": 135096,
+   "91": 138618,
+   "92": 142191,
+   "93": 145817,
+   "94": 149495,
+   "95": 153225,
+   "96": 157008,
+   "97": 160843,
+   "98": 164732,
+   "99": 168673,
+   "100": 172668,
+   "101": 176716,
+   "102": 180818,
+   "103": 184974,
+   "104": 189183,
+   "105": 193447,
+   "106": 197765,
+   "107": 202137,
+   "108": 206565,
+   "109": 211046,
+   "110": 215583,
+   "111": 220176,
+   "112": 224823,
+   "113": 229526,
+   "114": 234284,
+   "115": 239099,
+   "116": 243969,
+   "117": 248895,
+   "118": 253878,
+   "119": 258917,
+   "120": 264013,
+   "121": 269165,
+   "122": 274375,
+   "123": 279641,
+   "124": 284965,
+   "125": 290346,
+   "126": 295784,
+   "127": 301280,
+   "128": 306834,
+   "129": 312446,
+   "130": 318116,
+   "131": 323845,
+   "132": 329631,
+   "133": 335477,
+   "134": 341381,
+   "135": 347343,
+   "136": 353365,
+   "137": 359446,
+   "138": 365587,
+   "139": 371786,
+   "140": 378045,
+   "141": 384364,
+   "142": 390743,
+   "143": 397182,
+   "144": 403681,
+   "145": 410240,
+   "146": 416859,
+   "147": 423539,
+   "148": 430280,
+   "149": 437082,
+   "150": 443944,
+   "151": 450868,
+   "152": 457852,
+   "153": 464898,
+   "154": 472006,
+   "155": 479175,
+   "156": 486406,
+   "157": 493699,
+   "158": 501054,
+   "159": 508470,
+   "160": 515950,
+   "161": 523491,
+   "162": 531095,
+   "163": 538762,
+   "164": 546491,
+   "165": 554283,
+   "166": 562139,
+   "167": 570057,
+   "168": 578039,
+   "169": 586084,
+   "170": 594193,
+   "171": 602365,
+   "172": 610601,
+   "173": 618901,
+   "174": 627265,
+   "175": 635693,
+   "176": 644185,
+   "177": 652742,
+   "178": 661363,
+   "179": 670049,
+   "180": 678799,
+   "181": 687615,
+   "182": 696495,
+   "183": 705440,
+   "184": 714451,
+   "185": 723527,
+   "186": 732668,
+   "187": 741875,
+   "188": 751148,
+   "189": 760486,
+   "190": 769890,
+   "191": 779361,
+   "192": 788897,
+   "193": 798500,
+   "194": 808169,
+   "195": 817904,
+   "196": 827706,
+   "197": 837575,
+   "198": 847510,
+   "199": 857513,
+   "200": 867582
+  },
+  "gainPerTickByFeederTier": [
+   10,
+   20,
+   30,
+   40
+  ],
+  "sageMultiplier": 2,
+  "maxLevel": 200,
+  "fastestToLevel100Hours": 11.99,
+  "fastestToLevel200Hours": 60.25,
+  "note": "Le guide DPLN écrit 60h24 pour le niveau 200 au palier 4 ; le calcul exact donne 216 896 s = 60h15."
+ },
+ "breederJob": {
+  "jobId": 79,
+  "maxLevel": 200,
+  "xpTable": {
+   "formula": "cumulativeXp(L) = 10 × L × (L − 1) ; XP pour passer de L à L+1 = 20 × L",
+   "cumulativeXpToReachLevel": {
+    "1": 0,
+    "2": 20,
+    "3": 60,
+    "4": 120,
+    "5": 200,
+    "6": 300,
+    "7": 420,
+    "8": 560,
+    "9": 720,
+    "10": 900,
+    "11": 1100,
+    "12": 1320,
+    "13": 1560,
+    "14": 1820,
+    "15": 2100,
+    "16": 2400,
+    "17": 2720,
+    "18": 3060,
+    "19": 3420,
+    "20": 3800,
+    "21": 4200,
+    "22": 4620,
+    "23": 5060,
+    "24": 5520,
+    "25": 6000,
+    "26": 6500,
+    "27": 7020,
+    "28": 7560,
+    "29": 8120,
+    "30": 8700,
+    "31": 9300,
+    "32": 9920,
+    "33": 10560,
+    "34": 11220,
+    "35": 11900,
+    "36": 12600,
+    "37": 13320,
+    "38": 14060,
+    "39": 14820,
+    "40": 15600,
+    "41": 16400,
+    "42": 17220,
+    "43": 18060,
+    "44": 18920,
+    "45": 19800,
+    "46": 20700,
+    "47": 21620,
+    "48": 22560,
+    "49": 23520,
+    "50": 24500,
+    "51": 25500,
+    "52": 26520,
+    "53": 27560,
+    "54": 28620,
+    "55": 29700,
+    "56": 30800,
+    "57": 31920,
+    "58": 33060,
+    "59": 34220,
+    "60": 35400,
+    "61": 36600,
+    "62": 37820,
+    "63": 39060,
+    "64": 40320,
+    "65": 41600,
+    "66": 42900,
+    "67": 44220,
+    "68": 45560,
+    "69": 46920,
+    "70": 48300,
+    "71": 49700,
+    "72": 51120,
+    "73": 52560,
+    "74": 54020,
+    "75": 55500,
+    "76": 57000,
+    "77": 58520,
+    "78": 60060,
+    "79": 61620,
+    "80": 63200,
+    "81": 64800,
+    "82": 66420,
+    "83": 68060,
+    "84": 69720,
+    "85": 71400,
+    "86": 73100,
+    "87": 74820,
+    "88": 76560,
+    "89": 78320,
+    "90": 80100,
+    "91": 81900,
+    "92": 83720,
+    "93": 85560,
+    "94": 87420,
+    "95": 89300,
+    "96": 91200,
+    "97": 93120,
+    "98": 95060,
+    "99": 97020,
+    "100": 99000,
+    "101": 101000,
+    "102": 103020,
+    "103": 105060,
+    "104": 107120,
+    "105": 109200,
+    "106": 111300,
+    "107": 113420,
+    "108": 115560,
+    "109": 117720,
+    "110": 119900,
+    "111": 122100,
+    "112": 124320,
+    "113": 126560,
+    "114": 128820,
+    "115": 131100,
+    "116": 133400,
+    "117": 135720,
+    "118": 138060,
+    "119": 140420,
+    "120": 142800,
+    "121": 145200,
+    "122": 147620,
+    "123": 150060,
+    "124": 152520,
+    "125": 155000,
+    "126": 157500,
+    "127": 160020,
+    "128": 162560,
+    "129": 165120,
+    "130": 167700,
+    "131": 170300,
+    "132": 172920,
+    "133": 175560,
+    "134": 178220,
+    "135": 180900,
+    "136": 183600,
+    "137": 186320,
+    "138": 189060,
+    "139": 191820,
+    "140": 194600,
+    "141": 197400,
+    "142": 200220,
+    "143": 203060,
+    "144": 205920,
+    "145": 208800,
+    "146": 211700,
+    "147": 214620,
+    "148": 217560,
+    "149": 220520,
+    "150": 223500,
+    "151": 226500,
+    "152": 229520,
+    "153": 232560,
+    "154": 235620,
+    "155": 238700,
+    "156": 241800,
+    "157": 244920,
+    "158": 248060,
+    "159": 251220,
+    "160": 254400,
+    "161": 257600,
+    "162": 260820,
+    "163": 264060,
+    "164": 267320,
+    "165": 270600,
+    "166": 273900,
+    "167": 277220,
+    "168": 280560,
+    "169": 283920,
+    "170": 287300,
+    "171": 290700,
+    "172": 294120,
+    "173": 297560,
+    "174": 301020,
+    "175": 304500,
+    "176": 308000,
+    "177": 311520,
+    "178": 315060,
+    "179": 318620,
+    "180": 322200,
+    "181": 325800,
+    "182": 329420,
+    "183": 333060,
+    "184": 336720,
+    "185": 340400,
+    "186": 344100,
+    "187": 347820,
+    "188": 351560,
+    "189": 355320,
+    "190": 359100,
+    "191": 362900,
+    "192": 366720,
+    "193": 370560,
+    "194": 374420,
+    "195": 378300,
+    "196": 382200,
+    "197": 386120,
+    "198": 390060,
+    "199": 394020,
+    "200": 398000
+   },
+   "source": "formule métiers Dofus 2.29+ (https://dofuswiki.fandom.com/wiki/Profession) ; identique à la table DPLN sauf niveau 3 (DPLN 40, formule 60)",
+   "confidence": "medium-high"
+  },
+  "craftXp": {
+   "formula": "XP = floor(20 × L × r / 100 / (1 + 0.1 × (J − L)^1.1)) ; 0 si J − L > 100 ; L = niveau de la recette, J = niveau de métier (J ≥ L), r = craftXpRatio de l'objet s'il est ≥ 0 sinon celui du type (5 pour les types 326 carburants, 323 makinas, 99 filets ; 50 pour l'objet 32521 Filet de capture universel). À J = L : L XP par craft (10 XP pour le filet universel au niveau 1).",
+   "validation": "capture DPLN : Optimakina niv. 109 → 99 XP, Animakina niv. 107 → 80 XP, Animakina niv. 105 → 66 XP, tous exacts pour jobLevel = 110 Le niveau de métier 110 n'est pas affiché sur la capture : déduit (seul niveau entre 105 et 130 qui reproduit les 3 valeurs, vérifié).",
+   "sources": [
+    "https://github.com/Wallaka/dofus-efficiency/pull/56 (formule)",
+    "captures in-game du guide DPLN (raw/mechanics-evidence/screenshots)",
+    "DofusDB items.craftXpRatio"
+   ],
+   "confidence": "high",
+   "formulaPrevious": "XP = floor(recipeLevel × ratio / (1 + 0.1 × (jobLevel − recipeLevel)^1.1)) ; ratio = craftXpRatio/100 (−1 → 1 ; Filet universel = 50)",
+   "formulaFixNote": "Corrigé par la critique de complétude 2026-10-02 : l'ancien libellé « ratio = craftXpRatio/100 … Filet universel = 50 » donnait 50 XP au filet universel niv. 1 au lieu de 10 et contredisait crafts.json (xp.craftXpRatioPct) et strategy.json (formulas.jobCraftXp). Facteur réel = 20 × r/100 (= 1 pour r = 5, 10 pour r = 50). Recalcul : 109@110 → 99, 107@110 → 80, 105@110 → 66 (capture DPLN), 1@1 (r=50) → 10."
+  },
+  "breedingXp": "voir breeding.jobXp",
+  "captureXp": 30,
+  "unlocks": {
+   "paddocks": [
+    1,
+    40,
+    80,
+    120,
+    160,
+    200
+   ],
+   "nets": {
+    "universel": 1,
+    "multiplicateur": 100,
+    "renforcé": 150,
+    "multiplicateur renforcé": 200
+   },
+   "fuels": {
+    "Extrait": [
+     5,
+     45
+    ],
+    "Philtre": [
+     55,
+     95
+    ],
+    "Potion": [
+     105,
+     145
+    ],
+    "Élixir": [
+     155,
+     195
+    ],
+    "stepPerSize": 10
+   },
+   "makinas": "génération 2 dès niv. 17 … génération 10 jusqu'au niv. 189 (voir makinas.items)"
+  },
+  "almanaxJobXpBonuses": [
+   {
+    "dates": [
+     "22/10"
+    ],
+    "bonus": "+50 % XP Éleveurs (et Bûcherons, Mineurs, Alchimistes)",
+    "source": "DofusDB almanax-calendars id 37",
+    "confidence": "high"
+   },
+   {
+    "dates": [
+     "21/06→21/09",
+     "22/09→20/12",
+     "21/12→19/03",
+     "20/03→20/06"
+    ],
+    "bonus": "+25 % XP tous métiers (+75 % challenges) — « Challenges augmentés et expérience des métiers », DofusDB almanax-calendars catégorie 2 (ids 2, 129, 130, 131)",
+    "coversWholeYear": true,
+    "confidence": "medium (données DofusDB) ; low pour l'application réelle en jeu (bonus de saison permanent ?)",
+    "correction": "Vérification 2026-10-02 : l'ancienne valeur « 20-22/03, 21-23/06, 22-24/09, 21-23/12 » ne gardait que les 3 premières dates de chaque saison ; DofusDB liste chaque jour de la saison."
+   },
+   {
+    "dates": [
+     "01/05"
+    ],
+    "bonus": "+50 % XP tous métiers",
+    "source": "DofusDB almanax-calendars id 256 (Fabrique Féérique)",
+    "confidence": "high"
+   },
+   {
+    "dates": [
+     "29/02"
+    ],
+    "bonus": "+50 % XP tous métiers",
+    "source": "DofusDB almanax-calendars id 191",
+    "confidence": "high"
+   }
+  ],
+  "craftBonuses": [
+   {
+    "date": "10/05",
+    "bonus": "Éleveurs économisent 15 % des ingrédients"
+   },
+   {
+    "date": "10/08",
+    "bonus": "25 % de chances de créer un second objet (Éleveurs)"
+   }
+  ],
+  "sources": [
+   "https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html (guide DPLN, MAJ 02/03/2026)",
+   "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1762596-devblog-elevage-monture-partie-ii (devblog Ankama 28/04/2025)",
+   "DofusDB almanax-calendars"
+  ],
+  "confidence": "high"
+ },
+ "almanax": {
+  "breedingBonuses": [
+   {
+    "month": "Janvier",
+    "date": "10/01",
+    "effect": "Abreuvoirs : effet doublé",
+    "gauge": "DRINKING_TROUGH",
+    "meryde": "Trôma"
+   },
+   {
+    "month": "Février",
+    "date": "10/02",
+    "effect": "Bébés nés ce jour : capacité Endurante",
+    "ability": "Endurante",
+    "meryde": "Meash"
+   },
+   {
+    "month": "Mars",
+    "date": "10/03",
+    "effect": "Foudroyeurs : effet doublé",
+    "gauge": "BLASTER",
+    "meryde": "Inndo"
+   },
+   {
+    "month": "Avril",
+    "date": "10/04",
+    "effect": "Baffeurs : effet doublé",
+    "gauge": "SLAPPER",
+    "meryde": "Nunu"
+   },
+   {
+    "month": "Mai",
+    "date": "10/05",
+    "effect": "Éleveurs : 15 % d'ingrédients économisés",
+    "meryde": "Loumi"
+   },
+   {
+    "month": "Juin",
+    "date": "10/06",
+    "effect": "Mangeoires : effet doublé",
+    "gauge": "FEEDER",
+    "meryde": "Jibejan"
+   },
+   {
+    "month": "Juillet",
+    "date": "10/07",
+    "effect": "Bébés : capacité Amoureuse",
+    "ability": "Amoureuse",
+    "meryde": "Jihelair"
+   },
+   {
+    "month": "Août",
+    "date": "10/08",
+    "effect": "Éleveurs : 25 % de chances d'un second objet",
+    "meryde": "Rigamix"
+   },
+   {
+    "month": "Septembre",
+    "date": "10/09",
+    "effect": "Caresseurs : effet doublé",
+    "gauge": "PATTER",
+    "meryde": "Mau"
+   },
+   {
+    "month": "Octobre",
+    "date": "10/10",
+    "effect": "Bébés : capacité Sage",
+    "ability": "Sage",
+    "meryde": "Benjo"
+   },
+   {
+    "month": "Octobre",
+    "date": "variable (12/10/2026, 11/10/2027, 09/10/2028, 08/10/2029, 14/10/2030)",
+    "effect": "+20 % de chances d'obtenir la génération cible",
+    "targetBonus": 0.2,
+    "meryde": "Takeza"
+   },
+   {
+    "month": "Novembre",
+    "date": "10/11",
+    "effect": "Bébés : capacité Précoce",
+    "ability": "Précoce",
+    "meryde": "Otoul"
+   },
+   {
+    "month": "Décembre",
+    "date": "10/12",
+    "effect": "Dragofesses : effet doublé",
+    "gauge": "DRAGO_BUTT",
+    "meryde": "Foya"
+   }
+  ],
+  "captureRelated": [
+   {
+    "date": "11/09",
+    "effect": "+75 % XP dans le Territoire des Dragodindes Sauvages"
+   },
+   {
+    "date": "01/04",
+    "effect": "+50 % XP et butin sur les créatures marines dont les muldos sauvages"
+   }
+  ],
+  "raw": [
+   {
+    "almanaxId": 2,
+    "dates": [
+     "21/06/*",
+     "22/06/*",
+     "23/06/*",
+     "24/06/*",
+     "25/06/*",
+     "26/06/*",
+     "27/06/*",
+     "28/06/*",
+     "29/06/*",
+     "30/06/*",
+     "*/07/*",
+     "*/08/*",
+     "01/09/*",
+     "02/09/*",
+     "03/09/*",
+     "04/09/*",
+     "05/09/*",
+     "06/09/*",
+     "07/09/*",
+     "08/09/*",
+     "09/09/*",
+     "10/09/*",
+     "11/09/*",
+     "12/09/*",
+     "13/09/*",
+     "14/09/*",
+     "15/09/*",
+     "16/09/*",
+     "17/09/*",
+     "18/09/*",
+     "19/09/*",
+     "20/09/*",
+     "21/09/*"
+    ],
+    "nameFr": "Challenges augmentés et expérience des métiers",
+    "descFr": "Les bonus apportés par les challenges réussis sont augmentés de 75 %. De plus, Les gains d'expérience sont augmentés de 25 % pour tous les métiers."
+   },
+   {
+    "almanaxId": 25,
+    "dates": [
+     "10/10/*"
+    ],
+    "nameFr": "Montures sages",
+    "descFr": "Toutes les montures qui naissent ce jour auront la capacité Sage."
+   },
+   {
+    "almanaxId": 37,
+    "dates": [
+     "22/10/*"
+    ],
+    "nameFr": "Expérience des métiers",
+    "descFr": "Les gains d'expérience sont augmentés de 50 % pour les Bûcherons, les Mineurs, les Alchimistes et les Éleveurs."
+   },
+   {
+    "almanaxId": 47,
+    "dates": [
+     "08/10/2012",
+     "14/10/2013",
+     "13/10/2014",
+     "12/10/2015",
+     "10/10/2016",
+     "09/10/2017",
+     "08/10/2018",
+     "13/10/2025",
+     "14/10/2024",
+     "09/10/2023",
+     "10/10/2022",
+     "11/10/2021",
+     "12/10/2020",
+     "14/10/2019",
+     "12/10/2026",
+     "11/10/2027",
+     "09/10/2028",
+     "08/10/2029",
+     "14/10/2030",
+     "13/10/2031",
+     "11/10/2032",
+     "10/10/2033",
+     "09/10/2034",
+     "08/10/2035"
+    ],
+    "nameFr": "Génération montante",
+    "descFr": "Lors des accouplements de montures, un bonus de 20 % est ajouté aux chances d'obtenir la génération cible."
+   },
+   {
+    "almanaxId": 57,
+    "dates": [
+     "10/11/*"
+    ],
+    "nameFr": "Montures précoces",
+    "descFr": "Toutes les montures qui naissent ce jour auront la capacité Précoce."
+   },
+   {
+    "almanaxId": 80,
+    "dates": [
+     "02/12/*"
+    ],
+    "nameFr": "Expérience des métiers",
+    "descFr": "Les gains d'expérience sont augmentés de 50 % pour les Bricoleurs, les Forgerons, les Sculpteurs  et les Façonneurs."
+   },
+   {
+    "almanaxId": 88,
+    "dates": [
+     "10/12/*"
+    ],
+    "nameFr": "Efficacité des enclos",
+    "descFr": "Dans les enclos, l'effet des dragofesses est doublé."
+   },
+   {
+    "almanaxId": 113,
+    "dates": [
+     "02/09/*"
+    ],
+    "nameFr": "Vitalité débordante",
+    "descFr": "La régénération des Points de Vie est augmentée de 300 % (hors combat), et les soins par consommables (vie et énergie) sont augmentés de 100 %."
+   },
+   {
+    "almanaxId": 121,
+    "dates": [
+     "10/09/*"
+    ],
+    "nameFr": "Efficacité des enclos",
+    "descFr": "Dans les enclos, l'effet des caresseurs est doublé."
+   },
+   {
+    "almanaxId": 122,
+    "dates": [
+     "11/09/*"
+    ],
+    "nameFr": "Points d'expérience",
+    "descFr": "Les gains d'expérience sont augmentés de 75 % dans la zone du Territoire des Dragodindes Sauvages."
+   },
+   {
+    "almanaxId": 129,
+    "dates": [
+     "22/09/*",
+     "23/09/*",
+     "24/09/*",
+     "25/09/*",
+     "26/09/*",
+     "27/09/*",
+     "28/09/*",
+     "29/09/*",
+     "30/09/*",
+     "*/10/*",
+     "*/11/*",
+     "01/12/*",
+     "02/12/*",
+     "03/12/*",
+     "04/12/*",
+     "05/12/*",
+     "06/12/*",
+     "07/12/*",
+     "08/12/*",
+     "09/12/*",
+     "10/12/*",
+     "11/12/*",
+     "12/12/*",
+     "13/12/*",
+     "14/12/*",
+     "15/12/*",
+     "16/12/*",
+     "17/12/*",
+     "18/12/*",
+     "19/12/*",
+     "20/12/*"
+    ],
+    "nameFr": "Challenges augmentés et expérience des métiers",
+    "descFr": "Les bonus apportés par les challenges réussis sont augmentés de 75 %. De plus, Les gains d'expérience sont augmentés de 25 % pour tous les métiers."
+   },
+   {
+    "almanaxId": 130,
+    "dates": [
+     "21/12/*",
+     "22/12/*",
+     "23/12/*",
+     "24/12/*",
+     "25/12/*",
+     "26/12/*",
+     "27/12/*",
+     "28/12/*",
+     "29/12/*",
+     "30/12/*",
+     "31/12/*",
+     "*/01/*",
+     "*/02/*",
+     "01/03/*",
+     "02/03/*",
+     "03/03/*",
+     "04/03/*",
+     "05/03/*",
+     "06/03/*",
+     "07/03/*",
+     "08/03/*",
+     "09/03/*",
+     "10/03/*",
+     "11/03/*",
+     "12/03/*",
+     "13/03/*",
+     "14/03/*",
+     "15/03/*",
+     "16/03/*",
+     "17/03/*",
+     "18/03/*",
+     "19/03/*"
+    ],
+    "nameFr": "Challenges augmentés et expérience des métiers",
+    "descFr": "Les bonus apportés par les challenges réussis sont augmentés de 75 %. De plus, Les gains d'expérience sont augmentés de 25 % pour tous les métiers."
+   },
+   {
+    "almanaxId": 131,
+    "dates": [
+     "20/03/*",
+     "21/03/*",
+     "22/03/*",
+     "23/03/*",
+     "24/03/*",
+     "25/03/*",
+     "26/03/*",
+     "27/03/*",
+     "28/03/*",
+     "29/03/*",
+     "30/03/*",
+     "31/03/*",
+     "*/04/*",
+     "*/05/*",
+     "01/06/*",
+     "02/06/*",
+     "03/06/*",
+     "04/06/*",
+     "05/06/*",
+     "06/06/*",
+     "07/06/*",
+     "08/06/*",
+     "09/06/*",
+     "10/06/*",
+     "11/06/*",
+     "12/06/*",
+     "13/06/*",
+     "14/06/*",
+     "15/06/*",
+     "16/06/*",
+     "17/06/*",
+     "18/06/*",
+     "19/06/*",
+     "20/06/*"
+    ],
+    "nameFr": "Challenges augmentés et expérience des métiers",
+    "descFr": "Les bonus apportés par les challenges réussis sont augmentés de 75 %. De plus, Les gains d'expérience sont augmentés de 25 % pour tous les métiers."
+   },
+   {
+    "almanaxId": 141,
+    "dates": [
+     "10/01/*"
+    ],
+    "nameFr": "Efficacité des enclos",
+    "descFr": "Dans les enclos, l'effet des abreuvoirs est doublé."
+   },
+   {
+    "almanaxId": 172,
+    "dates": [
+     "10/02/*"
+    ],
+    "nameFr": "Montures endurantes",
+    "descFr": "Toutes les montures qui naissent ce jour auront la capacité Endurante."
+   },
+   {
+    "almanaxId": 191,
+    "dates": [
+     "29/02/*"
+    ],
+    "nameFr": "Points d'expérience et butin pour tous",
+    "descFr": "Les gains d'expérience et les chances d'obtenir du butin sont augmentés de 75 % lors des combats contre les monstres. De plus, les gains d'expérience sont augmentés de 50 % pour tous les métiers."
+   },
+   {
+    "almanaxId": 202,
+    "dates": [
+     "10/03/*"
+    ],
+    "nameFr": "Efficacité des enclos",
+    "descFr": "Dans les enclos, l'effet des foudroyeurs est doublé."
+   },
+   {
+    "almanaxId": 225,
+    "dates": [
+     "01/04/*"
+    ],
+    "nameFr": "Points d'expérience et butin sur les créatures marines",
+    "descFr": "Les gains d'expérience et les chances d'obtenir du butin sont augmentés de 50 % sur tous les monstres considérés comme des créatures marines (pichons, monstres des plages, corailleurs, crustorails, tortues de Moon, muldos sauvages, crabe Hijacob, gélikan, Kralamoure Géant, monstres des abysses de Sufokia, Mercemers, Submergés, Crocodailles de Crocuzko)."
+   },
+   {
+    "almanaxId": 234,
+    "dates": [
+     "10/04/*"
+    ],
+    "nameFr": "Efficacité des enclos",
+    "descFr": "Dans les enclos, l'effet des baffeurs est doublé."
+   },
+   {
+    "almanaxId": 256,
+    "dates": [
+     "01/05/*"
+    ],
+    "nameFr": "Fabrique Féérique",
+    "descFr": "Les gains d'expérience sont augmentés de 50 % pour tous les métiers. De plus, pour chaque Fée d'Artifice fabriquée, les personnages ont 25 % de chances de créer une seconde Fée et 15 % de chances d'économiser des ingrédients. Ils peuvent aussi récupérer 2 fois plus de Capsules Explosives en combattant des Bworks Mages."
+   },
+   {
+    "almanaxId": 265,
+    "dates": [
+     "10/05/*"
+    ],
+    "nameFr": "Économie d'ingrédients",
+    "descFr": "Les Éleveurs économisent 15 % de leurs ingrédients lorsqu'ils fabriquent des objets."
+   },
+   {
+    "almanaxId": 266,
+    "dates": [
+     "11/05/*"
+    ],
+    "nameFr": "Expérience des métiers",
+    "descFr": "Les gains d'expérience sont augmentés de 50 % pour les métiers de forgemagie d'armes (Forgemage et Sculptemage)."
+   },
+   {
+    "almanaxId": 276,
+    "dates": [
+     "21/05/*"
+    ],
+    "nameFr": "Expérience des métiers",
+    "descFr": "Les gains d'expérience sont augmentés de 50 % pour les métiers de fabrication de vêtements et de parures (Bijoutier, Cordonnier et Tailleur)."
+   },
+   {
+    "almanaxId": 298,
+    "dates": [
+     "10/06/*"
+    ],
+    "nameFr": "Efficacité des enclos",
+    "descFr": "Dans les enclos, l'effet des mangeoires est doublé."
+   },
+   {
+    "almanaxId": 328,
+    "dates": [
+     "10/07/*"
+    ],
+    "nameFr": "Montures amoureuses",
+    "descFr": "Toutes les montures qui naissent ce jour auront la capacité Amoureuse."
+   },
+   {
+    "almanaxId": 359,
+    "dates": [
+     "10/08/*"
+    ],
+    "nameFr": "Fabrication intensive",
+    "descFr": "Pour chaque objet fabriqué, les Éleveurs ont 25 % de chances de créer un second objet."
+   }
+  ],
+  "sources": [
+   "DofusDB almanax-calendars (texte officiel du client)",
+   "https://www.dofuspourlesnoobs.com/guide-de-l-eleveur.html (guide DPLN, MAJ 02/03/2026)"
+  ],
+  "confidence": "high",
+  "merydeNote": "« meryde » = Méryde (patron du jour, cf. DofusDB meriaDescription : « Trôma est le Méryde de la rapidité »…), pas un nom de mois. Corrigé par la vérification du 2026-10-02 (l'ancienne clé « month » contenait le nom du Méryde)."
+ },
+ "planning": {
+  "pointsPerStatPerMount": 20000,
+  "gaugePointsPerFertileBatch": "60 000 points (20 000 Foudroyeur + 20 000 Abreuvoir + 20 000 Dragofesse) pour TOUT un enclos de montures éligibles, quel que soit le palier ; + |Δsérénité| points de Baffeur/Caresseur",
+  "feederPointsToLevel100": 172668,
+  "feederPointsToLevel200": 867582,
+  "tierTradeoff": "Le palier ne change que la vitesse (10/20/30/40 par tick) et le prix par point (famille de carburant consommée en haut de jauge).",
+  "serenityPlanByStartBucket": {
+   "lt_-2000": [
+    "BLASTER+PATTER jusqu'à s∈[-2000,-1]",
+    "BLASTER+DRINKING_TROUGH",
+    "PATTER jusqu'à s≥0",
+    "DRAGO_BUTT(+FEEDER)"
+   ],
+   "-2000_-1": [
+    "BLASTER+DRINKING_TROUGH",
+    "PATTER de |s| points",
+    "DRAGO_BUTT(+FEEDER)"
+   ],
+   "0_2000": [
+    "DRAGO_BUTT+DRINKING_TROUGH",
+    "SLAPPER de s+1 points",
+    "BLASTER(+FEEDER)"
+   ],
+   "gt_2000": [
+    "DRAGO_BUTT+SLAPPER jusqu'à s∈[0,2000]",
+    "DRINKING_TROUGH(+DRAGO_BUTT)",
+    "SLAPPER jusqu'à s≤-1",
+    "BLASTER(+FEEDER)"
+   ]
+  },
+  "expectedMatingsForOneTargetBaby": "1/B (loi géométrique), chaque accouplement consommant 2 montures fécondes ; clonage : 2 stériles de même génération → 1 fertile",
+  "confidence": "high (arithmétique sur constantes high)"
+ },
+ "changes37": [
+  {
+   "what": "Optimakina",
+   "from": "+10 %",
+   "to": "+20 %",
+   "confirmedInClient": true
+  },
+  {
+   "what": "Animakina",
+   "from": "capacité aléatoire",
+   "to": "choix du sexe (stock converti)",
+   "confirmedInClient": true
+  },
+  {
+   "what": "Capacités naturelles",
+   "to": "Reproductrice 3 %, Sage 6 %, Précoce 8 %, Amoureuse 8 %, Endurante 8 % sans makina",
+   "confirmedInClient": false
+  },
+  {
+   "what": "Carburants",
+   "from": "1000..5000",
+   "to": "2000..10000 (×2)",
+   "confirmedInClient": true
+  },
+  {
+   "what": "Capacité des jauges",
+   "from": "100 000 (40k/30k/20k/10k)",
+   "to": "200 000 (80k/60k/40k/20k), consommation par tick inchangée 10/20/30/40",
+   "confirmedInClient": true
+  },
+  {
+   "what": "Génétons",
+   "from": "1..250",
+   "to": "2..500 (×2 environ)",
+   "confirmedInClient": true
+  },
+  {
+   "what": "Recettes de makinas",
+   "to": "74 recettes modifiées, ressources de boss coûteuses remplacées",
+   "confirmedInClient": true
+  },
+  {
+   "what": "Ressources d'élevage au PNJ de guilde",
+   "from": "15",
+   "to": "30 (prix)",
+   "confirmedInClient": false
+  },
+  {
+   "what": "Étable",
+   "from": 250,
+   "to": 500,
+   "confirmedInClient": false
+  },
+  {
+   "what": "Clonage",
+   "to": "conserve la sérénité",
+   "confirmedInClient": false
+  },
+  {
+   "what": "Carburants renommés",
+   "to": "ex. « Élixir de dragofesse » → « Élixir d'amour », « Élixir de foudroyeur » → « Élixir d'endurance »",
+   "confirmedInClient": false
+  },
+  {
+   "what": "Ressources d'élevage retirées des cadeaux de Nowel"
+  },
+  {
+   "what": "QoL",
+   "to": "filtres étable (aucune capacité, combinaisons fertilité), relance rapide accouplement/clonage, transfert auto entre enclos, renommage après naissance, bouton tout-vers-extraction, fenêtre de confirmation de remplissage"
+  }
+ ],
+ "legacyPre35": {
+  "warning": "ANCIEN système (Dofus 1.29/2.x jusqu'à 3.4). Ne PAS utiliser pour simuler 3.5+. Source empirique non confirmée par Ankama.",
+  "source": "http://felis-silvestris.lescigales.org/genetique-des-dragodindes.html (d'après Dofus Mag 5 + BillFR + JOL)",
+  "treeDepth": 3,
+  "positionWeights": {
+   "self": 10,
+   "selfPredisposee": 20,
+   "parent": 6,
+   "grandparent": 3,
+   "greatGrandparent": 1
+  },
+  "selection": "une couleur tirée dans l'arbre de chaque parent proportionnellement aux poids de position",
+  "combination": {
+   "incompatible": "P(x)=PGC(x)/(PGC(c1)+PGC(c2))",
+   "compatible": "P(x)=PGC(x)/(PGC(c1)+PGC(c2)+0.5·PGC(c3)) ; P(c3)=0.5·PGC(c3)/(PGC(c1)+PGC(c2)+0.5·PGC(c3))"
+  },
+  "PGC": {
+   "Dorée": 20,
+   "Ivoire et Pourpre": 20,
+   "estimate": "PGC(x)=100·V(x)/(2 − S(x) mod 2) (formule d'Aurelesk ; V = vitesse d'apprentissage, S = génération)"
+  },
+  "litter": {
+   "1": 0.625,
+   "2": 0.3125,
+   "3": 0.0625,
+   "+1": "Reproductrice (mère) ; +1 bébé avec proba (énergie% femelle + énergie% mâle)/2 depuis 2.16"
+  },
+  "abilities": "10 % de transmission par capacité parentale, sinon 5 % d'apparition spontanée par emplacement",
+  "relationTo35": "Le devblog II annonce que « le calcul basé sur l'arbre généalogique sera conservé, les croisements également » + 30 % de génération cible. Le modèle 3.5 retrouvé garde les poids de position 10/6 et un poids génétique par couleur (90/20 ≈ PGC), mais la combinaison n'est plus la formule PGC par paire."
+ },
+ "openQuestions": [
+  "Facteur de poids d'un croisement dont l'enfant est monocolore (GW 90) : 1 supposé.",
+  "Cas D(T) > B : B exact ou max(B, D(T)) ?",
+  "Reproducteur : deux tirages indépendants ? génétons doublés ?",
+  "Distribution de la sérénité aléatoire à la naissance / capture / clonage (3.5-3.6).",
+  "Niveau conservé après clonage ?",
+  "Effet Almanax « effet doublé » : gain ×2 seulement, ou consommation ×2 aussi ? Cumul avec capacité ?",
+  "Jauge active quand seules certaines montures sont éligibles : consommation pleine (supposé) ;",
+  "Date de sortie live de la 3.7 et prix PNJ Adèle Vage en 3.7.",
+  "XP de capture avec filets multiplicateurs (30 par monture obtenue ?).",
+  "Ordre d'application dans un tick quand Baffeur/Caresseur + jauge de stat sont actifs simultanément (éligibilité testée avant ou après la variation de sérénité).",
+  "Le croisement des deux parents eux-mêmes (ex. Rousse × Dorée → Dorée et Rousse) apparaît-il bien quand chaque parent a un arbre ? Le modèle dit oui (≈10,6 % dans l'exemple du devblog II), le devblog II l'omet dans sa liste.",
+  "Bonus de saison « Challenges augmentés et expérience des métiers » (+25 % XP tous métiers) : réellement actif tous les jours ?"
+ ]
+}

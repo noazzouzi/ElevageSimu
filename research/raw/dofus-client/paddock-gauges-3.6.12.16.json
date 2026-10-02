@@ -1,0 +1,139 @@
+{
+"source": "Ankama Dofus 3 client 3.6.12.16 (PaddockGaugesDataRoot), extracted from cytrus.cdn.ankama.com bundle data_assets_paddockgaugesdataroot.asset.bundle via UnityPy typetree",
+"extractedAt": "2026-10-01",
+"count": 6,
+"data": [
+{
+"id": 1,
+"name": "SLAPPER",
+"tierMaxValues": [
+{
+"tier": 90000,
+"consumptionTick": 30
+},
+{
+"tier": 100000,
+"consumptionTick": 40
+},
+{
+"tier": 40000,
+"consumptionTick": 10
+},
+{
+"tier": 70000,
+"consumptionTick": 20
+}
+]
+},
+{
+"id": 2,
+"name": "PATTER",
+"tierMaxValues": [
+{
+"tier": 100000,
+"consumptionTick": 40
+},
+{
+"tier": 90000,
+"consumptionTick": 30
+},
+{
+"tier": 40000,
+"consumptionTick": 10
+},
+{
+"tier": 70000,
+"consumptionTick": 20
+}
+]
+},
+{
+"id": 3,
+"name": "BLASTER",
+"tierMaxValues": [
+{
+"tier": 90000,
+"consumptionTick": 30
+},
+{
+"tier": 40000,
+"consumptionTick": 10
+},
+{
+"tier": 70000,
+"consumptionTick": 20
+},
+{
+"tier": 100000,
+"consumptionTick": 40
+}
+]
+},
+{
+"id": 4,
+"name": "DRINKING_TROUGH",
+"tierMaxValues": [
+{
+"tier": 90000,
+"consumptionTick": 30
+},
+{
+"tier": 100000,
+"consumptionTick": 40
+},
+{
+"tier": 70000,
+"consumptionTick": 20
+},
+{
+"tier": 40000,
+"consumptionTick": 10
+}
+]
+},
+{
+"id": 5,
+"name": "DRAGO_BUTT",
+"tierMaxValues": [
+{
+"tier": 70000,
+"consumptionTick": 20
+},
+{
+"tier": 100000,
+"consumptionTick": 40
+},
+{
+"tier": 40000,
+"consumptionTick": 10
+},
+{
+"tier": 90000,
+"consumptionTick": 30
+}
+]
+},
+{
+"id": 6,
+"name": "FEEDER",
+"tierMaxValues": [
+{
+"tier": 100000,
+"consumptionTick": 40
+},
+{
+"tier": 70000,
+"consumptionTick": 20
+},
+{
+"tier": 90000,
+"consumptionTick": 30
+},
+{
+"tier": 40000,
+"consumptionTick": 10
+}
+]
+}
+]
+}

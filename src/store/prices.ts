@@ -1,13 +1,16 @@
 // Prix saisis par le joueur (surchargent les valeurs par défaut issues de la recherche).
+import { useMemo } from 'react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { PriceContext } from '../domain/pricing'
+import { useSettings } from './settings'
 
 export type LevelBand = '1' | '100' | '200'
 
 interface PriceStore {
   /** Prix unitaire d'un objet (clé = id DofusDB). */
   items: Record<string, number>
-  /** Prix de vente d'une monture (clé = `${speciesId}|${LevelBand}`). */
+  /** Prix de vente d'une monture (clé = `${speciesId}|${LevelBand}`, id d'espèce numérique). */
   mounts: Record<string, number>
   /** Prix générique par génération (clé = `${family}|${generation}|${LevelBand}`). */
   generations: Record<string, number>
@@ -16,7 +19,7 @@ interface PriceStore {
   /** Date (ms) de la dernière mise à jour manuelle. */
   updatedAt: number
   setItem: (id: number | string, price: number | null) => void
-  setMount: (speciesId: string, band: LevelBand, price: number | null) => void
+  setMount: (speciesId: number, band: LevelBand, price: number | null) => void
   setGeneration: (family: string, generation: number, band: LevelBand, price: number | null) => void
   setGenetonValue: (v: number | null) => void
   replaceAll: (p: Pick<PriceStore, 'items' | 'mounts' | 'generations' | 'genetonValue'>) => void
@@ -51,3 +54,10 @@ export const usePrices = create<PriceStore>()(
     { name: 'elevagesimu:prices', version: 1 },
   ),
 )
+
+/** Contexte de prix courant (prix saisis + réglage « utiliser les prix par défaut »). */
+export function usePriceContext(): PriceContext {
+  const overrides = usePrices((s) => s.items)
+  const useDefaults = useSettings((s) => s.useDefaultPrices)
+  return useMemo(() => ({ overrides, useDefaults }), [overrides, useDefaults])
+}

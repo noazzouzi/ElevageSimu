@@ -1,0 +1,939 @@
+{
+ "generatedFrom": "research/data/mechanics.json + strategy.json (client Dofus 3.6.12.16 / bêta 3.7.3.3, guide DPLN, DofusDB)",
+ "liveClientVersion": "3.6.12.16",
+ "betaClientVersion": "3.7.3.3",
+ "families": {
+  "dragodinde": {
+   "label": "Dragodinde",
+   "plural": "Dragodindes",
+   "clientSpeciesId": 1,
+   "dofusdbFamilyId": 1,
+   "commonBonus": "Vitalité",
+   "extractionItemId": 33515,
+   "extractionItemName": "Neurone de dragodinde",
+   "captureZone": {
+    "subarea": "Plaine des Scarafeuilles",
+    "area": "Amakna",
+    "xRange": [
+     -6,
+     5
+    ],
+    "yRange": [
+     21,
+     32
+    ],
+    "nearestZaap": {
+     "name": "Plaine des Scarafeuilles",
+     "coords": [
+      -1,
+      24
+     ]
+    },
+    "levels": [
+     62,
+     70
+    ],
+    "monsters": [
+     {
+      "id": 171,
+      "name": "Dragodinde amande sauvage"
+     },
+     {
+      "id": 200,
+      "name": "Dragodinde rousse sauvage"
+     }
+    ]
+   }
+  },
+  "muldo": {
+   "label": "Muldo",
+   "plural": "Muldos",
+   "clientSpeciesId": 2,
+   "dofusdbFamilyId": 5,
+   "commonBonus": "1 PM dès le niveau 100",
+   "extractionItemId": 17864,
+   "extractionItemName": "Ambre de muldo",
+   "captureZone": {
+    "subarea": "Bassin des Muldos",
+    "area": "Baie de Sufokia",
+    "xRange": [
+     16,
+     22
+    ],
+    "yRange": [
+     18,
+     23
+    ],
+    "nearestZaap": {
+     "name": "Rivage sufokien",
+     "coords": [
+      10,
+      22
+     ]
+    },
+    "levels": [
+     62,
+     70
+    ],
+    "monsters": [
+     {
+      "id": 4438,
+      "name": "Muldo doré sauvage"
+     },
+     {
+      "id": 4437,
+      "name": "Muldo pourpre sauvage"
+     },
+     {
+      "id": 4434,
+      "name": "Muldo indigo sauvage"
+     },
+     {
+      "id": 4435,
+      "name": "Muldo ébène sauvage"
+     },
+     {
+      "id": 4436,
+      "name": "Muldo orchidée sauvage"
+     }
+    ]
+   }
+  },
+  "volkorne": {
+   "label": "Volkorne",
+   "plural": "Volkornes",
+   "clientSpeciesId": 3,
+   "dofusdbFamilyId": 6,
+   "commonBonus": "1 PA dès le niveau 100",
+   "extractionItemId": 19975,
+   "extractionItemName": "Corne de volkorne",
+   "captureZone": {
+    "subarea": "Haras de Brâkmar",
+    "area": "Brâkmar",
+    "xRange": [
+     -33,
+     -23
+    ],
+    "yRange": [
+     39,
+     45
+    ],
+    "nearestZaap": {
+     "name": "La Cuirasse",
+     "coords": [
+      -26,
+      37
+     ]
+    },
+    "levels": [
+     62,
+     70
+    ],
+    "monsters": [
+     {
+      "id": 5308,
+      "name": "Volkorne orchidée sauvage"
+     },
+     {
+      "id": 5309,
+      "name": "Volkorne indigo sauvage"
+     },
+     {
+      "id": 5311,
+      "name": "Volkorne ébène sauvage"
+     },
+     {
+      "id": 5313,
+      "name": "Volkorne pourpre sauvage"
+     }
+    ]
+   }
+  }
+ },
+ "mountXpTable": [
+  0,
+  19,
+  49,
+  96,
+  161,
+  246,
+  353,
+  481,
+  633,
+  809,
+  1011,
+  1238,
+  1491,
+  1772,
+  2081,
+  2419,
+  2786,
+  3182,
+  3609,
+  4067,
+  4557,
+  5078,
+  5632,
+  6219,
+  6839,
+  7493,
+  8182,
+  8905,
+  9664,
+  10457,
+  11287,
+  12154,
+  13057,
+  13997,
+  14974,
+  15990,
+  17043,
+  18135,
+  19266,
+  20437,
+  21646,
+  22896,
+  24186,
+  25516,
+  26887,
+  28299,
+  29753,
+  31248,
+  32785,
+  34365,
+  35987,
+  37652,
+  39360,
+  41111,
+  42906,
+  44745,
+  46628,
+  48555,
+  50527,
+  52544,
+  54607,
+  56714,
+  58868,
+  61067,
+  63312,
+  65604,
+  67942,
+  70327,
+  72760,
+  75239,
+  77766,
+  80341,
+  82964,
+  85635,
+  88355,
+  91123,
+  93940,
+  96806,
+  99721,
+  102685,
+  105700,
+  108764,
+  111878,
+  115042,
+  118257,
+  121523,
+  124840,
+  128207,
+  131626,
+  135096,
+  138618,
+  142191,
+  145817,
+  149495,
+  153225,
+  157008,
+  160843,
+  164732,
+  168673,
+  172668,
+  176716,
+  180818,
+  184974,
+  189183,
+  193447,
+  197765,
+  202137,
+  206565,
+  211046,
+  215583,
+  220176,
+  224823,
+  229526,
+  234284,
+  239099,
+  243969,
+  248895,
+  253878,
+  258917,
+  264013,
+  269165,
+  274375,
+  279641,
+  284965,
+  290346,
+  295784,
+  301280,
+  306834,
+  312446,
+  318116,
+  323845,
+  329631,
+  335477,
+  341381,
+  347343,
+  353365,
+  359446,
+  365587,
+  371786,
+  378045,
+  384364,
+  390743,
+  397182,
+  403681,
+  410240,
+  416859,
+  423539,
+  430280,
+  437082,
+  443944,
+  450868,
+  457852,
+  464898,
+  472006,
+  479175,
+  486406,
+  493699,
+  501054,
+  508470,
+  515950,
+  523491,
+  531095,
+  538762,
+  546491,
+  554283,
+  562139,
+  570057,
+  578039,
+  586084,
+  594193,
+  602365,
+  610601,
+  618901,
+  627265,
+  635693,
+  644185,
+  652742,
+  661363,
+  670049,
+  678799,
+  687615,
+  696495,
+  705440,
+  714451,
+  723527,
+  732668,
+  741875,
+  751148,
+  760486,
+  769890,
+  779361,
+  788897,
+  798500,
+  808169,
+  817904,
+  827706,
+  837575,
+  847510,
+  857513,
+  867582
+ ],
+ "jobXpTable": [
+  0,
+  20,
+  60,
+  120,
+  200,
+  300,
+  420,
+  560,
+  720,
+  900,
+  1100,
+  1320,
+  1560,
+  1820,
+  2100,
+  2400,
+  2720,
+  3060,
+  3420,
+  3800,
+  4200,
+  4620,
+  5060,
+  5520,
+  6000,
+  6500,
+  7020,
+  7560,
+  8120,
+  8700,
+  9300,
+  9920,
+  10560,
+  11220,
+  11900,
+  12600,
+  13320,
+  14060,
+  14820,
+  15600,
+  16400,
+  17220,
+  18060,
+  18920,
+  19800,
+  20700,
+  21620,
+  22560,
+  23520,
+  24500,
+  25500,
+  26520,
+  27560,
+  28620,
+  29700,
+  30800,
+  31920,
+  33060,
+  34220,
+  35400,
+  36600,
+  37820,
+  39060,
+  40320,
+  41600,
+  42900,
+  44220,
+  45560,
+  46920,
+  48300,
+  49700,
+  51120,
+  52560,
+  54020,
+  55500,
+  57000,
+  58520,
+  60060,
+  61620,
+  63200,
+  64800,
+  66420,
+  68060,
+  69720,
+  71400,
+  73100,
+  74820,
+  76560,
+  78320,
+  80100,
+  81900,
+  83720,
+  85560,
+  87420,
+  89300,
+  91200,
+  93120,
+  95060,
+  97020,
+  99000,
+  101000,
+  103020,
+  105060,
+  107120,
+  109200,
+  111300,
+  113420,
+  115560,
+  117720,
+  119900,
+  122100,
+  124320,
+  126560,
+  128820,
+  131100,
+  133400,
+  135720,
+  138060,
+  140420,
+  142800,
+  145200,
+  147620,
+  150060,
+  152520,
+  155000,
+  157500,
+  160020,
+  162560,
+  165120,
+  167700,
+  170300,
+  172920,
+  175560,
+  178220,
+  180900,
+  183600,
+  186320,
+  189060,
+  191820,
+  194600,
+  197400,
+  200220,
+  203060,
+  205920,
+  208800,
+  211700,
+  214620,
+  217560,
+  220520,
+  223500,
+  226500,
+  229520,
+  232560,
+  235620,
+  238700,
+  241800,
+  244920,
+  248060,
+  251220,
+  254400,
+  257600,
+  260820,
+  264060,
+  267320,
+  270600,
+  273900,
+  277220,
+  280560,
+  283920,
+  287300,
+  290700,
+  294120,
+  297560,
+  301020,
+  304500,
+  308000,
+  311520,
+  315060,
+  318620,
+  322200,
+  325800,
+  329420,
+  333060,
+  336720,
+  340400,
+  344100,
+  347820,
+  351560,
+  355320,
+  359100,
+  362900,
+  366720,
+  370560,
+  374420,
+  378300,
+  382200,
+  386120,
+  390060,
+  394020,
+  398000
+ ],
+ "almanaxBreedingBonuses": [
+  {
+   "month": "Janvier",
+   "date": "10/01",
+   "effect": "Abreuvoirs : effet doublé",
+   "gauge": "DRINKING_TROUGH",
+   "meryde": "Trôma"
+  },
+  {
+   "month": "Février",
+   "date": "10/02",
+   "effect": "Bébés nés ce jour : capacité Endurante",
+   "ability": "Endurante",
+   "meryde": "Meash"
+  },
+  {
+   "month": "Mars",
+   "date": "10/03",
+   "effect": "Foudroyeurs : effet doublé",
+   "gauge": "BLASTER",
+   "meryde": "Inndo"
+  },
+  {
+   "month": "Avril",
+   "date": "10/04",
+   "effect": "Baffeurs : effet doublé",
+   "gauge": "SLAPPER",
+   "meryde": "Nunu"
+  },
+  {
+   "month": "Mai",
+   "date": "10/05",
+   "effect": "Éleveurs : 15 % d'ingrédients économisés",
+   "meryde": "Loumi"
+  },
+  {
+   "month": "Juin",
+   "date": "10/06",
+   "effect": "Mangeoires : effet doublé",
+   "gauge": "FEEDER",
+   "meryde": "Jibejan"
+  },
+  {
+   "month": "Juillet",
+   "date": "10/07",
+   "effect": "Bébés : capacité Amoureuse",
+   "ability": "Amoureuse",
+   "meryde": "Jihelair"
+  },
+  {
+   "month": "Août",
+   "date": "10/08",
+   "effect": "Éleveurs : 25 % de chances d'un second objet",
+   "meryde": "Rigamix"
+  },
+  {
+   "month": "Septembre",
+   "date": "10/09",
+   "effect": "Caresseurs : effet doublé",
+   "gauge": "PATTER",
+   "meryde": "Mau"
+  },
+  {
+   "month": "Octobre",
+   "date": "10/10",
+   "effect": "Bébés : capacité Sage",
+   "ability": "Sage",
+   "meryde": "Benjo"
+  },
+  {
+   "month": "Octobre",
+   "date": "variable (12/10/2026, 11/10/2027, 09/10/2028, 08/10/2029, 14/10/2030)",
+   "effect": "+20 % de chances d'obtenir la génération cible",
+   "targetBonus": 0.2,
+   "meryde": "Takeza"
+  },
+  {
+   "month": "Novembre",
+   "date": "10/11",
+   "effect": "Bébés : capacité Précoce",
+   "ability": "Précoce",
+   "meryde": "Otoul"
+  },
+  {
+   "month": "Décembre",
+   "date": "10/12",
+   "effect": "Dragofesses : effet doublé",
+   "gauge": "DRAGO_BUTT",
+   "meryde": "Foya"
+  }
+ ],
+ "almanaxCalendar": [
+  {
+   "date": "2026-10-10",
+   "name": "Benjo – Montures sages",
+   "effect": "bébés Sage",
+   "use": "accouplements dont on garde/vend les bébés"
+  },
+  {
+   "date": "2026-10-12",
+   "name": "Takeza – Génération montante",
+   "effect": "+20 % génération cible",
+   "use": "accouplements à fort enjeu"
+  },
+  {
+   "date": "2026-10-22",
+   "name": "Expérience des métiers",
+   "effect": "+50 % XP Éleveurs",
+   "use": "crafts de montée"
+  },
+  {
+   "date": "2026-11-10",
+   "name": "Otoul – Montures précoces",
+   "effect": "bébés Précoce"
+  },
+  {
+   "date": "2026-12-10",
+   "name": "Foya – Efficacité des enclos",
+   "effect": "Dragofesse ×2",
+   "use": "phases d'amour"
+  },
+  {
+   "date": "2027-01-10",
+   "name": "Trôma",
+   "effect": "Abreuvoir ×2",
+   "use": "phases de maturité"
+  },
+  {
+   "date": "2027-02-10",
+   "name": "Meash",
+   "effect": "bébés Endurante"
+  },
+  {
+   "date": "2027-03-10",
+   "name": "Inndo",
+   "effect": "Foudroyeur ×2",
+   "use": "phases d'endurance"
+  },
+  {
+   "date": "2027-04-01",
+   "name": "Créatures marines",
+   "effect": "+50 % XP et butin (créatures marines)",
+   "use": "captures de Muldos (« muldos sauvages » cités dans la description DofusDB)",
+   "source": "dofusdb",
+   "confidence": "high"
+  },
+  {
+   "date": "2027-04-10",
+   "name": "Nunu",
+   "effect": "Baffeur ×2"
+  },
+  {
+   "date": "2027-05-01",
+   "name": "Fabrique Féérique",
+   "effect": "+50 % XP tous métiers",
+   "use": "crafts"
+  },
+  {
+   "date": "2027-05-10",
+   "name": "Loumi",
+   "effect": "−15 % d'ingrédients (Éleveurs)",
+   "use": "crafts chers"
+  },
+  {
+   "date": "2027-06-10",
+   "name": "Jibejan",
+   "effect": "Mangeoire ×2",
+   "use": "XP des montures"
+  },
+  {
+   "date": "2027-07-10",
+   "name": "Jihelair",
+   "effect": "bébés Amoureuse"
+  },
+  {
+   "date": "2027-08-10",
+   "name": "Rigamix",
+   "effect": "25 % de chances de double craft (Éleveurs)",
+   "use": "makinas, carburants chers"
+  },
+  {
+   "date": "2027-09-10",
+   "name": "Mau",
+   "effect": "Caresseur ×2"
+  },
+  {
+   "date": "2027-09-11",
+   "name": "Points d'expérience",
+   "effect": "+75 % XP au Territoire des Dragodindes Sauvages",
+   "use": "captures de Dragodindes"
+  },
+  {
+   "date": "2027-10-11",
+   "name": "Takeza",
+   "effect": "+20 % génération cible"
+  },
+  {
+   "date": "2027-10-22",
+   "name": "Expérience des métiers",
+   "effect": "+50 % XP Éleveurs"
+  }
+ ],
+ "genetonShop": [
+  {
+   "item": "Petits Parchemins de caractéristique (×6 types)",
+   "cost": 10
+  },
+  {
+   "item": "Aliton",
+   "cost": 10,
+   "exchangeable": false
+  },
+  {
+   "item": "Parchemins de caractéristique",
+   "cost": 50
+  },
+  {
+   "item": "Grands Parchemins de caractéristique",
+   "cost": 100
+  },
+  {
+   "item": "Tourmaline",
+   "cost": 130,
+   "exchangeable": true
+  },
+  {
+   "item": "Puissants Parchemins de caractéristique",
+   "cost": 160,
+   "exchangeable": true,
+   "observedPrice": [
+    {
+     "kamas": 20000,
+     "date": "2026-03",
+     "note": "lancement 3.5"
+    },
+    {
+     "kamas": 60000,
+     "date": "2026-09",
+     "note": "stable depuis plusieurs mois, pic 80–90 k",
+     "source": "yt_solomonk_volk10000"
+    }
+   ]
+  }
+ ],
+ "nets": [
+  {
+   "name": "Filet de capture universel",
+   "itemId": 32521,
+   "jobLevel": 1,
+   "species": "toutes",
+   "effect": "1 monture ciblée"
+  },
+  {
+   "name": "Filet multiplicateur de [espèce]",
+   "itemIds": [
+    32525,
+    32526,
+    32527
+   ],
+   "jobLevel": 100,
+   "effect": "1 monture ciblée, dupliquée (×2, sexe pas forcément identique)"
+  },
+  {
+   "name": "Filet à [espèce] renforcé",
+   "itemIds": [
+    32522,
+    32523,
+    32524
+   ],
+   "jobLevel": 150,
+   "effect": "zone cercle rayon 3"
+  },
+  {
+   "name": "Filet multiplicateur de [espèce] renforcé",
+   "itemIds": [
+    32528,
+    32529,
+    32530
+   ],
+   "jobLevel": 200,
+   "effect": "zone + ×2"
+  }
+ ],
+ "naturalAbilityOdds37": {
+  "Reproductrice": 0.03,
+  "Sage": 0.06,
+  "Précoce": 0.08,
+  "Amoureuse": 0.08,
+  "Endurante": 0.08,
+  "none": 0.67
+ },
+ "changes37": {
+  "status": "bêta depuis le 2026-09-17 (client 3.7.3.3) ; date live inconnue (probablement automne 2026, la 3.8 étant annoncée pour nov.–déc.)",
+  "confidenceDate": "low",
+  "changes": [
+   "carburants ×2 (durabilité)",
+   "jauges ×2 (80k/140k/180k/200k, ticks inchangés : palier 1 = 22 h 13)",
+   "génétons ≈ ×2 : barème par parent 2/4/8/15/30/60/120/250/500 de G1 à G9 (client 3.7.3.3 ; le barème 3.6 est décalé d'une génération, donc ×1,875 à ×2,08 selon la génération)",
+   "Optimakina +20 %",
+   "Animakina = choix du sexe (stocks convertis)",
+   "capacités aléatoires sans makina : Reproductrice 3 %, Sage 6 %, Précoce/Amoureuse/Endurante 8 %",
+   "étable 500",
+   "clone conserve la sérénité",
+   "recettes de makinas revues",
+   "PNJ de guilde : ressources d'élevage 15 → 30",
+   "fenêtre de confirmation au remplissage",
+   "relance rapide accouplement/clonage, transfert auto entre enclos, filtres de fertilité combinables"
+  ],
+  "strategyBefore37": [
+   "garder les Animakinas",
+   "reporter les gros accouplements G8/G9 si la sortie est proche (génétons ×2)",
+   "les stocks de carburants devraient doubler (non confirmé)"
+  ],
+  "sources": [
+   "devblog37",
+   "mechanics",
+   "crafts",
+   "guidactik"
+  ],
+  "tokensPerParentByGeneration": {
+   "1": 2,
+   "2": 4,
+   "3": 8,
+   "4": 15,
+   "5": 30,
+   "6": 60,
+   "7": 120,
+   "8": 250,
+   "9": 500
+  }
+ },
+ "timeline": [
+  {
+   "date": "2025-02-27",
+   "event": "Devblog élevage partie I (pistes, version abandonnée sur plusieurs points)",
+   "source": "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1761570-devblog-elevage-monture",
+   "confidence": "high"
+  },
+  {
+   "date": "2025-04-28",
+   "event": "Devblog élevage partie II (design final ; prévu pour 3.3, repoussé à 3.5)",
+   "source": "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1762596-devblog-elevage-monture-partie-ii (devblog Ankama 28/04/2025)",
+   "confidence": "high"
+  },
+  {
+   "date": "2026-02-11",
+   "event": "Bêta 3.5 ouverte",
+   "source": "https://www.dofus.com/fr/mmorpg/actualites/news/1767498-maj-3-5-disponible-serveur-beta",
+   "confidence": "medium",
+   "note": "non revérifiée : dofus.com renvoie 403 au vérificateur"
+  },
+  {
+   "date": "2026-03-03",
+   "event": "3.5 en ligne : refonte de l'élevage",
+   "source": "https://www.dofus.com/fr/mmorpg/actualites/news/1767665-maj-3-5-ligne ; https://www.dofuspourlesnoobs.com/mise-a-jour-305.html (« jusqu'au Mardi 3 mars avant la maintenance »)",
+   "confidence": "high"
+  },
+  {
+   "date": "2026-03..2026-06",
+   "event": "Patchs 3.5.3.1 → 3.5.6.7 : aucune modification des données client d'élevage (jauges, poids génétiques, génétons, XP d'accouplement = 10/génération)",
+   "source": "clients 3.5.3.1/3.5.4.2/3.5.5.3/3.5.6.7 décodés (raw/mechanics-evidence/client-data/breeding-constants-by-client-version.json)",
+   "confidence": "high"
+  },
+  {
+   "date": "2026-06-23",
+   "event": "3.6 en ligne. Seul changement d'élevage visible côté client : XP métier d'accouplement ×3 (10 → 30 par génération et par parent). Ajout de succès de monstres (bestiaire) « Muldos sauvages » / « Volkornes sauvages ». RidesData 3.5.6.7 vs 3.6.12.16 revérifié : seule l'XP d'accouplement change.",
+   "source": "https://www.dofus.com/fr/mmorpg/actualites/news/1770358-maj-3-6-raid-not-dead-maintenant-ligne ; client 3.6.2.1 vs 3.5.6.7 ; https://www.dofuspourlesnoobs.com/mise-a-jour-306.html (DPLN : Vulkania « le 1er juillet, une semaine après la sortie de cette mise à jour »)",
+   "confidence": "high"
+  },
+  {
+   "date": "2026-09-16",
+   "event": "Devblog 3.7 : ajustements élevage (voir changes37)",
+   "source": "https://www.dofus.com/fr/mmorpg/actualites/devblog/billets/1771790-maj-3-7-confort-jeu-lisibilite-ajustements (devblog Ankama 16/09/2026)",
+   "confidence": "high"
+  },
+  {
+   "date": "2026-09-17",
+   "event": "Bêta 3.7 ouverte (client 3.7.3.3 confirme jauges ×2, carburants ×2, génétons ×2, Optimakina 20 %, Animakina = choix du sexe)",
+   "source": "https://www.jeuxend.com/blog/dofus-3-7-date-sortie-beta-calendrier ; client Dofus 3.7.3.3-beta (cytrus CDN, raw/dofus-client) ; https://cytrus.cdn.ankama.com/cytrus.json (2026-10-02 : beta 6.0_3.7.3.3, dofus3 6.0_3.6.12.16)",
+   "confidence": "high"
+  }
+ ]
+}

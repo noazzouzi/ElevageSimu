@@ -27,3 +27,16 @@ dist-ssr
 research/raw/recipes-eleveur.json
 # Copie locale du guide DPLN (droits réservés) : usage de recherche uniquement, non versionnée
 research/raw/guide-eleveur-dpln.txt
+# Copies de contenus tiers (droits réservés) conservées localement pour la recherche uniquement :
+# pages web, scripts d'autres sites, captures d'écran, devblogs, transcriptions vidéo.
+research/raw/mechanics-evidence/screenshots/
+research/raw/mechanics-evidence/texts/
+research/raw/strategy-evidence/pages/
+research/raw/strategy-evidence/dragodinde-fr/
+research/raw/strategy-evidence/tools/
+research/raw/strategy-evidence/youtube/
+research/raw/strategy-evidence/enclos-calculator*.js
+research/raw/strategy-evidence/gestion-enclos.html
+research/raw/strategy-evidence/forum-rentabilite.html
+research/raw/strategy-evidence/reddit-elevage.json
+**/__pycache__/

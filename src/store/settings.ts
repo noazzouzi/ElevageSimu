@@ -1,13 +1,22 @@
 // Réglages du joueur (persistés dans le navigateur).
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { FuelTier } from '../domain/types'
+import { getRuleset } from '../domain/rules'
+import type { FamilyId, FuelTier, RulesetId } from '../domain/types'
 
 export type Goal = 'profit' | 'succes' | 'mixte'
 
 export interface Settings {
+  /** Version des règles du jeu (3.6 = live). */
+  ruleset: RulesetId
   /** Niveau du métier d'Éleveur (1 … 200). */
   jobLevel: number
+  /** Famille travaillée en priorité. */
+  family: FamilyId
+  /** Monture visée (id d'espèce) pour le plan d'élevage, ou null. */
+  goalSpeciesId: number | null
+  /** Utiliser les prix par défaut issus de la recherche quand aucun prix n'est saisi. */
+  useDefaultPrices: boolean
   /** Serveur de jeu (pour se souvenir des prix). */
   server: string
   /** Objectif principal : kamas, succès de générations, ou les deux. */
@@ -22,7 +31,7 @@ export interface Settings {
   hoursPerDay: number
   /** Intervalle minimum (min) entre deux passages devant les enclos. */
   checkIntervalMinutes: number
-  /** Niveau visé pour les parents avant accouplement (0 = ne pas monter). */
+  /** Niveau visé pour les parents avant accouplement (recherche : ~40 est le meilleur compromis). */
   parentTargetLevel: number
   /** Utiliser une Optimakina dès que la génération cible le justifie. */
   useOptimakina: boolean
@@ -31,7 +40,11 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
+  ruleset: '3.6',
   jobLevel: 1,
+  family: 'muldo',
+  goalSpeciesId: null,
+  useDefaultPrices: true,
   server: '',
   goal: 'profit',
   preferredTier: 2,
@@ -39,7 +52,7 @@ export const DEFAULT_SETTINGS: Settings = {
   accounts: 1,
   hoursPerDay: 3,
   checkIntervalMinutes: 60,
-  parentTargetLevel: 0,
+  parentTargetLevel: 40,
   useOptimakina: true,
   saleTax: 0.02,
 }
@@ -56,6 +69,12 @@ export const useSettings = create<SettingsStore>()(
       update: (patch) => set(patch),
       reset: () => set(DEFAULT_SETTINGS),
     }),
-    { name: 'elevagesimu:settings', version: 1 },
+    { name: 'elevagesimu:settings', version: 2, migrate: (state) => ({ ...DEFAULT_SETTINGS, ...(state as Partial<Settings>) }) },
   ),
 )
+
+/** Règles du jeu actives. */
+export function useRules() {
+  const id = useSettings((s) => s.ruleset)
+  return getRuleset(id)
+}

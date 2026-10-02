@@ -1,0 +1,3655 @@
+{
+ "meta": {
+  "generated": "2026-10-01",
+  "runs": 40,
+  "slots": 60,
+  "cycle_hours": 12,
+  "fuel_note": "stat_fuel_points = raises x (6000 + 300): 60 000 stat points shared by 10 mounts + ~3 000 serenity points per batch; xp_fuel_points = sum over mounts of max(0, XP(level) - 20 437)/10 (XP up to level ~40 is gained as 2nd gauge during raising)",
+  "model": "research/raw/mechanics-evidence/breeding_model_reference.py",
+  "sim": "research/raw/strategy-evidence/sim/pyramid_sim.py"
+ },
+ "results": {
+  "Dragodinde": {
+   "Dragodinde Pourpre": {
+    "L1_noopti": {
+     "captures": {
+      "mean": 83.2,
+      "p10": 78,
+      "p90": 91
+     },
+     "matings": {
+      "mean": 169.8,
+      "p10": 128,
+      "p90": 198
+     },
+     "clones": {
+      "mean": 168.0,
+      "p10": 126,
+      "p90": 197
+     },
+     "raises": {
+      "mean": 419.1,
+      "p10": 335,
+      "p90": 476
+     },
+     "cycles": {
+      "mean": 16.3,
+      "p10": 9,
+      "p90": 28
+     },
+     "genetons": {
+      "mean": 147.2,
+      "p10": 112,
+      "p90": 182
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 0.6,
+      "p10": 0,
+      "p90": 2
+     },
+     "extract_resources": {
+      "mean": 10.3,
+      "p10": 6,
+      "p90": 12
+     },
+     "deadlocks": {
+      "mean": 0.4,
+      "p10": 0,
+      "p90": 1
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 2640330.0,
+      "p10": 2110500,
+      "p90": 2998800
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_noopti": {
+     "captures": {
+      "mean": 38.0,
+      "p10": 34,
+      "p90": 44
+     },
+     "matings": {
+      "mean": 78.4,
+      "p10": 41,
+      "p90": 127
+     },
+     "clones": {
+      "mean": 76.8,
+      "p10": 38,
+      "p90": 126
+     },
+     "raises": {
+      "mean": 191.4,
+      "p10": 114,
+      "p90": 297
+     },
+     "cycles": {
+      "mean": 21.5,
+      "p10": 7,
+      "p90": 38
+     },
+     "genetons": {
+      "mean": 98.2,
+      "p10": 66,
+      "p90": 132
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 0.5,
+      "p10": 0,
+      "p90": 2
+     },
+     "extract_resources": {
+      "mean": 9.4,
+      "p10": 6,
+      "p90": 12
+     },
+     "deadlocks": {
+      "mean": 1.5,
+      "p10": 0,
+      "p90": 5
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 1206135.0,
+      "p10": 718200,
+      "p90": 1871100
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_from_G6": {
+     "captures": {
+      "mean": 38.0,
+      "p10": 34,
+      "p90": 44
+     },
+     "matings": {
+      "mean": 78.4,
+      "p10": 41,
+      "p90": 127
+     },
+     "clones": {
+      "mean": 76.8,
+      "p10": 38,
+      "p90": 126
+     },
+     "raises": {
+      "mean": 191.4,
+      "p10": 114,
+      "p90": 297
+     },
+     "cycles": {
+      "mean": 21.5,
+      "p10": 7,
+      "p90": 38
+     },
+     "genetons": {
+      "mean": 98.2,
+      "p10": 66,
+      "p90": 132
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 0.5,
+      "p10": 0,
+      "p90": 2
+     },
+     "extract_resources": {
+      "mean": 9.4,
+      "p10": 6,
+      "p90": 12
+     },
+     "deadlocks": {
+      "mean": 1.5,
+      "p10": 0,
+      "p90": 5
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 1206135.0,
+      "p10": 718200,
+      "p90": 1871100
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_all": {
+     "captures": {
+      "mean": 27.8,
+      "p10": 18,
+      "p90": 41
+     },
+     "matings": {
+      "mean": 52.9,
+      "p10": 24,
+      "p90": 80
+     },
+     "clones": {
+      "mean": 51.5,
+      "p10": 23,
+      "p90": 79
+     },
+     "raises": {
+      "mean": 130.8,
+      "p10": 65,
+      "p90": 205
+     },
+     "cycles": {
+      "mean": 26.5,
+      "p10": 8,
+      "p90": 43
+     },
+     "genetons": {
+      "mean": 85.0,
+      "p10": 50,
+      "p90": 120
+     },
+     "optimakinas": {
+      "mean": 52.9,
+      "p10": 24,
+      "p90": 80
+     },
+     "surplus_mounts": {
+      "mean": 0.4,
+      "p10": 0,
+      "p90": 1
+     },
+     "extract_resources": {
+      "mean": 7.8,
+      "p10": 6,
+      "p90": 12
+     },
+     "deadlocks": {
+      "mean": 3.0,
+      "p10": 0,
+      "p90": 6
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 823882.5,
+      "p10": 409500,
+      "p90": 1291500
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "mixed_L40_60_100_opti_from_G8": {
+     "captures": {
+      "mean": 38.0,
+      "p10": 34,
+      "p90": 44
+     },
+     "matings": {
+      "mean": 78.4,
+      "p10": 41,
+      "p90": 127
+     },
+     "clones": {
+      "mean": 76.8,
+      "p10": 38,
+      "p90": 126
+     },
+     "raises": {
+      "mean": 191.4,
+      "p10": 114,
+      "p90": 297
+     },
+     "cycles": {
+      "mean": 21.5,
+      "p10": 7,
+      "p90": 38
+     },
+     "genetons": {
+      "mean": 98.2,
+      "p10": 66,
+      "p90": 132
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 0.5,
+      "p10": 0,
+      "p90": 2
+     },
+     "extract_resources": {
+      "mean": 9.4,
+      "p10": 6,
+      "p90": 12
+     },
+     "deadlocks": {
+      "mean": 1.5,
+      "p10": 0,
+      "p90": 5
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 1206135.0,
+      "p10": 718200,
+      "p90": 1871100
+     },
+     "xp_fuel_points": {
+      "mean": 3852.8,
+      "p10": 3210.7,
+      "p90": 6421.4
+     }
+    },
+    "v37_L40_opti20_from_G6": {
+     "captures": {
+      "mean": 38.0,
+      "p10": 34,
+      "p90": 44
+     },
+     "matings": {
+      "mean": 78.4,
+      "p10": 41,
+      "p90": 127
+     },
+     "clones": {
+      "mean": 76.8,
+      "p10": 38,
+      "p90": 126
+     },
+     "raises": {
+      "mean": 191.4,
+      "p10": 114,
+      "p90": 297
+     },
+     "cycles": {
+      "mean": 21.5,
+      "p10": 7,
+      "p90": 38
+     },
+     "genetons": {
+      "mean": 98.2,
+      "p10": 66,
+      "p90": 132
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 0.5,
+      "p10": 0,
+      "p90": 2
+     },
+     "extract_resources": {
+      "mean": 9.4,
+      "p10": 6,
+      "p90": 12
+     },
+     "deadlocks": {
+      "mean": 1.5,
+      "p10": 0,
+      "p90": 5
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 1206135.0,
+      "p10": 718200,
+      "p90": 1871100
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    }
+   },
+   "Dragodinde Émeraude": {
+    "L1_noopti": {
+     "captures": {
+      "mean": 637.6,
+      "p10": 409,
+      "p90": 808
+     },
+     "matings": {
+      "mean": 3394.1,
+      "p10": 2482,
+      "p90": 4081
+     },
+     "clones": {
+      "mean": 3391.7,
+      "p10": 2479,
+      "p90": 4079
+     },
+     "raises": {
+      "mean": 7392.6,
+      "p10": 5363,
+      "p90": 8920
+     },
+     "cycles": {
+      "mean": 138.6,
+      "p10": 94,
+      "p90": 173
+     },
+     "genetons": {
+      "mean": 5259.8,
+      "p10": 4099,
+      "p90": 6192
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 29.6,
+      "p10": 19,
+      "p90": 41
+     },
+     "extract_resources": {
+      "mean": 28.2,
+      "p10": 16,
+      "p90": 42
+     },
+     "deadlocks": {
+      "mean": 1.2,
+      "p10": 0,
+      "p90": 3
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 46573537.5,
+      "p10": 33786900,
+      "p90": 56196000
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_noopti": {
+     "captures": {
+      "mean": 188.1,
+      "p10": 152,
+      "p90": 219
+     },
+     "matings": {
+      "mean": 820.6,
+      "p10": 606,
+      "p90": 1022
+     },
+     "clones": {
+      "mean": 818.4,
+      "p10": 603,
+      "p90": 1019
+     },
+     "raises": {
+      "mean": 1813.4,
+      "p10": 1340,
+      "p90": 2240
+     },
+     "cycles": {
+      "mean": 56.0,
+      "p10": 34,
+      "p90": 80
+     },
+     "genetons": {
+      "mean": 2991.4,
+      "p10": 2009,
+      "p90": 4018
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 12.5,
+      "p10": 5,
+      "p90": 21
+     },
+     "extract_resources": {
+      "mean": 27.9,
+      "p10": 16,
+      "p90": 38
+     },
+     "deadlocks": {
+      "mean": 2.2,
+      "p10": 0,
+      "p90": 5
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 11424420.0,
+      "p10": 8442000,
+      "p90": 14112000
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_from_G6": {
+     "captures": {
+      "mean": 150.1,
+      "p10": 136,
+      "p90": 166
+     },
+     "matings": {
+      "mean": 590.9,
+      "p10": 445,
+      "p90": 729
+     },
+     "clones": {
+      "mean": 588.5,
+      "p10": 444,
+      "p90": 726
+     },
+     "raises": {
+      "mean": 1318.0,
+      "p10": 1033,
+      "p90": 1585
+     },
+     "cycles": {
+      "mean": 49.4,
+      "p10": 34,
+      "p90": 68
+     },
+     "genetons": {
+      "mean": 2399.3,
+      "p10": 1700,
+      "p90": 3301
+     },
+     "optimakinas": {
+      "mean": 64.6,
+      "p10": 40,
+      "p90": 96
+     },
+     "surplus_mounts": {
+      "mean": 10.3,
+      "p10": 4,
+      "p90": 17
+     },
+     "extract_resources": {
+      "mean": 27.6,
+      "p10": 16,
+      "p90": 34
+     },
+     "deadlocks": {
+      "mean": 2.4,
+      "p10": 1,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 8303715.0,
+      "p10": 6507900,
+      "p90": 9985500
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_all": {
+     "captures": {
+      "mean": 111.3,
+      "p10": 102,
+      "p90": 120
+     },
+     "matings": {
+      "mean": 377.7,
+      "p10": 289,
+      "p90": 468
+     },
+     "clones": {
+      "mean": 375.2,
+      "p10": 287,
+      "p90": 465
+     },
+     "raises": {
+      "mean": 854.9,
+      "p10": 670,
+      "p90": 1033
+     },
+     "cycles": {
+      "mean": 40.5,
+      "p10": 21,
+      "p90": 58
+     },
+     "genetons": {
+      "mean": 2198.2,
+      "p10": 1418,
+      "p90": 2971
+     },
+     "optimakinas": {
+      "mean": 377.7,
+      "p10": 289,
+      "p90": 468
+     },
+     "surplus_mounts": {
+      "mean": 8.3,
+      "p10": 2,
+      "p90": 16
+     },
+     "extract_resources": {
+      "mean": 28.9,
+      "p10": 16,
+      "p90": 34
+     },
+     "deadlocks": {
+      "mean": 2.6,
+      "p10": 1,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 5385870.0,
+      "p10": 4221000,
+      "p90": 6507900
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "mixed_L40_60_100_opti_from_G8": {
+     "captures": {
+      "mean": 133.5,
+      "p10": 117,
+      "p90": 143
+     },
+     "matings": {
+      "mean": 514.0,
+      "p10": 402,
+      "p90": 647
+     },
+     "clones": {
+      "mean": 511.5,
+      "p10": 400,
+      "p90": 646
+     },
+     "raises": {
+      "mean": 1147.9,
+      "p10": 907,
+      "p90": 1410
+     },
+     "cycles": {
+      "mean": 71.2,
+      "p10": 46,
+      "p90": 106
+     },
+     "genetons": {
+      "mean": 2232.6,
+      "p10": 1640,
+      "p90": 3052
+     },
+     "optimakinas": {
+      "mean": 10.2,
+      "p10": 5,
+      "p90": 17
+     },
+     "surplus_mounts": {
+      "mean": 10.1,
+      "p10": 4,
+      "p90": 16
+     },
+     "extract_resources": {
+      "mean": 28.8,
+      "p10": 16,
+      "p90": 34
+     },
+     "deadlocks": {
+      "mean": 2.8,
+      "p10": 1,
+      "p90": 5
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 7231927.5,
+      "p10": 5714100,
+      "p90": 8883000
+     },
+     "xp_fuel_points": {
+      "mean": 442156.9,
+      "p10": 266266.30000000005,
+      "p90": 742556.1999999997
+     }
+    },
+    "v37_L40_opti20_from_G6": {
+     "captures": {
+      "mean": 117.0,
+      "p10": 101,
+      "p90": 138
+     },
+     "matings": {
+      "mean": 425.9,
+      "p10": 280,
+      "p90": 569
+     },
+     "clones": {
+      "mean": 423.5,
+      "p10": 278,
+      "p90": 567
+     },
+     "raises": {
+      "mean": 958.4,
+      "p10": 655,
+      "p90": 1251
+     },
+     "cycles": {
+      "mean": 46.9,
+      "p10": 25,
+      "p90": 73
+     },
+     "genetons": {
+      "mean": 2033.9,
+      "p10": 1360,
+      "p90": 3062
+     },
+     "optimakinas": {
+      "mean": 44.3,
+      "p10": 22,
+      "p90": 74
+     },
+     "surplus_mounts": {
+      "mean": 6.9,
+      "p10": 2,
+      "p90": 12
+     },
+     "extract_resources": {
+      "mean": 28.0,
+      "p10": 16,
+      "p90": 34
+     },
+     "deadlocks": {
+      "mean": 2.5,
+      "p10": 1,
+      "p90": 5
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 6037920.0,
+      "p10": 4126500,
+      "p90": 7881300
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    }
+   },
+   "Dragodinde Amande et Émeraude": {
+    "L1_noopti": {
+     "captures": {
+      "mean": 1150.9,
+      "p10": 626,
+      "p90": 1639
+     },
+     "matings": {
+      "mean": 6343.3,
+      "p10": 4516,
+      "p90": 8118
+     },
+     "clones": {
+      "mean": 6340.1,
+      "p10": 4515,
+      "p90": 8114
+     },
+     "raises": {
+      "mean": 13784.1,
+      "p10": 9597,
+      "p90": 17810
+     },
+     "cycles": {
+      "mean": 236.3,
+      "p10": 163,
+      "p90": 303
+     },
+     "genetons": {
+      "mean": 9774.6,
+      "p10": 7744,
+      "p90": 11845
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 48.6,
+      "p10": 37,
+      "p90": 61
+     },
+     "extract_resources": {
+      "mean": 29.4,
+      "p10": 16,
+      "p90": 40
+     },
+     "deadlocks": {
+      "mean": 0.1,
+      "p10": 0,
+      "p90": 0
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 86839672.5,
+      "p10": 60461100,
+      "p90": 112203000
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_noopti": {
+     "captures": {
+      "mean": 246.9,
+      "p10": 210,
+      "p90": 304
+     },
+     "matings": {
+      "mean": 1130.5,
+      "p10": 939,
+      "p90": 1361
+     },
+     "clones": {
+      "mean": 1127.6,
+      "p10": 936,
+      "p90": 1358
+     },
+     "raises": {
+      "mean": 2486.6,
+      "p10": 2091,
+      "p90": 3024
+     },
+     "cycles": {
+      "mean": 58.0,
+      "p10": 44,
+      "p90": 73
+     },
+     "genetons": {
+      "mean": 4093.1,
+      "p10": 3306,
+      "p90": 5057
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 17.2,
+      "p10": 10,
+      "p90": 26
+     },
+     "extract_resources": {
+      "mean": 26.6,
+      "p10": 16,
+      "p90": 36
+     },
+     "deadlocks": {
+      "mean": 0.6,
+      "p10": 0,
+      "p90": 2
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 15665737.5,
+      "p10": 13173300,
+      "p90": 19051200
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_from_G6": {
+     "captures": {
+      "mean": 166.6,
+      "p10": 128,
+      "p90": 191
+     },
+     "matings": {
+      "mean": 654.5,
+      "p10": 472,
+      "p90": 769
+     },
+     "clones": {
+      "mean": 651.9,
+      "p10": 469,
+      "p90": 767
+     },
+     "raises": {
+      "mean": 1460.8,
+      "p10": 1106,
+      "p90": 1696
+     },
+     "cycles": {
+      "mean": 54.6,
+      "p10": 35,
+      "p90": 73
+     },
+     "genetons": {
+      "mean": 3085.2,
+      "p10": 2290,
+      "p90": 3638
+     },
+     "optimakinas": {
+      "mean": 77.2,
+      "p10": 43,
+      "p90": 101
+     },
+     "surplus_mounts": {
+      "mean": 11.1,
+      "p10": 4,
+      "p90": 17
+     },
+     "extract_resources": {
+      "mean": 24.6,
+      "p10": 16,
+      "p90": 34
+     },
+     "deadlocks": {
+      "mean": 2.1,
+      "p10": 0,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 9203040.0,
+      "p10": 6967800,
+      "p90": 10684800
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_all": {
+     "captures": {
+      "mean": 137.1,
+      "p10": 116,
+      "p90": 160
+     },
+     "matings": {
+      "mean": 470.9,
+      "p10": 369,
+      "p90": 566
+     },
+     "clones": {
+      "mean": 468.1,
+      "p10": 367,
+      "p90": 562
+     },
+     "raises": {
+      "mean": 1064.5,
+      "p10": 846,
+      "p90": 1251
+     },
+     "cycles": {
+      "mean": 47.9,
+      "p10": 28,
+      "p90": 63
+     },
+     "genetons": {
+      "mean": 3168.8,
+      "p10": 2467,
+      "p90": 4246
+     },
+     "optimakinas": {
+      "mean": 470.9,
+      "p10": 369,
+      "p90": 566
+     },
+     "surplus_mounts": {
+      "mean": 10.2,
+      "p10": 2,
+      "p90": 19
+     },
+     "extract_resources": {
+      "mean": 26.4,
+      "p10": 16,
+      "p90": 36
+     },
+     "deadlocks": {
+      "mean": 2.3,
+      "p10": 0,
+      "p90": 3
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 6706035.0,
+      "p10": 5329800,
+      "p90": 7881300
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "mixed_L40_60_100_opti_from_G8": {
+     "captures": {
+      "mean": 143.1,
+      "p10": 124,
+      "p90": 160
+     },
+     "matings": {
+      "mean": 564.2,
+      "p10": 449,
+      "p90": 676
+     },
+     "clones": {
+      "mean": 561.2,
+      "p10": 446,
+      "p90": 673
+     },
+     "raises": {
+      "mean": 1256.5,
+      "p10": 1040,
+      "p90": 1485
+     },
+     "cycles": {
+      "mean": 82.7,
+      "p10": 51,
+      "p90": 122
+     },
+     "genetons": {
+      "mean": 2982.9,
+      "p10": 2021,
+      "p90": 3730
+     },
+     "optimakinas": {
+      "mean": 13.6,
+      "p10": 6,
+      "p90": 22
+     },
+     "surplus_mounts": {
+      "mean": 10.9,
+      "p10": 5,
+      "p90": 17
+     },
+     "extract_resources": {
+      "mean": 27.5,
+      "p10": 18,
+      "p90": 38
+     },
+     "deadlocks": {
+      "mean": 3.8,
+      "p10": 1,
+      "p90": 7
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 7915950.0,
+      "p10": 6552000,
+      "p90": 9355500
+     },
+     "xp_fuel_points": {
+      "mean": 512165.3,
+      "p10": 285419.60000000003,
+      "p90": 718309.5999999997
+     }
+    },
+    "v37_L40_opti20_from_G6": {
+     "captures": {
+      "mean": 122.8,
+      "p10": 100,
+      "p90": 136
+     },
+     "matings": {
+      "mean": 450.5,
+      "p10": 333,
+      "p90": 605
+     },
+     "clones": {
+      "mean": 447.6,
+      "p10": 329,
+      "p90": 602
+     },
+     "raises": {
+      "mean": 1012.6,
+      "p10": 770,
+      "p90": 1316
+     },
+     "cycles": {
+      "mean": 54.5,
+      "p10": 29,
+      "p90": 77
+     },
+     "genetons": {
+      "mean": 2648.4,
+      "p10": 1635,
+      "p90": 3683
+     },
+     "optimakinas": {
+      "mean": 53.3,
+      "p10": 29,
+      "p90": 80
+     },
+     "surplus_mounts": {
+      "mean": 7.2,
+      "p10": 2,
+      "p90": 13
+     },
+     "extract_resources": {
+      "mean": 26.2,
+      "p10": 16,
+      "p90": 38
+     },
+     "deadlocks": {
+      "mean": 3.7,
+      "p10": 1,
+      "p90": 6
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 6379222.5,
+      "p10": 4851000,
+      "p90": 8290800
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    }
+   }
+  },
+  "Muldo": {
+   "Muldo Ivoire": {
+    "L1_noopti": {
+     "captures": {
+      "mean": 87.1,
+      "p10": 79,
+      "p90": 96
+     },
+     "matings": {
+      "mean": 187.6,
+      "p10": 135,
+      "p90": 239
+     },
+     "clones": {
+      "mean": 185.9,
+      "p10": 134,
+      "p90": 237
+     },
+     "raises": {
+      "mean": 450.7,
+      "p10": 344,
+      "p90": 552
+     },
+     "cycles": {
+      "mean": 19.9,
+      "p10": 10,
+      "p90": 32
+     },
+     "genetons": {
+      "mean": 166.4,
+      "p10": 125,
+      "p90": 188
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 8.8,
+      "p10": 4,
+      "p90": 15
+     },
+     "extract_resources": {
+      "mean": 11.3,
+      "p10": 8,
+      "p90": 16
+     },
+     "deadlocks": {
+      "mean": 0.8,
+      "p10": 0,
+      "p90": 2
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 2839252.5,
+      "p10": 2167200,
+      "p90": 3477600
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_noopti": {
+     "captures": {
+      "mean": 44.0,
+      "p10": 36,
+      "p90": 53
+     },
+     "matings": {
+      "mean": 82.2,
+      "p10": 47,
+      "p90": 125
+     },
+     "clones": {
+      "mean": 80.7,
+      "p10": 46,
+      "p90": 123
+     },
+     "raises": {
+      "mean": 202.4,
+      "p10": 130,
+      "p90": 312
+     },
+     "cycles": {
+      "mean": 22.7,
+      "p10": 9,
+      "p90": 38
+     },
+     "genetons": {
+      "mean": 108.0,
+      "p10": 72,
+      "p90": 146
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 3.4,
+      "p10": 0,
+      "p90": 7
+     },
+     "extract_resources": {
+      "mean": 10.2,
+      "p10": 8,
+      "p90": 12
+     },
+     "deadlocks": {
+      "mean": 1.6,
+      "p10": 0,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 1275277.5,
+      "p10": 819000,
+      "p90": 1965600
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_from_G6": {
+     "captures": {
+      "mean": 44.0,
+      "p10": 36,
+      "p90": 53
+     },
+     "matings": {
+      "mean": 82.2,
+      "p10": 47,
+      "p90": 125
+     },
+     "clones": {
+      "mean": 80.7,
+      "p10": 46,
+      "p90": 123
+     },
+     "raises": {
+      "mean": 202.4,
+      "p10": 130,
+      "p90": 312
+     },
+     "cycles": {
+      "mean": 22.7,
+      "p10": 9,
+      "p90": 38
+     },
+     "genetons": {
+      "mean": 108.0,
+      "p10": 72,
+      "p90": 146
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 3.4,
+      "p10": 0,
+      "p90": 7
+     },
+     "extract_resources": {
+      "mean": 10.2,
+      "p10": 8,
+      "p90": 12
+     },
+     "deadlocks": {
+      "mean": 1.6,
+      "p10": 0,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 1275277.5,
+      "p10": 819000,
+      "p90": 1965600
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_all": {
+     "captures": {
+      "mean": 34.9,
+      "p10": 22,
+      "p90": 51
+     },
+     "matings": {
+      "mean": 57.1,
+      "p10": 23,
+      "p90": 95
+     },
+     "clones": {
+      "mean": 55.6,
+      "p10": 21,
+      "p90": 93
+     },
+     "raises": {
+      "mean": 143.4,
+      "p10": 67,
+      "p90": 227
+     },
+     "cycles": {
+      "mean": 25.2,
+      "p10": 12,
+      "p90": 41
+     },
+     "genetons": {
+      "mean": 96.3,
+      "p10": 55,
+      "p90": 153
+     },
+     "optimakinas": {
+      "mean": 57.1,
+      "p10": 23,
+      "p90": 95
+     },
+     "surplus_mounts": {
+      "mean": 3.1,
+      "p10": 0,
+      "p90": 7
+     },
+     "extract_resources": {
+      "mean": 10.4,
+      "p10": 8,
+      "p90": 12
+     },
+     "deadlocks": {
+      "mean": 2.5,
+      "p10": 1,
+      "p90": 5
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 903262.5,
+      "p10": 422100,
+      "p90": 1430100
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "mixed_L40_60_100_opti_from_G8": {
+     "captures": {
+      "mean": 44.0,
+      "p10": 36,
+      "p90": 53
+     },
+     "matings": {
+      "mean": 82.2,
+      "p10": 47,
+      "p90": 125
+     },
+     "clones": {
+      "mean": 80.7,
+      "p10": 46,
+      "p90": 123
+     },
+     "raises": {
+      "mean": 202.4,
+      "p10": 130,
+      "p90": 312
+     },
+     "cycles": {
+      "mean": 22.7,
+      "p10": 9,
+      "p90": 38
+     },
+     "genetons": {
+      "mean": 108.0,
+      "p10": 72,
+      "p90": 146
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 3.4,
+      "p10": 0,
+      "p90": 7
+     },
+     "extract_resources": {
+      "mean": 10.2,
+      "p10": 8,
+      "p90": 12
+     },
+     "deadlocks": {
+      "mean": 1.6,
+      "p10": 0,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 1275277.5,
+      "p10": 819000,
+      "p90": 1965600
+     },
+     "xp_fuel_points": {
+      "mean": 3291.0,
+      "p10": 3210.7,
+      "p90": 3210.7
+     }
+    },
+    "v37_L40_opti20_from_G6": {
+     "captures": {
+      "mean": 44.0,
+      "p10": 36,
+      "p90": 53
+     },
+     "matings": {
+      "mean": 82.2,
+      "p10": 47,
+      "p90": 125
+     },
+     "clones": {
+      "mean": 80.7,
+      "p10": 46,
+      "p90": 123
+     },
+     "raises": {
+      "mean": 202.4,
+      "p10": 130,
+      "p90": 312
+     },
+     "cycles": {
+      "mean": 22.7,
+      "p10": 9,
+      "p90": 38
+     },
+     "genetons": {
+      "mean": 108.0,
+      "p10": 72,
+      "p90": 146
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 3.4,
+      "p10": 0,
+      "p90": 7
+     },
+     "extract_resources": {
+      "mean": 10.2,
+      "p10": 8,
+      "p90": 12
+     },
+     "deadlocks": {
+      "mean": 1.6,
+      "p10": 0,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 1275277.5,
+      "p10": 819000,
+      "p90": 1965600
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    }
+   },
+   "Muldo Corail": {
+    "L1_noopti": {
+     "captures": {
+      "mean": 389.4,
+      "p10": 313,
+      "p90": 464
+     },
+     "matings": {
+      "mean": 1717.8,
+      "p10": 1286,
+      "p90": 2183
+     },
+     "clones": {
+      "mean": 1715.6,
+      "p10": 1284,
+      "p90": 2181
+     },
+     "raises": {
+      "mean": 3726.6,
+      "p10": 2837,
+      "p90": 4653
+     },
+     "cycles": {
+      "mean": 72.3,
+      "p10": 52,
+      "p90": 96
+     },
+     "genetons": {
+      "mean": 3036.4,
+      "p10": 2168,
+      "p90": 3986
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 93.2,
+      "p10": 62,
+      "p90": 125
+     },
+     "extract_resources": {
+      "mean": 28.4,
+      "p10": 20,
+      "p90": 40
+     },
+     "deadlocks": {
+      "mean": 1.2,
+      "p10": 0,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 23477265.0,
+      "p10": 17873100,
+      "p90": 29313900
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_noopti": {
+     "captures": {
+      "mean": 182.8,
+      "p10": 159,
+      "p90": 201
+     },
+     "matings": {
+      "mean": 617.1,
+      "p10": 513,
+      "p90": 714
+     },
+     "clones": {
+      "mean": 614.9,
+      "p10": 511,
+      "p90": 712
+     },
+     "raises": {
+      "mean": 1381.8,
+      "p10": 1162,
+      "p90": 1591
+     },
+     "cycles": {
+      "mean": 41.3,
+      "p10": 27,
+      "p90": 64
+     },
+     "genetons": {
+      "mean": 2081.1,
+      "p10": 1557,
+      "p90": 2651
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 31.8,
+      "p10": 23,
+      "p90": 43
+     },
+     "extract_resources": {
+      "mean": 27.6,
+      "p10": 20,
+      "p90": 38
+     },
+     "deadlocks": {
+      "mean": 1.4,
+      "p10": 0,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 8705655.0,
+      "p10": 7320600,
+      "p90": 10023300
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_from_G6": {
+     "captures": {
+      "mean": 134.4,
+      "p10": 118,
+      "p90": 152
+     },
+     "matings": {
+      "mean": 408.3,
+      "p10": 318,
+      "p90": 488
+     },
+     "clones": {
+      "mean": 406.1,
+      "p10": 316,
+      "p90": 486
+     },
+     "raises": {
+      "mean": 924.2,
+      "p10": 737,
+      "p90": 1086
+     },
+     "cycles": {
+      "mean": 41.7,
+      "p10": 25,
+      "p90": 63
+     },
+     "genetons": {
+      "mean": 1653.1,
+      "p10": 1054,
+      "p90": 2350
+     },
+     "optimakinas": {
+      "mean": 49.7,
+      "p10": 20,
+      "p90": 77
+     },
+     "surplus_mounts": {
+      "mean": 23.5,
+      "p10": 15,
+      "p90": 34
+     },
+     "extract_resources": {
+      "mean": 25.6,
+      "p10": 20,
+      "p90": 32
+     },
+     "deadlocks": {
+      "mean": 1.8,
+      "p10": 0,
+      "p90": 3
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 5822460.0,
+      "p10": 4643100,
+      "p90": 6841800
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_all": {
+     "captures": {
+      "mean": 108.1,
+      "p10": 97,
+      "p90": 129
+     },
+     "matings": {
+      "mean": 266.7,
+      "p10": 198,
+      "p90": 377
+     },
+     "clones": {
+      "mean": 264.5,
+      "p10": 195,
+      "p90": 375
+     },
+     "raises": {
+      "mean": 623.7,
+      "p10": 490,
+      "p90": 852
+     },
+     "cycles": {
+      "mean": 36.0,
+      "p10": 22,
+      "p90": 55
+     },
+     "genetons": {
+      "mean": 1585.9,
+      "p10": 1062,
+      "p90": 1988
+     },
+     "optimakinas": {
+      "mean": 266.7,
+      "p10": 198,
+      "p90": 377
+     },
+     "surplus_mounts": {
+      "mean": 14.4,
+      "p10": 6,
+      "p90": 27
+     },
+     "extract_resources": {
+      "mean": 26.1,
+      "p10": 20,
+      "p90": 32
+     },
+     "deadlocks": {
+      "mean": 2.1,
+      "p10": 0,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 3929152.5,
+      "p10": 3087000,
+      "p90": 5367600
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "mixed_L40_60_100_opti_from_G8": {
+     "captures": {
+      "mean": 126.5,
+      "p10": 106,
+      "p90": 147
+     },
+     "matings": {
+      "mean": 388.3,
+      "p10": 285,
+      "p90": 500
+     },
+     "clones": {
+      "mean": 386.1,
+      "p10": 283,
+      "p90": 498
+     },
+     "raises": {
+      "mean": 878.1,
+      "p10": 658,
+      "p90": 1115
+     },
+     "cycles": {
+      "mean": 55.6,
+      "p10": 33,
+      "p90": 77
+     },
+     "genetons": {
+      "mean": 1631.1,
+      "p10": 977,
+      "p90": 2131
+     },
+     "optimakinas": {
+      "mean": 10.8,
+      "p10": 5,
+      "p90": 17
+     },
+     "surplus_mounts": {
+      "mean": 21.7,
+      "p10": 9,
+      "p90": 31
+     },
+     "extract_resources": {
+      "mean": 27.0,
+      "p10": 22,
+      "p90": 32
+     },
+     "deadlocks": {
+      "mean": 2.0,
+      "p10": 0,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 5531872.5,
+      "p10": 4145400,
+      "p90": 7024500
+     },
+     "xp_fuel_points": {
+      "mean": 317395.1,
+      "p10": 147470.40000000002,
+      "p90": 454645.4000000002
+     }
+    },
+    "v37_L40_opti20_from_G6": {
+     "captures": {
+      "mean": 114.6,
+      "p10": 97,
+      "p90": 142
+     },
+     "matings": {
+      "mean": 336.7,
+      "p10": 214,
+      "p90": 472
+     },
+     "clones": {
+      "mean": 334.5,
+      "p10": 212,
+      "p90": 470
+     },
+     "raises": {
+      "mean": 764.2,
+      "p10": 509,
+      "p90": 1036
+     },
+     "cycles": {
+      "mean": 49.8,
+      "p10": 30,
+      "p90": 71
+     },
+     "genetons": {
+      "mean": 1617.4,
+      "p10": 987,
+      "p90": 2038
+     },
+     "optimakinas": {
+      "mean": 43.3,
+      "p10": 19,
+      "p90": 63
+     },
+     "surplus_mounts": {
+      "mean": 20.4,
+      "p10": 9,
+      "p90": 34
+     },
+     "extract_resources": {
+      "mean": 27.5,
+      "p10": 18,
+      "p90": 36
+     },
+     "deadlocks": {
+      "mean": 2.8,
+      "p10": 1,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 4814617.5,
+      "p10": 3206700,
+      "p90": 6526800
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    }
+   },
+   "Muldo Corail et Doré": {
+    "L1_noopti": {
+     "captures": {
+      "mean": 504.9,
+      "p10": 388,
+      "p90": 628
+     },
+     "matings": {
+      "mean": 2313.8,
+      "p10": 1822,
+      "p90": 2953
+     },
+     "clones": {
+      "mean": 2311.4,
+      "p10": 1820,
+      "p90": 2950
+     },
+     "raises": {
+      "mean": 4998.8,
+      "p10": 3960,
+      "p90": 6397
+     },
+     "cycles": {
+      "mean": 93.7,
+      "p10": 70,
+      "p90": 122
+     },
+     "genetons": {
+      "mean": 5154.9,
+      "p10": 3773,
+      "p90": 6815
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 130.1,
+      "p10": 86,
+      "p90": 163
+     },
+     "extract_resources": {
+      "mean": 23.6,
+      "p10": 14,
+      "p90": 32
+     },
+     "deadlocks": {
+      "mean": 0.7,
+      "p10": 0,
+      "p90": 2
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 31492282.5,
+      "p10": 24948000,
+      "p90": 40301100
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_noopti": {
+     "captures": {
+      "mean": 228.4,
+      "p10": 200,
+      "p90": 255
+     },
+     "matings": {
+      "mean": 818.4,
+      "p10": 643,
+      "p90": 931
+     },
+     "clones": {
+      "mean": 815.9,
+      "p10": 641,
+      "p90": 928
+     },
+     "raises": {
+      "mean": 1818.0,
+      "p10": 1466,
+      "p90": 2060
+     },
+     "cycles": {
+      "mean": 46.8,
+      "p10": 35,
+      "p90": 65
+     },
+     "genetons": {
+      "mean": 3346.3,
+      "p10": 2606,
+      "p90": 4094
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 43.4,
+      "p10": 33,
+      "p90": 56
+     },
+     "extract_resources": {
+      "mean": 24.6,
+      "p10": 16,
+      "p90": 34
+     },
+     "deadlocks": {
+      "mean": 0.9,
+      "p10": 0,
+      "p90": 3
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 11453557.5,
+      "p10": 9235800,
+      "p90": 12978000
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_from_G6": {
+     "captures": {
+      "mean": 153.6,
+      "p10": 135,
+      "p90": 173
+     },
+     "matings": {
+      "mean": 489.0,
+      "p10": 410,
+      "p90": 584
+     },
+     "clones": {
+      "mean": 486.5,
+      "p10": 408,
+      "p90": 581
+     },
+     "raises": {
+      "mean": 1101.5,
+      "p10": 956,
+      "p90": 1270
+     },
+     "cycles": {
+      "mean": 43.4,
+      "p10": 27,
+      "p90": 65
+     },
+     "genetons": {
+      "mean": 2525.8,
+      "p10": 1728,
+      "p90": 3210
+     },
+     "optimakinas": {
+      "mean": 61.6,
+      "p10": 34,
+      "p90": 84
+     },
+     "surplus_mounts": {
+      "mean": 26.3,
+      "p10": 17,
+      "p90": 32
+     },
+     "extract_resources": {
+      "mean": 23.6,
+      "p10": 14,
+      "p90": 32
+     },
+     "deadlocks": {
+      "mean": 1.8,
+      "p10": 0,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 6939292.5,
+      "p10": 6022800,
+      "p90": 8001000
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_all": {
+     "captures": {
+      "mean": 119.3,
+      "p10": 110,
+      "p90": 126
+     },
+     "matings": {
+      "mean": 322.1,
+      "p10": 254,
+      "p90": 373
+     },
+     "clones": {
+      "mean": 320.1,
+      "p10": 252,
+      "p90": 370
+     },
+     "raises": {
+      "mean": 743.6,
+      "p10": 607,
+      "p90": 850
+     },
+     "cycles": {
+      "mean": 39.1,
+      "p10": 22,
+      "p90": 65
+     },
+     "genetons": {
+      "mean": 2269.2,
+      "p10": 1593,
+      "p90": 2877
+     },
+     "optimakinas": {
+      "mean": 322.1,
+      "p10": 254,
+      "p90": 373
+     },
+     "surplus_mounts": {
+      "mean": 16.9,
+      "p10": 9,
+      "p90": 27
+     },
+     "extract_resources": {
+      "mean": 20.1,
+      "p10": 10,
+      "p90": 26
+     },
+     "deadlocks": {
+      "mean": 1.7,
+      "p10": 0,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 4684995.0,
+      "p10": 3824100,
+      "p90": 5355000
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "mixed_L40_60_100_opti_from_G8": {
+     "captures": {
+      "mean": 131.6,
+      "p10": 114,
+      "p90": 150
+     },
+     "matings": {
+      "mean": 419.0,
+      "p10": 330,
+      "p90": 529
+     },
+     "clones": {
+      "mean": 416.4,
+      "p10": 328,
+      "p90": 526
+     },
+     "raises": {
+      "mean": 942.9,
+      "p10": 758,
+      "p90": 1165
+     },
+     "cycles": {
+      "mean": 71.0,
+      "p10": 40,
+      "p90": 100
+     },
+     "genetons": {
+      "mean": 2370.3,
+      "p10": 1519,
+      "p90": 3299
+     },
+     "optimakinas": {
+      "mean": 17.6,
+      "p10": 8,
+      "p90": 27
+     },
+     "surplus_mounts": {
+      "mean": 22.9,
+      "p10": 14,
+      "p90": 32
+     },
+     "extract_resources": {
+      "mean": 24.6,
+      "p10": 16,
+      "p90": 34
+     },
+     "deadlocks": {
+      "mean": 2.9,
+      "p10": 0,
+      "p90": 5
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 5940427.5,
+      "p10": 4775400,
+      "p90": 7339500
+     },
+     "xp_fuel_points": {
+      "mean": 383493.8,
+      "p10": 194800.50000000006,
+      "p90": 569178.3999999999
+     }
+    },
+    "v37_L40_opti20_from_G6": {
+     "captures": {
+      "mean": 115.0,
+      "p10": 102,
+      "p90": 138
+     },
+     "matings": {
+      "mean": 342.3,
+      "p10": 259,
+      "p90": 424
+     },
+     "clones": {
+      "mean": 339.3,
+      "p10": 256,
+      "p90": 422
+     },
+     "raises": {
+      "mean": 776.5,
+      "p10": 607,
+      "p90": 963
+     },
+     "cycles": {
+      "mean": 54.2,
+      "p10": 27,
+      "p90": 77
+     },
+     "genetons": {
+      "mean": 2212.3,
+      "p10": 1405,
+      "p90": 3106
+     },
+     "optimakinas": {
+      "mean": 47.2,
+      "p10": 23,
+      "p90": 67
+     },
+     "surplus_mounts": {
+      "mean": 18.6,
+      "p10": 10,
+      "p90": 26
+     },
+     "extract_resources": {
+      "mean": 26.6,
+      "p10": 16,
+      "p90": 34
+     },
+     "deadlocks": {
+      "mean": 3.8,
+      "p10": 1,
+      "p90": 6
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 4891635.0,
+      "p10": 3824100,
+      "p90": 6066900
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    }
+   }
+  },
+  "Volkorne": {
+   "Volkorne Prune": {
+    "L1_noopti": {
+     "captures": {
+      "mean": 86.3,
+      "p10": 78,
+      "p90": 94
+     },
+     "matings": {
+      "mean": 225.6,
+      "p10": 145,
+      "p90": 321
+     },
+     "clones": {
+      "mean": 224.0,
+      "p10": 144,
+      "p90": 320
+     },
+     "raises": {
+      "mean": 531.1,
+      "p10": 371,
+      "p90": 717
+     },
+     "cycles": {
+      "mean": 31.3,
+      "p10": 11,
+      "p90": 57
+     },
+     "genetons": {
+      "mean": 201.7,
+      "p10": 145,
+      "p90": 276
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 3.6,
+      "p10": 0,
+      "p90": 8
+     },
+     "extract_resources": {
+      "mean": 10.9,
+      "p10": 8,
+      "p90": 16
+     },
+     "deadlocks": {
+      "mean": 1.9,
+      "p10": 0,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 3345772.5,
+      "p10": 2337300,
+      "p90": 4517100
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_noopti": {
+     "captures": {
+      "mean": 45.7,
+      "p10": 37,
+      "p90": 61
+     },
+     "matings": {
+      "mean": 108.9,
+      "p10": 54,
+      "p90": 178
+     },
+     "clones": {
+      "mean": 107.3,
+      "p10": 53,
+      "p90": 177
+     },
+     "raises": {
+      "mean": 258.4,
+      "p10": 143,
+      "p90": 404
+     },
+     "cycles": {
+      "mean": 31.8,
+      "p10": 12,
+      "p90": 58
+     },
+     "genetons": {
+      "mean": 145.2,
+      "p10": 94,
+      "p90": 204
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 2.3,
+      "p10": 0,
+      "p90": 7
+     },
+     "extract_resources": {
+      "mean": 11.2,
+      "p10": 8,
+      "p90": 16
+     },
+     "deadlocks": {
+      "mean": 2.5,
+      "p10": 0,
+      "p90": 5
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 1628077.5,
+      "p10": 900900,
+      "p90": 2545200
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_from_G6": {
+     "captures": {
+      "mean": 45.7,
+      "p10": 37,
+      "p90": 61
+     },
+     "matings": {
+      "mean": 108.9,
+      "p10": 54,
+      "p90": 178
+     },
+     "clones": {
+      "mean": 107.3,
+      "p10": 53,
+      "p90": 177
+     },
+     "raises": {
+      "mean": 258.4,
+      "p10": 143,
+      "p90": 404
+     },
+     "cycles": {
+      "mean": 31.8,
+      "p10": 12,
+      "p90": 58
+     },
+     "genetons": {
+      "mean": 145.2,
+      "p10": 94,
+      "p90": 204
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 2.3,
+      "p10": 0,
+      "p90": 7
+     },
+     "extract_resources": {
+      "mean": 11.2,
+      "p10": 8,
+      "p90": 16
+     },
+     "deadlocks": {
+      "mean": 2.5,
+      "p10": 0,
+      "p90": 5
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 1628077.5,
+      "p10": 900900,
+      "p90": 2545200
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_all": {
+     "captures": {
+      "mean": 32.2,
+      "p10": 20,
+      "p90": 42
+     },
+     "matings": {
+      "mean": 65.9,
+      "p10": 36,
+      "p90": 102
+     },
+     "clones": {
+      "mean": 64.4,
+      "p10": 35,
+      "p90": 101
+     },
+     "raises": {
+      "mean": 159.7,
+      "p10": 94,
+      "p90": 236
+     },
+     "cycles": {
+      "mean": 30.0,
+      "p10": 15,
+      "p90": 54
+     },
+     "genetons": {
+      "mean": 118.0,
+      "p10": 70,
+      "p90": 167
+     },
+     "optimakinas": {
+      "mean": 65.9,
+      "p10": 36,
+      "p90": 102
+     },
+     "surplus_mounts": {
+      "mean": 1.8,
+      "p10": 0,
+      "p90": 5
+     },
+     "extract_resources": {
+      "mean": 10.3,
+      "p10": 8,
+      "p90": 12
+     },
+     "deadlocks": {
+      "mean": 3.0,
+      "p10": 1,
+      "p90": 6
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 1005795.0,
+      "p10": 592200,
+      "p90": 1486800
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "mixed_L40_60_100_opti_from_G8": {
+     "captures": {
+      "mean": 45.7,
+      "p10": 37,
+      "p90": 61
+     },
+     "matings": {
+      "mean": 108.9,
+      "p10": 54,
+      "p90": 178
+     },
+     "clones": {
+      "mean": 107.3,
+      "p10": 53,
+      "p90": 177
+     },
+     "raises": {
+      "mean": 258.4,
+      "p10": 143,
+      "p90": 404
+     },
+     "cycles": {
+      "mean": 31.8,
+      "p10": 12,
+      "p90": 58
+     },
+     "genetons": {
+      "mean": 145.2,
+      "p10": 94,
+      "p90": 204
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 2.3,
+      "p10": 0,
+      "p90": 7
+     },
+     "extract_resources": {
+      "mean": 11.2,
+      "p10": 8,
+      "p90": 16
+     },
+     "deadlocks": {
+      "mean": 2.5,
+      "p10": 0,
+      "p90": 5
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 1628077.5,
+      "p10": 900900,
+      "p90": 2545200
+     },
+     "xp_fuel_points": {
+      "mean": 3291.0,
+      "p10": 3210.7,
+      "p90": 3210.7
+     }
+    },
+    "v37_L40_opti20_from_G6": {
+     "captures": {
+      "mean": 45.7,
+      "p10": 37,
+      "p90": 61
+     },
+     "matings": {
+      "mean": 108.9,
+      "p10": 54,
+      "p90": 178
+     },
+     "clones": {
+      "mean": 107.3,
+      "p10": 53,
+      "p90": 177
+     },
+     "raises": {
+      "mean": 258.4,
+      "p10": 143,
+      "p90": 404
+     },
+     "cycles": {
+      "mean": 31.8,
+      "p10": 12,
+      "p90": 58
+     },
+     "genetons": {
+      "mean": 145.2,
+      "p10": 94,
+      "p90": 204
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 2.3,
+      "p10": 0,
+      "p90": 7
+     },
+     "extract_resources": {
+      "mean": 11.2,
+      "p10": 8,
+      "p90": 16
+     },
+     "deadlocks": {
+      "mean": 2.5,
+      "p10": 0,
+      "p90": 5
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 1628077.5,
+      "p10": 900900,
+      "p90": 2545200
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    }
+   },
+   "Volkorne Jade": {
+    "L1_noopti": {
+     "captures": {
+      "mean": 718.2,
+      "p10": 593,
+      "p90": 831
+     },
+     "matings": {
+      "mean": 3653.0,
+      "p10": 2848,
+      "p90": 4238
+     },
+     "clones": {
+      "mean": 3650.3,
+      "p10": 2846,
+      "p90": 4236
+     },
+     "raises": {
+      "mean": 7935.9,
+      "p10": 6220,
+      "p90": 9180
+     },
+     "cycles": {
+      "mean": 138.8,
+      "p10": 109,
+      "p90": 166
+     },
+     "genetons": {
+      "mean": 4800.5,
+      "p10": 4063,
+      "p90": 5420
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 81.7,
+      "p10": 59,
+      "p90": 107
+     },
+     "extract_resources": {
+      "mean": 31.4,
+      "p10": 20,
+      "p90": 46
+     },
+     "deadlocks": {
+      "mean": 0.2,
+      "p10": 0,
+      "p90": 0
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 49996012.5,
+      "p10": 39186000,
+      "p90": 57834000
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_noopti": {
+     "captures": {
+      "mean": 197.6,
+      "p10": 172,
+      "p90": 228
+     },
+     "matings": {
+      "mean": 774.7,
+      "p10": 654,
+      "p90": 860
+     },
+     "clones": {
+      "mean": 772.1,
+      "p10": 652,
+      "p90": 859
+     },
+     "raises": {
+      "mean": 1721.5,
+      "p10": 1471,
+      "p90": 1919
+     },
+     "cycles": {
+      "mean": 46.5,
+      "p10": 33,
+      "p90": 63
+     },
+     "genetons": {
+      "mean": 2020.7,
+      "p10": 1631,
+      "p90": 2354
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 21.6,
+      "p10": 14,
+      "p90": 32
+     },
+     "extract_resources": {
+      "mean": 29.4,
+      "p10": 18,
+      "p90": 44
+     },
+     "deadlocks": {
+      "mean": 1.1,
+      "p10": 0,
+      "p90": 3
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 10845450.0,
+      "p10": 9267300,
+      "p90": 12089700
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_from_G6": {
+     "captures": {
+      "mean": 136.3,
+      "p10": 117,
+      "p90": 156
+     },
+     "matings": {
+      "mean": 515.8,
+      "p10": 416,
+      "p90": 599
+     },
+     "clones": {
+      "mean": 513.4,
+      "p10": 413,
+      "p90": 597
+     },
+     "raises": {
+      "mean": 1150.2,
+      "p10": 942,
+      "p90": 1304
+     },
+     "cycles": {
+      "mean": 49.2,
+      "p10": 27,
+      "p90": 71
+     },
+     "genetons": {
+      "mean": 1558.8,
+      "p10": 1116,
+      "p90": 2076
+     },
+     "optimakinas": {
+      "mean": 37.8,
+      "p10": 17,
+      "p90": 59
+     },
+     "surplus_mounts": {
+      "mean": 14.2,
+      "p10": 7,
+      "p90": 22
+     },
+     "extract_resources": {
+      "mean": 27.8,
+      "p10": 20,
+      "p90": 38
+     },
+     "deadlocks": {
+      "mean": 2.3,
+      "p10": 0,
+      "p90": 5
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 7246417.5,
+      "p10": 5934600,
+      "p90": 8215200
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_all": {
+     "captures": {
+      "mean": 105.7,
+      "p10": 88,
+      "p90": 123
+     },
+     "matings": {
+      "mean": 346.7,
+      "p10": 264,
+      "p90": 466
+     },
+     "clones": {
+      "mean": 344.1,
+      "p10": 262,
+      "p90": 462
+     },
+     "raises": {
+      "mean": 784.0,
+      "p10": 621,
+      "p90": 1037
+     },
+     "cycles": {
+      "mean": 51.8,
+      "p10": 26,
+      "p90": 84
+     },
+     "genetons": {
+      "mean": 1507.0,
+      "p10": 1002,
+      "p90": 1957
+     },
+     "optimakinas": {
+      "mean": 346.7,
+      "p10": 264,
+      "p90": 466
+     },
+     "surplus_mounts": {
+      "mean": 11.3,
+      "p10": 4,
+      "p90": 18
+     },
+     "extract_resources": {
+      "mean": 30.3,
+      "p10": 20,
+      "p90": 44
+     },
+     "deadlocks": {
+      "mean": 3.1,
+      "p10": 0,
+      "p90": 7
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 4939042.5,
+      "p10": 3912300,
+      "p90": 6533100
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "mixed_L40_60_100_opti_from_G8": {
+     "captures": {
+      "mean": 133.5,
+      "p10": 114,
+      "p90": 162
+     },
+     "matings": {
+      "mean": 517.7,
+      "p10": 352,
+      "p90": 674
+     },
+     "clones": {
+      "mean": 515.2,
+      "p10": 349,
+      "p90": 672
+     },
+     "raises": {
+      "mean": 1150.9,
+      "p10": 813,
+      "p90": 1480
+     },
+     "cycles": {
+      "mean": 65.0,
+      "p10": 33,
+      "p90": 95
+     },
+     "genetons": {
+      "mean": 1570.6,
+      "p10": 1103,
+      "p90": 2107
+     },
+     "optimakinas": {
+      "mean": 6.3,
+      "p10": 2,
+      "p90": 11
+     },
+     "surplus_mounts": {
+      "mean": 14.6,
+      "p10": 6,
+      "p90": 23
+     },
+     "extract_resources": {
+      "mean": 28.5,
+      "p10": 22,
+      "p90": 38
+     },
+     "deadlocks": {
+      "mean": 2.5,
+      "p10": 0,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 7250512.5,
+      "p10": 5121900,
+      "p90": 9324000
+     },
+     "xp_fuel_points": {
+      "mean": 239783.6,
+      "p10": 121065.30000000002,
+      "p90": 388881.5000000001
+     }
+    },
+    "v37_L40_opti20_from_G6": {
+     "captures": {
+      "mean": 116.9,
+      "p10": 99,
+      "p90": 137
+     },
+     "matings": {
+      "mean": 461.6,
+      "p10": 315,
+      "p90": 659
+     },
+     "clones": {
+      "mean": 459.2,
+      "p10": 313,
+      "p90": 656
+     },
+     "raises": {
+      "mean": 1022.2,
+      "p10": 739,
+      "p90": 1436
+     },
+     "cycles": {
+      "mean": 68.8,
+      "p10": 41,
+      "p90": 113
+     },
+     "genetons": {
+      "mean": 1630.2,
+      "p10": 1056,
+      "p90": 2211
+     },
+     "optimakinas": {
+      "mean": 35.3,
+      "p10": 19,
+      "p90": 56
+     },
+     "surplus_mounts": {
+      "mean": 14.5,
+      "p10": 6,
+      "p90": 24
+     },
+     "extract_resources": {
+      "mean": 27.3,
+      "p10": 18,
+      "p90": 36
+     },
+     "deadlocks": {
+      "mean": 4.2,
+      "p10": 1,
+      "p90": 7
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 6439860.0,
+      "p10": 4655700,
+      "p90": 9046800
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    }
+   },
+   "Volkorne Jade et Pourpre": {
+    "L1_noopti": {
+     "captures": {
+      "mean": 1437.7,
+      "p10": 1163,
+      "p90": 1654
+     },
+     "matings": {
+      "mean": 7571.4,
+      "p10": 6425,
+      "p90": 8665
+     },
+     "clones": {
+      "mean": 7567.9,
+      "p10": 6423,
+      "p90": 8660
+     },
+     "raises": {
+      "mean": 16417.2,
+      "p10": 14025,
+      "p90": 18752
+     },
+     "cycles": {
+      "mean": 276.5,
+      "p10": 236,
+      "p90": 316
+     },
+     "genetons": {
+      "mean": 9728.4,
+      "p10": 8132,
+      "p90": 10956
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 155.0,
+      "p10": 112,
+      "p90": 203
+     },
+     "extract_resources": {
+      "mean": 35.6,
+      "p10": 24,
+      "p90": 50
+     },
+     "deadlocks": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 103428360.0,
+      "p10": 88357500,
+      "p90": 118137600
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_noopti": {
+     "captures": {
+      "mean": 281.0,
+      "p10": 263,
+      "p90": 303
+     },
+     "matings": {
+      "mean": 1208.5,
+      "p10": 1104,
+      "p90": 1301
+     },
+     "clones": {
+      "mean": 1205.4,
+      "p10": 1101,
+      "p90": 1299
+     },
+     "raises": {
+      "mean": 2659.0,
+      "p10": 2440,
+      "p90": 2847
+     },
+     "cycles": {
+      "mean": 57.1,
+      "p10": 46,
+      "p90": 71
+     },
+     "genetons": {
+      "mean": 3493.2,
+      "p10": 2864,
+      "p90": 4090
+     },
+     "optimakinas": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "surplus_mounts": {
+      "mean": 34.4,
+      "p10": 27,
+      "p90": 44
+     },
+     "extract_resources": {
+      "mean": 32.3,
+      "p10": 16,
+      "p90": 48
+     },
+     "deadlocks": {
+      "mean": 0.6,
+      "p10": 0,
+      "p90": 2
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 16751542.5,
+      "p10": 15372000,
+      "p90": 17936100
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_from_G6": {
+     "captures": {
+      "mean": 160.8,
+      "p10": 138,
+      "p90": 184
+     },
+     "matings": {
+      "mean": 625.9,
+      "p10": 517,
+      "p90": 720
+     },
+     "clones": {
+      "mean": 622.6,
+      "p10": 514,
+      "p90": 716
+     },
+     "raises": {
+      "mean": 1389.7,
+      "p10": 1187,
+      "p90": 1571
+     },
+     "cycles": {
+      "mean": 44.2,
+      "p10": 30,
+      "p90": 64
+     },
+     "genetons": {
+      "mean": 2194.2,
+      "p10": 1666,
+      "p90": 2672
+     },
+     "optimakinas": {
+      "mean": 46.4,
+      "p10": 24,
+      "p90": 66
+     },
+     "surplus_mounts": {
+      "mean": 18.4,
+      "p10": 11,
+      "p90": 30
+     },
+     "extract_resources": {
+      "mean": 34.6,
+      "p10": 20,
+      "p90": 46
+     },
+     "deadlocks": {
+      "mean": 1.4,
+      "p10": 0,
+      "p90": 3
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 8754952.5,
+      "p10": 7478100,
+      "p90": 9897300
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "L40_opti_all": {
+     "captures": {
+      "mean": 123.7,
+      "p10": 109,
+      "p90": 144
+     },
+     "matings": {
+      "mean": 416.6,
+      "p10": 331,
+      "p90": 531
+     },
+     "clones": {
+      "mean": 413.3,
+      "p10": 329,
+      "p90": 526
+     },
+     "raises": {
+      "mean": 940.0,
+      "p10": 768,
+      "p90": 1161
+     },
+     "cycles": {
+      "mean": 45.6,
+      "p10": 28,
+      "p90": 70
+     },
+     "genetons": {
+      "mean": 2215.6,
+      "p10": 1543,
+      "p90": 2977
+     },
+     "optimakinas": {
+      "mean": 416.6,
+      "p10": 331,
+      "p90": 531
+     },
+     "surplus_mounts": {
+      "mean": 12.3,
+      "p10": 5,
+      "p90": 21
+     },
+     "extract_resources": {
+      "mean": 34.2,
+      "p10": 18,
+      "p90": 48
+     },
+     "deadlocks": {
+      "mean": 1.8,
+      "p10": 0,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 5922157.5,
+      "p10": 4838400,
+      "p90": 7314300
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    "mixed_L40_60_100_opti_from_G8": {
+     "captures": {
+      "mean": 145.8,
+      "p10": 129,
+      "p90": 165
+     },
+     "matings": {
+      "mean": 572.1,
+      "p10": 442,
+      "p90": 732
+     },
+     "clones": {
+      "mean": 569.0,
+      "p10": 439,
+      "p90": 728
+     },
+     "raises": {
+      "mean": 1268.1,
+      "p10": 998,
+      "p90": 1594
+     },
+     "cycles": {
+      "mean": 65.8,
+      "p10": 37,
+      "p90": 91
+     },
+     "genetons": {
+      "mean": 2188.1,
+      "p10": 1443,
+      "p90": 2827
+     },
+     "optimakinas": {
+      "mean": 11.2,
+      "p10": 5,
+      "p90": 16
+     },
+     "surplus_mounts": {
+      "mean": 17.7,
+      "p10": 10,
+      "p90": 26
+     },
+     "extract_resources": {
+      "mean": 34.5,
+      "p10": 24,
+      "p90": 44
+     },
+     "deadlocks": {
+      "mean": 2.0,
+      "p10": 0,
+      "p90": 4
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 7988872.5,
+      "p10": 6287400,
+      "p90": 10042200
+     },
+     "xp_fuel_points": {
+      "mean": 292169.0,
+      "p10": 149131.2,
+      "p90": 401724.30000000016
+     }
+    },
+    "v37_L40_opti20_from_G6": {
+     "captures": {
+      "mean": 123.6,
+      "p10": 103,
+      "p90": 145
+     },
+     "matings": {
+      "mean": 454.9,
+      "p10": 308,
+      "p90": 590
+     },
+     "clones": {
+      "mean": 451.5,
+      "p10": 305,
+      "p90": 587
+     },
+     "raises": {
+      "mean": 1015.3,
+      "p10": 716,
+      "p90": 1285
+     },
+     "cycles": {
+      "mean": 53.9,
+      "p10": 28,
+      "p90": 80
+     },
+     "genetons": {
+      "mean": 1969.6,
+      "p10": 1242,
+      "p90": 2855
+     },
+     "optimakinas": {
+      "mean": 37.6,
+      "p10": 21,
+      "p90": 58
+     },
+     "surplus_mounts": {
+      "mean": 13.4,
+      "p10": 5,
+      "p90": 22
+     },
+     "extract_resources": {
+      "mean": 35.5,
+      "p10": 22,
+      "p90": 46
+     },
+     "deadlocks": {
+      "mean": 2.7,
+      "p10": 1,
+      "p90": 5
+     },
+     "failed": {
+      "mean": 0.0,
+      "p10": 0,
+      "p90": 0
+     },
+     "stat_fuel_points": {
+      "mean": 6396547.5,
+      "p10": 4510800,
+      "p90": 8095500
+     },
+     "xp_fuel_points": {
+      "mean": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    }
+   }
+  }
+ }
+}

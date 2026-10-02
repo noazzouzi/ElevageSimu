@@ -6,9 +6,6 @@
 import {
   ABILITY_DOUBLES,
   ENDURANCE_SERENITY_MAX,
-  GAUGE_MAX,
-  GAUGE_RATE_PER_TICK,
-  GAUGE_TIER_MAX,
   LOVE_SERENITY_MIN,
   MATURITY_SERENITY_RANGE,
   MAX_ACTIVE_GAUGES,
@@ -17,32 +14,36 @@ import {
   SERENITY_MIN,
   TICK_SECONDS,
 } from './constants'
+import { RULESETS, type Ruleset } from './rules'
 import type { Ability, FuelTier, GaugeId, MountGauges } from './types'
 
+const LIVE = RULESETS['3.6']
+
 /** Tier courant d'une jauge (0 = vide). */
-export function gaugeTier(value: number): FuelTier | 0 {
+export function gaugeTier(value: number, rules: Ruleset = LIVE): FuelTier | 0 {
+  const max = rules.gaugeTierMax
   if (value <= 0) return 0
-  if (value <= GAUGE_TIER_MAX[1]) return 1
-  if (value <= GAUGE_TIER_MAX[2]) return 2
-  if (value <= GAUGE_TIER_MAX[3]) return 3
+  if (value <= max[1]) return 1
+  if (value <= max[2]) return 2
+  if (value <= max[3]) return 3
   return 4
 }
 
 /** Points consommés par tick pour une jauge à ce niveau (borné par ce qu'il reste). */
-export function gaugeRate(value: number): number {
-  const tier = gaugeTier(value)
+export function gaugeRate(value: number, rules: Ruleset = LIVE): number {
+  const tier = gaugeTier(value, rules)
   if (tier === 0) return 0
-  return Math.min(GAUGE_RATE_PER_TICK[tier], value)
+  return Math.min(rules.gaugeRatePerTick[tier], value)
 }
 
 /** Secondes nécessaires pour qu'une jauge passe de `from` à `to` (to < from), sans recharge. */
-export function gaugeDrainSeconds(from: number, to = 0): number {
+export function gaugeDrainSeconds(from: number, to = 0, rules: Ruleset = LIVE): number {
   let ticks = 0
-  let v = Math.min(from, GAUGE_MAX)
+  let v = Math.min(from, rules.gaugeTierMax[4])
   while (v > to) {
-    const tier = gaugeTier(v) as FuelTier
-    const floor = Math.max(to, tier === 1 ? 0 : GAUGE_TIER_MAX[(tier - 1) as FuelTier])
-    const rate = GAUGE_RATE_PER_TICK[tier]
+    const tier = gaugeTier(v, rules) as FuelTier
+    const floor = Math.max(to, tier === 1 ? 0 : rules.gaugeTierMax[(tier - 1) as FuelTier])
+    const rate = rules.gaugeRatePerTick[tier]
     const n = Math.ceil((v - floor) / rate)
     ticks += n
     v -= n * rate
@@ -149,6 +150,8 @@ export interface SimulateInput {
   stopOnBandChange?: boolean
   /** Condition d'arrêt personnalisée, évaluée après chaque tick. */
   stopWhen?: (mounts: SimMount[], seconds: number) => boolean
+  /** Règles du jeu (paliers de jauge). Défaut : 3.6. */
+  rules?: Ruleset
 }
 
 export interface SimulateResult {
@@ -176,6 +179,7 @@ export function simulatePaddock(input: SimulateInput): SimulateResult {
   const err = validateActiveGauges(input.active)
   if (err) throw new Error(err)
   const almanax = input.almanaxDoubled ?? null
+  const rules = input.rules ?? LIVE
   const stopWhenIdle = input.stopWhenIdle ?? true
   const gauges = { ...ZERO_GAUGES(), ...input.gauges }
   const mounts = input.mounts.map((m) => ({ ...m, xpGained: m.xpGained ?? 0 }))
@@ -183,7 +187,7 @@ export function simulatePaddock(input: SimulateInput): SimulateResult {
   const events: SimEvent[] = []
   const fecundAt: Record<string, number> = {}
   const bands = new Map(mounts.map((m) => [m.id, serenityBand(m.serenity)]))
-  const tiers = new Map(input.active.map((g) => [g, gaugeTier(gauges[g])]))
+  const tiers = new Map(input.active.map((g) => [g, gaugeTier(gauges[g], rules)]))
   for (const m of mounts) if (isFecund(m)) fecundAt[m.id] = 0
 
   const maxTicks = Math.floor(input.maxSeconds / TICK_SECONDS)
@@ -194,7 +198,7 @@ export function simulatePaddock(input: SimulateInput): SimulateResult {
     const gains: { gauge: GaugeId; rate: number; who: SimMount[] }[] = []
     for (const g of input.active) {
       const maintained = input.maintainTier?.[g]
-      const rate = maintained ? GAUGE_RATE_PER_TICK[maintained] : gaugeRate(gauges[g])
+      const rate = maintained ? rules.gaugeRatePerTick[maintained] : gaugeRate(gauges[g], rules)
       if (rate <= 0) continue
       const who = mounts.filter((m) => canBenefit(g, m))
       if (who.length === 0) continue
@@ -218,7 +222,7 @@ export function simulatePaddock(input: SimulateInput): SimulateResult {
     // Événements de tier de jauge.
     for (const g of input.active) {
       if (input.maintainTier?.[g]) continue
-      const tier = gaugeTier(gauges[g])
+      const tier = gaugeTier(gauges[g], rules)
       if (tier !== tiers.get(g)) {
         tiers.set(g, tier)
         events.push(tier === 0 ? { t, kind: 'gauge-empty', gauge: g } : { t, kind: 'gauge-tier', gauge: g, tier })

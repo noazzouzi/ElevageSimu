@@ -1,0 +1,140 @@
+{
+ "fecundity_batch_by_tier": {
+  "1": {
+   "one_stat": "5h33",
+   "serenity_1000": "0h17",
+   "batch_total_grouped": "11h23",
+   "batch_seconds": 41000
+  },
+  "2": {
+   "one_stat": "2h47",
+   "serenity_1000": "0h08",
+   "batch_total_grouped": "5h42",
+   "batch_seconds": 20500
+  },
+  "3": {
+   "one_stat": "1h51",
+   "serenity_1000": "0h06",
+   "batch_total_grouped": "3h48",
+   "batch_seconds": 13667
+  },
+  "4": {
+   "one_stat": "1h23",
+   "serenity_1000": "0h04",
+   "batch_total_grouped": "2h51",
+   "batch_seconds": 10250
+  }
+ },
+ "points_delivered_8h": {
+  "start_20000": 20000,
+  "start_40000": 28800,
+  "start_70000": 43800,
+  "start_90000": 57140,
+  "start_100000": 64640
+ },
+ "points_delivered_12h": {
+  "start_20000": 20000,
+  "start_40000": 40000,
+  "start_70000": 58200,
+  "start_90000": 71540,
+  "start_100000": 79040
+ },
+ "level_cost_benefit": {
+  "1": {
+   "xp": 0,
+   "paddock_points_for_10_mounts": 0,
+   "bonus_per_parent_pct": 0.15,
+   "pair_bonus_pct_if_both": 0.3,
+   "hours_T2": 0.0,
+   "hours_T4": 0.0
+  },
+  "10": {
+   "xp": 809,
+   "paddock_points_for_10_mounts": 809,
+   "bonus_per_parent_pct": 1.5,
+   "pair_bonus_pct_if_both": 3.0,
+   "hours_T2": 0.1,
+   "hours_T4": 0.1
+  },
+  "20": {
+   "xp": 4067,
+   "paddock_points_for_10_mounts": 4067,
+   "bonus_per_parent_pct": 3.0,
+   "pair_bonus_pct_if_both": 6.0,
+   "hours_T2": 0.6,
+   "hours_T4": 0.3
+  },
+  "30": {
+   "xp": 10457,
+   "paddock_points_for_10_mounts": 10457,
+   "bonus_per_parent_pct": 4.5,
+   "pair_bonus_pct_if_both": 9.0,
+   "hours_T2": 1.5,
+   "hours_T4": 0.7
+  },
+  "40": {
+   "xp": 20437,
+   "paddock_points_for_10_mounts": 20437,
+   "bonus_per_parent_pct": 6.0,
+   "pair_bonus_pct_if_both": 12.0,
+   "hours_T2": 2.8,
+   "hours_T4": 1.4
+  },
+  "50": {
+   "xp": 34365,
+   "paddock_points_for_10_mounts": 34365,
+   "bonus_per_parent_pct": 7.5,
+   "pair_bonus_pct_if_both": 15.0,
+   "hours_T2": 4.8,
+   "hours_T4": 2.4
+  },
+  "60": {
+   "xp": 52544,
+   "paddock_points_for_10_mounts": 52544,
+   "bonus_per_parent_pct": 9.0,
+   "pair_bonus_pct_if_both": 18.0,
+   "hours_T2": 7.3,
+   "hours_T4": 3.6
+  },
+  "80": {
+   "xp": 102685,
+   "paddock_points_for_10_mounts": 102685,
+   "bonus_per_parent_pct": 12.0,
+   "pair_bonus_pct_if_both": 24.0,
+   "hours_T2": 14.3,
+   "hours_T4": 7.1
+  },
+  "100": {
+   "xp": 172668,
+   "paddock_points_for_10_mounts": 172668,
+   "bonus_per_parent_pct": 15.0,
+   "pair_bonus_pct_if_both": 30.0,
+   "hours_T2": 24.0,
+   "hours_T4": 12.0
+  },
+  "120": {
+   "xp": 264013,
+   "paddock_points_for_10_mounts": 264013,
+   "bonus_per_parent_pct": 18.0,
+   "pair_bonus_pct_if_both": 36.0,
+   "hours_T2": 36.7,
+   "hours_T4": 18.3
+  },
+  "150": {
+   "xp": 443944,
+   "paddock_points_for_10_mounts": 443944,
+   "bonus_per_parent_pct": 22.5,
+   "pair_bonus_pct_if_both": 45.0,
+   "hours_T2": 61.7,
+   "hours_T4": 30.8
+  },
+  "200": {
+   "xp": 867582,
+   "paddock_points_for_10_mounts": 867582,
+   "bonus_per_parent_pct": 30.0,
+   "pair_bonus_pct_if_both": 60.0,
+   "hours_T2": 120.5,
+   "hours_T4": 60.2
+  }
+ }
+}

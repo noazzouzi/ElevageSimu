@@ -1,0 +1,13282 @@
+{
+"source": "Ankama Dofus 3 client 3.7.3.3-beta (EvolutiveEffectsDataRoot), extracted from cytrus.cdn.ankama.com bundle data_assets_evolutiveeffectsdataroot.asset.bundle via UnityPy typetree",
+"extractedAt": "2026-10-01",
+"count": 885,
+"data": [
+{
+"id": 280,
+"actionId": 125,
+"targetId": 33020,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 281,
+"actionId": 119,
+"targetId": 33020,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 282,
+"actionId": 138,
+"targetId": 33023,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 283,
+"actionId": 119,
+"targetId": 33023,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 284,
+"actionId": 125,
+"targetId": 33023,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 285,
+"actionId": 178,
+"targetId": 33063,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 286,
+"actionId": 125,
+"targetId": 33063,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 287,
+"actionId": 178,
+"targetId": 33045,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 288,
+"actionId": 138,
+"targetId": 33045,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 289,
+"actionId": 125,
+"targetId": 33045,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 290,
+"actionId": 119,
+"targetId": 33026,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 291,
+"actionId": 125,
+"targetId": 33026,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 292,
+"actionId": 178,
+"targetId": 33026,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 293,
+"actionId": 176,
+"targetId": 33065,
+"progressionPerLevelRange": [
+[
+100.0,
+0.8
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 294,
+"actionId": 125,
+"targetId": 33065,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 295,
+"actionId": 138,
+"targetId": 33042,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 296,
+"actionId": 125,
+"targetId": 33042,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 297,
+"actionId": 123,
+"targetId": 33036,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 298,
+"actionId": 125,
+"targetId": 33036,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 299,
+"actionId": 182,
+"targetId": 33011,
+"progressionPerLevelRange": [
+[
+100.0,
+0.02
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 300,
+"actionId": 125,
+"targetId": 33011,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 301,
+"actionId": 118,
+"targetId": 33050,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 302,
+"actionId": 125,
+"targetId": 33050,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 303,
+"actionId": 174,
+"targetId": 33001,
+"progressionPerLevelRange": [
+[
+100.0,
+15.0
+],
+[
+200.0,
+2.0
+]
+]
+},
+{
+"id": 304,
+"actionId": 125,
+"targetId": 33001,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 305,
+"actionId": 115,
+"targetId": 33028,
+"progressionPerLevelRange": [
+[
+100.0,
+0.12
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 306,
+"actionId": 125,
+"targetId": 33028,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 307,
+"actionId": 126,
+"targetId": 33047,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 308,
+"actionId": 125,
+"targetId": 33047,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 309,
+"actionId": 117,
+"targetId": 33052,
+"progressionPerLevelRange": [
+[
+100.0,
+0.02
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 310,
+"actionId": 125,
+"targetId": 33052,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 311,
+"actionId": 125,
+"targetId": 33002,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 312,
+"actionId": 182,
+"targetId": 33002,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 313,
+"actionId": 174,
+"targetId": 33002,
+"progressionPerLevelRange": [
+[
+100.0,
+10.0
+],
+[
+200.0,
+2.0
+]
+]
+},
+{
+"id": 314,
+"actionId": 119,
+"targetId": 33003,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 315,
+"actionId": 174,
+"targetId": 33003,
+"progressionPerLevelRange": [
+[
+100.0,
+10.0
+],
+[
+200.0,
+2.0
+]
+]
+},
+{
+"id": 316,
+"actionId": 125,
+"targetId": 33003,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 317,
+"actionId": 174,
+"targetId": 33004,
+"progressionPerLevelRange": [
+[
+100.0,
+10.0
+],
+[
+200.0,
+2.0
+]
+]
+},
+{
+"id": 318,
+"actionId": 115,
+"targetId": 33004,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 319,
+"actionId": 125,
+"targetId": 33004,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 320,
+"actionId": 123,
+"targetId": 33005,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 321,
+"actionId": 125,
+"targetId": 33005,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 322,
+"actionId": 174,
+"targetId": 33005,
+"progressionPerLevelRange": [
+[
+100.0,
+10.0
+],
+[
+200.0,
+2.0
+]
+]
+},
+{
+"id": 323,
+"actionId": 138,
+"targetId": 33006,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 324,
+"actionId": 125,
+"targetId": 33006,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 325,
+"actionId": 174,
+"targetId": 33006,
+"progressionPerLevelRange": [
+[
+100.0,
+10.0
+],
+[
+200.0,
+2.0
+]
+]
+},
+{
+"id": 326,
+"actionId": 125,
+"targetId": 33009,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 327,
+"actionId": 174,
+"targetId": 33009,
+"progressionPerLevelRange": [
+[
+100.0,
+10.0
+],
+[
+200.0,
+2.0
+]
+]
+},
+{
+"id": 328,
+"actionId": 178,
+"targetId": 33009,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 329,
+"actionId": 125,
+"targetId": 33010,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 330,
+"actionId": 176,
+"targetId": 33010,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 331,
+"actionId": 174,
+"targetId": 33010,
+"progressionPerLevelRange": [
+[
+100.0,
+10.0
+],
+[
+200.0,
+2.0
+]
+]
+},
+{
+"id": 332,
+"actionId": 125,
+"targetId": 33007,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 333,
+"actionId": 126,
+"targetId": 33007,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 334,
+"actionId": 174,
+"targetId": 33007,
+"progressionPerLevelRange": [
+[
+100.0,
+10.0
+],
+[
+200.0,
+2.0
+]
+]
+},
+{
+"id": 335,
+"actionId": 125,
+"targetId": 33008,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 336,
+"actionId": 118,
+"targetId": 33008,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 337,
+"actionId": 174,
+"targetId": 33008,
+"progressionPerLevelRange": [
+[
+100.0,
+10.0
+],
+[
+200.0,
+2.0
+]
+]
+},
+{
+"id": 338,
+"actionId": 119,
+"targetId": 33012,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 339,
+"actionId": 182,
+"targetId": 33012,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 340,
+"actionId": 125,
+"targetId": 33012,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 341,
+"actionId": 125,
+"targetId": 33013,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 342,
+"actionId": 115,
+"targetId": 33013,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 343,
+"actionId": 182,
+"targetId": 33013,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 344,
+"actionId": 123,
+"targetId": 33014,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 345,
+"actionId": 125,
+"targetId": 33014,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 346,
+"actionId": 182,
+"targetId": 33014,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 347,
+"actionId": 182,
+"targetId": 33015,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 348,
+"actionId": 138,
+"targetId": 33015,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 349,
+"actionId": 125,
+"targetId": 33015,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 350,
+"actionId": 125,
+"targetId": 33018,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 351,
+"actionId": 178,
+"targetId": 33018,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 352,
+"actionId": 182,
+"targetId": 33018,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 353,
+"actionId": 125,
+"targetId": 33019,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 354,
+"actionId": 176,
+"targetId": 33019,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 355,
+"actionId": 182,
+"targetId": 33019,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 356,
+"actionId": 182,
+"targetId": 33016,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 357,
+"actionId": 126,
+"targetId": 33016,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 358,
+"actionId": 125,
+"targetId": 33016,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 359,
+"actionId": 118,
+"targetId": 33017,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 360,
+"actionId": 182,
+"targetId": 33017,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 361,
+"actionId": 125,
+"targetId": 33017,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 362,
+"actionId": 115,
+"targetId": 33021,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 363,
+"actionId": 125,
+"targetId": 33021,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 364,
+"actionId": 119,
+"targetId": 33021,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 365,
+"actionId": 123,
+"targetId": 33022,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 366,
+"actionId": 125,
+"targetId": 33022,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 367,
+"actionId": 119,
+"targetId": 33022,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 368,
+"actionId": 125,
+"targetId": 33027,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 369,
+"actionId": 119,
+"targetId": 33027,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 370,
+"actionId": 176,
+"targetId": 33027,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 371,
+"actionId": 126,
+"targetId": 33024,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 372,
+"actionId": 125,
+"targetId": 33024,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 373,
+"actionId": 119,
+"targetId": 33024,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 374,
+"actionId": 118,
+"targetId": 33025,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 375,
+"actionId": 125,
+"targetId": 33025,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 376,
+"actionId": 119,
+"targetId": 33025,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 377,
+"actionId": 115,
+"targetId": 33029,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 378,
+"actionId": 125,
+"targetId": 33029,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 379,
+"actionId": 123,
+"targetId": 33029,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 380,
+"actionId": 125,
+"targetId": 33030,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 381,
+"actionId": 138,
+"targetId": 33030,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 382,
+"actionId": 115,
+"targetId": 33030,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 383,
+"actionId": 115,
+"targetId": 33033,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 384,
+"actionId": 125,
+"targetId": 33033,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 385,
+"actionId": 178,
+"targetId": 33033,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 386,
+"actionId": 115,
+"targetId": 33034,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 387,
+"actionId": 125,
+"targetId": 33034,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 388,
+"actionId": 176,
+"targetId": 33034,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 389,
+"actionId": 115,
+"targetId": 33031,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 390,
+"actionId": 125,
+"targetId": 33031,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 391,
+"actionId": 126,
+"targetId": 33031,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 392,
+"actionId": 115,
+"targetId": 33032,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 393,
+"actionId": 125,
+"targetId": 33032,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 394,
+"actionId": 118,
+"targetId": 33032,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 395,
+"actionId": 123,
+"targetId": 33037,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 396,
+"actionId": 125,
+"targetId": 33037,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 397,
+"actionId": 138,
+"targetId": 33037,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 398,
+"actionId": 178,
+"targetId": 33040,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 399,
+"actionId": 125,
+"targetId": 33040,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 400,
+"actionId": 123,
+"targetId": 33040,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 401,
+"actionId": 125,
+"targetId": 33041,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 402,
+"actionId": 123,
+"targetId": 33041,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 403,
+"actionId": 176,
+"targetId": 33041,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 404,
+"actionId": 126,
+"targetId": 33038,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 405,
+"actionId": 123,
+"targetId": 33038,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 406,
+"actionId": 125,
+"targetId": 33038,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 407,
+"actionId": 118,
+"targetId": 33039,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 408,
+"actionId": 125,
+"targetId": 33039,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 409,
+"actionId": 123,
+"targetId": 33039,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 410,
+"actionId": 176,
+"targetId": 33046,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 411,
+"actionId": 125,
+"targetId": 33046,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 412,
+"actionId": 138,
+"targetId": 33046,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 413,
+"actionId": 126,
+"targetId": 33043,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 414,
+"actionId": 138,
+"targetId": 33043,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 415,
+"actionId": 125,
+"targetId": 33043,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 416,
+"actionId": 125,
+"targetId": 33044,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 417,
+"actionId": 118,
+"targetId": 33044,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 418,
+"actionId": 138,
+"targetId": 33044,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 419,
+"actionId": 125,
+"targetId": 33068,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 420,
+"actionId": 176,
+"targetId": 33068,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 421,
+"actionId": 178,
+"targetId": 33068,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 422,
+"actionId": 178,
+"targetId": 33049,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 423,
+"actionId": 126,
+"targetId": 33049,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 424,
+"actionId": 125,
+"targetId": 33049,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 425,
+"actionId": 118,
+"targetId": 33051,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 426,
+"actionId": 178,
+"targetId": 33051,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 427,
+"actionId": 125,
+"targetId": 33051,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 428,
+"actionId": 125,
+"targetId": 33066,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 429,
+"actionId": 176,
+"targetId": 33066,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 430,
+"actionId": 126,
+"targetId": 33066,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 431,
+"actionId": 118,
+"targetId": 33067,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 432,
+"actionId": 125,
+"targetId": 33067,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 433,
+"actionId": 176,
+"targetId": 33067,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 434,
+"actionId": 125,
+"targetId": 33048,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 435,
+"actionId": 118,
+"targetId": 33048,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 436,
+"actionId": 126,
+"targetId": 33048,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 437,
+"actionId": 125,
+"targetId": 33053,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 438,
+"actionId": 174,
+"targetId": 33053,
+"progressionPerLevelRange": [
+[
+100.0,
+10.0
+],
+[
+200.0,
+2.0
+]
+]
+},
+{
+"id": 439,
+"actionId": 117,
+"targetId": 33053,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 440,
+"actionId": 125,
+"targetId": 33054,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 441,
+"actionId": 117,
+"targetId": 33054,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 442,
+"actionId": 182,
+"targetId": 33054,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 443,
+"actionId": 119,
+"targetId": 33055,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 444,
+"actionId": 117,
+"targetId": 33055,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 445,
+"actionId": 125,
+"targetId": 33055,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 446,
+"actionId": 117,
+"targetId": 33056,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 447,
+"actionId": 115,
+"targetId": 33056,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 448,
+"actionId": 125,
+"targetId": 33056,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 449,
+"actionId": 117,
+"targetId": 33057,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 450,
+"actionId": 123,
+"targetId": 33057,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 451,
+"actionId": 125,
+"targetId": 33057,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 452,
+"actionId": 138,
+"targetId": 33058,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 453,
+"actionId": 117,
+"targetId": 33058,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 454,
+"actionId": 125,
+"targetId": 33058,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 455,
+"actionId": 125,
+"targetId": 33061,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 456,
+"actionId": 117,
+"targetId": 33061,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 457,
+"actionId": 178,
+"targetId": 33061,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 458,
+"actionId": 125,
+"targetId": 33062,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 459,
+"actionId": 117,
+"targetId": 33062,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 460,
+"actionId": 176,
+"targetId": 33062,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 461,
+"actionId": 117,
+"targetId": 33059,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 462,
+"actionId": 126,
+"targetId": 33059,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 463,
+"actionId": 125,
+"targetId": 33059,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 464,
+"actionId": 117,
+"targetId": 33060,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 465,
+"actionId": 118,
+"targetId": 33060,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 466,
+"actionId": 125,
+"targetId": 33060,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 467,
+"actionId": 210,
+"targetId": 33035,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 468,
+"actionId": 213,
+"targetId": 33035,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 469,
+"actionId": 138,
+"targetId": 33035,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 470,
+"actionId": 211,
+"targetId": 33035,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 471,
+"actionId": 212,
+"targetId": 33035,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 472,
+"actionId": 214,
+"targetId": 33035,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 473,
+"actionId": 220,
+"targetId": 33000,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 474,
+"actionId": 125,
+"targetId": 33000,
+"progressionPerLevelRange": [
+[
+100.0,
+3.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 475,
+"actionId": 213,
+"targetId": 33096,
+"progressionPerLevelRange": [
+[
+100.0,
+0.16
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 476,
+"actionId": 128,
+"targetId": 33096,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 477,
+"actionId": 212,
+"targetId": 33080,
+"progressionPerLevelRange": [
+[
+100.0,
+0.16
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 478,
+"actionId": 128,
+"targetId": 33080,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 479,
+"actionId": 128,
+"targetId": 33088,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 480,
+"actionId": 211,
+"targetId": 33088,
+"progressionPerLevelRange": [
+[
+100.0,
+0.16
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 481,
+"actionId": 128,
+"targetId": 33101,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 482,
+"actionId": 210,
+"targetId": 33101,
+"progressionPerLevelRange": [
+[
+100.0,
+0.16
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 483,
+"actionId": 138,
+"targetId": 33072,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 484,
+"actionId": 128,
+"targetId": 33072,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 485,
+"actionId": 128,
+"targetId": 33116,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 486,
+"actionId": 753,
+"targetId": 33116,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 487,
+"actionId": 752,
+"targetId": 33069,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 488,
+"actionId": 128,
+"targetId": 33069,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 489,
+"actionId": 160,
+"targetId": 33094,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 490,
+"actionId": 128,
+"targetId": 33094,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 491,
+"actionId": 161,
+"targetId": 33125,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 492,
+"actionId": 128,
+"targetId": 33125,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 493,
+"actionId": 128,
+"targetId": 33105,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 494,
+"actionId": 115,
+"targetId": 33105,
+"progressionPerLevelRange": [
+[
+100.0,
+0.1
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 495,
+"actionId": 418,
+"targetId": 33087,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 496,
+"actionId": 128,
+"targetId": 33087,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 497,
+"actionId": 210,
+"targetId": 33079,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 498,
+"actionId": 128,
+"targetId": 33079,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 499,
+"actionId": 138,
+"targetId": 33079,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 500,
+"actionId": 210,
+"targetId": 33093,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 501,
+"actionId": 128,
+"targetId": 33093,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 502,
+"actionId": 211,
+"targetId": 33093,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 503,
+"actionId": 128,
+"targetId": 33086,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 504,
+"actionId": 212,
+"targetId": 33086,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 505,
+"actionId": 210,
+"targetId": 33086,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 506,
+"actionId": 128,
+"targetId": 33100,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 507,
+"actionId": 210,
+"targetId": 33100,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 508,
+"actionId": 213,
+"targetId": 33100,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 509,
+"actionId": 213,
+"targetId": 33078,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 510,
+"actionId": 128,
+"targetId": 33078,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 511,
+"actionId": 138,
+"targetId": 33078,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 512,
+"actionId": 128,
+"targetId": 33092,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 513,
+"actionId": 213,
+"targetId": 33092,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 514,
+"actionId": 211,
+"targetId": 33092,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 515,
+"actionId": 212,
+"targetId": 33085,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 516,
+"actionId": 128,
+"targetId": 33085,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 517,
+"actionId": 213,
+"targetId": 33085,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 518,
+"actionId": 138,
+"targetId": 33076,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 519,
+"actionId": 211,
+"targetId": 33076,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 520,
+"actionId": 128,
+"targetId": 33076,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 521,
+"actionId": 211,
+"targetId": 33083,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 522,
+"actionId": 128,
+"targetId": 33083,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 523,
+"actionId": 212,
+"targetId": 33083,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 524,
+"actionId": 212,
+"targetId": 33074,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 525,
+"actionId": 128,
+"targetId": 33074,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 526,
+"actionId": 138,
+"targetId": 33074,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 527,
+"actionId": 210,
+"targetId": 33124,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 528,
+"actionId": 753,
+"targetId": 33124,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 529,
+"actionId": 128,
+"targetId": 33124,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 530,
+"actionId": 128,
+"targetId": 33123,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 531,
+"actionId": 753,
+"targetId": 33123,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 532,
+"actionId": 213,
+"targetId": 33123,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 533,
+"actionId": 211,
+"targetId": 33121,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 534,
+"actionId": 753,
+"targetId": 33121,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 535,
+"actionId": 128,
+"targetId": 33121,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 536,
+"actionId": 753,
+"targetId": 33119,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 537,
+"actionId": 128,
+"targetId": 33119,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 538,
+"actionId": 212,
+"targetId": 33119,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 539,
+"actionId": 138,
+"targetId": 33118,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 540,
+"actionId": 128,
+"targetId": 33118,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 541,
+"actionId": 753,
+"targetId": 33118,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 542,
+"actionId": 753,
+"targetId": 33117,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 543,
+"actionId": 128,
+"targetId": 33117,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 544,
+"actionId": 752,
+"targetId": 33117,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 545,
+"actionId": 752,
+"targetId": 33102,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 546,
+"actionId": 210,
+"targetId": 33102,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 547,
+"actionId": 128,
+"targetId": 33102,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 548,
+"actionId": 752,
+"targetId": 33097,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 549,
+"actionId": 128,
+"targetId": 33097,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 550,
+"actionId": 213,
+"targetId": 33097,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 551,
+"actionId": 211,
+"targetId": 33089,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 552,
+"actionId": 752,
+"targetId": 33089,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 553,
+"actionId": 128,
+"targetId": 33089,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 554,
+"actionId": 752,
+"targetId": 33081,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 555,
+"actionId": 128,
+"targetId": 33081,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 556,
+"actionId": 212,
+"targetId": 33081,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 557,
+"actionId": 138,
+"targetId": 33073,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 558,
+"actionId": 128,
+"targetId": 33073,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 559,
+"actionId": 752,
+"targetId": 33073,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 560,
+"actionId": 210,
+"targetId": 33104,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 561,
+"actionId": 160,
+"targetId": 33104,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 562,
+"actionId": 128,
+"targetId": 33104,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 563,
+"actionId": 213,
+"targetId": 33099,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 564,
+"actionId": 160,
+"targetId": 33099,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 565,
+"actionId": 128,
+"targetId": 33099,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 566,
+"actionId": 128,
+"targetId": 33091,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 567,
+"actionId": 160,
+"targetId": 33091,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 568,
+"actionId": 211,
+"targetId": 33091,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 569,
+"actionId": 212,
+"targetId": 33084,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 570,
+"actionId": 128,
+"targetId": 33084,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 571,
+"actionId": 160,
+"targetId": 33084,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 572,
+"actionId": 128,
+"targetId": 33077,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 573,
+"actionId": 160,
+"targetId": 33077,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 574,
+"actionId": 138,
+"targetId": 33077,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 575,
+"actionId": 753,
+"targetId": 33122,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 576,
+"actionId": 160,
+"targetId": 33122,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 577,
+"actionId": 128,
+"targetId": 33122,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 578,
+"actionId": 752,
+"targetId": 33071,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 579,
+"actionId": 128,
+"targetId": 33071,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 580,
+"actionId": 160,
+"targetId": 33071,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 581,
+"actionId": 161,
+"targetId": 33131,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 582,
+"actionId": 160,
+"targetId": 33131,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 583,
+"actionId": 128,
+"targetId": 33131,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 584,
+"actionId": 128,
+"targetId": 33133,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 585,
+"actionId": 161,
+"targetId": 33133,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 586,
+"actionId": 210,
+"targetId": 33133,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 587,
+"actionId": 128,
+"targetId": 33130,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 588,
+"actionId": 211,
+"targetId": 33130,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 589,
+"actionId": 161,
+"targetId": 33130,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 590,
+"actionId": 161,
+"targetId": 33128,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 591,
+"actionId": 212,
+"targetId": 33128,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 592,
+"actionId": 128,
+"targetId": 33128,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 593,
+"actionId": 753,
+"targetId": 33134,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 594,
+"actionId": 128,
+"targetId": 33134,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 595,
+"actionId": 161,
+"targetId": 33134,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 596,
+"actionId": 161,
+"targetId": 33126,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 597,
+"actionId": 128,
+"targetId": 33126,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 598,
+"actionId": 752,
+"targetId": 33126,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 599,
+"actionId": 138,
+"targetId": 33127,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 600,
+"actionId": 161,
+"targetId": 33127,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 601,
+"actionId": 128,
+"targetId": 33127,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 602,
+"actionId": 115,
+"targetId": 33113,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 603,
+"actionId": 210,
+"targetId": 33113,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 604,
+"actionId": 128,
+"targetId": 33113,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 605,
+"actionId": 213,
+"targetId": 33112,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 606,
+"actionId": 115,
+"targetId": 33112,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 607,
+"actionId": 128,
+"targetId": 33112,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 608,
+"actionId": 115,
+"targetId": 33110,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 609,
+"actionId": 128,
+"targetId": 33110,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 610,
+"actionId": 211,
+"targetId": 33110,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 611,
+"actionId": 128,
+"targetId": 33108,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 612,
+"actionId": 115,
+"targetId": 33108,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 613,
+"actionId": 212,
+"targetId": 33108,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 614,
+"actionId": 128,
+"targetId": 33107,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 615,
+"actionId": 138,
+"targetId": 33107,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 616,
+"actionId": 115,
+"targetId": 33107,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 617,
+"actionId": 115,
+"targetId": 33114,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 618,
+"actionId": 128,
+"targetId": 33114,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 619,
+"actionId": 753,
+"targetId": 33114,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 620,
+"actionId": 752,
+"targetId": 33106,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 621,
+"actionId": 128,
+"targetId": 33106,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 622,
+"actionId": 115,
+"targetId": 33106,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 623,
+"actionId": 160,
+"targetId": 33111,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 624,
+"actionId": 115,
+"targetId": 33111,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 625,
+"actionId": 128,
+"targetId": 33111,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 626,
+"actionId": 128,
+"targetId": 33115,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 627,
+"actionId": 115,
+"targetId": 33115,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 628,
+"actionId": 161,
+"targetId": 33115,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 629,
+"actionId": 418,
+"targetId": 33109,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 630,
+"actionId": 115,
+"targetId": 33109,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 631,
+"actionId": 128,
+"targetId": 33109,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 632,
+"actionId": 128,
+"targetId": 33103,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 633,
+"actionId": 210,
+"targetId": 33103,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 634,
+"actionId": 418,
+"targetId": 33103,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 635,
+"actionId": 128,
+"targetId": 33098,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 636,
+"actionId": 213,
+"targetId": 33098,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 637,
+"actionId": 418,
+"targetId": 33098,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 638,
+"actionId": 128,
+"targetId": 33090,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 639,
+"actionId": 211,
+"targetId": 33090,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 640,
+"actionId": 418,
+"targetId": 33090,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 641,
+"actionId": 212,
+"targetId": 33082,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 642,
+"actionId": 418,
+"targetId": 33082,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 643,
+"actionId": 128,
+"targetId": 33082,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 644,
+"actionId": 128,
+"targetId": 33075,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 645,
+"actionId": 138,
+"targetId": 33075,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 646,
+"actionId": 418,
+"targetId": 33075,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 647,
+"actionId": 753,
+"targetId": 33120,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 648,
+"actionId": 418,
+"targetId": 33120,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 649,
+"actionId": 128,
+"targetId": 33120,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 650,
+"actionId": 752,
+"targetId": 33070,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 651,
+"actionId": 128,
+"targetId": 33070,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 652,
+"actionId": 418,
+"targetId": 33070,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 653,
+"actionId": 160,
+"targetId": 33095,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 654,
+"actionId": 128,
+"targetId": 33095,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 655,
+"actionId": 418,
+"targetId": 33095,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 656,
+"actionId": 161,
+"targetId": 33129,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 657,
+"actionId": 128,
+"targetId": 33129,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 658,
+"actionId": 418,
+"targetId": 33129,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 659,
+"actionId": 213,
+"targetId": 33132,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 660,
+"actionId": 128,
+"targetId": 33132,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 661,
+"actionId": 161,
+"targetId": 33132,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 662,
+"actionId": 111,
+"targetId": 33176,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 663,
+"actionId": 123,
+"targetId": 33176,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 664,
+"actionId": 111,
+"targetId": 33166,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 665,
+"actionId": 119,
+"targetId": 33166,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 666,
+"actionId": 118,
+"targetId": 33202,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 667,
+"actionId": 111,
+"targetId": 33202,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 668,
+"actionId": 126,
+"targetId": 33199,
+"progressionPerLevelRange": [
+[
+100.0,
+0.7
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 669,
+"actionId": 111,
+"targetId": 33199,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 670,
+"actionId": 414,
+"targetId": 33216,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 671,
+"actionId": 111,
+"targetId": 33216,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 672,
+"actionId": 111,
+"targetId": 33135,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 673,
+"actionId": 416,
+"targetId": 33135,
+"progressionPerLevelRange": [
+[
+100.0,
+0.8
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 674,
+"actionId": 410,
+"targetId": 33178,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 675,
+"actionId": 111,
+"targetId": 33178,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 676,
+"actionId": 412,
+"targetId": 33250,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 677,
+"actionId": 111,
+"targetId": 33250,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 678,
+"actionId": 111,
+"targetId": 33206,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 679,
+"actionId": 420,
+"targetId": 33206,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 680,
+"actionId": 111,
+"targetId": 33167,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 681,
+"actionId": 115,
+"targetId": 33167,
+"progressionPerLevelRange": [
+[
+100.0,
+0.07
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 682,
+"actionId": 111,
+"targetId": 33155,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 683,
+"actionId": 125,
+"targetId": 33155,
+"progressionPerLevelRange": [
+[
+100.0,
+1.5
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 684,
+"actionId": 111,
+"targetId": 33184,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 685,
+"actionId": 210,
+"targetId": 33184,
+"progressionPerLevelRange": [
+[
+100.0,
+0.12
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 686,
+"actionId": 213,
+"targetId": 33223,
+"progressionPerLevelRange": [
+[
+100.0,
+0.12
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 687,
+"actionId": 111,
+"targetId": 33223,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 688,
+"actionId": 211,
+"targetId": 33237,
+"progressionPerLevelRange": [
+[
+100.0,
+0.12
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 689,
+"actionId": 111,
+"targetId": 33237,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 690,
+"actionId": 111,
+"targetId": 33143,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 691,
+"actionId": 212,
+"targetId": 33143,
+"progressionPerLevelRange": [
+[
+100.0,
+0.12
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 692,
+"actionId": 126,
+"targetId": 33205,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 693,
+"actionId": 118,
+"targetId": 33205,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 694,
+"actionId": 111,
+"targetId": 33205,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 695,
+"actionId": 111,
+"targetId": 33204,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 696,
+"actionId": 118,
+"targetId": 33204,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 697,
+"actionId": 123,
+"targetId": 33204,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 698,
+"actionId": 119,
+"targetId": 33203,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 699,
+"actionId": 118,
+"targetId": 33203,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 700,
+"actionId": 111,
+"targetId": 33203,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 701,
+"actionId": 111,
+"targetId": 33201,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 702,
+"actionId": 126,
+"targetId": 33201,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 703,
+"actionId": 123,
+"targetId": 33201,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 704,
+"actionId": 119,
+"targetId": 33200,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 705,
+"actionId": 126,
+"targetId": 33200,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 706,
+"actionId": 111,
+"targetId": 33200,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 707,
+"actionId": 119,
+"targetId": 33177,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 708,
+"actionId": 111,
+"targetId": 33177,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 709,
+"actionId": 123,
+"targetId": 33177,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 710,
+"actionId": 118,
+"targetId": 33140,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 711,
+"actionId": 416,
+"targetId": 33140,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 712,
+"actionId": 111,
+"targetId": 33140,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 713,
+"actionId": 126,
+"targetId": 33139,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 714,
+"actionId": 416,
+"targetId": 33139,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 715,
+"actionId": 111,
+"targetId": 33139,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 716,
+"actionId": 111,
+"targetId": 33137,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 717,
+"actionId": 416,
+"targetId": 33137,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 718,
+"actionId": 123,
+"targetId": 33137,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 719,
+"actionId": 416,
+"targetId": 33136,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 720,
+"actionId": 119,
+"targetId": 33136,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 721,
+"actionId": 111,
+"targetId": 33136,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 722,
+"actionId": 416,
+"targetId": 33141,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 723,
+"actionId": 414,
+"targetId": 33141,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 724,
+"actionId": 111,
+"targetId": 33141,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 725,
+"actionId": 416,
+"targetId": 33138,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 726,
+"actionId": 111,
+"targetId": 33138,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 727,
+"actionId": 410,
+"targetId": 33138,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 728,
+"actionId": 412,
+"targetId": 33142,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 729,
+"actionId": 416,
+"targetId": 33142,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 730,
+"actionId": 111,
+"targetId": 33142,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 731,
+"actionId": 414,
+"targetId": 33221,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 732,
+"actionId": 111,
+"targetId": 33221,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 733,
+"actionId": 118,
+"targetId": 33221,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 734,
+"actionId": 414,
+"targetId": 33220,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 735,
+"actionId": 126,
+"targetId": 33220,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 736,
+"actionId": 111,
+"targetId": 33220,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 737,
+"actionId": 111,
+"targetId": 33218,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 738,
+"actionId": 414,
+"targetId": 33218,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 739,
+"actionId": 123,
+"targetId": 33218,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 740,
+"actionId": 111,
+"targetId": 33217,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 741,
+"actionId": 414,
+"targetId": 33217,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 742,
+"actionId": 119,
+"targetId": 33217,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 743,
+"actionId": 414,
+"targetId": 33219,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 744,
+"actionId": 410,
+"targetId": 33219,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 745,
+"actionId": 111,
+"targetId": 33219,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 746,
+"actionId": 111,
+"targetId": 33222,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 747,
+"actionId": 414,
+"targetId": 33222,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 748,
+"actionId": 412,
+"targetId": 33222,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 749,
+"actionId": 111,
+"targetId": 33182,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 750,
+"actionId": 410,
+"targetId": 33182,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 751,
+"actionId": 118,
+"targetId": 33182,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 752,
+"actionId": 111,
+"targetId": 33181,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 753,
+"actionId": 410,
+"targetId": 33181,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 754,
+"actionId": 126,
+"targetId": 33181,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 755,
+"actionId": 410,
+"targetId": 33180,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 756,
+"actionId": 111,
+"targetId": 33180,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 757,
+"actionId": 123,
+"targetId": 33180,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 758,
+"actionId": 111,
+"targetId": 33179,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 759,
+"actionId": 410,
+"targetId": 33179,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 760,
+"actionId": 119,
+"targetId": 33179,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 761,
+"actionId": 410,
+"targetId": 33183,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 762,
+"actionId": 412,
+"targetId": 33183,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 763,
+"actionId": 111,
+"targetId": 33183,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 764,
+"actionId": 118,
+"targetId": 33254,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 765,
+"actionId": 111,
+"targetId": 33254,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 766,
+"actionId": 412,
+"targetId": 33254,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 767,
+"actionId": 412,
+"targetId": 33253,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 768,
+"actionId": 111,
+"targetId": 33253,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 769,
+"actionId": 126,
+"targetId": 33253,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 770,
+"actionId": 123,
+"targetId": 33252,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 771,
+"actionId": 111,
+"targetId": 33252,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 772,
+"actionId": 412,
+"targetId": 33252,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 773,
+"actionId": 111,
+"targetId": 33251,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 774,
+"actionId": 412,
+"targetId": 33251,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 775,
+"actionId": 119,
+"targetId": 33251,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 776,
+"actionId": 111,
+"targetId": 33213,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 777,
+"actionId": 118,
+"targetId": 33213,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 778,
+"actionId": 420,
+"targetId": 33213,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 779,
+"actionId": 111,
+"targetId": 33212,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 780,
+"actionId": 420,
+"targetId": 33212,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 781,
+"actionId": 126,
+"targetId": 33212,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 782,
+"actionId": 123,
+"targetId": 33210,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 783,
+"actionId": 111,
+"targetId": 33210,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 784,
+"actionId": 420,
+"targetId": 33210,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 785,
+"actionId": 111,
+"targetId": 33208,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 786,
+"actionId": 420,
+"targetId": 33208,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 787,
+"actionId": 119,
+"targetId": 33208,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 788,
+"actionId": 416,
+"targetId": 33207,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 789,
+"actionId": 111,
+"targetId": 33207,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 790,
+"actionId": 420,
+"targetId": 33207,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 791,
+"actionId": 420,
+"targetId": 33215,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 792,
+"actionId": 412,
+"targetId": 33215,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 793,
+"actionId": 111,
+"targetId": 33215,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 794,
+"actionId": 111,
+"targetId": 33209,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 795,
+"actionId": 115,
+"targetId": 33209,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 796,
+"actionId": 420,
+"targetId": 33209,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 797,
+"actionId": 111,
+"targetId": 33173,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 798,
+"actionId": 115,
+"targetId": 33173,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 799,
+"actionId": 118,
+"targetId": 33173,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 800,
+"actionId": 115,
+"targetId": 33172,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 801,
+"actionId": 126,
+"targetId": 33172,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 802,
+"actionId": 111,
+"targetId": 33172,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 803,
+"actionId": 111,
+"targetId": 33170,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 804,
+"actionId": 123,
+"targetId": 33170,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 805,
+"actionId": 115,
+"targetId": 33170,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 806,
+"actionId": 111,
+"targetId": 33169,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 807,
+"actionId": 119,
+"targetId": 33169,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 808,
+"actionId": 115,
+"targetId": 33169,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 809,
+"actionId": 416,
+"targetId": 33168,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 810,
+"actionId": 115,
+"targetId": 33168,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 811,
+"actionId": 111,
+"targetId": 33168,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 812,
+"actionId": 115,
+"targetId": 33174,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 813,
+"actionId": 414,
+"targetId": 33174,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 814,
+"actionId": 111,
+"targetId": 33174,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 815,
+"actionId": 410,
+"targetId": 33171,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 816,
+"actionId": 115,
+"targetId": 33171,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 817,
+"actionId": 111,
+"targetId": 33171,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 818,
+"actionId": 111,
+"targetId": 33175,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 819,
+"actionId": 412,
+"targetId": 33175,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 820,
+"actionId": 115,
+"targetId": 33175,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 821,
+"actionId": 125,
+"targetId": 33162,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 822,
+"actionId": 118,
+"targetId": 33162,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 823,
+"actionId": 111,
+"targetId": 33162,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 824,
+"actionId": 126,
+"targetId": 33161,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 825,
+"actionId": 111,
+"targetId": 33161,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 826,
+"actionId": 125,
+"targetId": 33161,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 827,
+"actionId": 125,
+"targetId": 33159,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 828,
+"actionId": 111,
+"targetId": 33159,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 829,
+"actionId": 123,
+"targetId": 33159,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 830,
+"actionId": 119,
+"targetId": 33157,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 831,
+"actionId": 111,
+"targetId": 33157,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 832,
+"actionId": 125,
+"targetId": 33157,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 833,
+"actionId": 210,
+"targetId": 33193,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 834,
+"actionId": 111,
+"targetId": 33193,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 835,
+"actionId": 118,
+"targetId": 33193,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 836,
+"actionId": 126,
+"targetId": 33192,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 837,
+"actionId": 111,
+"targetId": 33192,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 838,
+"actionId": 210,
+"targetId": 33192,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 839,
+"actionId": 123,
+"targetId": 33190,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 840,
+"actionId": 111,
+"targetId": 33190,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 841,
+"actionId": 210,
+"targetId": 33190,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 842,
+"actionId": 210,
+"targetId": 33188,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 843,
+"actionId": 119,
+"targetId": 33188,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 844,
+"actionId": 111,
+"targetId": 33188,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 845,
+"actionId": 210,
+"targetId": 33185,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 846,
+"actionId": 111,
+"targetId": 33185,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 847,
+"actionId": 416,
+"targetId": 33185,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 848,
+"actionId": 111,
+"targetId": 33195,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 849,
+"actionId": 210,
+"targetId": 33195,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 850,
+"actionId": 414,
+"targetId": 33195,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 851,
+"actionId": 410,
+"targetId": 33191,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 852,
+"actionId": 210,
+"targetId": 33191,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 853,
+"actionId": 111,
+"targetId": 33191,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 854,
+"actionId": 210,
+"targetId": 33198,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 855,
+"actionId": 412,
+"targetId": 33198,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 856,
+"actionId": 111,
+"targetId": 33198,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 857,
+"actionId": 111,
+"targetId": 33194,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 858,
+"actionId": 210,
+"targetId": 33194,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 859,
+"actionId": 420,
+"targetId": 33194,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 860,
+"actionId": 115,
+"targetId": 33189,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 861,
+"actionId": 210,
+"targetId": 33189,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 862,
+"actionId": 111,
+"targetId": 33189,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 863,
+"actionId": 125,
+"targetId": 33187,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 864,
+"actionId": 210,
+"targetId": 33187,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 865,
+"actionId": 111,
+"targetId": 33187,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 866,
+"actionId": 111,
+"targetId": 33196,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 867,
+"actionId": 213,
+"targetId": 33196,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 868,
+"actionId": 210,
+"targetId": 33196,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 869,
+"actionId": 111,
+"targetId": 33197,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 870,
+"actionId": 211,
+"targetId": 33197,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 871,
+"actionId": 210,
+"targetId": 33197,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 872,
+"actionId": 212,
+"targetId": 33186,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 873,
+"actionId": 111,
+"targetId": 33186,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 874,
+"actionId": 210,
+"targetId": 33186,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 875,
+"actionId": 111,
+"targetId": 33232,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 876,
+"actionId": 118,
+"targetId": 33232,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 877,
+"actionId": 213,
+"targetId": 33232,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 878,
+"actionId": 213,
+"targetId": 33231,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 879,
+"actionId": 111,
+"targetId": 33231,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 880,
+"actionId": 126,
+"targetId": 33231,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 881,
+"actionId": 111,
+"targetId": 33229,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 882,
+"actionId": 123,
+"targetId": 33229,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 883,
+"actionId": 213,
+"targetId": 33229,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 884,
+"actionId": 119,
+"targetId": 33227,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 885,
+"actionId": 111,
+"targetId": 33227,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 886,
+"actionId": 213,
+"targetId": 33227,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 887,
+"actionId": 111,
+"targetId": 33224,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 888,
+"actionId": 213,
+"targetId": 33224,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 889,
+"actionId": 416,
+"targetId": 33224,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 890,
+"actionId": 414,
+"targetId": 33234,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 891,
+"actionId": 213,
+"targetId": 33234,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 892,
+"actionId": 111,
+"targetId": 33234,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 893,
+"actionId": 111,
+"targetId": 33230,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 894,
+"actionId": 213,
+"targetId": 33230,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 895,
+"actionId": 410,
+"targetId": 33230,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 896,
+"actionId": 213,
+"targetId": 33236,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 897,
+"actionId": 111,
+"targetId": 33236,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 898,
+"actionId": 412,
+"targetId": 33236,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 899,
+"actionId": 111,
+"targetId": 33233,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 900,
+"actionId": 420,
+"targetId": 33233,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 901,
+"actionId": 213,
+"targetId": 33233,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 902,
+"actionId": 111,
+"targetId": 33228,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 903,
+"actionId": 115,
+"targetId": 33228,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 904,
+"actionId": 213,
+"targetId": 33228,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 905,
+"actionId": 213,
+"targetId": 33226,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 906,
+"actionId": 111,
+"targetId": 33226,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 907,
+"actionId": 125,
+"targetId": 33226,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 908,
+"actionId": 211,
+"targetId": 33246,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 909,
+"actionId": 118,
+"targetId": 33246,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 910,
+"actionId": 111,
+"targetId": 33246,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 911,
+"actionId": 126,
+"targetId": 33245,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 912,
+"actionId": 211,
+"targetId": 33245,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 913,
+"actionId": 111,
+"targetId": 33245,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 914,
+"actionId": 123,
+"targetId": 33243,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 915,
+"actionId": 211,
+"targetId": 33243,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 916,
+"actionId": 111,
+"targetId": 33243,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 917,
+"actionId": 111,
+"targetId": 33241,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 918,
+"actionId": 211,
+"targetId": 33241,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 919,
+"actionId": 119,
+"targetId": 33241,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 920,
+"actionId": 416,
+"targetId": 33238,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 921,
+"actionId": 211,
+"targetId": 33238,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 922,
+"actionId": 111,
+"targetId": 33238,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 923,
+"actionId": 414,
+"targetId": 33248,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 924,
+"actionId": 211,
+"targetId": 33248,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 925,
+"actionId": 111,
+"targetId": 33248,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 926,
+"actionId": 111,
+"targetId": 33244,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 927,
+"actionId": 211,
+"targetId": 33244,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 928,
+"actionId": 410,
+"targetId": 33244,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 929,
+"actionId": 211,
+"targetId": 33249,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 930,
+"actionId": 111,
+"targetId": 33249,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 931,
+"actionId": 412,
+"targetId": 33249,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 932,
+"actionId": 420,
+"targetId": 33247,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 933,
+"actionId": 111,
+"targetId": 33247,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 934,
+"actionId": 211,
+"targetId": 33247,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 935,
+"actionId": 115,
+"targetId": 33242,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 936,
+"actionId": 211,
+"targetId": 33242,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 937,
+"actionId": 111,
+"targetId": 33242,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 938,
+"actionId": 111,
+"targetId": 33240,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 939,
+"actionId": 125,
+"targetId": 33240,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 940,
+"actionId": 211,
+"targetId": 33240,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 941,
+"actionId": 212,
+"targetId": 33239,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 942,
+"actionId": 211,
+"targetId": 33239,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 943,
+"actionId": 111,
+"targetId": 33239,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 944,
+"actionId": 212,
+"targetId": 33151,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 945,
+"actionId": 118,
+"targetId": 33151,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 946,
+"actionId": 111,
+"targetId": 33151,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 947,
+"actionId": 111,
+"targetId": 33150,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 948,
+"actionId": 126,
+"targetId": 33150,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 949,
+"actionId": 212,
+"targetId": 33150,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 950,
+"actionId": 123,
+"targetId": 33148,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 951,
+"actionId": 111,
+"targetId": 33148,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 952,
+"actionId": 212,
+"targetId": 33148,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 953,
+"actionId": 119,
+"targetId": 33146,
+"progressionPerLevelRange": [
+[
+100.0,
+0.5
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 954,
+"actionId": 212,
+"targetId": 33146,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 955,
+"actionId": 111,
+"targetId": 33146,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 956,
+"actionId": 111,
+"targetId": 33144,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 957,
+"actionId": 212,
+"targetId": 33144,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 958,
+"actionId": 416,
+"targetId": 33144,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 959,
+"actionId": 111,
+"targetId": 33153,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 960,
+"actionId": 212,
+"targetId": 33153,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 961,
+"actionId": 414,
+"targetId": 33153,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 962,
+"actionId": 111,
+"targetId": 33149,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 963,
+"actionId": 410,
+"targetId": 33149,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 964,
+"actionId": 212,
+"targetId": 33149,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 965,
+"actionId": 111,
+"targetId": 33154,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 966,
+"actionId": 412,
+"targetId": 33154,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 967,
+"actionId": 212,
+"targetId": 33154,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 968,
+"actionId": 420,
+"targetId": 33152,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 969,
+"actionId": 111,
+"targetId": 33152,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 970,
+"actionId": 212,
+"targetId": 33152,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 971,
+"actionId": 111,
+"targetId": 33147,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 972,
+"actionId": 115,
+"targetId": 33147,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 973,
+"actionId": 212,
+"targetId": 33147,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 974,
+"actionId": 212,
+"targetId": 33145,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 975,
+"actionId": 111,
+"targetId": 33145,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 976,
+"actionId": 125,
+"targetId": 33145,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 977,
+"actionId": 420,
+"targetId": 33214,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 978,
+"actionId": 414,
+"targetId": 33214,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 979,
+"actionId": 111,
+"targetId": 33214,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 980,
+"actionId": 111,
+"targetId": 33211,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 981,
+"actionId": 420,
+"targetId": 33211,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 982,
+"actionId": 410,
+"targetId": 33211,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 983,
+"actionId": 211,
+"targetId": 33235,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 984,
+"actionId": 213,
+"targetId": 33235,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 985,
+"actionId": 111,
+"targetId": 33235,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 986,
+"actionId": 213,
+"targetId": 33225,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 987,
+"actionId": 111,
+"targetId": 33225,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 988,
+"actionId": 212,
+"targetId": 33225,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 989,
+"actionId": 111,
+"targetId": 33164,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 990,
+"actionId": 414,
+"targetId": 33164,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 991,
+"actionId": 125,
+"targetId": 33164,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 992,
+"actionId": 111,
+"targetId": 33156,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 993,
+"actionId": 125,
+"targetId": 33156,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 994,
+"actionId": 416,
+"targetId": 33156,
+"progressionPerLevelRange": [
+[
+100.0,
+0.6
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 995,
+"actionId": 125,
+"targetId": 33160,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 996,
+"actionId": 410,
+"targetId": 33160,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 997,
+"actionId": 111,
+"targetId": 33160,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 998,
+"actionId": 111,
+"targetId": 33165,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 999,
+"actionId": 125,
+"targetId": 33165,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 1000,
+"actionId": 412,
+"targetId": 33165,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1001,
+"actionId": 420,
+"targetId": 33163,
+"progressionPerLevelRange": [
+[
+100.0,
+0.35
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1002,
+"actionId": 111,
+"targetId": 33163,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1003,
+"actionId": 125,
+"targetId": 33163,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 1004,
+"actionId": 125,
+"targetId": 33158,
+"progressionPerLevelRange": [
+[
+100.0,
+1.0
+],
+[
+200.0,
+1.0
+]
+]
+},
+{
+"id": 1005,
+"actionId": 115,
+"targetId": 33158,
+"progressionPerLevelRange": [
+[
+100.0,
+0.05
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1006,
+"actionId": 111,
+"targetId": 33158,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1007,
+"actionId": 128,
+"targetId": 33255,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1008,
+"actionId": 422,
+"targetId": 33255,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1009,
+"actionId": 128,
+"targetId": 33256,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1010,
+"actionId": 424,
+"targetId": 33256,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1011,
+"actionId": 128,
+"targetId": 33257,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1012,
+"actionId": 426,
+"targetId": 33257,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1013,
+"actionId": 128,
+"targetId": 33258,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1014,
+"actionId": 428,
+"targetId": 33258,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1015,
+"actionId": 128,
+"targetId": 33259,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1016,
+"actionId": 422,
+"targetId": 33259,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1017,
+"actionId": 138,
+"targetId": 33259,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 1018,
+"actionId": 128,
+"targetId": 33260,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1019,
+"actionId": 422,
+"targetId": 33260,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1020,
+"actionId": 212,
+"targetId": 33260,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1021,
+"actionId": 128,
+"targetId": 33261,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1022,
+"actionId": 422,
+"targetId": 33261,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1023,
+"actionId": 211,
+"targetId": 33261,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1024,
+"actionId": 128,
+"targetId": 33262,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1025,
+"actionId": 422,
+"targetId": 33262,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1026,
+"actionId": 210,
+"targetId": 33262,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1027,
+"actionId": 128,
+"targetId": 33263,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1028,
+"actionId": 422,
+"targetId": 33263,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1029,
+"actionId": 213,
+"targetId": 33263,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1030,
+"actionId": 128,
+"targetId": 33264,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1031,
+"actionId": 422,
+"targetId": 33264,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1032,
+"actionId": 752,
+"targetId": 33264,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1033,
+"actionId": 128,
+"targetId": 33265,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1034,
+"actionId": 422,
+"targetId": 33265,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1035,
+"actionId": 753,
+"targetId": 33265,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1036,
+"actionId": 128,
+"targetId": 33266,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1037,
+"actionId": 422,
+"targetId": 33266,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1038,
+"actionId": 160,
+"targetId": 33266,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1039,
+"actionId": 128,
+"targetId": 33267,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1040,
+"actionId": 422,
+"targetId": 33267,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1041,
+"actionId": 161,
+"targetId": 33267,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1042,
+"actionId": 128,
+"targetId": 33268,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1043,
+"actionId": 422,
+"targetId": 33268,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1044,
+"actionId": 418,
+"targetId": 33268,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1045,
+"actionId": 128,
+"targetId": 33269,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1046,
+"actionId": 422,
+"targetId": 33269,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1047,
+"actionId": 115,
+"targetId": 33269,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1048,
+"actionId": 128,
+"targetId": 33270,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1049,
+"actionId": 422,
+"targetId": 33270,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1050,
+"actionId": 424,
+"targetId": 33270,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1051,
+"actionId": 128,
+"targetId": 33271,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1052,
+"actionId": 422,
+"targetId": 33271,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1053,
+"actionId": 426,
+"targetId": 33271,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1054,
+"actionId": 128,
+"targetId": 33272,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1055,
+"actionId": 422,
+"targetId": 33272,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1056,
+"actionId": 428,
+"targetId": 33272,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1057,
+"actionId": 128,
+"targetId": 33273,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1058,
+"actionId": 424,
+"targetId": 33273,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1059,
+"actionId": 138,
+"targetId": 33273,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 1060,
+"actionId": 128,
+"targetId": 33274,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1061,
+"actionId": 424,
+"targetId": 33274,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1062,
+"actionId": 212,
+"targetId": 33274,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1063,
+"actionId": 128,
+"targetId": 33275,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1064,
+"actionId": 424,
+"targetId": 33275,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1065,
+"actionId": 211,
+"targetId": 33275,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1066,
+"actionId": 128,
+"targetId": 33276,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1067,
+"actionId": 424,
+"targetId": 33276,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1068,
+"actionId": 210,
+"targetId": 33276,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1069,
+"actionId": 128,
+"targetId": 33277,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1070,
+"actionId": 424,
+"targetId": 33277,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1071,
+"actionId": 213,
+"targetId": 33277,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1072,
+"actionId": 128,
+"targetId": 33278,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1073,
+"actionId": 424,
+"targetId": 33278,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1074,
+"actionId": 752,
+"targetId": 33278,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1075,
+"actionId": 128,
+"targetId": 33279,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1076,
+"actionId": 424,
+"targetId": 33279,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1077,
+"actionId": 753,
+"targetId": 33279,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1078,
+"actionId": 128,
+"targetId": 33280,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1079,
+"actionId": 424,
+"targetId": 33280,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1080,
+"actionId": 160,
+"targetId": 33280,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1081,
+"actionId": 128,
+"targetId": 33281,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1082,
+"actionId": 424,
+"targetId": 33281,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1083,
+"actionId": 161,
+"targetId": 33281,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1084,
+"actionId": 128,
+"targetId": 33282,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1085,
+"actionId": 424,
+"targetId": 33282,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1086,
+"actionId": 418,
+"targetId": 33282,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1087,
+"actionId": 128,
+"targetId": 33283,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1088,
+"actionId": 424,
+"targetId": 33283,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1089,
+"actionId": 115,
+"targetId": 33283,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1090,
+"actionId": 128,
+"targetId": 33284,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1091,
+"actionId": 424,
+"targetId": 33284,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1092,
+"actionId": 426,
+"targetId": 33284,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1093,
+"actionId": 128,
+"targetId": 33285,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1094,
+"actionId": 424,
+"targetId": 33285,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1095,
+"actionId": 428,
+"targetId": 33285,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1096,
+"actionId": 128,
+"targetId": 33286,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1097,
+"actionId": 426,
+"targetId": 33286,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1098,
+"actionId": 138,
+"targetId": 33286,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 1099,
+"actionId": 128,
+"targetId": 33287,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1100,
+"actionId": 426,
+"targetId": 33287,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1101,
+"actionId": 212,
+"targetId": 33287,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1102,
+"actionId": 128,
+"targetId": 33288,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1103,
+"actionId": 426,
+"targetId": 33288,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1104,
+"actionId": 211,
+"targetId": 33288,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1105,
+"actionId": 128,
+"targetId": 33289,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1106,
+"actionId": 426,
+"targetId": 33289,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1107,
+"actionId": 210,
+"targetId": 33289,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1108,
+"actionId": 128,
+"targetId": 33290,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1109,
+"actionId": 426,
+"targetId": 33290,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1110,
+"actionId": 213,
+"targetId": 33290,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1111,
+"actionId": 128,
+"targetId": 33291,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1112,
+"actionId": 426,
+"targetId": 33291,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1113,
+"actionId": 752,
+"targetId": 33291,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1114,
+"actionId": 128,
+"targetId": 33292,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1115,
+"actionId": 426,
+"targetId": 33292,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1116,
+"actionId": 753,
+"targetId": 33292,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1117,
+"actionId": 128,
+"targetId": 33293,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1118,
+"actionId": 426,
+"targetId": 33293,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1119,
+"actionId": 160,
+"targetId": 33293,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1120,
+"actionId": 128,
+"targetId": 33294,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1121,
+"actionId": 426,
+"targetId": 33294,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1122,
+"actionId": 161,
+"targetId": 33294,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1123,
+"actionId": 128,
+"targetId": 33295,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1124,
+"actionId": 426,
+"targetId": 33295,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1125,
+"actionId": 418,
+"targetId": 33295,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1126,
+"actionId": 128,
+"targetId": 33296,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1127,
+"actionId": 426,
+"targetId": 33296,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1128,
+"actionId": 115,
+"targetId": 33296,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1129,
+"actionId": 128,
+"targetId": 33297,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1130,
+"actionId": 426,
+"targetId": 33297,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1131,
+"actionId": 428,
+"targetId": 33297,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1132,
+"actionId": 128,
+"targetId": 33298,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1133,
+"actionId": 428,
+"targetId": 33298,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1134,
+"actionId": 138,
+"targetId": 33298,
+"progressionPerLevelRange": [
+[
+100.0,
+0.4
+],
+[
+200.0,
+0.2
+]
+]
+},
+{
+"id": 1135,
+"actionId": 128,
+"targetId": 33299,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1136,
+"actionId": 428,
+"targetId": 33299,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1137,
+"actionId": 212,
+"targetId": 33299,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1138,
+"actionId": 128,
+"targetId": 33300,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1139,
+"actionId": 428,
+"targetId": 33300,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1140,
+"actionId": 211,
+"targetId": 33300,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1141,
+"actionId": 128,
+"targetId": 33301,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1142,
+"actionId": 428,
+"targetId": 33301,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1143,
+"actionId": 210,
+"targetId": 33301,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1144,
+"actionId": 128,
+"targetId": 33302,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1145,
+"actionId": 428,
+"targetId": 33302,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1146,
+"actionId": 213,
+"targetId": 33302,
+"progressionPerLevelRange": [
+[
+100.0,
+0.08
+],
+[
+200.0,
+0.02
+]
+]
+},
+{
+"id": 1147,
+"actionId": 128,
+"targetId": 33303,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1148,
+"actionId": 428,
+"targetId": 33303,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1149,
+"actionId": 752,
+"targetId": 33303,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1150,
+"actionId": 128,
+"targetId": 33304,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1151,
+"actionId": 428,
+"targetId": 33304,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1152,
+"actionId": 753,
+"targetId": 33304,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1153,
+"actionId": 128,
+"targetId": 33305,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1154,
+"actionId": 428,
+"targetId": 33305,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1155,
+"actionId": 160,
+"targetId": 33305,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1156,
+"actionId": 128,
+"targetId": 33306,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1157,
+"actionId": 428,
+"targetId": 33306,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1158,
+"actionId": 161,
+"targetId": 33306,
+"progressionPerLevelRange": [
+[
+100.0,
+0.3
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1159,
+"actionId": 128,
+"targetId": 33307,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1160,
+"actionId": 428,
+"targetId": 33307,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1161,
+"actionId": 418,
+"targetId": 33307,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1162,
+"actionId": 128,
+"targetId": 33308,
+"progressionPerLevelRange": [
+[
+100.0,
+0.01
+],
+[
+200.0,
+0.0
+]
+]
+},
+{
+"id": 1163,
+"actionId": 428,
+"targetId": 33308,
+"progressionPerLevelRange": [
+[
+100.0,
+0.2
+],
+[
+200.0,
+0.1
+]
+]
+},
+{
+"id": 1164,
+"actionId": 115,
+"targetId": 33308,
+"progressionPerLevelRange": [
+[
+100.0,
+0.06
+],
+[
+200.0,
+0.02
+]
+]
+}
+]
+}

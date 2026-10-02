@@ -1,0 +1,451 @@
+{
+ "source": "https://api.dofusdb.fr/almanax-calendars (DofusDB, fetched 2026-10-01), filtered to breeding/job related entries",
+ "data": [
+  {
+   "id": 2,
+   "dates": [
+    "21/06/*",
+    "22/06/*",
+    "23/06/*",
+    "24/06/*",
+    "25/06/*",
+    "26/06/*",
+    "27/06/*",
+    "28/06/*",
+    "29/06/*",
+    "30/06/*",
+    "*/07/*",
+    "*/08/*",
+    "01/09/*",
+    "02/09/*",
+    "03/09/*",
+    "04/09/*",
+    "05/09/*",
+    "06/09/*",
+    "07/09/*",
+    "08/09/*",
+    "09/09/*",
+    "10/09/*",
+    "11/09/*",
+    "12/09/*",
+    "13/09/*",
+    "14/09/*",
+    "15/09/*",
+    "16/09/*",
+    "17/09/*",
+    "18/09/*",
+    "19/09/*",
+    "20/09/*",
+    "21/09/*"
+   ],
+   "name": "Challenges augmentés et expérience des métiers",
+   "desc": "Les bonus apportés par les challenges réussis sont augmentés de 75 %. De plus, Les gains d'expérience sont augmentés de 25 % pour tous les métiers.",
+   "bonusesIds": [
+    4,
+    518
+   ]
+  },
+  {
+   "id": 25,
+   "dates": [
+    "10/10/*"
+   ],
+   "name": "Montures sages",
+   "desc": "Toutes les montures qui naissent ce jour auront la capacité Sage.",
+   "bonusesIds": [
+    540
+   ]
+  },
+  {
+   "id": 37,
+   "dates": [
+    "22/10/*"
+   ],
+   "name": "Expérience des métiers",
+   "desc": "Les gains d'expérience sont augmentés de 50 % pour les Bûcherons, les Mineurs, les Alchimistes et les Éleveurs.",
+   "bonusesIds": [
+    322
+   ]
+  },
+  {
+   "id": 47,
+   "dates": [
+    "08/10/2012",
+    "14/10/2013",
+    "13/10/2014",
+    "12/10/2015",
+    "10/10/2016",
+    "09/10/2017",
+    "08/10/2018",
+    "13/10/2025",
+    "14/10/2024",
+    "09/10/2023",
+    "10/10/2022",
+    "11/10/2021",
+    "12/10/2020",
+    "14/10/2019",
+    "12/10/2026",
+    "11/10/2027",
+    "09/10/2028",
+    "08/10/2029",
+    "14/10/2030",
+    "13/10/2031",
+    "11/10/2032",
+    "10/10/2033",
+    "09/10/2034",
+    "08/10/2035"
+   ],
+   "name": "Génération montante",
+   "desc": "Lors des accouplements de montures, un bonus de 20 % est ajouté aux chances d'obtenir la génération cible.",
+   "bonusesIds": [
+    542
+   ]
+  },
+  {
+   "id": 57,
+   "dates": [
+    "10/11/*"
+   ],
+   "name": "Montures précoces",
+   "desc": "Toutes les montures qui naissent ce jour auront la capacité Précoce.",
+   "bonusesIds": [
+    541
+   ]
+  },
+  {
+   "id": 80,
+   "dates": [
+    "02/12/*"
+   ],
+   "name": "Expérience des métiers",
+   "desc": "Les gains d'expérience sont augmentés de 50 % pour les Bricoleurs, les Forgerons, les Sculpteurs  et les Façonneurs.",
+   "bonusesIds": [
+    515
+   ]
+  },
+  {
+   "id": 88,
+   "dates": [
+    "10/12/*"
+   ],
+   "name": "Efficacité des enclos",
+   "desc": "Dans les enclos, l'effet des dragofesses est doublé.",
+   "bonusesIds": [
+    537
+   ]
+  },
+  {
+   "id": 113,
+   "dates": [
+    "02/09/*"
+   ],
+   "name": "Vitalité débordante",
+   "desc": "La régénération des Points de Vie est augmentée de 300 % (hors combat), et les soins par consommables (vie et énergie) sont augmentés de 100 %.",
+   "bonusesIds": [
+    158,
+    159,
+    505
+   ]
+  },
+  {
+   "id": 121,
+   "dates": [
+    "10/09/*"
+   ],
+   "name": "Efficacité des enclos",
+   "desc": "Dans les enclos, l'effet des caresseurs est doublé.",
+   "bonusesIds": [
+    536
+   ]
+  },
+  {
+   "id": 122,
+   "dates": [
+    "11/09/*"
+   ],
+   "name": "Points d'expérience",
+   "desc": "Les gains d'expérience sont augmentés de 75 % dans la zone du Territoire des Dragodindes Sauvages.",
+   "bonusesIds": [
+    119
+   ]
+  },
+  {
+   "id": 129,
+   "dates": [
+    "22/09/*",
+    "23/09/*",
+    "24/09/*",
+    "25/09/*",
+    "26/09/*",
+    "27/09/*",
+    "28/09/*",
+    "29/09/*",
+    "30/09/*",
+    "*/10/*",
+    "*/11/*",
+    "01/12/*",
+    "02/12/*",
+    "03/12/*",
+    "04/12/*",
+    "05/12/*",
+    "06/12/*",
+    "07/12/*",
+    "08/12/*",
+    "09/12/*",
+    "10/12/*",
+    "11/12/*",
+    "12/12/*",
+    "13/12/*",
+    "14/12/*",
+    "15/12/*",
+    "16/12/*",
+    "17/12/*",
+    "18/12/*",
+    "19/12/*",
+    "20/12/*"
+   ],
+   "name": "Challenges augmentés et expérience des métiers",
+   "desc": "Les bonus apportés par les challenges réussis sont augmentés de 75 %. De plus, Les gains d'expérience sont augmentés de 25 % pour tous les métiers.",
+   "bonusesIds": [
+    4,
+    518
+   ]
+  },
+  {
+   "id": 130,
+   "dates": [
+    "21/12/*",
+    "22/12/*",
+    "23/12/*",
+    "24/12/*",
+    "25/12/*",
+    "26/12/*",
+    "27/12/*",
+    "28/12/*",
+    "29/12/*",
+    "30/12/*",
+    "31/12/*",
+    "*/01/*",
+    "*/02/*",
+    "01/03/*",
+    "02/03/*",
+    "03/03/*",
+    "04/03/*",
+    "05/03/*",
+    "06/03/*",
+    "07/03/*",
+    "08/03/*",
+    "09/03/*",
+    "10/03/*",
+    "11/03/*",
+    "12/03/*",
+    "13/03/*",
+    "14/03/*",
+    "15/03/*",
+    "16/03/*",
+    "17/03/*",
+    "18/03/*",
+    "19/03/*"
+   ],
+   "name": "Challenges augmentés et expérience des métiers",
+   "desc": "Les bonus apportés par les challenges réussis sont augmentés de 75 %. De plus, Les gains d'expérience sont augmentés de 25 % pour tous les métiers.",
+   "bonusesIds": [
+    4,
+    518
+   ]
+  },
+  {
+   "id": 131,
+   "dates": [
+    "20/03/*",
+    "21/03/*",
+    "22/03/*",
+    "23/03/*",
+    "24/03/*",
+    "25/03/*",
+    "26/03/*",
+    "27/03/*",
+    "28/03/*",
+    "29/03/*",
+    "30/03/*",
+    "31/03/*",
+    "*/04/*",
+    "*/05/*",
+    "01/06/*",
+    "02/06/*",
+    "03/06/*",
+    "04/06/*",
+    "05/06/*",
+    "06/06/*",
+    "07/06/*",
+    "08/06/*",
+    "09/06/*",
+    "10/06/*",
+    "11/06/*",
+    "12/06/*",
+    "13/06/*",
+    "14/06/*",
+    "15/06/*",
+    "16/06/*",
+    "17/06/*",
+    "18/06/*",
+    "19/06/*",
+    "20/06/*"
+   ],
+   "name": "Challenges augmentés et expérience des métiers",
+   "desc": "Les bonus apportés par les challenges réussis sont augmentés de 75 %. De plus, Les gains d'expérience sont augmentés de 25 % pour tous les métiers.",
+   "bonusesIds": [
+    4,
+    518
+   ]
+  },
+  {
+   "id": 141,
+   "dates": [
+    "10/01/*"
+   ],
+   "name": "Efficacité des enclos",
+   "desc": "Dans les enclos, l'effet des abreuvoirs est doublé.",
+   "bonusesIds": [
+    532
+   ]
+  },
+  {
+   "id": 172,
+   "dates": [
+    "10/02/*"
+   ],
+   "name": "Montures endurantes",
+   "desc": "Toutes les montures qui naissent ce jour auront la capacité Endurante.",
+   "bonusesIds": [
+    538
+   ]
+  },
+  {
+   "id": 191,
+   "dates": [
+    "29/02/*"
+   ],
+   "name": "Points d'expérience et butin pour tous",
+   "desc": "Les gains d'expérience et les chances d'obtenir du butin sont augmentés de 75 % lors des combats contre les monstres. De plus, les gains d'expérience sont augmentés de 50 % pour tous les métiers.",
+   "bonusesIds": [
+    189,
+    188,
+    2
+   ]
+  },
+  {
+   "id": 202,
+   "dates": [
+    "10/03/*"
+   ],
+   "name": "Efficacité des enclos",
+   "desc": "Dans les enclos, l'effet des foudroyeurs est doublé.",
+   "bonusesIds": [
+    533
+   ]
+  },
+  {
+   "id": 225,
+   "dates": [
+    "01/04/*"
+   ],
+   "name": "Points d'expérience et butin sur les créatures marines",
+   "desc": "Les gains d'expérience et les chances d'obtenir du butin sont augmentés de 50 % sur tous les monstres considérés comme des créatures marines (pichons, monstres des plages, corailleurs, crustorails, tortues de Moon, muldos sauvages, crabe Hijacob, gélikan, Kralamoure Géant, monstres des abysses de Sufokia, Mercemers, Submergés, Crocodailles de Crocuzko).",
+   "bonusesIds": [
+    220,
+    221
+   ]
+  },
+  {
+   "id": 234,
+   "dates": [
+    "10/04/*"
+   ],
+   "name": "Efficacité des enclos",
+   "desc": "Dans les enclos, l'effet des baffeurs est doublé.",
+   "bonusesIds": [
+    534
+   ]
+  },
+  {
+   "id": 256,
+   "dates": [
+    "01/05/*"
+   ],
+   "name": "Fabrique Féérique",
+   "desc": "Les gains d'expérience sont augmentés de 50 % pour tous les métiers. De plus, pour chaque Fée d'Artifice fabriquée, les personnages ont 25 % de chances de créer une seconde Fée et 15 % de chances d'économiser des ingrédients. Ils peuvent aussi récupérer 2 fois plus de Capsules Explosives en combattant des Bworks Mages.",
+   "bonusesIds": [
+    2,
+    253,
+    254
+   ]
+  },
+  {
+   "id": 265,
+   "dates": [
+    "10/05/*"
+   ],
+   "name": "Économie d'ingrédients",
+   "desc": "Les Éleveurs économisent 15 % de leurs ingrédients lorsqu'ils fabriquent des objets.",
+   "bonusesIds": [
+    543
+   ]
+  },
+  {
+   "id": 266,
+   "dates": [
+    "11/05/*"
+   ],
+   "name": "Expérience des métiers",
+   "desc": "Les gains d'expérience sont augmentés de 50 % pour les métiers de forgemagie d'armes (Forgemage et Sculptemage).",
+   "bonusesIds": [
+    531
+   ]
+  },
+  {
+   "id": 276,
+   "dates": [
+    "21/05/*"
+   ],
+   "name": "Expérience des métiers",
+   "desc": "Les gains d'expérience sont augmentés de 50 % pour les métiers de fabrication de vêtements et de parures (Bijoutier, Cordonnier et Tailleur).",
+   "bonusesIds": [
+    206
+   ]
+  },
+  {
+   "id": 298,
+   "dates": [
+    "10/06/*"
+   ],
+   "name": "Efficacité des enclos",
+   "desc": "Dans les enclos, l'effet des mangeoires est doublé.",
+   "bonusesIds": [
+    535
+   ]
+  },
+  {
+   "id": 328,
+   "dates": [
+    "10/07/*"
+   ],
+   "name": "Montures amoureuses",
+   "desc": "Toutes les montures qui naissent ce jour auront la capacité Amoureuse.",
+   "bonusesIds": [
+    539
+   ]
+  },
+  {
+   "id": 359,
+   "dates": [
+    "10/08/*"
+   ],
+   "name": "Fabrication intensive",
+   "desc": "Pour chaque objet fabriqué, les Éleveurs ont 25 % de chances de créer un second objet.",
+   "bonusesIds": [
+    544
+   ]
+  }
+ ]
+}

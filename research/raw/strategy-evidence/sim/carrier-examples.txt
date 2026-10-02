@@ -1,0 +1,71 @@
+== PORTEUR Dragodinde Dorée (parents Dorée+Émeraude) x Rousse sauvage | levels 1 1 | opti False | target gen 10
+   Dragodinde Émeraude et Rousse            G10  30.30%  genetons 2
+   Dragodinde Rousse                        G1  29.38%  genetons 0
+   Dragodinde Émeraude                      G9  18.45%  genetons 0
+   Dragodinde Dorée                         G1  10.93%  genetons 0
+   Dragodinde Dorée et Rousse               G2  10.93%  genetons 0
+== STANDARD Émeraude (arbre standard) x Dorée sauvage | levels 1 1 | opti False | target gen 10
+   Dragodinde Dorée                         G1  34.85%  genetons 0
+   Dragodinde Dorée et Émeraude             G10  30.30%  genetons 251
+   Dragodinde Émeraude                      G9  27.51%  genetons 0
+   Dragodinde Ivoire et Turquoise           G8   3.67%  genetons 0
+   Dragodinde Ivoire et Pourpre             G8   3.67%  genetons 0
+== PORTEUR Dragodinde Dorée (parents Dorée+Émeraude) x Rousse sauvage | levels 40 40 | opti False | target gen 10
+   Dragodinde Émeraude et Rousse            G10  42.00%  genetons 2
+   Dragodinde Rousse                        G1  24.45%  genetons 0
+   Dragodinde Émeraude                      G9  15.35%  genetons 0
+   Dragodinde Dorée                         G1   9.10%  genetons 0
+   Dragodinde Dorée et Rousse               G2   9.10%  genetons 0
+== STANDARD Émeraude (arbre standard) x Dorée sauvage | levels 40 40 | opti False | target gen 10
+   Dragodinde Dorée et Émeraude             G10  42.00%  genetons 251
+   Dragodinde Dorée                         G1  29.00%  genetons 0
+   Dragodinde Émeraude                      G9  22.89%  genetons 0
+   Dragodinde Ivoire et Turquoise           G8   3.05%  genetons 0
+   Dragodinde Ivoire et Pourpre             G8   3.05%  genetons 0
+== PORTEUR Muldo Doré (parents Doré+Corail) x Pourpre sauvage | levels 40 40 | opti False | target gen 10
+   Muldo Corail et Pourpre                  G10  42.00%  genetons 2
+   Muldo Pourpre                            G1  19.84%  genetons 0
+   Muldo Doré                               G1  18.32%  genetons 0
+   Muldo Doré et Pourpre                    G2  18.32%  genetons 0
+   Muldo Corail                             G9   1.53%  genetons 0
+== PORTEUR Muldo Doré(Corail) x Pourpre et Ivoire (2 cibles G10) | levels 40 40 | opti False | target gen 10
+   Muldo Corail et Pourpre                  G10  21.00%  genetons 31
+   Muldo Corail et Ivoire                   G10  21.00%  genetons 31
+   Muldo Doré                               G1  19.27%  genetons 0
+   Muldo Pourpre                            G1   8.81%  genetons 0
+   Muldo Ivoire                             G5   8.81%  genetons 0
+   Muldo Doré et Pourpre                    G2   8.13%  genetons 0
+   Muldo Doré et Ivoire                     G6   8.13%  genetons 0
+   Muldo Pourpre et Ivoire                  G6   3.26%  genetons 0
+   Muldo Corail                             G9   1.61%  genetons 0
+== PORTEUR Volkorne Pourpre (parents Pourpre+Jade) x Indigo sauvage | levels 40 40 | opti False | target gen 10
+   Volkorne Jade et Indigo                  G10  42.00%  genetons 2
+   Volkorne Indigo                          G1  21.27%  genetons 0
+   Volkorne Pourpre                         G1  15.47%  genetons 0
+   Volkorne Pourpre et Indigo               G2  15.47%  genetons 0
+   Volkorne Jade                            G9   5.80%  genetons 0
+== G10 x G10 (dernier accouplement avant sortie) | levels 40 40 | opti False | target gen 10
+   Dragodinde Émeraude                      G9  21.81%  genetons 0
+   Dragodinde Prune                         G9  14.65%  genetons 0
+   Dragodinde Rousse                        G1  14.65%  genetons 0
+   Dragodinde Prune et Émeraude             G10  11.38%  genetons 0
+   Dragodinde Émeraude et Rousse            G10  11.38%  genetons 0
+   Dragodinde Dorée et Émeraude             G10   9.99%  genetons 0
+   Dragodinde Prune et Rousse               G10   6.71%  genetons 0
+   Dragodinde Dorée                         G1   4.85%  genetons 0
+   Dragodinde Prune et Dorée                G10   2.53%  genetons 0
+   Dragodinde Dorée et Rousse               G2   2.04%  genetons 0
+== DILUTION: Pourpre dont les parents sont G6 (>= génération cible) | levels 40 40 | opti False | target gen 6
+   Dragodinde Orchidée et Pourpre           G6  36.70%  genetons 0
+   Dragodinde Orchidée                      G5  25.59%  genetons 0
+   Dragodinde Pourpre                       G5  25.59%  genetons 0
+   Dragodinde Indigo et Pourpre             G6   5.30%  genetons 0
+   Dragodinde Dorée et Rousse               G2   3.41%  genetons 0
+   Dragodinde Ébène et Indigo               G4   3.41%  genetons 0
+== PROPRE: Pourpre issue de la recette standard | levels 40 40 | opti False | target gen 6
+   Dragodinde Orchidée et Pourpre           G6  42.00%  genetons 30
+   Dragodinde Orchidée                      G5  22.96%  genetons 0
+   Dragodinde Pourpre                       G5  22.96%  genetons 0
+   Dragodinde Ébène et Indigo               G4   6.04%  genetons 0
+   Dragodinde Dorée et Rousse               G2   3.02%  genetons 0
+   Dragodinde Amande et Rousse              G2   3.02%  genetons 0

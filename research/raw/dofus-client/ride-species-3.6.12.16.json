@@ -1,0 +1,22 @@
+{
+"source": "Ankama Dofus 3 client 3.6.12.16 (RideSpeciesDataRoot)",
+"extractedAt": "2026-10-01",
+"count": 3,
+"data": [
+{
+"id": 1,
+"nameId": 1166800,
+"extractionRewardGid": 33515
+},
+{
+"id": 2,
+"nameId": 1166801,
+"extractionRewardGid": 17864
+},
+{
+"id": 3,
+"nameId": 1166802,
+"extractionRewardGid": 19975
+}
+]
+}
