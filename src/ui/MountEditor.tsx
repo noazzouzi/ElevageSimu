@@ -29,6 +29,49 @@ export function SerenitySmiley({ serenity, withValue = false }: { serenity: numb
   )
 }
 
+/**
+ * Choix rapide de la sérénité d'après le smiley vu en jeu (rouge :C, bleu :(, violet :), vert :D).
+ * Un smiley de la zone actuelle garde la valeur exacte ; un autre la remplace par le milieu de la zone
+ * (`SERENITY_BAND_MIDPOINT`, estimation). `value: null` = inconnue (bouton « ? » si `allowUnknown`).
+ */
+export function SmileyPicker({
+  value,
+  onChange,
+  label,
+  allowUnknown = false,
+  mixed = false,
+}: {
+  value: number | null
+  onChange: (v: number | null) => void
+  label: string
+  allowUnknown?: boolean
+  /** Valeurs différentes (choix groupé) : aucun bouton enfoncé. */
+  mixed?: boolean
+}) {
+  const current = mixed || value === null ? null : serenitySmiley(value).band
+  return (
+    <span className="mt-band-buttons mt-smiley-picker" role="group" aria-label={label}>
+      {SERENITY_BANDS.map((b) => (
+        <button
+          key={b}
+          type="button"
+          className={`btn small mt-band-btn ${SERENITY_SMILEYS[b].color}${current === b ? ' on' : ''}`}
+          aria-pressed={current === b}
+          title={`${SERENITY_SMILEYS[b].label} — valeur approchée ${formatNumber(SERENITY_BAND_MIDPOINT[b])}`}
+          onClick={() => onChange(current === b && value !== null ? value : SERENITY_BAND_MIDPOINT[b])}
+        >
+          {SERENITY_SMILEYS[b].face}
+        </button>
+      ))}
+      {allowUnknown && (
+        <button type="button" className={`btn small mt-band-btn${!mixed && value === null ? ' on' : ''}`} aria-pressed={!mixed && value === null} title="Sérénité inconnue" onClick={() => onChange(null)}>
+          ?
+        </button>
+      )}
+    </span>
+  )
+}
+
 const GAUGE_COLORS = { endurance: 'var(--g-foudroyeur)', maturity: 'var(--g-abreuvoir)', love: 'var(--g-dragofesse)' } as const
 
 /** Trois mini-barres Endurance / Maturité / Amour (0 … 20 000). */
@@ -50,13 +93,21 @@ export function GaugeBars({ mount }: { mount: Pick<Mount, 'endurance' | 'maturit
   )
 }
 
-/** Fenêtre modale accessible (Échap pour fermer). */
+/**
+ * Fenêtre modale accessible (Échap pour fermer). Le focus va au premier champ à l'ouverture seulement,
+ * et revient à l'élément précédent à la fermeture : un nouveau rendu du parent (nouvelle fonction
+ * `onClose`, minuterie…) ne déplace jamais le focus pendant la saisie.
+ */
 export function Modal({ title, onClose, children, footer, wide }: { title: ReactNode; onClose: () => void; children: ReactNode; footer?: ReactNode; wide?: boolean }) {
   const titleId = useId()
   const ref = useRef<HTMLDivElement>(null)
+  const closeRef = useRef(onClose)
+  useEffect(() => {
+    closeRef.current = onClose
+  }, [onClose])
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') closeRef.current()
     }
     window.addEventListener('keydown', onKey)
     const prev = document.activeElement as HTMLElement | null
@@ -66,7 +117,7 @@ export function Modal({ title, onClose, children, footer, wide }: { title: React
       window.removeEventListener('keydown', onKey)
       prev?.focus?.()
     }
-  }, [onClose])
+  }, [])
   return (
     <div className="mt-modal-backdrop">
       <div className={`mt-modal card${wide ? ' wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId} ref={ref}>

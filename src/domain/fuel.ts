@@ -109,7 +109,9 @@ export interface FuelOption {
 }
 
 export function fuelOption(fuel: FuelRecipe, ctx: PriceContext, opts: FuelOpts): FuelOption {
-  const resolved = resolvePrice(fuel.id, ctx)
+  // Niveau d'Éleveur du joueur (ECO-12) : une recette hors de portée prend le prix HDV s'il existe ;
+  // sinon son coût de craft reste affiché, signalé `craftPriceOnly`.
+  const resolved = resolvePrice(fuel.id, ctx.jobLevel === undefined ? { ...ctx, jobLevel: opts.jobLevel } : ctx)
   const durability = fuelDurability(fuel, opts.rules)
   const unitPrice = resolved.price
   const canCraft = opts.jobLevel >= fuel.level
@@ -332,7 +334,7 @@ export interface FillPlan {
   steps: FillStep[]
   items: FillPlanItem[]
   count: number
-  /** Coût total (borne basse si incomplet). */
+  /** Coût total (borne basse si incomplet ; null si rien n'est chiffré). */
   cost: number | null
   complete: boolean
   /** Points perdus au-delà des plafonds. */
@@ -340,11 +342,28 @@ export interface FillPlan {
   /** Points au-delà de l'objectif (restent dans la jauge, non perdus). */
   overshoot: number
   feasible: boolean
+  /** Objets à chiffrer (ingrédients manquants, ou le carburant lui-même). */
   missing: number[]
+  /**
+   * Plan incomplet seulement : même remplissage avec des carburants entièrement chiffrés, quitte à
+   * prendre une famille supérieure (souvent un Élixir estimé). Son coût est une BORNE HAUTE du coût
+   * réel (on peut toujours acheter ces carburants) — à afficher comme telle, jamais comme le coût.
+   * null si aucun plan chiffré n'existe ou si le plan est complet.
+   */
+  upperBound: FillPlan | null
 }
 
-/** Vecteur de coût comparé dans l'ordre : [objets non chiffrés, kamas, gaspillage, nombre d'objets]. */
-type CostVec = [number, number, number, number]
+/** Famille minimale pour déposer à ce niveau : plus petit palier dont le plafond est au-dessus du niveau. */
+export function sliceTier(level: number, rules: Ruleset): FuelTier {
+  for (const t of FUEL_TIERS) if (level < rules.gaugeTierMax[t]) return t
+  return 4
+}
+
+/**
+ * Vecteur de coût comparé dans l'ordre : [objets non chiffrés, kamas des objets chiffrés, gaspillage,
+ * dépassement de l'objectif, nombre d'objets, coût partiel connu des objets non chiffrés].
+ */
+type CostVec = [number, number, number, number, number, number]
 
 function lessThan(a: CostVec, b: CostVec): boolean {
   for (let i = 0; i < a.length; i++) {
@@ -353,37 +372,17 @@ function lessThan(a: CostVec, b: CostVec): boolean {
   return false
 }
 
-/**
- * Plan le moins cher pour faire passer une jauge de `from` à `to` : chaque dépôt respecte le plafond
- * de son palier (donc chaque tranche est remplie par un carburant de palier ≥ celui de la tranche).
- * Critères dans l'ordre : objets chiffrés d'abord, kamas, gaspillage, nombre d'objets.
- */
-export function fillPlan(gauge: GaugeId, from: number, to: number, ctx: PriceContext, opts: BestFuelOpts): FillPlan {
-  const max = opts.rules.gaugeTierMax[4]
-  const start = Math.max(0, Math.min(max, Math.floor(from)))
-  const goal = Math.max(0, Math.min(max, Math.ceil(to)))
-  const options = fuelsOf(gauge)
-    .map((f) => fuelOption(f, ctx, opts))
-    .filter((o) => !(opts.craftableOnly && o.craftPriceOnly))
-  const empty: FillPlan = {
-    gauge,
-    from: start,
-    to: goal,
-    reached: start,
-    steps: [],
-    items: [],
-    count: 0,
-    cost: 0,
-    complete: true,
-    waste: 0,
-    overshoot: 0,
-    feasible: true,
-    missing: [],
-  }
-  if (start >= goal) return empty
+const isPriced = (o: FuelOption) => o.complete && o.unitPrice !== null
 
-  // Dijkstra lexicographique sur les niveaux de jauge atteignables (quelques centaines d'états).
-  const dist = new Map<number, CostVec>([[start, [0, 0, 0, 0]]])
+/** Dijkstra lexicographique de `start` à `goal` ; `allowed(t)` = carburants autorisés dans la tranche de famille t. */
+function searchFill(
+  gauge: GaugeId,
+  start: number,
+  goal: number,
+  allowed: (t: FuelTier) => FuelOption[],
+  rules: Ruleset,
+): FillPlan | null {
+  const dist = new Map<number, CostVec>([[start, [0, 0, 0, 0, 0, 0]]])
   const prev = new Map<number, { from: number; option: FuelOption; wasted: number }>()
   const done = new Set<number>()
   let reached: number | null = null
@@ -397,11 +396,18 @@ export function fillPlan(gauge: GaugeId, from: number, to: number, ctx: PriceCon
       break
     }
     const dv = dist.get(v)!
-    for (const o of options) {
-      const r = depositFuel(v, o.fuel, opts.rules)
+    for (const o of allowed(sliceTier(v, rules))) {
+      const r = depositFuel(v, o.fuel, rules)
       if (!r || r.added <= 0) continue
-      const priced = o.complete && o.unitPrice !== null
-      const nd: CostVec = [dv[0] + (priced ? 0 : 1), dv[1] + (o.unitPrice ?? 0), dv[2] + r.wasted, dv[3] + 1]
+      const priced = isPriced(o)
+      const nd: CostVec = [
+        dv[0] + (priced ? 0 : 1),
+        dv[1] + (priced ? o.unitPrice! : 0),
+        dv[2] + r.wasted,
+        dv[3] + (r.value >= goal ? r.value - goal : 0),
+        dv[4] + 1,
+        dv[5] + (priced ? 0 : (o.unitPrice ?? 0)),
+      ]
       const cur = dist.get(r.value)
       if (!done.has(r.value) && (!cur || lessThan(nd, cur))) {
         dist.set(r.value, nd)
@@ -409,7 +415,7 @@ export function fillPlan(gauge: GaugeId, from: number, to: number, ctx: PriceCon
       }
     }
   }
-  if (reached === null) return { ...empty, cost: null, complete: false, feasible: false }
+  if (reached === null) return null
 
   const path: { from: number; to: number; option: FuelOption; wasted: number }[] = []
   for (let v = reached; v !== start; ) {
@@ -441,7 +447,7 @@ export function fillPlan(gauge: GaugeId, from: number, to: number, ctx: PriceCon
   for (const it of items) {
     it.subtotal = it.option.unitPrice === null ? null : it.option.unitPrice * it.count
     cost += it.subtotal ?? 0
-    if (!it.option.complete) {
+    if (!isPriced(it.option)) {
       complete = false
       missing.push(...(it.option.missing.length ? it.option.missing : [it.option.fuel.id]))
     }
@@ -460,7 +466,81 @@ export function fillPlan(gauge: GaugeId, from: number, to: number, ctx: PriceCon
     overshoot: reached - goal,
     feasible: true,
     missing: [...new Set(missing)],
+    upperBound: null,
   }
+}
+
+/**
+ * Plan de dépôts pour faire passer une jauge de `from` à `to`. Chaque dépôt respecte le plafond de
+ * sa famille (un Extrait ne se dépose que sous 40 000…), et chaque tranche est remplie avec la
+ * FAMILLE MINIMALE qui le permet (Extrait sous le plafond du palier 1, Philtre jusqu'au palier 2…).
+ * Une famille supérieure n'est prise dans une tranche que si elle est chiffrée et pas plus chère au
+ * point qu'un carburant chiffré de la famille de la tranche (à défaut, d'une famille inférieure) —
+ * jamais parce qu'elle serait la seule chiffrée. Si la famille de la tranche n'est pas chiffrée, le plan la garde (« prix à saisir »,
+ * `complete: false`, coût = borne basse) et `upperBound` donne le plan chiffré de famille supérieure
+ * (borne haute).
+ * Critères, dans l'ordre : objets chiffrés d'abord, kamas, gaspillage, dépassement de l'objectif,
+ * nombre d'objets, puis coût partiel connu (simple départage).
+ * `craftableOnly` : un prix « craft » d'un carburant que le joueur ne sait pas fabriquer compte comme
+ * non chiffré.
+ */
+export function fillPlan(gauge: GaugeId, from: number, to: number, ctx: PriceContext, opts: BestFuelOpts): FillPlan {
+  const max = opts.rules.gaugeTierMax[4]
+  const start = Math.max(0, Math.min(max, Math.floor(from)))
+  const goal = Math.max(0, Math.min(max, Math.ceil(to)))
+  const options = fuelsOf(gauge).map((f) => {
+    const o = fuelOption(f, ctx, opts)
+    return opts.craftableOnly && o.craftPriceOnly ? { ...o, complete: false, unitPrice: null, costPerPoint: null, missing: [o.fuel.id] } : o
+  })
+  const empty: FillPlan = {
+    gauge,
+    from: start,
+    to: goal,
+    reached: start,
+    steps: [],
+    items: [],
+    count: 0,
+    cost: 0,
+    complete: true,
+    waste: 0,
+    overshoot: 0,
+    feasible: true,
+    missing: [],
+    upperBound: null,
+  }
+  if (start >= goal) return empty
+
+  // Référence de chaque tranche : coût au point du carburant chiffré le moins cher de la famille de la
+  // tranche ; si elle n'a aucun prix, celui des familles inférieures (une famille supérieure moins chère
+  // au point qu'une famille inférieure chiffrée est une vraie bonne affaire : les familles inférieures
+  // coûtent normalement moins cher au point). Aucune référence = famille supérieure interdite.
+  const cheapestOf = (pick: (t: FuelTier) => boolean) => {
+    let best: number | undefined
+    for (const o of options) if (pick(o.tier) && isPriced(o) && o.costPerPoint !== null && (best === undefined || o.costPerPoint < best)) best = o.costPerPoint
+    return best
+  }
+  const reference = new Map<FuelTier, number>()
+  for (const t of FUEL_TIERS) {
+    const ref = cheapestOf((x) => x === t) ?? cheapestOf((x) => x < t)
+    if (ref !== undefined) reference.set(t, ref)
+  }
+  const mainAllowed = new Map<FuelTier, FuelOption[]>()
+  const upperAllowed = new Map<FuelTier, FuelOption[]>()
+  for (const t of FUEL_TIERS) {
+    const ref = reference.get(t)
+    mainAllowed.set(
+      t,
+      options.filter((o) => o.tier === t || (o.tier > t && ref !== undefined && isPriced(o) && o.costPerPoint !== null && o.costPerPoint <= ref + 1e-12)),
+    )
+    upperAllowed.set(
+      t,
+      options.filter((o) => o.tier >= t && isPriced(o)),
+    )
+  }
+  const main = searchFill(gauge, start, goal, (t) => mainAllowed.get(t)!, opts.rules)
+  if (!main) return { ...empty, cost: null, complete: false, feasible: false }
+  if (!main.complete) main.upperBound = searchFill(gauge, start, goal, (t) => upperAllowed.get(t)!, opts.rules)
+  return main
 }
 
 // ---------- Poussière d'élevage (héritage) ----------

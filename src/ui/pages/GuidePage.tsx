@@ -20,7 +20,7 @@ import {
   speciesOfFamily,
   type StrategyRule,
 } from '../../data'
-import { almanaxOn, isoDay, upcomingAlmanax } from '../../domain/almanax'
+import { almanaxOn, isoDaysBetween, serverDayChangeIfNotLocalMidnight, upcomingAlmanaxFrom } from '../../domain/almanax'
 import {
   ABILITY_LABELS,
   ANIMAKINA_ODDS,
@@ -44,11 +44,12 @@ import { gaugeDrainSeconds } from '../../domain/paddock'
 import { RULESETS, type Ruleset } from '../../domain/rules'
 import type { Ability, FamilyId, FuelTier, GaugeId, RulesetId } from '../../domain/types'
 import { jobXpForLevel } from '../../domain/xp'
-import { formatDuration, formatKamas, formatNumber, formatPercent } from '../../lib/format'
+import { formatClock, formatDuration, formatInDays, formatIsoDay, formatKamas, formatNumber, formatPercent } from '../../lib/format'
 import { useRules, useSettings } from '../../store/settings'
 import { Badge, Callout, GaugeChip, NumberField, PageHeader } from '../components'
 import { href, useRoute } from '../router'
 import { ConfidenceBadge, GenBadge, SpeciesName } from '../species'
+import { useServerDay } from '../useServerDay'
 import './GuidePage.css'
 
 // ---------- Sommaire ----------
@@ -89,23 +90,10 @@ function strings(x: unknown): string[] {
 /** Nombre formaté avec un vrai signe moins (−5 000). */
 const k = (n: number) => formatNumber(n).replace('-', '−')
 
-const dayFormat = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+/** « lundi 12 octobre 2026 » (date de calendrier, indépendante du fuseau du navigateur). */
+const longDay = (iso: string) => formatIsoDay(iso, { year: true })
 
-function isoToDate(iso: string): Date {
-  const [y, m, d] = iso.split('-').map(Number)
-  return new Date(y, m - 1, d)
-}
-
-function daysUntil(iso: string, now: number): number {
-  const today = isoToDate(isoDay(now))
-  return Math.round((isoToDate(iso).getTime() - today.getTime()) / 86_400_000)
-}
-
-function inDays(n: number): string {
-  if (n === 0) return 'aujourd’hui'
-  if (n === 1) return 'demain'
-  return `dans ${n} jours`
-}
+const inDays = formatInDays
 
 // ---------- Mise en page ----------
 
@@ -994,15 +982,11 @@ function ClonageSection({ rules }: { rules: Ruleset }) {
 
 // ---------- Section : Captures ----------
 
-/** Zone principale des Dragodindes selon la recherche (strategy.md §2.1 : DofusDB + DPLN, confiance haute). */
-const DRAGODINDE_MAIN_ZONE = {
-  subarea: 'Territoire des dragodindes sauvages',
-  area: 'Montagne des Koalaks',
-  x: [-23, -11] as [number, number],
-  y: [-2, 9] as [number, number],
-  zaap: 'Village des Éleveurs',
-  zaapCoords: [-16, 1] as [number, number],
-  note: 'anneau autour du Village des Éleveurs ; seule zone où apparaît la Dorée ; archimonstres Draglida la Disparue et Dragnoute l’Irascible (capturables ou non : inconnu)',
+/** Accès à la zone de capture (recherche : strategy.md §2.1, DofusDB + DPLN). */
+const ZONE_ACCESS: Partial<Record<FamilyId, string>> = {
+  dragodinde: 'Anneau de cartes autour du Village des Éleveurs.',
+  muldo:
+    'Accès : barque du Territoire des Bandits [15,19] puis corde, échelle face au sous-marin de Sufokia [22,19], ou scaphandre de l’atelier des éleveurs de Sufokia [19,23].',
 }
 
 const FAMILY_DANGERS: Record<FamilyId, string> = {
@@ -1040,27 +1024,12 @@ function CapturesSection({ jobLevel }: { jobLevel: number }) {
           const info = FAMILIES[f]
           const z = info.captureZone
           const g1 = SPECIES.filter((s) => s.family === f && s.capturable)
-          const useResearch = f === 'dragodinde' && z?.subarea !== DRAGODINDE_MAIN_ZONE.subarea
+          const special = z?.monsters.filter((mo) => mo.note) ?? []
+          const archis = z?.monsters.filter((mo) => mo.archimonster) ?? []
           return (
             <div key={f} className="guide-zone">
               <h4>{info.plural}</h4>
-              {useResearch ? (
-                <>
-                  <p>
-                    <strong>{DRAGODINDE_MAIN_ZONE.subarea}</strong> ({DRAGODINDE_MAIN_ZONE.area}) <ConfidenceBadge level="high" />
-                    <br />x {range(DRAGODINDE_MAIN_ZONE.x)}, y {range(DRAGODINDE_MAIN_ZONE.y)}
-                    <br />
-                    Zaap : {DRAGODINDE_MAIN_ZONE.zaap} {coords(DRAGODINDE_MAIN_ZONE.zaapCoords)}
-                  </p>
-                  <p className="muted">{DRAGODINDE_MAIN_ZONE.note}.</p>
-                  {z && (
-                    <p className="muted">
-                      DofusDB rattache aussi l’Amande et la Rousse à la {z.subarea} ({z.area}, x {range(z.xRange)}, y {range(z.yRange)}, zaap{' '}
-                      {coords(z.nearestZaap.coords)}) : probable reste de l’ancien système <ConfidenceBadge level="low" />.
-                    </p>
-                  )}
-                </>
-              ) : z ? (
+              {z ? (
                 <>
                   <p>
                     <strong>{z.subarea}</strong> ({z.area})
@@ -1068,10 +1037,16 @@ function CapturesSection({ jobLevel }: { jobLevel: number }) {
                     <br />
                     Zaap : {z.nearestZaap.name} {coords(z.nearestZaap.coords)}
                   </p>
-                  {f === 'muldo' && (
+                  {ZONE_ACCESS[f] && <p className="muted">{ZONE_ACCESS[f]}</p>}
+                  {special.map((mo) => (
+                    <p key={mo.id} className="muted">
+                      <strong>{mo.name}</strong> : {mo.note}.
+                    </p>
+                  ))}
+                  {archis.length > 0 && (
                     <p className="muted">
-                      Accès : barque du Territoire des Bandits [15,19] puis corde, échelle face au sous-marin de Sufokia [22,19], ou scaphandre de
-                      l’atelier des éleveurs de Sufokia [19,23].
+                      Archimonstre{archis.length > 1 ? 's' : ''} : {archis.map((mo) => mo.name).join(', ')} — capturable{archis.length > 1 ? 's' : ''} ou non :
+                      inconnu.
                     </p>
                   )}
                 </>
@@ -1205,15 +1180,17 @@ function MetierSection({ rules, jobLevel }: { rules: Ruleset; jobLevel: number }
 // ---------- Section : Almanax ----------
 
 function AlmanaxSection() {
-  const [now] = useState(() => Date.now())
-  const upcoming = useMemo(() => upcomingAlmanax(now, 120), [now])
-  const today = isoDay(now)
+  // Jour de jeu (heure de Paris), mis à jour à minuit.
+  const today = useServerDay()
+  const upcoming = useMemo(() => upcomingAlmanaxFrom(today, 120), [today])
+  const changeAt = useMemo(() => serverDayChangeIfNotLocalMidnight(today), [today])
   const otherDays = GAME.almanaxCalendar.filter((d) => d.date >= today && !almanaxOn(d.date)).slice(0, 6)
   return (
     <Section id="almanax" title="Almanax">
       <p>
         Le 10 de chaque mois, l’Almanax donne un bonus d’élevage, et un jour d’octobre (date variable) est le jour <strong>Takeza</strong> : +20 % de
-        génération cible pour tous les accouplements. Préparez vos couples féconds la veille.
+        génération cible pour tous les accouplements. Préparez vos couples féconds la veille. Les jours Almanax suivent l’heure des serveurs
+        (Paris){changeAt !== null && <> : chez vous, le jour de jeu change à {formatClock(changeAt, changeAt)}</>}.
       </p>
       <h3>Prochains bonus d’élevage</h3>
       {upcoming.length === 0 ? (
@@ -1223,8 +1200,8 @@ function AlmanaxSection() {
           {upcoming.map((e) => (
             <li key={e.date} className={e.takeza ? 'takeza' : undefined}>
               <span className="guide-almanax-date">
-                {dayFormat.format(isoToDate(e.date))}
-                <small>{inDays(daysUntil(e.date, now))}</small>
+                {longDay(e.date)}
+                <small>{inDays(isoDaysBetween(today, e.date))}</small>
               </span>
               <span>
                 <strong>{e.name}</strong> — {e.effect}
@@ -1259,7 +1236,7 @@ function AlmanaxSection() {
           <ul>
             {otherDays.map((d) => (
               <li key={d.date}>
-                <strong>{dayFormat.format(isoToDate(d.date))}</strong> — {d.name} : {d.effect}
+                <strong>{longDay(d.date)}</strong> — {d.name} : {d.effect}
                 {d.use && <span className="muted"> ({d.use})</span>}
               </li>
             ))}

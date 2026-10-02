@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
+import { DEFAULT_SETTINGS } from '../store/schema'
 import {
   BACKUP_APP,
   BACKUP_VERSION,
+  KNOWN_STORES,
+  STORE_VERSIONS,
   appKeys,
   backupFileName,
   exportAll,
@@ -57,8 +60,27 @@ class FakeStorage implements StorageLike {
   }
 }
 
-const settings = { state: { ruleset: '3.6', jobLevel: 87, server: 'Salar' }, version: 2 }
-const inventory = { state: { mounts: [{ id: 'm-1' }, { id: 'm-2' }, { id: 'm-3' }] }, version: 1 }
+// Données telles que l'application les enregistre (version actuelle, champs complets).
+const settings = { state: { ...DEFAULT_SETTINGS, jobLevel: 87, jobLevelUpdatedAt: 1_790_000_000_000, server: 'Salar' }, version: STORE_VERSIONS['elevagesimu:settings'] }
+/** Monture complète (Muldo Doré G1 = espèce 94). */
+const mountOf = (id: string, patch: Record<string, unknown> = {}) => ({
+  id,
+  speciesId: 94,
+  gender: 'male',
+  level: 1,
+  ability: null,
+  fertility: 'fertile',
+  parents: [],
+  location: { kind: 'etable' },
+  serenity: 0,
+  endurance: 0,
+  maturity: 0,
+  love: 0,
+  createdAt: 1,
+  updatedAt: 1,
+  ...patch,
+})
+const inventory = { state: { mounts: [mountOf('m-1'), mountOf('m-2', { gender: 'femelle' }), mountOf('m-3')] }, version: 1 }
 
 function sampleStorage() {
   return new FakeStorage({
@@ -103,6 +125,14 @@ describe('exportAll', () => {
     expect(b.stores['elevagesimu:settings']).toEqual(settings)
     expect(b.raw).toBeUndefined()
     expect(JSON.stringify(b)).not.toContain('secret')
+  })
+
+  it('exporte les modifications non enregistrées (quota plein) à la place de la valeur stockée', () => {
+    const s = sampleStorage()
+    const newer = JSON.stringify({ state: { mounts: [mountOf('m-9')] }, version: 1 })
+    const b = exportAll(s, new Date('2026-10-02T12:00:00Z'), { 'elevagesimu:inventory': newer, 'autre:cle': '1' })
+    expect((b.stores['elevagesimu:inventory'] as { state: { mounts: { id: string }[] } }).state.mounts.map((m) => m.id)).toEqual(['m-9'])
+    expect(b.stores).not.toHaveProperty('autre:cle')
   })
 
   it('conserve telles quelles les valeurs qui ne sont pas du JSON', () => {
@@ -178,6 +208,98 @@ describe('validateBackup / parseBackup', () => {
       expect(v.warnings.join(' ')).toMatch(/Date/)
       expect(v.backup.exportedAt).toBe('')
     }
+  })
+
+  it('refuse un store enregistré par une version plus récente de l’application (rien n’est importé)', () => {
+    const v = validateBackup({ ...valid(), stores: { ...valid().stores, 'elevagesimu:inventory': { ...inventory, version: 99 } } })
+    expect(v.ok).toBe(false)
+    if (!v.ok) expect(v.error).toMatch(/plus récente/)
+    const target = new FakeStorage()
+    expect(importAll({ ...valid(), stores: { 'elevagesimu:inventory': { ...inventory, version: STORE_VERSIONS['elevagesimu:inventory'] + 1 } } }, { storage: target, reload: false }).ok).toBe(false)
+    expect(appKeys(target)).toEqual([])
+  })
+
+  it('migre un store d’une version plus ancienne (réglages v2 → version actuelle)', () => {
+    const old = { state: { ruleset: '3.6', jobLevel: 87, server: 'Salar' }, version: 2 }
+    const v = validateBackup({ ...valid(), stores: { 'elevagesimu:settings': old } })
+    expect(v.ok).toBe(true)
+    if (!v.ok) return
+    const st = v.backup.stores['elevagesimu:settings'] as { state: Record<string, unknown>; version: number }
+    expect(st.version).toBe(STORE_VERSIONS['elevagesimu:settings'])
+    expect(st.state.jobLevel).toBe(87)
+    expect(st.state.server).toBe('Salar')
+    expect(st.state.family).toBe(DEFAULT_SETTINGS.family)
+    // Niveau saisi avant la migration : daté de la migration (l'XP du journal antérieure n'est pas recomptée).
+    expect(typeof st.state.jobLevelUpdatedAt).toBe('number')
+    expect(st.state.jobLevelUpdatedAt as number).toBeGreaterThan(0)
+  })
+
+  it('normalise les montures mal formées, avec avertissements (au lieu de faire planter les pages)', () => {
+    const mounts = [
+      mountOf('ok'),
+      { id: 'sans-espece' },
+      mountOf('inconnue', { speciesId: 999_999 }),
+      mountOf('cassee', { location: undefined, parents: undefined, gender: 'x', level: 999, serenity: -99_999 }),
+      mountOf('ok'),
+    ]
+    const v = validateBackup({ ...valid(), stores: { 'elevagesimu:inventory': { state: { mounts }, version: 1 } } })
+    expect(v.ok).toBe(true)
+    if (!v.ok) return
+    const out = (v.backup.stores['elevagesimu:inventory'] as { state: { mounts: Record<string, unknown>[] } }).state.mounts
+    expect(out).toHaveLength(3)
+    const fixed = out.find((m) => m.id === 'cassee')
+    expect(fixed).toMatchObject({ location: { kind: 'etable' }, parents: [], gender: 'male', level: 200, serenity: -5_000 })
+    // L'identifiant en double est renouvelé (sinon modifier l'une modifierait l'autre).
+    expect(new Set(out.map((m) => m.id)).size).toBe(3)
+    const w = v.warnings.join(' ')
+    expect(w).toMatch(/2 montures inutilisables ignorées/)
+    expect(w).toMatch(/montures corrigées/)
+    expect(summarizeBackup(v.backup).find((l) => l.key === 'elevagesimu:inventory')?.detail).toBe('3 montures')
+  })
+
+  it('accepte des montures sous forme d’objet, et une liste illisible devient vide avec avertissement', () => {
+    const asObject = validateBackup({ ...valid(), stores: { 'elevagesimu:inventory': { state: { mounts: { a: mountOf('a') } }, version: 1 } } })
+    expect(asObject.ok && (asObject.backup.stores['elevagesimu:inventory'] as { state: { mounts: unknown[] } }).state.mounts).toHaveLength(1)
+    const broken = validateBackup({ ...valid(), stores: { 'elevagesimu:inventory': { state: { mounts: 42 }, version: 1 } } })
+    expect(broken.ok).toBe(true)
+    if (broken.ok) expect(broken.warnings.join(' ')).toMatch(/illisible/)
+  })
+
+  it('normalise des réglages invalides (famille inconnue, palier hors liste, niveau hors bornes)', () => {
+    const bad = { state: { ...settings.state, family: 'dinde', preferredTier: 9, jobLevel: 500, ruleset: '9.9', saleTax: 'beaucoup' }, version: settings.version }
+    const v = validateBackup({ ...valid(), stores: { 'elevagesimu:settings': bad } })
+    expect(v.ok).toBe(true)
+    if (!v.ok) return
+    const st = (v.backup.stores['elevagesimu:settings'] as { state: Record<string, unknown> }).state
+    expect(st).toMatchObject({ family: DEFAULT_SETTINGS.family, preferredTier: DEFAULT_SETTINGS.preferredTier, jobLevel: 200, ruleset: DEFAULT_SETTINGS.ruleset, saleTax: DEFAULT_SETTINGS.saleTax, server: 'Salar' })
+    expect(v.warnings.join(' ')).toMatch(/Réglages : 5 réglages invalides corrigés/)
+  })
+
+  it('retire un prix invalide au lieu de le compter comme 0', () => {
+    const prices = { state: { items: { '1': 10, '2': -5, '3': 'cher', '4': null }, mounts: [], generations: {}, genetonValue: 'x', updatedAt: 3 }, version: 1 }
+    const v = validateBackup({ ...valid(), stores: { 'elevagesimu:prices': prices } })
+    expect(v.ok).toBe(true)
+    if (!v.ok) return
+    const st = (v.backup.stores['elevagesimu:prices'] as { state: Record<string, unknown> }).state
+    expect(st.items).toEqual({ '1': 10 })
+    expect(st.genetonValue).toBeNull()
+    expect(v.warnings.join(' ')).toMatch(/prix invalides retirés/)
+  })
+
+  it('reprend un store sans migration déclarée d’une version plus ancienne (au lieu de le laisser ignorer au chargement)', () => {
+    const v = validateBackup({ ...valid(), stores: { 'elevagesimu:paddocks': { state: { paddocks: [] }, version: 0 } } })
+    expect(v.ok).toBe(true)
+    if (!v.ok) return
+    expect((v.backup.stores['elevagesimu:paddocks'] as { version: number }).version).toBe(STORE_VERSIONS['elevagesimu:paddocks'])
+    expect(v.warnings.join(' ')).toMatch(/format v0 repris/)
+  })
+
+  it('reconnaît et vérifie l’avancement du plan (planProgress)', () => {
+    expect(KNOWN_STORES['elevagesimu:planProgress']).toBeDefined()
+    expect(storeLabel('elevagesimu:planProgress')).not.toMatch(/^Préférences/)
+    expect(validateBackup({ ...valid(), stores: { 'elevagesimu:planProgress': { checked: {} } } }).ok).toBe(false)
+    const v = validateBackup({ ...valid(), stores: { 'elevagesimu:planProgress': { state: { checked: { a: 1, b: 2 }, done: { c: 3 } }, version: 1 } } })
+    expect(v.ok && summarizeBackup(v.backup)[0].detail).toBe('2 cases cochées, 1 conseil fait')
   })
 
   it('refuse un texte qui n’est pas du JSON', () => {

@@ -1,4 +1,6 @@
 import { Component, Suspense, useState, type ErrorInfo, type ReactNode } from 'react'
+import { DueSwitchBanner, PlanAlarms } from './ui/alarms'
+import { DataRecoveryActions } from './ui/components'
 import { PAGES } from './ui/pages/registry'
 import { href, useRoute } from './ui/router'
 
@@ -44,7 +46,12 @@ export default function App() {
           </strong>
         </div>
         <main className="main">
-          <PageBoundary key={page.id} title={page.title}>
+          {/* Alarmes des plans d'enclos : actives quelle que soit la page affichée. */}
+          <AlarmBoundary>
+            <PlanAlarms />
+            <DueSwitchBanner pageId={page.id} />
+          </AlarmBoundary>
+          <PageBoundary key={page.id} title={page.title} routeKey={`${route.page}?${route.params.toString()}`}>
             <Suspense fallback={<p className="muted">Chargement de la page…</p>}>
               <Page />
             </Suspense>
@@ -55,15 +62,37 @@ export default function App() {
   )
 }
 
+/** Filet des alarmes globales : une erreur dans les alarmes ne doit jamais empêcher d'afficher la page. */
+class AlarmBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false }
+
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('Erreur dans les alarmes des enclos', error, info.componentStack)
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children
+  }
+}
+
 /**
  * Filet de sécurité par page : une erreur d'affichage (ou un fichier de page introuvable après une
  * mise à jour du site) n'efface pas toute l'application ; la navigation reste utilisable.
  */
-class PageBoundary extends Component<{ title: string; children: ReactNode }, { error: Error | null }> {
-  state: { error: Error | null } = { error: null }
+class PageBoundary extends Component<{ title: string; routeKey: string; children: ReactNode }, { error: Error | null; routeKey: string }> {
+  state: { error: Error | null; routeKey: string } = { error: null, routeKey: this.props.routeKey }
 
   static getDerivedStateFromError(error: Error) {
     return { error }
+  }
+
+  /** Nouvelle adresse (autre onglet, autre enclos…) : on retente l'affichage au lieu de garder l'erreur. */
+  static getDerivedStateFromProps(props: { routeKey: string }, state: { error: Error | null; routeKey: string }) {
+    return props.routeKey !== state.routeKey ? { error: null, routeKey: props.routeKey } : null
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
@@ -90,6 +119,9 @@ class PageBoundary extends Component<{ title: string; children: ReactNode }, { e
           <a className="btn" href={href('reglages')}>
             Réglages et sauvegarde
           </a>
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <DataRecoveryActions />
         </div>
       </section>
     )

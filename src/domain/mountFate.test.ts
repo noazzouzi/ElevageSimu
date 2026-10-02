@@ -3,6 +3,7 @@ import { mountValuation, type FateValue, type MountPriceContext, type MountState
 import {
   captureBlockers,
   capturedMounts,
+  captureSlots,
   clonePatch,
   extractionQuantity,
   goalPlan,
@@ -11,6 +12,7 @@ import {
   locationKey,
   moveBlockers,
   mountUsefulness,
+  pairForCloning,
   parseLocationKey,
   recommendFate,
   recommendFates,
@@ -379,5 +381,224 @@ describe('inventaire : emplacements, captures, clonage, extraction', () => {
     expect(s.stable).toBe(2)
     expect(s.inventory).toBe(1)
     expect(s.byGeneration.get(1)).toBe(4)
+  })
+})
+
+// ---------- Corrections de la revue (groupe C1) ----------
+
+const CORAIL = 298 // Muldo G9
+const CORAIL_DORE = 315 // Muldo G10 = Doré × Corail
+const DRAGO_AMANDE_EBENE = 34 // Dragodinde G4 sans descendance de génération supérieure
+
+describe('porteuses et arbres (F7)', () => {
+  it('porteuse de Corail pour l’objectif Corail et Doré : croisement de l’espèce portée, partenaire trouvée', () => {
+    const porteur = mk(DORE, { gender: 'male', parents: [CORAIL, DORE], level: 40 })
+    const plainF = mk(DORE, { gender: 'femelle', level: 40 })
+    const use = mountUsefulness(porteur, goalPlan(CORAIL_DORE))
+    expect(use.kind).toBe('porteur')
+    expect(use.carried).toBe(CORAIL)
+    const f = recommendFates(ctxOf([porteur, plainF], { goalSpeciesId: CORAIL_DORE })).get(porteur.id)
+    expect(f?.action).toBe('garder')
+    expect(f?.reason).toContain('porteuse de Muldo Corail × Muldo Doré')
+    expect(f?.reason).not.toContain('Aucune Muldo Corail femelle')
+    expect(f?.reason).toContain('Partenaire')
+  })
+
+  it('arbre ≥ cible : un croisement détourné par l’arbre n’est pas proposé comme s’il était propre', () => {
+    // Doré dont un parent est Corail (G9), objectif Corail : ses croisements « Doré × X » visent une G10.
+    const m = mk(DORE, { gender: 'male', parents: [CORAIL, DORE], level: 40 })
+    const f = recommendFates(ctxOf([m], { goalSpeciesId: CORAIL })).get(m.id)
+    expect(f?.reason).toContain('Arbre ≥ cible')
+    expect(f?.reason).not.toContain('Croisement visé : Muldo Doré ×')
+  })
+})
+
+describe('impasse sous la G10 (F11)', () => {
+  it('Dragodinde Amande et Ébène (G4) : « impasse », pas « G10 »', () => {
+    const u = mountUsefulness(mk(DRAGO_AMANDE_EBENE), null)
+    expect(u.useful).toBe(false)
+    expect(u.detail).not.toContain('G10')
+    expect(u.detail).toContain('Impasse')
+    expect(mountUsefulness(mk(DRAGO_AMANDE_EMERAUDE), null).detail).toContain('G10')
+  })
+})
+
+describe('clonage : sexe et généalogie (F9)', () => {
+  it('2 ♂ + 2 ♀ stériles utiles de même couleur : ♂+♂ et ♀+♀, résultat certain', () => {
+    const ms = [mk(INDIGO, { fertility: 'sterile', gender: 'male' }), mk(INDIGO, { fertility: 'sterile', gender: 'femelle' }), mk(INDIGO, { fertility: 'sterile', gender: 'male' }), mk(INDIGO, { fertility: 'sterile', gender: 'femelle' })]
+    const fates = recommendFates(ctxOf(ms))
+    for (const m of ms) {
+      const f = fates.get(m.id)
+      expect(f?.action).toBe('cloner')
+      const partner = ms.find((x) => x.id === f?.partnerId)
+      expect(partner?.gender).toBe(m.gender)
+      expect(f?.reason).toContain('résultat certain')
+    }
+  })
+
+  it('sexes différents : « couleur certaine ; sexe et généalogie : 50/50 », jamais « résultat certain »', () => {
+    const a = mk(INDIGO, { fertility: 'sterile', gender: 'male' })
+    const b = mk(INDIGO, { fertility: 'sterile', gender: 'femelle' })
+    const f = recommendFates(ctxOf([a, b])).get(a.id)
+    expect(f?.action).toBe('cloner')
+    expect(f?.reason).toContain('couleur certaine')
+    expect(f?.reason).toContain('50/50')
+    expect(f?.reason).not.toContain('résultat certain')
+  })
+
+  it('pairForCloning : porteuse gardée à part si deux arbres ordinaires peuvent se cloner ensemble', () => {
+    const porteur = mk(DORE, { fertility: 'sterile', gender: 'male', parents: [CORAIL, DORE] })
+    const m = mk(DORE, { fertility: 'sterile', gender: 'male' })
+    const f = mk(DORE, { fertility: 'sterile', gender: 'femelle' })
+    const r = pairForCloning([porteur, m, f], (x) => x)
+    expect(r.pairs.map(([x, y]) => [x.id, y.id].sort())).toEqual([[m.id, f.id].sort()])
+    expect(r.leftovers).toEqual([porteur])
+  })
+})
+
+describe('plan d’accouplement transmis (F3) : pas de sortie immédiate pour une monture prévue', () => {
+  it('féconde sans usage prévue au plan : « accoupler (plan) », sortie après l’accouplement, valorisée stérile', () => {
+    const useful = mk(INDIGO, { ...FECUND, gender: 'male' })
+    const off = mk(POURPRE, { ...FECUND, gender: 'femelle' })
+    const without = recommendFates(ctxOf([useful, off])).get(off.id)
+    expect(['vente', 'extraction', 'brisage']).toContain(without?.action)
+    const fates = recommendFates(ctxOf([useful, off], { plannedPartners: new Map([[useful.id, off.id], [off.id, useful.id]]) }))
+    const f = fates.get(off.id)
+    expect(f?.action).toBe('accoupler')
+    expect(f?.partnerId).toBe(useful.id)
+    expect(f?.reason).toContain("Après l'accouplement")
+    expect(f?.value).toBe(5_000) // valeur stérile (flatVal), pas la valeur féconde (6 000)
+    expect(f?.exit).toBe('vente')
+    expect(fates.get(useful.id)).toMatchObject({ action: 'garder', partnerId: off.id })
+    expect(fates.get(useful.id)?.reason).toContain("Prévue au plan d'accouplement")
+  })
+})
+
+describe('bébé gratuit : prix de décision seulement (ECO-03)', () => {
+  it('fécondes valorisées sur un relevé peu fiable : accoupler quand même (M-FREEBABY-01)', () => {
+    const val = fakeVal((_id, _l, state) => ({ sale: state === 'feconde' ? 637_000 : 5_000, extraction: 0, conf: state === 'feconde' ? 'low' : 'medium' }))
+    const a = mk(POURPRE, { ...FECUND, gender: 'male' })
+    const b = mk(ORCHIDEE, { ...FECUND, gender: 'femelle' })
+    const fates = recommendFates(ctxOf([a, b], { valuation: val }))
+    expect(fates.get(a.id)?.action).toBe('accoupler')
+    expect(fates.get(b.id)?.action).toBe('accoupler')
+  })
+
+  it('vendre fécondes (prix fiables) : la raison nomme la partenaire au lieu de dire qu’il n’y en a pas', () => {
+    const val = fakeVal((_id, _l, state) => ({ sale: state === 'feconde' ? 100_000 : 5_000, extraction: 0 }))
+    const a = mk(POURPRE, { ...FECUND, gender: 'male' })
+    const b = mk(ORCHIDEE, { ...FECUND, gender: 'femelle' })
+    const f = recommendFates(ctxOf([a, b], { valuation: val })).get(a.id)
+    expect(f?.action).toBe('vente')
+    expect(f?.reason).not.toContain('sans autre féconde condamnée')
+    expect(f?.reason).toContain('rapporte plus que l')
+  })
+})
+
+describe('monter en niveau : lot réel (ECO-10)', () => {
+  const val = fakeVal((_id, level) => ({ sale: 2_000, extraction: 0, brisage: level >= 53 ? 12_000 : 0, conf: 'low' }))
+  // Coût du lot de Mangeoire (10 400 K pour 1 → 53) partagé entre les montures montées ensemble.
+  const perBatch: LevelCostFn = (from, to, _m, batchSize) => ({ cost: ((to - from) * 200) / batchSize, complete: true, seconds: 3600, tier: 1 })
+
+  it('une monture seule ne paie pas le lot : pas de « monter »', () => {
+    const m = mk(POURPRE, { fertility: 'sterile' })
+    const f = recommendFates(ctxOf([m], { valuation: val, levelCost: perBatch })).get(m.id)
+    expect(f?.action).toBe('vente')
+  })
+
+  it('10 montures identiques : « monter », coût par monture du lot de 10', () => {
+    const ms = Array.from({ length: 10 }, () => mk(POURPRE, { fertility: 'sterile', gender: 'male' }))
+    // Pas de clonage entre montures inutiles : elles restent candidates à la montée.
+    const fates = recommendFates(ctxOf(ms, { valuation: val, levelCost: perBatch }))
+    for (const m of ms) {
+      const f = fates.get(m.id)
+      expect(f).toMatchObject({ action: 'monter', targetLevel: 53 })
+      expect(f?.value).toBe(12_000 - (52 * 200) / 10)
+      expect(f?.reason).toContain('si vous montez 10 montures ensemble')
+    }
+  })
+
+  it('ancienne fonction de coût à 3 paramètres (lot de 10 fixe) : le texte dit « 10 montures ensemble », jamais « seule »', () => {
+    const legacy: LevelCostFn = (from, to) => ({ cost: ((to - from) * 200) / 10, complete: true, seconds: 3600 })
+    const m = mk(POURPRE, { fertility: 'sterile' })
+    const f = recommendFates(ctxOf([m], { valuation: val, levelCost: legacy })).get(m.id)
+    expect(f?.action).toBe('monter')
+    expect(f?.reason).toContain('si vous montez 10 montures ensemble')
+    expect(f?.reason).not.toContain('seule')
+  })
+
+  it('valeur actuelle incomplète : gain présenté comme un maximum, fiche incomplète', () => {
+    const partial = fakeVal((_id, level) => ({ sale: level >= 53 ? 2_000 : null, extraction: 0, brisage: level >= 53 ? 12_000 : 0, conf: 'low' }))
+    const ms = Array.from({ length: 10 }, () => mk(POURPRE, { fertility: 'sterile' }))
+    const f = recommendFates(ctxOf(ms, { valuation: partial, levelCost: perBatch })).get(ms[0].id)
+    expect(f?.action).toBe('monter')
+    expect(f?.complete).toBe(false)
+    expect(f?.reason).toContain('au plus')
+  })
+})
+
+describe('sans monture visée, objectif « profit » : clonage comparé à la vente (ux F11)', () => {
+  const val = fakeVal((_id, _l, state) => ({ sale: state === 'fertile' ? 12_250 : 12_250, extraction: undefined }))
+  it('deux G1 stériles : pas de clonage si le clone vaut moins que les deux stériles', () => {
+    const a = mk(DORE, { fertility: 'sterile' })
+    const b = mk(DORE, { fertility: 'sterile' })
+    const fates = recommendFates(ctxOf([a, b], { goalSpeciesId: null, goal: 'profit', valuation: val }))
+    expect(fates.get(a.id)?.action).not.toBe('cloner')
+    expect(fates.get(a.id)?.reason).toMatch(/Clone fertile ≈ 12\s250\sK contre ≈ 24\s500\sK/)
+    // Hors objectif « profit » (ou non précisé) : la grille de la recherche (cloner) s'applique.
+    expect(recommendFates(ctxOf([a, b], { goalSpeciesId: null, valuation: val })).get(a.id)?.action).toBe('cloner')
+  })
+
+  it('le clonage reste conseillé quand il rapporte plus, ou dès la G3', () => {
+    const rich = fakeVal((_id, _l, state) => ({ sale: state === 'fertile' ? 50_000 : 5_000, extraction: undefined }))
+    const a = mk(DORE, { fertility: 'sterile' })
+    const b = mk(DORE, { fertility: 'sterile' })
+    expect(recommendFates(ctxOf([a, b], { goalSpeciesId: null, goal: 'profit', valuation: rich })).get(a.id)?.action).toBe('cloner')
+    const g3a = mk(ROUX, { fertility: 'sterile' })
+    const g3b = mk(ROUX, { fertility: 'sterile' })
+    expect(recommendFates(ctxOf([g3a, g3b], { goalSpeciesId: null, goal: 'profit', valuation: val })).get(g3a.id)?.action).toBe('cloner')
+  })
+})
+
+describe('captures : sérénité monture par monture (ux F7)', () => {
+  it('3 montures capturées avec 3 smileys différents → 3 sérénités différentes ; inconnue → valeur commune', () => {
+    const lines = [{ speciesId: DORE, males: 2, females: 1 }]
+    const slots = captureSlots(lines)
+    expect(slots.map((s) => `${s.gender}${s.index}`)).toEqual(['male0', 'male1', 'femelle0'])
+    const ms = capturedMounts(lines, { serenity: 100, serenities: [-3_500, 3_500, 1_000] })
+    expect(ms.map((m) => m.serenity)).toEqual([-3_500, 3_500, 1_000])
+    expect(ms.map((m) => m.gender)).toEqual(['male', 'male', 'femelle'])
+    const partial = capturedMounts(lines, { serenity: 100, serenities: [null, 9_999] })
+    expect(partial.map((m) => m.serenity)).toEqual([100, 5_000, 100])
+  })
+})
+
+describe('valeur plancher incomplète (intégration)', () => {
+  // G1 niveau 1 : brisage nul (relevé), vente sans prix → plancher 0 qui n'est qu'un minimum.
+  const g1Val = fakeVal(() => ({ sale: null, extraction: undefined, brisage: 0 }))
+
+  it('« garder » : floor 0 mais floorComplete faux quand la vente n’a pas de prix', () => {
+    const indigo = mk(INDIGO)
+    const f = recommendFates(ctxOf([indigo], { valuation: g1Val })).get(indigo.id)
+    expect(f?.action).toBe('garder')
+    expect(f?.floor).toBe(0)
+    expect(f?.floorComplete).toBe(false)
+  })
+
+  it('plancher complet quand toutes les sorties possibles sont chiffrées', () => {
+    const indigo = mk(INDIGO)
+    const f = recommendFates(ctxOf([indigo])).get(indigo.id)
+    expect(f?.floor).toBe(5_000)
+    expect(f?.floorComplete).toBe(true)
+  })
+
+  it('clonage : le nom du partenaire n’est pas répété quand il n’a pas de nom propre', () => {
+    const a = mk(INDIGO, { fertility: 'sterile' })
+    const b = mk(DORE, { fertility: 'sterile', gender: 'femelle' })
+    const fates = recommendFates(ctxOf([a, b]))
+    const f = fates.get(a.id)
+    expect(f?.action).toBe('cloner')
+    expect(f?.reason).not.toContain('Muldo Doré (Muldo Doré)')
+    expect(f?.floorComplete).toBe(true)
   })
 })

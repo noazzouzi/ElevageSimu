@@ -9,7 +9,11 @@ mulberry32 à graine), testé dans `src/domain/programSim.test.ts` (33 tests, �
 `bestFuel` (`fuel.ts`), `makinaCost`/`captureCost`/`fertilitySeconds`/`DEFAULT_SERENITY_POINTS`
 (`economy.ts`), `mountXpForLevel` (`xp.ts`).
 
-Page associée : `src/ui/pages/OptimizerPage.tsx` (`#/optimiseur`).
+Page associée : `src/ui/pages/OptimizerPage.tsx` (`#/optimiseur`). Sessions par jour par défaut :
+`sessionsPerDayFor(settings.hoursPerDay)` (temps de jeu des Réglages, comme le calendrier du Plan) tant que
+la page ne les modifie pas. La simulation part d'une étable vide : la page indique la part du programme qui
+reste avec vos montures (`advisor.goalStatus(...).remainingShare`, modèle analytique) et l'hypothèse de lot
+idéal (`BatchAssumption` : écart avec un lot typique du planificateur).
 
 ## Politique simulée (identique à la recherche)
 
@@ -74,7 +78,8 @@ L'enregistrement du gestionnaire n'a lieu que dans un vrai `WorkerGlobalScope` :
 
 `estimateProgramCost(summary, { ctx, rules, tier, jobLevel, netKind?, mountsPerCast?, genetonValue?, craftableOnly? }): ProgramCost`
 
-- Lignes (`ProgramCostLine`) : une par jauge (`points moyens × bestFuel(g, tier).value`), une par génération
+- Lignes (`ProgramCostLine`) : une par jauge (`points moyens × bestFuel(g, maintainedTier(g, …, tier)).value` :
+  Baffeur et Caresseur au palier 1, comme la page Enclos et Rentabilité), une par génération
   d'Optimakina (`makinaCost('optimakina', famille, G)`), une pour les filets (`captureCost(...).perMount ×
   captures`). Chaque ligne : `quantity`, `unit`, `unitCost`, `cost` (null si inconnu), `complete`, `bound`
   (`'min'` borne basse, `'max'` borne haute : palier supérieur seulement), `estimated` (défaut de la recherche,

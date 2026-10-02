@@ -3,7 +3,10 @@
 Logique pure (aucun React, aucun store), testée dans `src/domain/job.test.ts` (28 tests). S'appuie sur
 `craftXp`, `jobXpForLevel`, `jobLevelFromXp` (`xp.ts`), `craftCost`, `resolvePrice`, `marketPrice`
 (`pricing.ts`), les recettes `FUELS`/`MAKINAS`/`NETS` et `GAME.almanaxCalendar` (`src/data`).
-Page associée : `src/ui/pages/JobPage.tsx` (`#/metier`).
+Page associée : `src/ui/pages/JobPage.tsx` (`#/metier`). La page planifie depuis le niveau **estimé** :
+niveau saisi + « XP déjà gagnée dans ce niveau » + XP du journal depuis la saisie (`journalJobXp`), comme
+le conseil Métier de l'accueil (`jobStatus(…, { xpGained })`) — même « XP restante » sur les deux pages ;
+« Passer au niveau N » enregistre l'estimation (test : `JobPage.test.tsx`).
 
 ```ts
 const rules = useRules(); const ctx = usePriceContext(); const level = useSettings((s) => s.jobLevel)

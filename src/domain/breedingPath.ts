@@ -12,6 +12,8 @@
 //    - avec clonage, les 2 stériles d'un accouplement en rendent ≈ 1 fertile (½ de chaque parent) ;
 //    - le dernier clone de chaque couleur ne resert pas (+½ exemplaire par espèce intermédiaire) ;
 //    - les bébés « ratés » ne sont pas réutilisés (option `recycleByproducts` : borne optimiste) ;
+//    - des montures déjà possédées (option `owned`) couvrent une partie de la demande ATTENDUE d'une
+//      espèce (pas tout son sous-arbre avec certitude : un accouplement peut rater) ;
 //    - pas de contrainte de sexe, de place ni de calendrier (joueur parfait, valeurs moyennes).
 import { getSpecies, SPECIES } from '../data'
 import { JOB_XP_PER_CAPTURE } from './constants'
@@ -292,6 +294,14 @@ export interface EffortOptions {
    * sexes, les délais et les arbres « sales ». À n'utiliser que pour comparer.
    */
   recycleByproducts?: boolean
+  /**
+   * Montures déjà possédées et utilisables (fertiles ou fécondes), par espèce : elles couvrent d'abord
+   * la demande attendue de leur espèce (`parentsNeeded` des accouplements qui l'utilisent), le reste
+   * est à produire. Un exemplaire d'un parent du haut ne couvre donc pas tout son sous-arbre : la
+   * tentative peut rater (P < 1) et il en faudra d'autres. Les sexes ne sont pas vus ici : passer des
+   * effectifs déjà ajustés (voir `ownedRecipeSupply` dans advisor.ts).
+   */
+  owned?: ReadonlyMap<number, number>
   /** Recette à évaluer (défaut : `cheapestRecipe`). */
   recipe?: RecipeNode
 }
@@ -303,6 +313,8 @@ export interface NodeEffort {
   crossing: [number, number] | null
   /** Exemplaires demandés par les étages supérieurs (avant recyclage, reliquat de clonage compris). */
   demand: number
+  /** Exemplaires couverts par des montures possédées (`EffortOptions.owned`). */
+  owned: number
   /** Exemplaires couverts par des bébés « ratés » d'accouplements supérieurs. */
   recycled: number
   /** Exemplaires à produire (accouplements) ou à capturer (G1). */
@@ -373,6 +385,7 @@ export function parentsNeeded(attempts: number, cloning: boolean): number {
 export function expectedEffort(speciesId: number, opts: EffortOptions): EffortEstimate {
   const rules = opts.rules ?? RULESETS['3.6']
   const recycle = opts.recycleByproducts ?? false
+  const ownedLeft = new Map(opts.owned ?? [])
   const optiFrom = opts.optimakinaFromGeneration ?? 2
   const tree = opts.recipe ?? cheapestRecipe(speciesId)
   if (!tree) throw new Error(`${mustSpecies(speciesId).name} n'est pas élevable.`)
@@ -406,16 +419,28 @@ export function expectedEffort(speciesId: number, opts: EffortOptions): EffortEs
   let genetons = 0
   let jobXpMatings = 0
 
+  // Espèces dont les montures possédées couvrent la demande sauf une fraction q < 1 : avec la
+  // probabilité q il faudra en produire UN exemplaire (une chaîne complète), pas « q exemplaires » de
+  // chaque étage (le reliquat de clonage de chaque étage serait alors compté comme certain).
+  const fractional: { id: number; share: number }[] = []
+
   for (const id of order) {
     const gen = mustSpecies(id).generation
     const d = id === speciesId ? 1 : parentsNeeded(attemptsUsing.get(id) ?? 0, opts.cloning)
-    const recycled = Math.min(d, supply.get(id) ?? 0)
-    const needed = d - recycled
+    const owned = Math.max(0, Math.min(d, ownedLeft.get(id) ?? 0))
+    if (owned > 0) ownedLeft.set(id, (ownedLeft.get(id) ?? 0) - owned)
+    const recycled = Math.min(d - owned, supply.get(id) ?? 0)
+    const needed = Math.max(0, d - owned - recycled)
     processed.add(id)
     const crossing = recipeOf.get(id) ?? null
+    if (crossing && owned > 0 && needed > 1e-9 && needed < 1 && id !== speciesId) {
+      fractional.push({ id, share: needed })
+      nodes.push({ speciesId: id, generation: gen, crossing, demand: d, owned, recycled, needed, chance: 0, targetChance: 0, sharedWith: [], matings: 0, optimakina: false, genetonsPerMating: 0, jobXpPerMating: 0 })
+      continue
+    }
     if (!crossing) {
       capturesByColorOut.set(id, needed)
-      nodes.push({ speciesId: id, generation: gen, crossing: null, demand: d, recycled, needed, chance: 1, targetChance: 1, sharedWith: [], matings: 0, optimakina: false, genetonsPerMating: 0, jobXpPerMating: 0 })
+      nodes.push({ speciesId: id, generation: gen, crossing: null, demand: d, owned, recycled, needed, chance: 1, targetChance: 1, sharedWith: [], matings: 0, optimakina: false, genetonsPerMating: 0, jobXpPerMating: 0 })
       continue
     }
     const useOpti = opts.makina === 'optimakina' && gen >= optiFrom
@@ -438,6 +463,7 @@ export function expectedEffort(speciesId: number, opts: EffortOptions): EffortEs
       generation: gen,
       crossing,
       demand: d,
+      owned,
       recycled,
       needed,
       chance,
@@ -450,9 +476,51 @@ export function expectedEffort(speciesId: number, opts: EffortOptions): EffortEs
     })
   }
 
+  // Productions « fractionnaires » : q × effort d'un exemplaire depuis sa propre recette (vos autres
+  // montures de ce sous-arbre comprises).
+  const findNode = (n: RecipeNode, id: number): RecipeNode | null => {
+    if (n.speciesId === id) return n
+    for (const p of n.parents ?? []) {
+      const hit = findNode(p, id)
+      if (hit) return hit
+    }
+    return null
+  }
+  const nodeOf = new Map(nodes.map((n) => [n.speciesId, n]))
+  for (const f of fractional) {
+    const subtree = findNode(tree, f.id)
+    if (!subtree) continue
+    const sub = expectedEffort(f.id, { ...opts, recipe: subtree, owned: ownedLeft })
+    const q = f.share
+    matings += q * sub.matings
+    clonings += q * sub.clonings
+    optimakinas += q * sub.optimakinas
+    genetons += q * sub.genetons
+    jobXpMatings += q * sub.jobXp.matings
+    for (const [c, v] of sub.capturesByColor) add(capturesByColorOut, c, q * v)
+    for (const sn of sub.nodes) {
+      if (sn.owned > 0) ownedLeft.set(sn.speciesId, Math.max(0, (ownedLeft.get(sn.speciesId) ?? 0) - sn.owned))
+      const n = nodeOf.get(sn.speciesId)
+      if (!n) continue
+      if (sn.speciesId === f.id) {
+        // Le nœud lui-même : `needed` reste la fraction à produire, ses accouplements sont ceux de la chaîne.
+        Object.assign(n, { matings: q * sn.matings, chance: sn.chance, targetChance: sn.targetChance, sharedWith: sn.sharedWith, optimakina: sn.optimakina, genetonsPerMating: sn.genetonsPerMating, jobXpPerMating: sn.jobXpPerMating })
+        continue
+      }
+      n.demand += q * sn.demand
+      n.owned += q * sn.owned
+      n.recycled += q * sn.recycled
+      n.needed += q * sn.needed
+      n.matings += q * sn.matings
+      if (n.crossing && n.chance === 0) Object.assign(n, { chance: sn.chance, targetChance: sn.targetChance, sharedWith: sn.sharedWith, optimakina: sn.optimakina, genetonsPerMating: sn.genetonsPerMating, jobXpPerMating: sn.jobXpPerMating })
+    }
+  }
+
   let captures = 0
   for (const v of capturesByColorOut.values()) captures += v
   const jobXpCaptures = captures * JOB_XP_PER_CAPTURE
+  let ownedUsed = 0
+  for (const n of nodes) ownedUsed += n.owned
   const assumptions = [
     `Parents au niveau ${opts.parentLevel}${opts.makina === 'optimakina' ? `, Optimakina ${optiFrom <= 2 ? 'à chaque accouplement' : `dès la G${optiFrom}`}` : ', sans makina'}${opts.takeza ? ', jour Takeza' : ''} (règles ${rules.id}).`,
     'Il faut en moyenne 1 / P accouplements pour obtenir un bébé de probabilité P (P calculée par le modèle de naissance, arbres « propres » : chaque parent issu de sa recette).',
@@ -463,6 +531,11 @@ export function expectedEffort(speciesId: number, opts: EffortOptions): EffortEs
       ? 'Les bébés hors cible d\'une couleur utile plus bas dans la recette sont réutilisés (sexe et généalogie supposés convenir).'
       : 'Les bébés hors cible ne sont pas comptés comme parents (vendus, extraits ou clonés) : estimation prudente des captures.',
     'Moyennes d\'un joueur parfait : ni contrainte de sexe (♂/♀), ni places d\'enclos, ni délais ; un vrai élevage demande davantage.',
+    ...(opts.owned && opts.owned.size > 0
+      ? [
+          `Vos montures couvrent ≈ ${Math.round(ownedUsed * 10) / 10} exemplaire(s) de la demande attendue (et non tout leur sous-arbre : une tentative peut rater, il en faut alors d'autres).`,
+        ]
+      : []),
   ]
   return {
     speciesId,

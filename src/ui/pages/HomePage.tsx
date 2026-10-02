@@ -1,42 +1,51 @@
 // Accueil « Que faire maintenant ? » : les actions du moment, minutées et expliquées (src/domain/advisor.ts),
 // avec les indicateurs clés de l'élevage, l'Almanax du jour et le suivi « fait ».
+// L'analyse lourde est mémorisée (`analyzeStateCached`) : revenir sur l'accueil ne la recalcule pas tant
+// que les données et le jour n'ont pas changé. La simulation de l'objectif (captures calibrées) est
+// partagée avec le Plan d'élevage (`useGoalSimulation`).
 import { useEffect, useMemo, useState } from 'react'
 import { FAMILIES, getSpecies, itemName } from '../../data'
 import {
   ADVICE_CATEGORY_LABELS,
   PRIORITY_LABELS,
   adviseNow,
-  analyzeState,
+  analyzeStateCached,
   checklistKey,
   daysBetween,
   formatIsoDay,
+  goalProgramConfig,
   groupAdvice,
   relativeTime,
-  startOfDay,
+  withGoalSimulation,
   type Advice,
   type AdviceCategory,
   type AdviceHorizon,
   type AdvisorAnalysis,
   type AdvisorSettings,
+  type GoalStatus,
 } from '../../domain/advisor'
-import { almanaxOn, isoDay, upcomingAlmanax } from '../../domain/almanax'
+import { almanaxOn, serverDay, serverDayStart, upcomingAlmanax } from '../../domain/almanax'
 import { PADDOCK_SLOTS } from '../../domain/constants'
 import type { MountPriceContext } from '../../domain/economy'
 import { validateActiveGauges } from '../../domain/paddock'
+import { downloadBackup } from '../../lib/backup'
 import { formatClock, formatKamas, formatNumber } from '../../lib/format'
 import { useInventory } from '../../store/inventory'
+import { journalJobXp, useJournal } from '../../store/journal'
 import { nextAlarm, usePaddockPlans } from '../../store/paddockPlans'
 import { usePaddocks } from '../../store/paddocks'
 import { PLAN_PROGRESS_RETENTION_MS, usePlanProgress } from '../../store/planProgress'
 import { usePriceContext, usePrices } from '../../store/prices'
 import { useRules, useSettings } from '../../store/settings'
-import { Badge, Card, Empty, PageHeader, Progress, Stat } from '../components'
+import { Badge, Callout, Card, Empty, PageHeader, Progress, Stat } from '../components'
 import { href } from '../router'
+import { useGoalSimulation } from '../useGoalSimulation'
 import './HomePage.css'
 
 const REFRESH_MS = 30_000
 
 const CATEGORY_ICONS: Record<AdviceCategory, string> = {
+  erreur: '⚠️',
   alarme: '⏰',
   almanax: '📅',
   accouplement: '🥚',
@@ -92,10 +101,18 @@ function useAdvisorStores() {
   const useOptimakina = useSettings((s) => s.useOptimakina)
   const saleTax = useSettings((s) => s.saleTax)
   const useDefaultPrices = useSettings((s) => s.useDefaultPrices)
+  const accounts = useSettings((s) => s.accounts)
+  const hoursPerDay = useSettings((s) => s.hoursPerDay)
+  const checkIntervalMinutes = useSettings((s) => s.checkIntervalMinutes)
+  const almanaxGaugeDoubling = useSettings((s) => s.almanaxGaugeDoubling)
+  const jobLevelUpdatedAt = useSettings((s) => s.jobLevelUpdatedAt)
   const settings: AdvisorSettings = useMemo(
-    () => ({ jobLevel, family, goalSpeciesId, goal, preferredTier, xpFiller, parentTargetLevel, useOptimakina, saleTax, useDefaultPrices }),
-    [jobLevel, family, goalSpeciesId, goal, preferredTier, xpFiller, parentTargetLevel, useOptimakina, saleTax, useDefaultPrices],
+    () => ({ jobLevel, family, goalSpeciesId, goal, preferredTier, xpFiller, parentTargetLevel, useOptimakina, saleTax, useDefaultPrices, accounts, hoursPerDay, checkIntervalMinutes, almanaxGaugeDoubling }),
+    [jobLevel, family, goalSpeciesId, goal, preferredTier, xpFiller, parentTargetLevel, useOptimakina, saleTax, useDefaultPrices, accounts, hoursPerDay, checkIntervalMinutes, almanaxGaugeDoubling],
   )
+  // XP d'Éleveur du journal depuis la dernière saisie du niveau (niveau estimé, XP jusqu'au prochain enclos).
+  const journal = useJournal((s) => s.entries)
+  const journalXp = useMemo(() => ({ xp: journalJobXp(journal, jobLevelUpdatedAt).xp }), [journal, jobLevelUpdatedAt])
   const rules = useRules()
   const mounts = useInventory((s) => s.mounts)
   const paddocks = usePaddocks((s) => s.paddocks)
@@ -106,13 +123,13 @@ function useAdvisorStores() {
   const genetonValue = usePrices((s) => s.genetonValue)
   const pricedItems = Object.keys(usePrices((s) => s.items)).length
   const mountPrices: MountPriceContext = useMemo(() => ({ mountOverrides, generationOverrides, useDefaults: useDefaultPrices }), [mountOverrides, generationOverrides, useDefaultPrices])
-  return { settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems }
+  return { settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp }
 }
 
 export default function HomePage() {
   const [now, refresh] = useNow()
   const st = useAdvisorStores()
-  const { settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems } = st
+  const { settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp } = st
   const advance = usePaddockPlans((s) => s.advance)
   const setActive = usePaddocks((s) => s.setActive)
   const done = usePlanProgress((s) => s.done)
@@ -124,21 +141,35 @@ export default function HomePage() {
     prune(Date.now() - PLAN_PROGRESS_RETENTION_MS)
   }, [prune])
 
-  // Calculs lourds : une fois par jour et à chaque changement de données (pas toutes les 30 s).
-  const dayAnchor = startOfDay(now) + 12 * 3_600_000
+  // Calculs lourds : une fois par jour et à chaque changement de données (pas toutes les 30 s), et
+  // mémorisés d'une visite à l'autre (même résultat tant que les données des stores n'ont pas changé).
+  // Ancre : midi du jour de jeu (Paris), pour que l'analyse change de jour avec l'Almanax et le Takeza.
+  const dayAnchor = serverDayStart(serverDay(now)) + 12 * 3_600_000
   const analysis = useMemo(
-    () => analyzeState({ now: dayAnchor, settings, rules, mounts, paddocks: [], paddockPlans: {}, priceCtx, mountPrices, genetonValue }),
-    [dayAnchor, settings, rules, mounts, priceCtx, mountPrices, genetonValue],
+    () => analyzeStateCached({ now: dayAnchor, settings, rules, mounts, paddocks: [], paddockPlans: {}, priceCtx, mountPrices, genetonValue, journalXp }),
+    [dayAnchor, settings, rules, mounts, priceCtx, mountPrices, genetonValue, journalXp],
   )
+  // Simulation Monte-Carlo de l'objectif (partagée avec le Plan) : captures calibrées.
+  const simConfig = useMemo(() => (analysis.goal && !analysis.goal.reached && analysis.goal.tree ? goalProgramConfig(settings, rules) : null), [analysis.goal, settings, rules])
+  const sim = useGoalSimulation(simConfig)
+  const goalView = useMemo(() => withGoalSimulation(analysis.goal, mounts, sim.summary, rules), [analysis.goal, mounts, sim.summary, rules])
   const advice = useMemo(
-    () => adviseNow({ now, settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems }, analysis),
-    [now, settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, analysis],
+    () => adviseNow({ now, settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp, goalSim: sim.summary }, analysis),
+    [now, settings, rules, mounts, paddocks, paddockPlans, priceCtx, mountPrices, genetonValue, pricedItems, journalXp, sim.summary, analysis],
   )
-  const visible = advice.filter((a) => done[a.id] === undefined)
-  const doneList = advice.filter((a) => done[a.id] !== undefined)
+  // Sections indisponibles : regroupées dans un encadré en haut (et non mêlées aux actions).
+  const failures = advice.filter((a) => a.category === 'erreur')
+  const actionable = advice.filter((a) => a.category !== 'erreur')
+  const visible = actionable.filter((a) => done[a.id] === undefined)
+  const doneList = actionable.filter((a) => done[a.id] !== undefined)
   const groups = groupAdvice(visible, now)
   const onboarding = mounts.length === 0 ? visible.find((a) => a.id === 'onboarding:premiers-pas') : undefined
   const alarm = nextAlarm(Object.fromEntries(Object.entries(paddockPlans).filter(([, p]) => p.paddockId <= analysis.unlocked)))
+  // Plans terminés (à appliquer au lot) : « aucun plan démarré » serait faux.
+  const finishedPlans = Object.values(paddockPlans)
+    .filter((p) => p.paddockId <= analysis.unlocked && p.acknowledgedStepIndex >= p.steps.length)
+    .map((p) => p.paddockId)
+    .sort((a, b) => a - b)
 
   const advancePlan = (paddockId: number, to: GaugeTarget, at?: number) => {
     advance(paddockId, at)
@@ -169,7 +200,9 @@ export default function HomePage() {
 
       <AlmanaxStrip now={now} analysis={analysis} />
 
-      {onboarding ? <OnboardingCard advice={onboarding} /> : <Kpis analysis={analysis} now={now} alarm={alarm} settings={settings} />}
+      {failures.length > 0 && <SectionFailures failures={failures} />}
+
+      {onboarding ? <OnboardingCard advice={onboarding} /> : <Kpis analysis={analysis} goal={goalView} now={now} alarm={alarm} finishedPlans={finishedPlans} settings={settings} />}
 
       {groups.length === 0 && !onboarding && (
         <Card>
@@ -241,8 +274,9 @@ export default function HomePage() {
 // ---------- Almanax ----------
 
 function AlmanaxStrip({ now, analysis }: { now: number; analysis: AdvisorAnalysis }) {
-  const today = almanaxOn(isoDay(now))
-  const todayIso = isoDay(now)
+  // Jour de jeu (heure de Paris), comme upcomingAlmanax : pas le jour local du navigateur.
+  const todayIso = serverDay(now)
+  const today = almanaxOn(todayIso)
   const upcoming = [
     ...upcomingAlmanax(now, 31)
       .filter((e) => e.date !== todayIso)
@@ -280,13 +314,17 @@ function AlmanaxStrip({ now, analysis }: { now: number; analysis: AdvisorAnalysi
 
 function Kpis({
   analysis,
+  goal: goalStatus,
   now,
   alarm,
+  finishedPlans,
   settings,
 }: {
   analysis: AdvisorAnalysis
+  goal: GoalStatus | null
   now: number
   alarm: ReturnType<typeof nextAlarm>
+  finishedPlans: number[]
   settings: AdvisorSettings
 }) {
   const s = analysis.summary
@@ -299,7 +337,8 @@ function Kpis({
       if (n > 0) occupiedPaddocks++
     }
   const j = analysis.job
-  const genetonKamas = analysis.expectedGenetons * analysis.genetonValue
+  // Génétons revendus en parchemins à l'HDV : nets de la taxe de vente (comme la Rentabilité, ECO-14).
+  const genetonKamas = analysis.expectedGenetons * analysis.genetonValue * (1 - Math.max(0, Math.min(1, settings.saleTax)))
   const status = [
     s.byStatus.fertile ? `${s.byStatus.fertile} fertile${s.byStatus.fertile > 1 ? 's' : ''}` : '',
     s.byStatus.feconde ? `${s.byStatus.feconde} féconde${s.byStatus.feconde > 1 ? 's' : ''}` : '',
@@ -332,7 +371,13 @@ function Kpis({
         <Stat
           label="Prochaine alarme"
           value={alarm ? formatClock(alarm.switch.at, now) : '—'}
-          hint={alarm ? `${relativeTime(alarm.switch.at, now)} · enclos ${alarm.paddockId} : ${alarm.switch.text}` : 'aucun plan d’enclos démarré'}
+          hint={
+            alarm
+              ? `${relativeTime(alarm.switch.at, now)} · enclos ${alarm.paddockId} : ${alarm.switch.text}`
+              : finishedPlans.length
+                ? `plan terminé (enclos ${finishedPlans.join(', ')}) : à appliquer au lot`
+                : 'aucun plan d’enclos démarré'
+          }
         />
       </a>
       <a className="hp-kpi" href={href('accouplement', { onglet: 'couples' })}>
@@ -341,7 +386,7 @@ function Kpis({
           value={formatNumber(analysis.expectedGenetons, analysis.expectedGenetons < 10 ? 1 : 0)}
           hint={
             <>
-              ≈ {formatKamas(genetonKamas, true)} au plan actuel ({formatKamas(analysis.genetonValue)} / généton) <span className="badge warn">estimation</span>
+              ≈ {formatKamas(genetonKamas, true)} net de taxe au plan actuel ({formatKamas(analysis.genetonValue)} / généton brut) <span className="badge warn">estimation</span>
             </>
           }
         />
@@ -349,11 +394,14 @@ function Kpis({
       <a className="hp-kpi" href={href('metier')}>
         <Stat
           label="Niveau d'Éleveur"
-          value={j.level >= 200 ? 'niv. 200' : `niv. ${j.level} → ${j.nextPaddockLevel}`}
+          value={j.estimatedLevel >= 200 ? 'niv. 200' : `niv. ${j.estimatedLevel} → ${j.nextPaddockLevel}`}
           hint={
             <span className="hp-job">
               <Progress value={j.progress} max={1} />
-              <span>{j.level >= 200 ? 'tous les enclos sont débloqués' : `${formatNumber(j.xpToNext)} XP avant le ${j.nextPaddockIndex}e enclos`}</span>
+              <span>
+                {j.estimatedLevel >= 200 ? 'tous les enclos sont débloqués' : `${formatNumber(j.xpToNext)} XP avant le ${j.nextPaddockIndex}e enclos`}
+                {j.xpGained > 0 && ` · saisi : niv. ${j.level}, +${formatNumber(j.xpGained)} XP au journal (estimation)`}
+              </span>
             </span>
           }
         />
@@ -361,11 +409,55 @@ function Kpis({
       {goal && (
         <p className="hp-goal muted">
           Objectif : <a href={href('plan')}>{goal.name}</a> (G{goal.generation})
-          {analysis.goal?.reached ? ' — atteint !' : analysis.goal && analysis.goal.capturesRemaining > 0 ? ` — ≈ ${formatNumber(analysis.goal.capturesRemaining)} captures restantes (estimation)` : ''} · famille{' '}
-          {FAMILIES[settings.family]?.label ?? settings.family}
+          {goalStatus?.reached
+            ? ' — atteint !'
+            : goalStatus && goalStatus.capturesRemaining > 0
+              ? goalStatus.captureBasis === 'simulation'
+                ? ` — ≈ ${formatNumber(goalStatus.capturesRemaining)} captures restantes (estimation, simulation)`
+                : ` — jusqu’à ≈ ${formatNumber(goalStatus.capturesRemaining)} captures restantes (borne haute, simulation en cours)`
+              : ''}{' '}
+          · famille {FAMILIES[settings.family]?.label ?? settings.family}
         </p>
       )}
     </div>
+  )
+}
+
+// ---------- Sections indisponibles ----------
+
+/** Encadré des sections de conseils qui n'ont pas pu être calculées (jamais masquées en silence). */
+function SectionFailures({ failures }: { failures: Advice[] }) {
+  const [message, setMessage] = useState<string | null>(null)
+  return (
+    <Callout tone="warn">
+      <strong>Une partie des conseils n’a pas pu être calculée.</strong> Les autres conseils restent valables, mais ces sections manquent (ce n’est pas « rien à faire ») :
+      <ul className="hp-failures">
+        {failures.map((f) => (
+          <li key={f.id}>
+            <strong>{f.title.replace(/^Section indisponible : /, '')}</strong> — <span className="muted">{f.items?.[0]?.text ?? f.detail}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="row">
+        <button
+          type="button"
+          className="btn small"
+          onClick={() => {
+            try {
+              setMessage(`Sauvegarde téléchargée : ${downloadBackup()}`)
+            } catch {
+              setMessage('Le téléchargement a échoué : votre navigateur bloque peut-être les téléchargements.')
+            }
+          }}
+        >
+          Télécharger une sauvegarde (pour signaler le problème)
+        </button>
+        <a className="btn small ghost" href={href('reglages')}>
+          Réglages
+        </a>
+      </div>
+      {message && <small role="status">{message}</small>}
+    </Callout>
   )
 }
 
@@ -441,7 +533,7 @@ function AdviceCard({
         {a.dueAt !== undefined &&
           (a.allDay ? (
             <span className="hp-due">
-              <strong>{formatIsoDay(isoDay(a.dueAt))}</strong> · {dayDistance(daysBetween(isoDay(now), isoDay(a.dueAt)))}
+              <strong>{formatIsoDay(serverDay(a.dueAt))}</strong> · {dayDistance(daysBetween(serverDay(now), serverDay(a.dueAt)))}
             </span>
           ) : (
             <span className={`hp-due${late ? ' late' : ''}`} title={new Date(a.dueAt).toLocaleString('fr-FR')}>

@@ -8,13 +8,14 @@
 // Module pur : aucun React, aucun accès au store. Les heures sont calculées à partir de `now`.
 import { FAMILIES, STRATEGY, getSpecies, itemName, speciesOfFamily, type StrategyPhase } from '../data'
 import { formatClock, formatDuration, formatKamas, formatNumber, formatPercent } from '../lib/format'
-import { TAKEZA_DATES, almanaxOn, isoDay, upcomingAlmanax, type AlmanaxEffect } from './almanax'
-import { capturesByColor, cheapestRecipe, expectedEffort, type EffortEstimate, type EffortOptions, type RecipeNode } from './breedingPath'
-import { ABILITY_LABELS, FUEL_TIER_NAMES, GAUGE_LABELS, PADDOCK_SLOTS, PADDOCK_UNLOCK_LEVELS } from './constants'
+import { TAKEZA_DATES, almanaxOn, serverDay, serverDayStart, upcomingAlmanax, type AlmanaxEffect } from './almanax'
+import { capturesByColor, cheapestRecipe, cleanParent, expectedEffort, type EffortEstimate, type EffortOptions, type RecipeNode } from './breedingPath'
+import { ABILITY_LABELS, FUEL_TIER_NAMES, GAUGE_IDS, GAUGE_LABELS, PADDOCK_SLOTS, PADDOCK_UNLOCK_LEVELS, TICK_SECONDS } from './constants'
 import {
   NET_KIND_LABELS,
   captureCost,
   fertilityCost,
+  batchProfile,
   fertilitySeconds,
   genetonKamasValue,
   levelingCost,
@@ -27,7 +28,7 @@ import {
   type NetKind,
 } from './economy'
 import { fillPlan, type FillPlan } from './fuel'
-import { targetChance } from './genetics'
+import { breed, targetChance } from './genetics'
 import {
   bestCraftAt,
   jobAlmanaxDays,
@@ -40,23 +41,37 @@ import {
   type LevelingPlan,
 } from './job'
 import { inventorySummary, recommendFates, unlockedPaddocks, type InventorySummary, type LevelCostFn, type MountFate, type ValuationFn } from './mountFate'
-import { effectiveFertility, mountName } from './mounts'
-import { canBenefit, gaugeTier, simulatePaddock, validateActiveGauges, type SimEvent, type SimMount } from './paddock'
-import { PADDOCK_ROLE_LABELS, assignPaddocks, gaugeSwitch, planProgress, toSimMount, type AssignResult, type PlanSchedule } from './paddockAssign'
-import { OPTIMAKINA_SYSTEMATIC_GENERATION, bestDisjointPairs, objectiveFromGoal, rankPairs, type PairSuggestion } from './pairing'
+import { effectiveFertility, mountName, toBreedingParent } from './mounts'
+import { canBenefit, gaugeTier, simulatePaddock, validateActiveGauges, type SimMount } from './paddock'
+import { PADDOCK_ROLE_LABELS, assignPaddocks, gaugeSwitch, toSimMount, type AssignResult, type PlanSchedule } from './paddockAssign'
+import { planStatus, remainingPlanConsumption } from './paddockPlanStatus'
+import {
+  OPTIMAKINA_GOAL_STEP_GENERATION,
+  OPTIMAKINA_SYSTEMATIC_GENERATION,
+  STACK_MIN_ATTEMPTS,
+  TAKEZA_PRIORITY_GENERATION,
+  bestDisjointPairs,
+  economyCoupleCost,
+  objectiveFromGoal,
+  rankPairs,
+  type PairSuggestion,
+} from './pairing'
 import type { PriceContext } from './pricing'
-import type { Ruleset } from './rules'
-import type { FamilyId, FuelTier, GaugeId, Mount, PaddockState } from './types'
-import { jobXpBetween, jobXpForLevel } from './xp'
+import type { ProgramConfig, ProgramSummary } from './programSim'
+import { planActiveHistory, projectMountsFromPlan, projectPaddock } from './projection'
+import { gaugeMax, type Ruleset } from './rules'
+import type { FamilyId, FuelTier, GaugeId, Mount, PaddockState, RulesetId } from './types'
+import { jobLevelFromXp, jobXpForLevel } from './xp'
 
 // ---------- Types ----------
 
-export type AdviceCategory = 'alarme' | 'almanax' | 'accouplement' | 'clonage' | 'enclos' | 'carburant' | 'capture' | 'vente' | 'metier' | 'prix' | 'objectif'
+export type AdviceCategory = 'alarme' | 'almanax' | 'accouplement' | 'clonage' | 'enclos' | 'carburant' | 'capture' | 'vente' | 'metier' | 'prix' | 'objectif' | 'erreur'
 
 /** Ordre d'une session (strategy.md règle 13) : sert de départage à priorité égale. */
-export const ADVICE_CATEGORIES: AdviceCategory[] = ['objectif', 'alarme', 'carburant', 'almanax', 'accouplement', 'clonage', 'enclos', 'capture', 'vente', 'metier', 'prix']
+export const ADVICE_CATEGORIES: AdviceCategory[] = ['erreur', 'objectif', 'alarme', 'carburant', 'almanax', 'accouplement', 'clonage', 'enclos', 'capture', 'vente', 'metier', 'prix']
 
 export const ADVICE_CATEGORY_LABELS: Record<AdviceCategory, string> = {
+  erreur: 'Section indisponible',
   alarme: 'Alarme',
   almanax: 'Almanax',
   accouplement: 'Accouplement',
@@ -150,6 +165,14 @@ export interface AdvisorSettings {
   useOptimakina: boolean
   saleTax: number
   useDefaultPrices: boolean
+  /** Personnages qui lancent un filet à chaque combat de capture (défaut 1). */
+  accounts?: number
+  /** Heures de jeu par jour (défaut 3) : passages aux enclos par jour du calendrier (`sessionsPerDayFor`). */
+  hoursPerDay?: number
+  /** Passage aux enclos toutes les N minutes (défaut 60) : durée minimale d'une étape de plan d'enclos. */
+  checkIntervalMinutes?: number
+  /** Doublement Almanax des jauges (non vérifié) appliqué aux plans et projections d'enclos (défaut : non). */
+  almanaxGaugeDoubling?: boolean
 }
 
 /** Plan d'enclos démarré (structure de `usePaddockPlans().plans[n]`). */
@@ -157,6 +180,25 @@ export interface AdvisorPaddockPlan extends PlanSchedule {
   paddockId: number
   tier: FuelTier
   mountIds: string[]
+  /** Paliers par jauge du plan (`FertilityPlan.tiers`) : projection des montures. */
+  tiers?: Partial<Record<GaugeId, FuelTier>>
+  rulesetId?: RulesetId
+}
+
+/** Enclos saisi (structure de `usePaddocks().paddocks[n]`) : heures de saisie par jauge et jauges actives successives. */
+export interface AdvisorPaddock extends PaddockState {
+  gaugeUpdatedAt?: Partial<Record<GaugeId, number>>
+  activeHistory?: { at: number; active: GaugeId[] }[]
+  /** Version des règles sous laquelle chaque niveau a été saisi (`usePaddocks().setGauge`). */
+  gaugeRulesets?: Partial<Record<GaugeId, RulesetId>>
+}
+
+/** XP d'Éleveur enregistrée dans le journal depuis la dernière saisie du niveau (`journalJobXp(entries, settings.jobLevelUpdatedAt)`). */
+export interface AdvisorJournalXp {
+  xp: number
+  captures?: number
+  matings?: number
+  crafts?: number
 }
 
 export interface AdvisorInput {
@@ -164,7 +206,7 @@ export interface AdvisorInput {
   settings: AdvisorSettings
   rules: Ruleset
   mounts: Mount[]
-  paddocks: PaddockState[]
+  paddocks: AdvisorPaddock[]
   paddockPlans: Record<string, AdvisorPaddockPlan>
   priceCtx: PriceContext
   mountPrices: MountPriceContext
@@ -172,6 +214,14 @@ export interface AdvisorInput {
   genetonValue?: number | null
   /** Nombre de prix d'objets saisis par le joueur (onboarding). */
   pricedItems?: number
+  /** XP d'Éleveur du journal depuis la saisie du niveau : niveau estimé, XP jusqu'au prochain enclos. */
+  journalXp?: AdvisorJournalXp | null
+  /**
+   * Simulation Monte-Carlo du programme vers l'objectif (`runProgram(goalProgramConfig(...))`), si elle
+   * est disponible : les captures conseillées en sont tirées (calibrées), sinon le modèle analytique
+   * (borne haute) est utilisé et annoncé comme tel.
+   */
+  goalSim?: ProgramSummary | null
 }
 
 // ---------- Utilitaires ----------
@@ -212,6 +262,14 @@ export function daysBetween(a: string, b: string): number {
   return n(b) - n(a)
 }
 
+/**
+ * Durée d'un lot de fécondité typique (moyenne du planificateur d'enclos, `economy.batchProfile('typique')`) :
+ * même hypothèse que la Rentabilité et la page Enclos, plutôt que le minimum théorique (`fertilitySeconds`).
+ */
+export function typicalBatchSeconds(tier: FuelTier, rules: Ruleset): number {
+  return batchProfile('typique', tier, rules).seconds
+}
+
 /** « lundi 12 octobre ». */
 export function formatIsoDay(iso: string): string {
   return longDay.format(isoToMs(iso))
@@ -234,6 +292,11 @@ export function isoWeekKey(ms: number): string {
   const yearStart = Date.UTC(date.getUTCFullYear(), 0, 1)
   const week = Math.ceil(((date.getTime() - yearStart) / DAY + 1) / 7)
   return `${date.getUTCFullYear()}-W${String(week).padStart(2, '0')}`
+}
+
+/** Message lisible d'une exception (section de conseils indisponible). */
+function errorMessage(e: unknown): string {
+  return e instanceof Error ? e.message : String(e)
 }
 
 const genOf = (id: number) => getSpecies(id)?.generation ?? 0
@@ -317,25 +380,27 @@ export interface CaptureSpot {
 }
 
 /**
- * Zone de capture conseillée. Dragodindes : zone principale de la recherche (strategy.md §2.1,
- * DofusDB + DPLN, confiance haute : Territoire des dragodindes sauvages, seule zone de la Dorée) ;
- * Muldos et Volkornes : zone des données (`FAMILIES[f].captureZone`).
+ * Zone de capture conseillée : zone des données (`FAMILIES[f].captureZone`, strategy.md §2.1, DofusDB +
+ * DPLN, confiance haute) pour toutes les familles, notes des monstres comprises (Dorée : uniquement ici).
  */
 export function captureSpot(family: FamilyId): CaptureSpot | null {
-  if (family === 'dragodinde')
-    return {
-      subarea: 'Territoire des dragodindes sauvages',
-      area: 'Montagne des Koalaks',
-      x: [-23, -11],
-      y: [-2, 9],
-      zaap: 'Village des Éleveurs',
-      zaapCoords: [-16, 1],
-      confidence: 'high',
-      note: 'anneau autour du Village des Éleveurs (le zaap des enclos) ; seule zone de la Dorée',
-    }
+  // Une seule source pour toutes les familles : la zone de capture des données (comme le Guide), avec
+  // les notes par monstre (ex. « Dragodinde dorée sauvage : uniquement ici ») (R14).
   const z = FAMILIES[family]?.captureZone
   if (!z) return null
-  return { subarea: z.subarea, area: z.area, x: z.xRange, y: z.yRange, zaap: z.nearestZaap.name, zaapCoords: z.nearestZaap.coords, confidence: 'high' }
+  const notes = z.monsters.filter((m) => m.note).map((m) => `${m.name} : ${m.note}`)
+  const archi = z.monsters.filter((m) => m.archimonster).map((m) => m.name)
+  if (archi.length) notes.push(`archimonstres : ${archi.join(', ')}`)
+  return {
+    subarea: z.subarea,
+    area: z.area,
+    x: z.xRange,
+    y: z.yRange,
+    zaap: z.nearestZaap.name,
+    zaapCoords: z.nearestZaap.coords,
+    confidence: 'high',
+    ...(notes.length ? { note: notes.join(' ; ') } : {}),
+  }
 }
 
 /** « Bassin des Muldos (Baie de Sufokia), x 16 → 22, y 18 → 23 ; zaap Rivage sufokien [10,22] ». */
@@ -363,15 +428,137 @@ export function captureStatus(family: FamilyId, jobLevel: number, ctx: PriceCont
   return { family, netKind, cost: captureCost(family, netKind, ctx, { jobLevel }), spot: captureSpot(family) }
 }
 
+/** Montures capturées par combat : chaque personnage lance son filet (`settings.accounts`), × montures par lancer. */
+export function capturesPerFight(accounts: number | undefined, mountsPerCast: number): number {
+  const a = Number.isFinite(accounts) ? Math.max(1, Math.round(accounts as number)) : 1
+  return a * Math.max(1, Math.round(mountsPerCast) || 1)
+}
+
+/**
+ * Arrondi « au plus fort reste » : des entiers dont la somme est l'arrondi de la somme des valeurs,
+ * chacun à moins de 1 de sa valeur. Évite qu'une série d'arrondis supérieurs gonfle le total (408
+ * captures « restantes » pour un effort de 405,6).
+ */
+export function largestRemainder(values: readonly number[]): number[] {
+  const clean = values.map((v) => (Number.isFinite(v) && v > 0 ? v : 0))
+  const total = Math.round(clean.reduce((a, b) => a + b, 0) + 1e-9)
+  const out = clean.map((v) => Math.floor(v + 1e-9))
+  let rest = total - out.reduce((a, b) => a + b, 0)
+  const order = clean.map((v, i) => ({ i, frac: v - Math.floor(v + 1e-9) })).sort((a, b) => b.frac - a.frac || a.i - b.i)
+  for (const o of order) {
+    if (rest <= 0) break
+    out[o.i]++
+    rest--
+  }
+  return out
+}
+
+/** Effectifs de vos montures retenus pour une recette (sexes et porteuses pris en compte). */
+export interface RecipeSupply {
+  /** Exemplaires utilisables par espèce de la recette. */
+  counts: Map<number, number>
+  /** Monture → espèce de la recette qu'elle tient (une porteuse tient l'espèce qu'elle porte). */
+  roles: Map<string, number>
+  /** Explications (porteuses comptées, montures sans partenaire de sexe opposé), en français. */
+  notes: string[]
+}
+
+/**
+ * Montures possédées (fertiles ou fécondes) utiles à une recette :
+ * - une **porteuse** (un parent de génération supérieure présent dans la recette, M-CARRIER-01) tient
+ *   l'espèce qu'elle porte quand `breed()` confirme que, avec la partenaire du croisement de la recette,
+ *   la génération cible est bien l'enfant visé (sinon elle compte pour sa propre espèce) ;
+ * - **sexes** : pour un croisement x × y dont les deux espèces ne servent qu'à ce croisement, seuls les
+ *   couples ♂/♀ possibles comptent pleinement ; si les montures restantes des deux couleurs sont du même
+ *   sexe (deux mâles, par exemple), une seule couleur est comptée — il faudra produire l'autre avec le
+ *   bon sexe.
+ * Les effectifs servent d'`owned` à `expectedEffort` (couverture de la demande attendue, pas du
+ * sous-arbre avec certitude).
+ */
+export function ownedRecipeSupply(tree: RecipeNode, mounts: readonly Mount[], opts: { rules?: Ruleset } = {}): RecipeSupply {
+  const goalId = tree.speciesId
+  const family = getSpecies(goalId)?.family
+  const crossings = new Map<number, [number, number]>()
+  const uses = new Map<number, { partner: number; child: number }[]>()
+  const addUse = (x: number, use: { partner: number; child: number }) => uses.set(x, [...(uses.get(x) ?? []), use])
+  const walk = (n: RecipeNode) => {
+    if (!n.crossing || !n.parents || crossings.has(n.speciesId)) return
+    const [x, y] = n.crossing
+    crossings.set(n.speciesId, [x, y])
+    addUse(x, { partner: y, child: n.speciesId })
+    if (y !== x) addUse(y, { partner: x, child: n.speciesId })
+    walk(n.parents[0])
+    walk(n.parents[1])
+  }
+  walk(tree)
+  const roles = new Map<string, number>()
+  const notes: string[] = []
+  const bySpecies = new Map<number, { male: number; femelle: number }>()
+  for (const m of mounts) {
+    if (!isUsable(m) || m.speciesId === goalId) continue
+    const sp = getSpecies(m.speciesId)
+    if (!sp || sp.family !== family) continue
+    let role: number | null = null
+    const carried = m.parents
+      .slice(0, 2)
+      .filter((p) => p !== goalId && uses.has(p) && genOf(p) > sp.generation)
+      .sort((x, y) => genOf(y) - genOf(x))
+    for (const x of carried) {
+      for (const u of uses.get(x) ?? []) {
+        try {
+          const r = breed(toBreedingParent(m), cleanParent(u.partner, m.level), { rules: opts.rules })
+          if (r.targetSpecies.includes(u.child)) {
+            role = x
+            notes.push(`${mountName(m)} (porteuse de ${nameOf(x)}) compte comme ${nameOf(x)} : avec ${nameOf(u.partner)}, elle vise ${nameOf(u.child)} (porteurs).`)
+            break
+          }
+        } catch {
+          // croisement impossible avec cet arbre : la monture compte pour sa propre espèce
+        }
+      }
+      if (role !== null) break
+    }
+    if (role === null && uses.has(m.speciesId)) role = m.speciesId
+    if (role === null) continue
+    roles.set(m.id, role)
+    const e = bySpecies.get(role) ?? { male: 0, femelle: 0 }
+    e[m.gender]++
+    bySpecies.set(role, e)
+  }
+  const counts = new Map<number, number>()
+  for (const [id, e] of bySpecies) counts.set(id, e.male + e.femelle)
+  for (const [x, y] of crossings.values()) {
+    if (x === y || (uses.get(x)?.length ?? 0) !== 1 || (uses.get(y)?.length ?? 0) !== 1) continue
+    const ex = bySpecies.get(x)
+    const ey = bySpecies.get(y)
+    if (!ex || !ey) continue
+    const matched = Math.min(ex.male, ey.femelle) + Math.min(ex.femelle, ey.male)
+    const lx = ex.male + ex.femelle - matched
+    const ly = ey.male + ey.femelle - matched
+    if (lx <= 0 || ly <= 0) continue
+    const keepX = lx >= ly
+    const drop = keepX ? y : x
+    const dropped = keepX ? ly : lx
+    counts.set(drop, matched)
+    const sex = (keepX ? ey.male : ex.male) > matched ? 'mâle' : 'femelle'
+    notes.push(
+      `${nb(dropped, 'monture')} ${nameOf(drop)} sans partenaire de sexe opposé parmi vos ${nameOf(keepX ? x : y)} (${plural(dropped, sex, `${sex}s`)} des deux côtés) : une seule couleur compte, il faudra produire l'autre avec le bon sexe.`,
+    )
+  }
+  return { counts, roles, notes }
+}
+
 /** Besoin de captures d'une couleur G1 pour l'objectif. */
 export interface CaptureNeed {
   speciesId: number
   /** G1 de la recette idéale (1 exemplaire, chaque accouplement réussi). */
   idealTotal: number
-  /** Part de la recette idéale que vos montures ne couvrent pas encore. */
+  /** Part de la recette idéale que vos montures ne couvrent pas encore (si chaque accouplement réussit). */
   idealRemaining: number
-  /** Captures attendues restantes avec la stratégie (arrondi supérieur ; 0 si couvert). */
+  /** Captures attendues restantes (entier, arrondi au plus fort reste : Σ = arrondi du total). */
   expected: number
+  /** Même valeur, non arrondie. */
+  expectedRaw: number
   ownedMales: number
   ownedFemales: number
   /** Répartition conseillée des captures attendues pour équilibrer les sexes. */
@@ -379,20 +566,32 @@ export interface CaptureNeed {
   females: number
 }
 
+export interface CaptureNeedsOptions {
+  /** Effort depuis zéro (modèle analytique) : base de la calibration par la simulation. */
+  full?: EffortEstimate | null
+  /** Simulation Monte-Carlo du même programme : captures = restant analytique × (simulé / analytique depuis zéro), couleur par couleur. */
+  sim?: ProgramSummary | null
+  /** Effectifs possédés ajustés (sexes, porteuses) ; défaut : `ownedRecipeSupply(tree, mounts)`. */
+  supply?: Map<number, number>
+  rules?: Ruleset
+}
+
 /**
- * Captures restantes par couleur pour l'objectif. On parcourt la recette idéale depuis la cible :
- * une monture possédée (fertile ou féconde) de l'espèce d'un nœud couvre tout son sous-arbre ; les
- * G1 non couvertes restent à capturer. Les captures attendues (`effort.capturesByColor`, stratégie
- * réelle : chances, clonage) sont réparties au prorata de la part non couverte (ESTIMATION).
+ * Captures restantes par couleur pour l'objectif.
+ * - `idealRemaining` : recette idéale parcourue depuis la cible, une monture utile (sexes et porteuses
+ *   comptés, `ownedRecipeSupply`) couvre son sous-arbre ; c'est le minimum si tout réussit.
+ * - `expected` : effort attendu restant (`remaining`, `expectedEffort` avec vos montures en `owned` :
+ *   un accouplement peut rater, un exemplaire du haut ne couvre pas tout son sous-arbre), calibré par
+ *   la simulation Monte-Carlo si elle est fournie (sinon : modèle analytique = borne haute prudente),
+ *   arrondi au plus fort reste. ESTIMATION.
  */
-export function captureNeeds(tree: RecipeNode, mounts: Mount[], effort: EffortEstimate | null): CaptureNeed[] {
+export function captureNeeds(tree: RecipeNode, mounts: readonly Mount[], remaining: EffortEstimate | null, opts: CaptureNeedsOptions = {}): CaptureNeed[] {
   const usable = mounts.filter(isUsable)
-  const pool = new Map<number, number>()
-  for (const m of usable) pool.set(m.speciesId, (pool.get(m.speciesId) ?? 0) + 1)
-  const remaining = new Map<number, number>()
+  const pool = new Map(opts.supply ?? ownedRecipeSupply(tree, mounts, { rules: opts.rules }).counts)
+  const uncovered = new Map<number, number>()
   const walk = (n: RecipeNode) => {
     const have = pool.get(n.speciesId) ?? 0
-    if (have > 0) {
+    if (have > 0 && n.speciesId !== tree.speciesId) {
       pool.set(n.speciesId, have - 1)
       return
     }
@@ -401,20 +600,32 @@ export function captureNeeds(tree: RecipeNode, mounts: Mount[], effort: EffortEs
       walk(n.parents[1])
       return
     }
-    remaining.set(n.speciesId, (remaining.get(n.speciesId) ?? 0) + 1)
+    uncovered.set(n.speciesId, (uncovered.get(n.speciesId) ?? 0) + 1)
   }
   walk(tree)
-  const out: CaptureNeed[] = []
-  for (const [id, total] of capturesByColor(tree)) {
-    const idealRemaining = remaining.get(id) ?? 0
-    const expTotal = effort?.capturesByColor.get(id) ?? total
-    const expected = total > 0 && idealRemaining > 0 ? Math.max(idealRemaining, Math.ceil((expTotal * idealRemaining) / total - 1e-9)) : 0
+  const ideal = [...capturesByColor(tree)]
+  const simColors = opts.sim ? new Map(opts.sim.capturesByColor.map((c) => [c.speciesId, c.mean])) : null
+  const fullTotal = opts.full?.captures ?? 0
+  const simTotal = opts.sim?.metrics.captures.mean ?? 0
+  const raw = ideal.map(([id]) => {
+    if (!remaining) return uncovered.get(id) ?? 0
+    let v = remaining.capturesByColor.get(id) ?? 0
+    if (simColors && opts.full) {
+      const f = opts.full.capturesByColor.get(id) ?? 0
+      const sc = simColors.get(id)
+      v *= f > 0 && sc !== undefined ? sc / f : fullTotal > 0 ? simTotal / fullTotal : 1
+    }
+    return v
+  })
+  const rounded = largestRemainder(raw)
+  const out: CaptureNeed[] = ideal.map(([id, total], i) => {
+    const expected = rounded[i]
     const ownedMales = usable.filter((m) => m.speciesId === id && m.gender === 'male').length
     const ownedFemales = usable.filter((m) => m.speciesId === id && m.gender === 'femelle').length
     const deficit = ownedFemales - ownedMales
     const males = Math.max(0, Math.min(expected, Math.round((expected + deficit) / 2)))
-    out.push({ speciesId: id, idealTotal: total, idealRemaining, expected, ownedMales, ownedFemales, males, females: expected - males })
-  }
+    return { speciesId: id, idealTotal: total, idealRemaining: uncovered.get(id) ?? 0, expected, expectedRaw: raw[i], ownedMales, ownedFemales, males, females: expected - males }
+  })
   return out.sort((a, b) => b.expected - a.expected || a.speciesId - b.speciesId)
 }
 
@@ -446,30 +657,54 @@ export interface GoalStatus {
   owned: number
   reached: boolean
   tree: RecipeNode | null
+  /** Effort attendu depuis zéro (modèle analytique : captures = borne haute prudente, voir genetics.md). */
   effort: EffortEstimate | null
+  /** Effort attendu restant avec vos montures (modèle analytique, `owned`). */
+  remaining: EffortEstimate | null
+  /** Vos montures retenues pour la recette (sexes, porteuses). */
+  supply: RecipeSupply | null
   captures: CaptureNeed[]
-  /** Captures attendues restantes (somme). */
+  /** Captures attendues restantes (somme des `expected`). */
   capturesRemaining: number
+  /** Origine des captures conseillées : simulation Monte-Carlo (calibrée) ou modèle analytique (borne haute). */
+  captureBasis: 'simulation' | 'analytique'
+  /** Simulation appliquée (même objectif), ou null. */
+  sim: ProgramSummary | null
+  /** Part du programme qui reste (accouplements restants ÷ accouplements depuis zéro, modèle analytique), 0 … 1. */
+  remainingShare: number
   error?: string
 }
 
-/** Où en est l'objectif : recette, effort attendu (stratégie réelle) et captures restantes par couleur. */
-export function goalStatus(goalId: number, mounts: Mount[], opts: StrategyOptions): GoalStatus | null {
+/** La simulation porte-t-elle sur cet objectif (et a-t-elle abouti au moins une fois) ? */
+function simFor(goalId: number, sim: ProgramSummary | null | undefined): ProgramSummary | null {
+  return sim && sim.config.targetSpeciesId === goalId && sim.runs > 0 && sim.successRate > 0 && sim.capturesByColor.length > 0 ? sim : null
+}
+
+/**
+ * Où en est l'objectif : recette, effort attendu depuis zéro et restant avec vos montures (sexes et
+ * porteuses compris, couverture probabiliste), captures restantes par couleur — calibrées par la
+ * simulation Monte-Carlo `sim` si elle est fournie, sinon modèle analytique (borne haute).
+ */
+export function goalStatus(goalId: number, mounts: readonly Mount[], opts: StrategyOptions & { sim?: ProgramSummary | null }): GoalStatus | null {
   const s = getSpecies(goalId)
   if (!s) return null
   const owned = mounts.filter((m) => m.speciesId === goalId).length
   const tree = s.breedable ? cheapestRecipe(goalId) : null
   let effort: EffortEstimate | null = null
+  let remaining: EffortEstimate | null = null
+  let supply: RecipeSupply | null = null
   let error: string | undefined
   if (!tree) error = `${s.name} ne s'obtient pas par élevage.`
   else
     try {
-      effort = expectedEffort(goalId, strategyEffortOptions(opts))
+      const eo = strategyEffortOptions(opts)
+      effort = expectedEffort(goalId, eo)
+      supply = ownedRecipeSupply(tree, mounts, { rules: opts.rules })
+      remaining = supply.counts.size ? expectedEffort(goalId, { ...eo, owned: supply.counts }) : effort
     } catch (e) {
       error = e instanceof Error ? e.message : String(e)
     }
-  const captures = tree && owned === 0 ? captureNeeds(tree, mounts, effort) : []
-  return {
+  const base: GoalStatus = {
     speciesId: goalId,
     name: s.name,
     family: s.family,
@@ -478,59 +713,210 @@ export function goalStatus(goalId: number, mounts: Mount[], opts: StrategyOption
     reached: owned > 0,
     tree,
     effort,
+    remaining,
+    supply,
+    captures: [],
+    capturesRemaining: 0,
+    captureBasis: 'analytique',
+    sim: null,
+    remainingShare: owned > 0 ? 0 : effort && remaining && effort.matings > 0 ? Math.max(0, Math.min(1, remaining.matings / effort.matings)) : 1,
+    error,
+  }
+  return withGoalSimulation(base, mounts, opts.sim ?? null, opts.rules)
+}
+
+/**
+ * Applique (ou retire) la simulation Monte-Carlo à un état d'objectif déjà calculé : captures par
+ * couleur recalculées (calibrées si `sim` porte sur cet objectif). Léger : à appeler quand la
+ * simulation arrive, sans refaire l'analyse.
+ */
+export function withGoalSimulation(goal: GoalStatus, mounts: readonly Mount[], sim: ProgramSummary | null | undefined, rules?: Ruleset): GoalStatus
+export function withGoalSimulation(goal: GoalStatus | null, mounts: readonly Mount[], sim: ProgramSummary | null | undefined, rules?: Ruleset): GoalStatus | null
+export function withGoalSimulation(goal: GoalStatus | null, mounts: readonly Mount[], sim: ProgramSummary | null | undefined, rules?: Ruleset): GoalStatus | null {
+  if (!goal) return null
+  const used = simFor(goal.speciesId, sim)
+  if (!goal.tree || goal.reached || goal.error) return { ...goal, captures: [], capturesRemaining: 0, sim: used, captureBasis: used ? 'simulation' : 'analytique' }
+  const captures = captureNeeds(goal.tree, mounts, goal.remaining, { full: goal.effort, sim: used, supply: goal.supply?.counts, rules })
+  return {
+    ...goal,
     captures,
     capturesRemaining: captures.reduce((n, c) => n + c.expected, 0),
-    error,
+    captureBasis: used ? 'simulation' : 'analytique',
+    sim: used,
+  }
+}
+
+// ---------- Calendrier (simulation du programme) ----------
+
+/**
+ * Passages aux enclos par jour selon le temps de jeu (`settings.hoursPerDay`), pour la simulation du
+ * calendrier (une session = un cycle) : moins d'1 h → 1 ; 1 à 4 h → 2 (matin et soir, valeur de la
+ * recherche) ; 4 à 8 h → 3 ; 8 h et plus → 4. Hypothèse documentée (ESTIMATION) : les jauges tournent
+ * 24 h sur 24, seul le nombre de passages limite le rythme.
+ */
+export function sessionsPerDayFor(hoursPerDay: number | undefined): number {
+  const h = hoursPerDay ?? 3
+  if (!Number.isFinite(h)) return 2
+  if (h < 1) return 1
+  if (h < 4) return 2
+  if (h < 8) return 3
+  return 4
+}
+
+/** Configuration de la simulation Monte-Carlo de la stratégie conseillée vers l'objectif (Plan, Accueil). */
+export function goalProgramConfig(
+  settings: Pick<AdvisorSettings, 'goalSpeciesId' | 'parentTargetLevel' | 'useOptimakina' | 'preferredTier' | 'jobLevel' | 'hoursPerDay'>,
+  rules: Ruleset,
+  opts: { runs?: number } = {},
+): ProgramConfig | null {
+  if (settings.goalSpeciesId === null) return null
+  const sp = getSpecies(settings.goalSpeciesId)
+  if (!sp || !sp.breedable || !cheapestRecipe(sp.id)) return null
+  return {
+    targetSpeciesId: sp.id,
+    parentLevel: Math.max(1, Math.min(200, Math.round(settings.parentTargetLevel))),
+    makina: settings.useOptimakina ? { fromGeneration: OPTIMAKINA_SYSTEMATIC_GENERATION } : 'none',
+    cloning: true,
+    paddocks: unlockedPaddocks(settings.jobLevel),
+    tier: settings.preferredTier,
+    batchSize: PADDOCK_SLOTS,
+    rules,
+    maxDays: 730,
+    runs: opts.runs ?? 24,
+    seed: 1,
+    sessionsPerDay: sessionsPerDayFor(settings.hoursPerDay),
+  }
+}
+
+/** Empreinte d'une configuration de simulation (cache partagé entre le Plan et l'Accueil). */
+export function programConfigKey(cfg: ProgramConfig): string {
+  return JSON.stringify([cfg.targetSpeciesId, cfg.parentLevel, cfg.levelByGeneration ?? null, cfg.makina, cfg.cloning, cfg.paddocks, cfg.tier, cfg.batchSize, cfg.rules.id, cfg.maxDays, cfg.runs, cfg.seed ?? 1, cfg.sessionsPerDay ?? 2])
+}
+
+/** Ce qui reste du programme depuis votre étable (calendrier du Plan). */
+export interface RemainingProgram {
+  /** Part restante du programme (accouplements analytiques restants ÷ depuis zéro). */
+  share: number
+  /** Captures restantes conseillées (`goal.capturesRemaining`). */
+  captures: number
+  /** Accouplements restants : simulation × part restante (ou modèle analytique sans simulation). */
+  matings: number
+  /** Jours restants en jeu optimal : simulation × part restante, au moins un cycle de fécondation s'il reste des accouplements ; null sans simulation. */
+  days: { mean: number; p10: number; p90: number } | null
+  basis: 'simulation' | 'analytique'
+}
+
+/**
+ * Programme restant depuis l'étable actuelle. La simulation part de zéro (elle ne connaît pas vos
+ * montures) : ses durées et accouplements sont ramenés à la part du programme qui reste d'après le
+ * modèle analytique (`goal.remainingShare`). ESTIMATION : à afficher comme telle.
+ */
+export function remainingProgram(goal: GoalStatus, sim?: ProgramSummary | null): RemainingProgram | null {
+  if (!goal.effort || !goal.remaining) return null
+  const used = simFor(goal.speciesId, sim ?? goal.sim)
+  const share = goal.reached ? 0 : goal.remainingShare
+  if (!used) return { share, captures: goal.capturesRemaining, matings: goal.reached ? 0 : goal.remaining.matings, days: null, basis: 'analytique' }
+  const d = used.metrics.days
+  const floor = share > 0 ? used.fecundationCycles / Math.max(1, used.config.sessionsPerDay) : 0
+  const scale = (v: number) => (share > 0 ? Math.max(floor, v * share) : 0)
+  return {
+    share,
+    captures: goal.capturesRemaining,
+    matings: used.metrics.matings.mean * share,
+    days: { mean: scale(d.mean), p10: scale(d.p10), p90: scale(d.p90) },
+    basis: 'simulation',
   }
 }
 
 // ---------- Métier ----------
 
 export interface JobStatus {
+  /** Niveau saisi (réglages). */
   level: number
-  /** Prochain niveau qui débloque un enclos (200 au plus). */
+  /** Niveau estimé = niveau saisi + XP du journal depuis la saisie (plancher : bonus Almanax non comptés). */
+  estimatedLevel: number
+  /** XP d'Éleveur enregistrée dans le journal depuis la saisie du niveau (0 sans journal). */
+  xpGained: number
+  /** Prochain niveau qui débloque un enclos (200 au plus), depuis le niveau estimé. */
   nextPaddockLevel: number
   /** Numéro de l'enclos débloqué à ce niveau. */
   nextPaddockIndex: number
+  /** XP restante jusqu'au prochain enclos (XP du journal déduite). */
   xpToNext: number
   /** Avancement (0 … 1) entre le dernier enclos débloqué et le suivant. */
   progress: number
+  /** Le niveau estimé débloque un enclos que le niveau saisi ne débloque pas : mettre à jour les réglages. */
+  paddockUnlockedSinceEntry: boolean
   nextMilestone: JobMilestoneDef | null
   plan: LevelingPlan | null
   bestNow: CraftChoice | null
   /** Prochains jours Almanax utiles au métier (≤ 30 jours). */
   almanax: JobAlmanaxDay[]
+  /** Plan de montée ou meilleur craft impossible à calculer (message), sinon absent. */
+  error?: string
 }
 
-export function jobStatus(jobLevel: number, ctx: PriceContext, rules: Ruleset, opts: { family?: FamilyId; todayIso: string; withPlan?: boolean }): JobStatus {
+/**
+ * Niveau d'Éleveur estimé : niveau saisi + XP du journal depuis la saisie (`journalJobXp`). Plancher :
+ * les bonus Almanax non enregistrés ne sont pas comptés ; jamais en dessous du niveau saisi.
+ */
+export function estimatedJobLevel(jobLevel: number, xpGained: number | undefined): number {
   const level = Math.max(1, Math.min(200, Math.floor(jobLevel)))
-  const next = nextPaddockTarget(level)
-  const prev = [...PADDOCK_UNLOCK_LEVELS].reverse().find((p) => p.level <= level)?.level ?? 1
+  const xp = Math.max(0, Number.isFinite(xpGained) ? (xpGained as number) : 0)
+  return Math.max(level, Math.min(200, jobLevelFromXp(jobXpForLevel(level) + xp)))
+}
+
+/**
+ * Où en est le métier : prochain enclos, XP restante, plan de montée. `xpGained` = XP d'Éleveur du
+ * journal depuis la dernière saisie du niveau (`journalJobXp(entries, settings.jobLevelUpdatedAt).xp`) :
+ * elle est déduite de l'XP restante et donne le niveau estimé.
+ */
+export function jobStatus(
+  jobLevel: number,
+  ctx: PriceContext,
+  rules: Ruleset,
+  opts: { family?: FamilyId; todayIso: string; withPlan?: boolean; xpGained?: number },
+): JobStatus {
+  const level = Math.max(1, Math.min(200, Math.floor(jobLevel)))
+  const xpGained = Math.max(0, Math.floor(Number.isFinite(opts.xpGained) ? (opts.xpGained as number) : 0))
+  const totalXp = jobXpForLevel(level) + xpGained
+  const estimatedLevel = estimatedJobLevel(level, xpGained)
+  const next = nextPaddockTarget(estimatedLevel)
+  const prev = [...PADDOCK_UNLOCK_LEVELS].reverse().find((p) => p.level <= estimatedLevel)?.level ?? 1
   const nextIndex = Math.max(1, PADDOCK_UNLOCK_LEVELS.findIndex((p) => p.level === next) + 1)
   const span = jobXpForLevel(next) - jobXpForLevel(prev)
   const almanax = jobAlmanaxDays(opts.todayIso).filter((d) => d.daysUntil <= 30)
   const todayBonus = almanax.find((d) => d.daysUntil === 0)?.xpBonus ?? 0
   const milestones = jobMilestones({ family: opts.family })
+  const startXp = Math.max(0, totalXp - jobXpForLevel(estimatedLevel))
   let plan: LevelingPlan | null = null
   let bestNow: CraftChoice | null = null
-  if (level < 200) {
+  let error: string | undefined
+  if (estimatedLevel < 200) {
     try {
-      bestNow = bestCraftAt(level, ctx, rules, 'kamas', { includeCaptures: true, almanaxXpBonus: todayBonus })
-      if (opts.withPlan !== false) plan = levelingPlan(level, next, ctx, { rules, metric: 'kamas', includeCaptures: true, family: opts.family, almanaxXpBonus: todayBonus })
-    } catch {
+      bestNow = bestCraftAt(estimatedLevel, ctx, rules, 'kamas', { includeCaptures: true, almanaxXpBonus: todayBonus })
+      if (opts.withPlan !== false)
+        plan = levelingPlan(estimatedLevel, next, ctx, { rules, metric: 'kamas', includeCaptures: true, family: opts.family, almanaxXpBonus: todayBonus, startXp })
+    } catch (e) {
+      // Section signalée (`error`, puis « section indisponible » à l'accueil), jamais avalée en silence.
+      error = errorMessage(e)
       plan = null
     }
   }
   return {
     level,
+    estimatedLevel,
+    xpGained,
     nextPaddockLevel: next,
     nextPaddockIndex: nextIndex,
-    xpToNext: level >= 200 ? 0 : jobXpBetween(level, next),
-    progress: level >= 200 ? 1 : span > 0 ? Math.max(0, Math.min(1, (jobXpForLevel(level) - jobXpForLevel(prev)) / span)) : 0,
-    nextMilestone: milestones.find((m) => m.level > level && m.kind !== 'makina') ?? null,
+    xpToNext: estimatedLevel >= 200 ? 0 : Math.max(0, jobXpForLevel(next) - totalXp),
+    progress: estimatedLevel >= 200 ? 1 : span > 0 ? Math.max(0, Math.min(1, (totalXp - jobXpForLevel(prev)) / span)) : 0,
+    paddockUnlockedSinceEntry: unlockedPaddocks(estimatedLevel) > unlockedPaddocks(level),
+    nextMilestone: milestones.find((m) => m.level > estimatedLevel && m.kind !== 'makina') ?? null,
     plan,
     bestNow,
     almanax,
+    error,
   }
 }
 
@@ -616,7 +1002,7 @@ export function strategyHighlights(settings: Pick<AdvisorSettings, 'parentTarget
     {
       id: 'palier',
       title: `Palier : nuit au palier 1, journée au palier ${Math.max(2, Math.min(3, tier))}`,
-      text: `Lot complet (≈ 2 phases + traversée de 0) : ≈ ${formatDuration(fertilitySeconds(1, rules))} au palier 1, ≈ ${formatDuration(fertilitySeconds(tier, rules))} au palier ${tier} (votre réglage). Palier 4 seulement en étant présent.`,
+      text: `Lot complet (≈ 2 phases + traversée de 0) : ≈ ${formatDuration(typicalBatchSeconds(1, rules))} au palier 1, ≈ ${formatDuration(typicalBatchSeconds(tier, rules))} au palier ${tier} (votre réglage) pour un lot typique du planificateur d'enclos (minimum théorique ≈ ${formatDuration(fertilitySeconds(tier, rules))}). Palier 4 seulement en étant présent.`,
       why: 'Le palier ne change que la vitesse et le prix au point : les Extraits sont en général les moins chers, les Élixirs les plus chers.',
       confidence: 'high',
     },
@@ -651,6 +1037,59 @@ export function resolveRuleRefs(text: string): string {
 
 // ---------- Analyse (calculs lourds, indépendants de l'heure) ----------
 
+/** Section de conseils (calcul de l'analyse ou générateur de `adviseNow`). */
+export type AdvisorSection =
+  | 'summary'
+  | 'pairs'
+  | 'fates'
+  | 'assignment'
+  | 'goal'
+  | 'job'
+  | 'costs'
+  | 'onboarding'
+  | 'alarms'
+  | 'gauges'
+  | 'almanax'
+  | 'mating'
+  | 'exits'
+  | 'placement'
+  | 'captures'
+  | 'prices'
+
+export const ADVISOR_SECTION_LABELS: Record<AdvisorSection, string> = {
+  summary: 'résumé de l’étable',
+  pairs: 'plan d’accouplement',
+  fates: 'sort des montures',
+  assignment: 'répartition en enclos',
+  goal: 'objectif et captures',
+  job: 'métier (plan de montée)',
+  costs: 'coûts (fécondation, XP, filets)',
+  onboarding: 'premiers pas',
+  alarms: 'alarmes des plans d’enclos',
+  gauges: 'jauges et carburant',
+  almanax: 'Almanax',
+  mating: 'conseils d’accouplement',
+  exits: 'clonages et sorties',
+  placement: 'placement en enclos',
+  captures: 'captures',
+  prices: 'prix manquants',
+}
+
+/** Section qui n'a pas pu être calculée : affichée « section indisponible », jamais masquée en silence. */
+export interface AdvisorSectionError {
+  section: AdvisorSection
+  label: string
+  message: string
+}
+
+/** Monture utile à l'objectif dont la partenaire du plan est encore en préparation (fertile). */
+export interface WaitingPartner {
+  mountId: string
+  partnerId: string
+  /** Espèces visées par le couple de l'objectif. */
+  targetSpecies: number[]
+}
+
 export interface AdvisorAnalysis {
   /** Jour (ISO) de l'analyse : Almanax, Takeza. */
   day: string
@@ -662,24 +1101,28 @@ export interface AdvisorAnalysis {
   pairs: PairSuggestion[]
   /** Couples possibles examinés. */
   pairCandidates: number
+  /** Montures de l'objectif mises de côté : attendre que leur partenaire soit féconde (`PairSuggestion.waitFor`). */
+  waiting: WaitingPartner[]
   assignment: AssignResult | null
   /** Places d'enclos libres après la répartition conseillée. */
   freeSlots: number
   goal: GoalStatus | null
   capture: CaptureStatus
   job: JobStatus
-  fertility: FertilityCost
+  fertility: FertilityCost | null
   genetonValue: number
-  /** Génétons attendus du plan d'accouplement. */
+  /** Génétons attendus du plan d'accouplement (Σ `result.expectedGenetons`, bébés compris). */
   expectedGenetons: number
   /** XP d'Éleveur du plan d'accouplement. */
   matingJobXp: number
   missingPrices: MissingPrice[]
   /** Montures dont aucune sortie n'est chiffrée. */
   unpricedMounts: number
+  /** Sections qui n'ont pas pu être calculées (message), à afficher. */
+  errors: AdvisorSectionError[]
 }
 
-/** Fonctions économiques communes (valorisations mises en cache). */
+/** Fonctions économiques communes (valorisations mises en cache, C_eff de la règle de prix). */
 function economyKit(input: Pick<AdvisorInput, 'priceCtx' | 'mountPrices' | 'settings' | 'rules'>) {
   const { priceCtx: ctx, mountPrices, settings, rules } = input
   const cache = new Map<string, MountValuation>()
@@ -693,39 +1136,81 @@ function economyKit(input: Pick<AdvisorInput, 'priceCtx' | 'mountPrices' | 'sett
     return v
   }
   const valuation: ValuationFn = (id, level, o) => valuationOf(id, level, o.state, o.senile)
-  const levelCost: LevelCostFn = (from, to, m) => {
-    const c = levelingCost(from, to, { tier: settings.preferredTier, batchSize: PADDOCK_SLOTS, sage: m.ability === 'sage', ctx, rules, jobLevel: settings.jobLevel })
-    return { cost: c.costPerMount, complete: c.complete, seconds: c.secondsPerBatch }
+  // Montée de niveau des montures de surplus : coût du lot réel (montures montées ensemble, fourni par
+  // recommendFates), au palier de Mangeoire le moins cher entre le palier 1 (Extraits, C-BREAK-01) et
+  // le palier préféré — même calcul que la page Montures.
+  const levelCost: LevelCostFn = (from, to, m, batchSize) => {
+    const tiers: FuelTier[] = settings.preferredTier === 1 ? [1] : [1, settings.preferredTier]
+    let best: ReturnType<LevelCostFn> | null = null
+    for (const tier of tiers) {
+      const c = levelingCost(from, to, { tier, batchSize, sage: m.ability === 'sage', ctx, rules, jobLevel: settings.jobLevel })
+      const option = { cost: c.costPerMount, complete: c.complete, seconds: c.secondsPerBatch, tier, batchSize }
+      if (!best || (option.complete && option.cost !== null && (!best.complete || best.cost === null || option.cost < best.cost))) best = option
+    }
+    return best ?? { cost: null, complete: false }
   }
   const mountValue = (id: number, level: number) => valuationOf(id, level, 'fertile', false).best
-  return { valuation, levelCost, mountValue }
+  // C_eff (règle de prix de l'Optimakina, M-OPTI-01) : mêmes paramètres que la page Accouplement.
+  const coupleCost = economyCoupleCost({ ctx, mountPrices, saleTax: settings.saleTax, rules, jobLevel: settings.jobLevel, tier: settings.preferredTier })
+  return { valuation, levelCost, mountValue, coupleCost }
+}
+
+function emptySummary(total: number): InventorySummary {
+  return {
+    total,
+    byFamily: { dragodinde: 0, muldo: 0, volkorne: 0 },
+    byStatus: { fertile: 0, feconde: 0, sterile: 0, senile: 0 },
+    byGeneration: new Map(),
+    fecundPairs: 0,
+    fecundInPaddock: 0,
+    paddock: new Map(),
+    stable: 0,
+    inventory: 0,
+  }
+}
+
+/** Montures de l'objectif écartées du plan faute de partenaire prête (`waitFor` des couples classés). */
+function collectWaiting(ranked: PairSuggestion[], plan: PairSuggestion[]): WaitingPartner[] {
+  const inPlan = new Set(plan.flatMap((p) => [p.a.id, p.b.id]))
+  const out = new Map<string, WaitingPartner>()
+  for (const p of ranked)
+    for (const w of p.waitFor)
+      if (!inPlan.has(w.mountId) && !inPlan.has(w.partnerId) && !out.has(w.mountId)) out.set(w.mountId, { mountId: w.mountId, partnerId: w.partnerId, targetSpecies: w.targetSpecies })
+  return [...out.values()]
 }
 
 /**
- * Calculs lourds de l'aide (sort des montures, plan d'accouplement, répartition en enclos, objectif,
- * métier, prix manquants). Ne dépend de `now` que par le jour (Almanax) : la page le mémorise et
- * rappelle `adviseNow` toutes les 30 s avec le même résultat.
+ * Calculs lourds de l'aide (plan d'accouplement, sort des montures, répartition en enclos, objectif,
+ * métier, prix manquants). Ne dépend de `now` que par le jour (Almanax) : la page le mémorise
+ * (`analyzeStateCached`) et rappelle `adviseNow` toutes les 30 s avec le même résultat. Une section qui
+ * échoue est notée dans `errors` (et affichée), les autres restent calculées.
  */
 export function analyzeState(input: AdvisorInput): AdvisorAnalysis {
   const { settings, rules, mounts, priceCtx: ctx } = input
-  const day = isoDay(input.now)
+  const errors: AdvisorSectionError[] = []
+  const fail = (section: AdvisorSection, e: unknown) => {
+    console.error('[conseiller]', section, e)
+    errors.push({ section, label: ADVISOR_SECTION_LABELS[section], message: errorMessage(e) })
+  }
+  const day = serverDay(input.now) // jour de jeu (Paris) : Almanax, Takeza
   const almanax = almanaxOn(day)
   const unlocked = unlockedPaddocks(settings.jobLevel)
-  const summary = inventorySummary(mounts)
+  let summary: InventorySummary
+  try {
+    summary = inventorySummary(mounts)
+  } catch (e) {
+    fail('summary', e)
+    summary = emptySummary(mounts.length)
+  }
   const genetonValue = genetonKamasValue(input.genetonValue ?? null).value
   const kit = economyKit(input)
   const missing = new MissingCollector()
 
-  let fates = new Map<string, MountFate>()
-  if (mounts.length)
-    try {
-      fates = recommendFates({ inventory: mounts, goalSpeciesId: settings.goalSpeciesId, rules, valuation: kit.valuation, levelCost: kit.levelCost, genetonValue })
-    } catch {
-      fates = new Map()
-    }
-
+  // 1. Plan d'accouplement d'abord : le sort des montures en dépend (une monture prévue au plan
+  //    n'est jamais conseillée en sortie avant l'accouplement).
   let pairs: PairSuggestion[] = []
   let pairCandidates = 0
+  let waiting: WaitingPartner[] = []
   if (summary.byStatus.feconde >= 2)
     try {
       const ranked = rankPairs(mounts, {
@@ -737,13 +1222,39 @@ export function analyzeState(input: AdvisorInput): AdvisorAnalysis {
         mountValue: kit.mountValue,
         makinaCost: (kind, family, gen) => makinaCost(kind, family, gen, ctx, rules),
         genetonValue,
+        coupleCost: kit.coupleCost.cost,
       })
       pairCandidates = ranked.length
       pairs = bestDisjointPairs(ranked)
-    } catch {
-      pairs = []
+      waiting = collectWaiting(ranked, pairs)
+    } catch (e) {
+      fail('pairs', e)
     }
 
+  // 2. Sort des montures, avec le plan retenu (« Accoupler (plan) puis … »).
+  const plannedPartners = new Map<string, string>()
+  for (const p of pairs) {
+    plannedPartners.set(p.a.id, p.b.id)
+    plannedPartners.set(p.b.id, p.a.id)
+  }
+  let fates = new Map<string, MountFate>()
+  if (mounts.length)
+    try {
+      fates = recommendFates({
+        inventory: mounts,
+        goalSpeciesId: settings.goalSpeciesId,
+        rules,
+        valuation: kit.valuation,
+        levelCost: kit.levelCost,
+        genetonValue,
+        plannedPartners,
+        goal: settings.goal,
+      })
+    } catch (e) {
+      fail('fates', e)
+    }
+
+  // 3. Répartition en enclos (mêmes options que la page Enclos).
   const xpTargets: Record<string, number> = {}
   for (const f of fates.values()) if (f.action === 'monter' && f.targetLevel) xpTargets[f.mountId] = f.targetLevel
   let assignment: AssignResult | null = null
@@ -754,30 +1265,43 @@ export function analyzeState(input: AdvisorInput): AdvisorAnalysis {
         rules,
         tier: settings.preferredTier,
         withXp: settings.xpFiller,
-        almanaxDoubled: almanax?.doubledGauge ?? null,
+        almanaxDoubled: settings.almanaxGaugeDoubling ? (almanax?.doubledGauge ?? null) : null,
+        startMs: input.now,
+        applyAlmanax: !!settings.almanaxGaugeDoubling,
         levelTarget: settings.parentTargetLevel,
         xpTargets,
         keepCurrent: true,
+        minStepSeconds: Math.max(5, settings.checkIntervalMinutes ?? 60) * 60,
       })
-    } catch {
-      assignment = null
+    } catch (e) {
+      fail('assignment', e)
     }
   const used = assignment
     ? assignment.paddocks.reduce((n, p) => n + p.mountIds.length, 0)
     : mounts.filter((m) => m.location.kind === 'enclos' && m.location.paddock <= unlocked).length
   const freeSlots = Math.max(0, unlocked * PADDOCK_SLOTS - used)
 
-  const goal =
-    settings.goalSpeciesId !== null
-      ? goalStatus(settings.goalSpeciesId, mounts, { parentLevel: settings.parentTargetLevel, useOptimakina: settings.useOptimakina, rules })
-      : null
+  // 4. Objectif (effort restant avec vos montures ; la simulation est appliquée par `adviseNow`).
+  let goal: GoalStatus | null = null
+  if (settings.goalSpeciesId !== null)
+    try {
+      goal = goalStatus(settings.goalSpeciesId, mounts, { parentLevel: settings.parentTargetLevel, useOptimakina: settings.useOptimakina, rules })
+      if (goal?.error && goal.tree) fail('goal', goal.error)
+    } catch (e) {
+      fail('goal', e)
+    }
   const capture = captureStatus(goal?.family ?? settings.family, settings.jobLevel, ctx)
-  const job = jobStatus(settings.jobLevel, ctx, rules, { family: settings.family, todayIso: day })
-  const fertility = fertilityCost({ tier: settings.preferredTier, batchSize: PADDOCK_SLOTS, ctx, rules, jobLevel: settings.jobLevel })
-
-  missing.add(fertility.complete ? [] : fertility.missing, `fécondation au palier ${settings.preferredTier}`, 3)
-  const lvl = levelingCost(1, settings.parentTargetLevel, { tier: settings.preferredTier, batchSize: PADDOCK_SLOTS, ctx, rules, jobLevel: settings.jobLevel })
-  missing.add(lvl.complete ? [] : lvl.missing, `XP des parents (Mangeoire, niveau ${settings.parentTargetLevel})`, 2)
+  const job = jobStatus(settings.jobLevel, ctx, rules, { family: settings.family, todayIso: day, xpGained: input.journalXp?.xp })
+  if (job.error) fail('job', job.error)
+  let fertility: FertilityCost | null = null
+  try {
+    fertility = fertilityCost({ tier: settings.preferredTier, batchSize: PADDOCK_SLOTS, ctx, rules, jobLevel: settings.jobLevel })
+    missing.add(fertility.complete ? [] : fertility.missing, `fécondation au palier ${settings.preferredTier}`, 3)
+    const lvl = levelingCost(1, settings.parentTargetLevel, { tier: settings.preferredTier, batchSize: PADDOCK_SLOTS, ctx, rules, jobLevel: settings.jobLevel })
+    missing.add(lvl.complete ? [] : lvl.missing, `XP des parents (Mangeoire, niveau ${settings.parentTargetLevel})`, 2)
+  } catch (e) {
+    fail('costs', e)
+  }
   missing.add(capture.cost.complete ? [] : capture.cost.missing, 'filets de capture', 2)
   for (const p of pairs)
     if (p.makina === 'optimakina' && p.makinaPrice && !p.makinaPrice.complete) {
@@ -797,6 +1321,7 @@ export function analyzeState(input: AdvisorInput): AdvisorAnalysis {
     fates,
     pairs,
     pairCandidates,
+    waiting,
     assignment,
     freeSlots,
     goal,
@@ -804,11 +1329,76 @@ export function analyzeState(input: AdvisorInput): AdvisorAnalysis {
     job,
     fertility,
     genetonValue,
-    expectedGenetons: pairs.reduce((n, p) => n + p.result.expectedGenetons * p.result.babies, 0),
+    // `result.expectedGenetons` compte déjà les bébés (genetics.ts) : jamais × babies une 2e fois.
+    expectedGenetons: pairs.reduce((n, p) => n + p.result.expectedGenetons, 0),
     matingJobXp: pairs.reduce((n, p) => n + p.result.jobXp, 0),
     missingPrices: missing.list(),
     unpricedMounts,
+    errors,
   }
+}
+
+// ---------- Cache de l'analyse (accueil) ----------
+
+interface AnalysisCacheEntry {
+  input: AdvisorInput
+  day: string
+  value: AdvisorAnalysis
+}
+
+let analysisCache: AnalysisCacheEntry | null = null
+const analysisCounters = { computed: 0, hits: 0 }
+
+function shallowEqual(a: object | null | undefined, b: object | null | undefined): boolean {
+  if (a === b) return true
+  if (!a || !b) return false
+  const ka = Object.keys(a) as (keyof typeof a)[]
+  const kb = Object.keys(b)
+  if (ka.length !== kb.length) return false
+  return ka.every((k) => Object.is(a[k], (b as typeof a)[k]))
+}
+
+/** Les entrées de l'analyse sont-elles les mêmes (références des données des stores, jour) ? */
+function sameAnalysisInput(x: AdvisorInput, y: AdvisorInput): boolean {
+  return (
+    x.rules === y.rules &&
+    x.mounts === y.mounts &&
+    shallowEqual(x.settings, y.settings) &&
+    shallowEqual(x.priceCtx, y.priceCtx) &&
+    shallowEqual(x.mountPrices, y.mountPrices) &&
+    Object.is(x.genetonValue ?? null, y.genetonValue ?? null) &&
+    Object.is(x.journalXp?.xp ?? 0, y.journalXp?.xp ?? 0)
+  )
+}
+
+/**
+ * `analyzeState` mémorisé (dernier résultat) : le même objet est rendu tant que le jour et les données
+ * (mêmes références de stores : montures, réglages, prix, règles) n'ont pas changé. L'accueil ne refait
+ * donc pas ≈ 0,5 s de calcul à chaque visite. Les plans d'enclos et niveaux de jauges n'entrent pas dans
+ * l'analyse (ils sont lus par `adviseNow`).
+ */
+export function analyzeStateCached(input: AdvisorInput): AdvisorAnalysis {
+  const day = serverDay(input.now)
+  if (analysisCache && analysisCache.day === day && sameAnalysisInput(analysisCache.input, input)) {
+    analysisCounters.hits++
+    return analysisCache.value
+  }
+  analysisCounters.computed++
+  const value = analyzeState(input)
+  analysisCache = { input, day, value }
+  return value
+}
+
+/** Compteurs du cache (tests, diagnostic) : analyses calculées et réutilisées. */
+export function analysisCacheStats(): { computed: number; hits: number } {
+  return { ...analysisCounters }
+}
+
+/** Vide le cache de l'analyse (tests). */
+export function clearAnalysisCache(): void {
+  analysisCache = null
+  analysisCounters.computed = 0
+  analysisCounters.hits = 0
 }
 
 // ---------- Générateurs de conseils ----------
@@ -819,6 +1409,8 @@ interface Ctx {
   now: number
   byId: Map<string, Mount>
   missing: MissingCollector
+  /** Objectif avec la simulation Monte-Carlo appliquée (`withGoalSimulation`), ou celui de l'analyse. */
+  goal: GoalStatus | null
 }
 
 function onboardingAdvice({ input }: Ctx): Advice[] {
@@ -885,25 +1477,25 @@ function onboardingAdvice({ input }: Ctx): Advice[] {
   return []
 }
 
-function goalAdvice({ input, a }: Ctx): Advice[] {
+function goalAdvice({ input, goal }: Ctx): Advice[] {
   const s = input.settings
   const out: Advice[] = []
-  if (a.goal?.reached)
+  if (goal?.reached)
     out.push({
-      id: `objectif:atteint:${a.goal.speciesId}`,
+      id: `objectif:atteint:${goal.speciesId}`,
       priority: 2,
       category: 'objectif',
-      title: `Objectif atteint : ${a.goal.name} !`,
-      detail: `Vous possédez ${nb(a.goal.owned, 'exemplaire')} de ${a.goal.name}. Choisissez la prochaine monture visée (génération suivante, autre couleur pour les succès) ou passez en « rentabilité maximale ».`,
+      title: `Objectif atteint : ${goal.name} !`,
+      detail: `Vous possédez ${nb(goal.owned, 'exemplaire')} de ${goal.name}. Choisissez la prochaine monture visée (génération suivante, autre couleur pour les succès) ou passez en « rentabilité maximale ».`,
       link: { page: 'plan', label: 'Choisir le prochain objectif' },
     })
-  else if (a.goal?.error)
+  else if (goal?.error)
     out.push({
-      id: `objectif:erreur:${a.goal.speciesId}`,
+      id: `objectif:erreur:${goal.speciesId}`,
       priority: 3,
       category: 'objectif',
-      title: `Objectif à revoir : ${a.goal.name}`,
-      detail: a.goal.error,
+      title: `Objectif à revoir : ${goal.name}`,
+      detail: goal.error,
       link: { page: 'plan', label: "Plan d'élevage" },
     })
   else if (s.goalSpeciesId === null && s.goal !== 'profit' && input.mounts.length > 0)
@@ -924,45 +1516,93 @@ function alarmAdvice({ input, a, now }: Ctx): Advice[] {
   for (const plan of Object.values(input.paddockPlans)) {
     if (plan.paddockId > a.unlocked) continue
     const N = plan.paddockId
-    const pr = planProgress(plan, now)
-    if (pr.finished) {
-      const inside = input.mounts.filter((m) => m.location.kind === 'enclos' && m.location.paddock === N)
+    const st = planStatus(plan, now)
+    const pr = st.progress
+    const link: AdviceLink = { page: 'enclos', params: { enclos: N }, label: `Voir l'enclos ${N}` }
+    if (st.state === 'finished' || st.state === 'end-overdue') {
+      // Plan terminé : l'inventaire ne sait pas que le lot est fécond (rien n'est écrit tant que le
+      // joueur n'a pas « appliqué au lot ») — on ne propose ni « démarrer » ni recharge pour cet enclos.
+      let fecund = 0
+      try {
+        fecund = projectMountsFromPlan(plan, input.mounts, now, { rules: input.rules, almanax: input.settings.almanaxGaugeDoubling ? undefined : false }).fecundIds.length
+      } catch {
+        fecund = 0
+      }
+      const total = plan.mountIds.filter((id) => input.mounts.some((m) => m.id === id)).length
+      const inside = input.mounts.filter((m) => m.location.kind === 'enclos' && m.location.paddock === N).length
       out.push({
         id: `plan-fini:${N}:${plan.startedAt}`,
-        priority: inside.length ? 2 : 4,
+        priority: total || inside ? 2 : 4,
         category: 'enclos',
-        title: `Enclos ${N} : plan terminé`,
-        detail: inside.length
-          ? `Le lot est fécond : sortez les fécondes vers l'étable (accouplement depuis l'étable), puis lancez un nouveau lot. ${nb(inside.length, 'monture')} encore dans l'enclos.`
-          : "Le plan est terminé : arrêtez-le dans la page Enclos et lancez un nouveau lot.",
-        link: { page: 'enclos', params: { enclos: N }, label: `Voir l'enclos ${N}` },
+        title: total ? `Enclos ${N} : plan terminé — appliquez-le au lot` : `Enclos ${N} : plan terminé`,
+        detail: [
+          st.state === 'end-overdue' ? `${st.reason ?? 'Fin du plan non validée.'}` : '',
+          total
+            ? `≈ ${nb(fecund, 'féconde')} sur ${nb(total, 'monture')} d'après le plan (estimation). Dans la page Enclos, « Appliquer au lot » enregistre leur état (E/M/A, sérénité, niveau gagné) et range les fécondes à l'étable ; le plan d'accouplement les prendra alors en compte. Arrêtez ensuite le plan et lancez un nouveau lot.`
+            : inside
+              ? `Le lot est fécond : sortez les fécondes vers l'étable (accouplement depuis l'étable), arrêtez le plan dans la page Enclos, puis lancez un nouveau lot. ${nb(inside, 'monture')} encore dans l'enclos.`
+              : "Le plan est terminé : arrêtez-le dans la page Enclos et lancez un nouveau lot.",
+        ]
+          .filter(Boolean)
+          .join(' '),
+        link: { page: 'enclos', params: { enclos: N }, label: total ? 'Appliquer au lot' : `Voir l'enclos ${N}` },
+        items: total
+          ? [
+              { id: 'couper', text: 'Couper toutes les jauges de l’enclos' },
+              { id: 'appliquer', text: `Appliquer au lot (${nb(total, 'monture')})`, link: { page: 'enclos', params: { enclos: N }, label: 'Enclos' } },
+            ]
+          : undefined,
+        confidence: 'medium',
       })
       continue
     }
     const next = pr.next
     if (!next) continue
-    const ms = next.at - now
     const clock = formatClock(next.at, now)
+    if (st.state === 'stale') {
+      // Plan dépassé : la suite ne vaut plus (des montures ont pu sortir de leur zone) — jamais « faites-le
+      // tout de suite » ni « Fait » : relever les sérénités et recalculer.
+      const n = plan.mountIds.length
+      out.push({
+        id: `plan-depasse:${N}:${plan.startedAt}:${next.index}`,
+        priority: 1,
+        category: 'alarme',
+        title: `Enclos ${N} : plan dépassé — relevez les sérénités et recalculez`,
+        detail: `${st.reason ?? `Changement prévu à ${clock}, non fait.`} Coupez la jauge de sérénité, relevez les smileys (ou sérénités) des ${nb(n, 'monture')} dans la page Enclos, puis « Recalculer depuis l'état actuel » : un nouveau plan repart de leur état réel.`,
+        dueAt: next.at,
+        horizon: 'maintenant',
+        link: { page: 'enclos', params: { enclos: N }, label: 'Relever et recalculer' },
+        items: [
+          { id: 'couper', text: 'Couper la jauge de sérénité (Baffeur ou Caresseur)' },
+          { id: 'relever', text: `Relever la sérénité des ${nb(n, 'monture')}` },
+          { id: 'recalculer', text: 'Recalculer le plan depuis l’état actuel', link },
+        ],
+      })
+      continue
+    }
+    const ms = next.at - now
     const serenity = next.from.some((g) => g === 'baffeur' || g === 'caresseur')
     const priority: AdvicePriority = pr.due || ms <= 30 * MIN ? 1 : ms <= 3 * HOUR ? 2 : 3
     const parts: string[] = []
     if (pr.due)
       parts.push(
         pr.late && next.latest !== null
-          ? `En retard : prévu à ${clock}, la fenêtre s'est fermée à ${formatClock(next.latest, now)} — des montures risquent de sortir de leur zone de sérénité. Faites-le tout de suite.`
+          ? `En retard : prévu à ${clock}, la fenêtre s'est fermée à ${formatClock(next.latest, now)} — des montures risquent de sortir de leur zone de sérénité. Faites-le tout de suite${
+              st.staleAt !== null ? ` (au-delà de ${formatClock(st.staleAt, now)}, le plan sera dépassé : il faudra relever les sérénités et recalculer)` : ''
+            }.`
           : `Prévu à ${clock} (${relativeTime(next.at, now)}).`,
       )
     else parts.push(`Prévu à ${clock} (${relativeTime(next.at, now)}).`)
     if (next.earliest !== null && next.latest !== null) parts.push(`Fenêtre de changement : ${formatClock(next.earliest, now)} → ${formatClock(next.latest, now)}.`)
     if (serenity) parts.push("Une jauge de sérénité continue de pousser toutes les montures jusqu'à ±5 000 : coupez-la à l'heure (à distance).")
     const purpose = plan.steps[next.index]?.purpose
-    if (next.final) parts.push("Fin du plan : les montures sont fécondes, sortez-les vers l'étable pour les accoupler.")
+    if (next.final) parts.push("Fin du plan : les montures sont fécondes ; coupez les jauges, puis « Appliquer au lot » (page Enclos) pour les enregistrer fécondes et les ranger à l'étable.")
     else if (purpose) parts.push(`Étape suivante : ${purpose.charAt(0).toLowerCase()}${purpose.slice(1)}.`)
     const items: AdviceItem[] = [
       ...next.from.filter((g) => !next.to.includes(g)).map((g) => ({ id: `off-${g}`, text: `Désactiver ${GAUGE_LABELS[g]}` })),
       ...next.to.filter((g) => !next.from.includes(g)).map((g) => ({ id: `on-${g}`, text: `Activer ${GAUGE_LABELS[g]}` })),
     ]
-    if (next.final) items.push({ id: 'sortir', text: "Sortir les fécondes vers l'étable" })
+    if (next.final) items.push({ id: 'appliquer', text: 'Enregistrer le lot fécond (« Appliquer au lot », page Enclos)', link: { ...link, label: 'Appliquer au lot' } })
     out.push({
       id: `alarme:${N}:${plan.startedAt}:${next.index}`,
       priority,
@@ -971,7 +1611,7 @@ function alarmAdvice({ input, a, now }: Ctx): Advice[] {
       detail: parts.join(' '),
       dueAt: next.at,
       window: next.earliest !== null && next.latest !== null ? { earliest: next.earliest, latest: next.latest } : undefined,
-      link: { page: 'enclos', params: { enclos: N }, label: `Voir l'enclos ${N}` },
+      link,
       items,
       action: { kind: 'advance-plan', paddockId: N, to: next.to },
     })
@@ -996,58 +1636,117 @@ function fillItems(plan: FillPlan): AdviceItem[] {
   }))
 }
 
+/** Retard (s) en dessous duquel passer sous le palier du plan ne justifie pas une recharge (≈ un quart d'heure). */
+const NEGLIGIBLE_DELAY_S = 15 * 60
+
 function gaugeAdvice({ input, a, now, missing }: Ctx): Advice[] {
   const out: Advice[] = []
   const { rules, settings, priceCtx: ctx } = input
   const fuelOpts = { jobLevel: settings.jobLevel, rules }
-  const doubled = a.almanax?.doubledGauge ?? null
+  // Doublement Almanax (non vérifié) : seulement si le réglage est coché, comme la page Enclos.
+  const doubling = !!settings.almanaxGaugeDoubling
+  const doubled = doubling ? (a.almanax?.doubledGauge ?? null) : null
+  const max = gaugeMax(rules)
   for (const p of input.paddocks) {
     if (p.id > a.unlocked || p.active.length === 0) continue
     if (validateActiveGauges(p.active) !== null) continue
     const N = p.id
+    const plan = input.paddockPlans[String(N)] ?? null
+    // Plan terminé (ou fin non validée) : le conseil « Appliquer au lot » couvre l'enclos (tout couper) ;
+    // ni recharge ni « jauge vide » pour un lot déjà fécond.
+    if (plan) {
+      const state = planStatus(plan, now).state
+      if (state === 'finished' || state === 'end-overdue') continue
+    }
+    const planRunning = plan
     const inside = input.mounts.filter((m) => m.location.kind === 'enclos' && m.location.paddock === N)
     const link: AdviceLink = { page: 'enclos', params: { enclos: N }, label: `Voir l'enclos ${N}` }
-    const elapsedS = p.updatedAt > 0 ? Math.max(0, (now - p.updatedAt) / 1000) : 0
-    if (elapsedS > 3 * 86_400) {
+    // Heures de saisie jauge par jauge (une jauge non ressaisie n'est pas « rajeunie »), comme la page Enclos.
+    const gaugeUpdatedAt: Partial<Record<GaugeId, number>> = {}
+    for (const g of GAUGE_IDS) {
+      const t = p.gaugeUpdatedAt?.[g]
+      const at = typeof t === 'number' && t > 0 ? t : p.updatedAt
+      if (at > 0) gaugeUpdatedAt[g] = at
+    }
+    const activeStamps = p.active.map((g) => gaugeUpdatedAt[g] ?? 0).filter((t) => t > 0)
+    const oldest = activeStamps.length ? Math.min(...activeStamps) : 0
+    if (oldest > 0 && now - oldest > 3 * DAY) {
       out.push({
-        id: `jauges-anciennes:${N}:${p.updatedAt}`,
+        id: `jauges-anciennes:${N}:${oldest}`,
         priority: 3,
         category: 'enclos',
         title: `Enclos ${N} : mettez à jour les niveaux de jauges`,
-        detail: `Saisis ${relativeTime(p.updatedAt, now)} : trop ancien pour prévoir les recharges. Recopiez les valeurs affichées en jeu.`,
+        detail: `Saisis ${relativeTime(oldest, now)} : trop ancien pour prévoir les recharges. Recopiez les valeurs affichées en jeu.`,
         link,
       })
       continue
     }
-    const plan = input.paddockPlans[String(N)]
-    const planRunning = plan && plan.acknowledgedStepIndex < plan.steps.length ? plan : null
+    // Niveaux saisis sous une autre version des règles (plafonds différents) : ni recharge ni « jauge
+    // vide » tant qu'ils ne sont pas convertis ou ressaisis (même règle que la page Enclos, R9).
+    const otherRuleset = GAUGE_IDS.filter((g) => {
+      const tag = p.gaugeRulesets?.[g]
+      return tag !== undefined && tag !== rules.id && (p.gauges[g] ?? 0) > 0
+    })
+    if (otherRuleset.length) {
+      out.push({
+        id: `jauges-version:${N}:${rules.id}`,
+        priority: 3,
+        category: 'enclos',
+        title: `Enclos ${N} : niveaux de jauges à vérifier`,
+        detail: `${otherRuleset.map((g) => GAUGE_LABELS[g]).join(', ')} : saisi${otherRuleset.length > 1 ? 's' : ''} sous les règles ${p.gaugeRulesets?.[otherRuleset[0]]}, vous êtes en ${rules.id} (plafonds différents). Convertissez ou ressaisissez les niveaux dans la page Enclos pour obtenir les recharges.`,
+        link,
+      })
+      continue
+    }
     // Sans plan démarré, la répartition conseillée peut changer les jauges de l'enclos : on ne
     // conseille pas de recharger une jauge qu'elle propose de désactiver (voir le conseil « Placer »).
     const planned = planRunning ? null : a.assignment?.paddocks.find((x) => x.paddockId === N && x.plan && x.firstGauges.length)
     const refTier: FuelTier = planRunning?.tier ?? settings.preferredTier
-    const sims: SimMount[] = inside.map(toSimMount)
-    let current = { ...p.gauges }
-    let mountsNow = sims
-    let pastEvents: SimEvent[] = []
-    if (elapsedS >= 10) {
-      const r = simulatePaddock({ gauges: { ...p.gauges }, active: p.active, mounts: sims, almanaxDoubled: doubled, maxSeconds: elapsedS, rules })
-      current = r.gauges
-      mountsNow = r.mounts
-      pastEvents = r.events
+    // Projection « maintenant » partagée avec la page Enclos (projection.ts) : jauges vidées depuis leur
+    // saisie (jauges actives successives — celles du plan démarré pendant le plan) et montures (plan rejoué).
+    const stamps = Object.values(gaugeUpdatedAt).filter((t): t is number => typeof t === 'number' && t > 0)
+    let activeHistory = p.activeHistory && p.activeHistory.length ? p.activeHistory : undefined
+    if (planRunning) {
+      const base = planRunning.startedAt + (planRunning.offsetMs ?? 0)
+      activeHistory = [...(activeHistory ?? []).filter((h) => h.at < base), ...planActiveHistory(planRunning)]
     }
+    const levels: Record<GaugeId, number> = { ...p.gauges }
+    for (const g of GAUGE_IDS) levels[g] = Math.max(0, Math.min(max, p.gauges[g] ?? 0))
+    const proj = projectPaddock({
+      state: { gauges: levels, active: p.active },
+      activeSinceMs: stamps.length ? Math.min(...stamps) : 0,
+      nowMs: now,
+      rules,
+      mounts: inside,
+      plan: planRunning,
+      gaugeUpdatedAt,
+      activeHistory,
+      almanax: doubling ? undefined : false,
+    })
+    const current = proj.gauges.levels
+    const mountsNow: SimMount[] = proj.mounts
     let horizonS = 12 * 3600
     if (planRunning) {
-      const pr = planProgress(planRunning, now)
+      const pr = planStatus(planRunning, now).progress
       if (pr.next) horizonS = Math.max(0, Math.min(horizonS, (pr.next.at - now) / 1000))
     }
     const future = horizonS >= 10 ? simulatePaddock({ gauges: { ...current }, active: p.active, mounts: mountsNow, almanaxDoubled: doubled, maxSeconds: horizonS, rules }).events : []
-    const basis = p.updatedAt > 0 ? `estimation d'après les niveaux saisis à ${formatClock(p.updatedAt, now)} et les montures de l'enclos` : "estimation d'après les niveaux saisis"
+    // Plan démarré : étape en cours (ses jauges sont voulues, même sans monture éligible à l'instant :
+    // traversée de 0, ou changement déjà annoncé par l'alarme) et ce qu'il lui reste à consommer, jauge
+    // par jauge — les recharges se dimensionnent sur ce besoin, comme le carburant de la page Enclos.
+    const planStep = planRunning ? (planRunning.steps[Math.min(planRunning.acknowledgedStepIndex, planRunning.steps.length - 1)] ?? null) : null
+    const planNeed = planRunning ? remainingPlanConsumption(planRunning, now).consumed : null
+    const lastEntry = stamps.length ? Math.max(...stamps) : p.updatedAt
+    const basis = lastEntry > 0 ? `estimation d'après les niveaux saisis (dernière saisie à ${formatClock(lastEntry, now)}) et les montures de l'enclos` : "estimation d'après les niveaux saisis"
     for (const g of p.active) {
       const eligible = mountsNow.filter((m) => canBenefit(g, m)).length
       const level = current[g] ?? 0
       const serenityGauge = g === 'baffeur' || g === 'caresseur'
       const G = GAUGE_LABELS[g]
       if (eligible === 0 && level > 0) {
+        // Jauge de l'étape en cours du plan : voulue (les montures y arrivent en traversant 0, ou l'alarme
+        // de changement dit déjà de la couper) — ne pas contredire le plan.
+        if (planStep?.gauges.includes(g)) continue
         out.push({
           id: `jauge-inutile:${N}:${g}:${p.updatedAt}`,
           priority: inside.length ? 2 : 3,
@@ -1062,11 +1761,20 @@ function gaugeAdvice({ input, a, now, missing }: Ctx): Advice[] {
         continue
       }
       if (eligible === 0 || (planned && !planned.firstGauges.includes(g))) continue
+      // Plan démarré : ce que le plan doit encore consommer sur cette jauge (0 : rien à recharger, le
+      // changement ou la fin du plan la coupera).
+      const need = planNeed ? Math.max(0, Math.round(planNeed[g] ?? 0)) : null
+      if (need !== null && need <= 0) continue
+      // Palier de cette jauge : celui du plan (paliers par jauge : sérénité au palier 1, socle évité
+      // pour une petite consommation), comme la page Enclos ; sinon le palier préféré (sérénité : 1).
+      const gTier: FuelTier = planRunning?.tiers?.[g] ?? planned?.plan?.tiers?.[g] ?? (serenityGauge ? 1 : refTier)
       const tierNow = gaugeTier(level, rules)
+      const gFloor = gTier === 1 ? 0 : rules.gaugeTierMax[(gTier - 1) as FuelTier]
+      const gCap = rules.gaugeTierMax[gTier]
       if (level <= 0) {
-        const emptied = pastEvents.find((e) => e.kind === 'gauge-empty' && e.gauge === g)
-        const since = emptied && p.updatedAt > 0 ? p.updatedAt + emptied.t * 1000 : null
-        const refill = serenityGauge ? null : fillPlan(g, 0, rules.gaugeTierMax[refTier], ctx, fuelOpts)
+        const since = proj.gauges.emptiedAt[g] ?? null
+        // Plan démarré : socle + ce qui reste à consommer (pas tout le palier).
+        const refill = serenityGauge ? null : fillPlan(g, 0, need !== null ? Math.min(gCap, gFloor + need) : gCap, ctx, fuelOpts)
         if (refill) missing.add(refill.complete ? [] : refill.missing, `recharge ${deName(G)}`, 2)
         out.push({
           id: `jauge-vide:${N}:${g}:${p.updatedAt}`,
@@ -1074,7 +1782,7 @@ function gaugeAdvice({ input, a, now, missing }: Ctx): Advice[] {
           category: 'carburant',
           title: `Enclos ${N} : ${G} est vide`,
           detail: `${since ? `Vide depuis ≈ ${formatClock(since, now)}` : 'Jauge vide'} (${basis}) : ${eligible > 1 ? `${formatNumber(eligible)} montures n'avancent` : "1 monture n'avance"} plus sur cette statistique. ${
-            serenityGauge ? 'Jauge de sérénité : ne la rechargez que du nécessaire, avec une alarme.' : `Rechargez au palier ${refTier} (${FUEL_TIER_NAMES[refTier]}s).`
+            serenityGauge ? 'Jauge de sérénité : ne la rechargez que du nécessaire, avec une alarme.' : `Rechargez au palier ${gTier} (${FUEL_TIER_NAMES[gTier]}s).`
           }`,
           link,
           items: refill ? fillItems(refill) : undefined,
@@ -1088,28 +1796,38 @@ function gaugeAdvice({ input, a, now, missing }: Ctx): Advice[] {
       const drop = future.find(
         (e) =>
           (e.kind === 'gauge-empty' && e.gauge === g) ||
-          (planRunning !== null && e.kind === 'gauge-tier' && e.gauge === g && e.tier < refTier && tierNow >= refTier),
+          (planRunning !== null && e.kind === 'gauge-tier' && e.gauge === g && e.tier < gTier && tierNow >= gTier),
       )
-      const belowPlanTier = planRunning !== null && tierNow < refTier
+      const belowPlanTier = planRunning !== null && tierNow < gTier
       if (!drop && !belowPlanTier) continue
       const at = drop ? now + drop.t * 1000 : now
       const isEmpty = drop?.kind === 'gauge-empty'
-      const from = isEmpty || refTier === 1 ? 0 : rules.gaugeTierMax[(refTier - 1) as FuelTier]
-      const refill = serenityGauge ? null : fillPlan(g, belowPlanTier ? level : from, rules.gaugeTierMax[refTier], ctx, fuelOpts)
+      const from = isEmpty || gTier === 1 ? 0 : gFloor
+      // Plan démarré : points qui manqueront au palier du plan (besoin restant − points utilisables).
+      const shortfall = need !== null ? Math.max(0, need - Math.max(0, level - gFloor)) : null
+      if (shortfall !== null && shortfall <= 0) continue
+      if (shortfall !== null && !isEmpty && gTier > 1) {
+        // Passer sous le palier ne fait que ralentir : un retard de quelques minutes ne vaut pas une recharge.
+        const lowTier = Math.max(1, Math.min(tierNow || 1, gTier - 1)) as FuelTier
+        const lostSeconds = shortfall * TICK_SECONDS * (1 / rules.gaugeRatePerTick[lowTier] - 1 / rules.gaugeRatePerTick[gTier])
+        if (lostSeconds < NEGLIGIBLE_DELAY_S) continue
+      }
+      const target = shortfall !== null ? Math.min(gCap, (belowPlanTier ? Math.max(level, gFloor) : from) + shortfall) : gCap
+      const refill = serenityGauge ? null : fillPlan(g, belowPlanTier ? level : from, target, ctx, fuelOpts)
       if (refill) missing.add(refill.complete ? [] : refill.missing, `recharge ${deName(G)}`, 1)
       const ms = at - now
       const priority: AdvicePriority = belowPlanTier || ms <= HOUR ? 2 : ms <= 6 * HOUR ? 3 : 4
       const clock = formatClock(at, now)
       const title = belowPlanTier
-        ? `Enclos ${N} : rechargez ${G} (palier ${tierNow || 0} au lieu de ${refTier})`
+        ? `Enclos ${N} : rechargez ${G} (palier ${tierNow || 0} au lieu de ${gTier})`
         : isEmpty
           ? `Enclos ${N} : ${G} vide vers ${clock}`
           : `Enclos ${N} : rechargez ${G} avant ${clock}`
       const why = belowPlanTier
-        ? `Les heures du plan supposent le palier ${refTier} entretenu : sous ce palier, la jauge tourne moins vite et le plan prend du retard.`
+        ? `Les heures du plan supposent le palier ${gTier} entretenu : sous ce palier, la jauge tourne moins vite et le plan prend du retard.`
         : isEmpty
           ? `À ce rythme, la jauge sera vide ${relativeTime(at, now)} : les montures cesseront d'avancer.`
-          : `Elle passera sous le palier ${refTier} ${relativeTime(at, now)} : les heures du plan supposent ce palier entretenu.`
+          : `Elle passera sous le palier ${gTier} ${relativeTime(at, now)} : les heures du plan supposent ce palier entretenu.`
       out.push({
         id: `recharge:${N}:${g}:${p.updatedAt}:${isEmpty ? 'vide' : 'palier'}`,
         priority,
@@ -1183,7 +1901,7 @@ function almanaxAdvice({ input, a, now }: Ctx): Advice[] {
     if (e.date === todayIso) continue
     const days = daysBetween(todayIso, e.date)
     const when = `${formatIsoDay(e.date)} (dans ${nb(days, 'jour')})`
-    const dueAt = isoToMs(e.date)
+    const dueAt = serverDayStart(e.date) // début du jour de jeu (minuit à Paris)
     if (e.takeza) {
       const usable = input.mounts.filter(isUsable)
       const maxGen = usable.reduce((g, m) => Math.max(g, genOf(m.speciesId)), 0)
@@ -1207,7 +1925,7 @@ function almanaxAdvice({ input, a, now }: Ctx): Advice[] {
         priority: days <= 3 ? 2 : 3,
         category: 'almanax',
         title: `Takeza ${when} : préparez vos couples`,
-        detail: `Ce jour-là, +20 % de génération cible sur tous les accouplements. Préparez un maximum de couples féconds de haute génération : un lot demande ≈ ${formatDuration(fertilitySeconds(input.settings.preferredTier, input.rules))} au palier ${input.settings.preferredTier}. Gardez pour ce jour les couples dont la cible est ≥ G6.`,
+        detail: `Ce jour-là, +20 % de génération cible sur tous les accouplements. Préparez un maximum de couples féconds de haute génération : ${takezaPrepTiming(a, input, dueAt, now)} Gardez pour ce jour les couples dont la cible est ≥ G${TAKEZA_PRIORITY_GENERATION}.`,
         dueAt,
         allDay: true,
         horizon: days <= 3 ? 'aujourdhui' : 'semaine',
@@ -1246,6 +1964,22 @@ function almanaxAdvice({ input, a, now }: Ctx): Advice[] {
   return out
 }
 
+/**
+ * Préparation du Takeza : durée du plus long lot planifié par la répartition (sinon un lot typique du
+ * planificateur au palier préféré) et heure limite de démarrage pour que le lot soit fécond au début
+ * du jour Takeza (minuit à Paris).
+ */
+function takezaPrepTiming(a: AdvisorAnalysis, input: AdvisorInput, dayStart: number, now: number): string {
+  const tier = input.settings.preferredTier
+  const planned = (a.assignment?.paddocks ?? []).filter((p) => p.plan && p.plan.converges !== false && p.totalSeconds > 0).map((p) => p.totalSeconds)
+  const seconds = planned.length ? Math.max(...planned) : typicalBatchSeconds(tier, input.rules)
+  const basis = planned.length ? `votre plus long lot planifié demande ≈ ${formatDuration(seconds)}` : `un lot typique demande ≈ ${formatDuration(seconds)} au palier ${tier}`
+  const latest = dayStart - seconds * 1000
+  return latest > now
+    ? `${basis} : pour qu'il soit fécond au début du jour Takeza, démarrez-le au plus tard ${formatClock(latest, now)}.`
+    : `${basis} : démarrez vos lots dès que possible.`
+}
+
 function pairText(p: PairSuggestion): string {
   const ga = genOf(p.a.speciesId)
   const gb = genOf(p.b.speciesId)
@@ -1253,17 +1987,55 @@ function pairText(p: PairSuggestion): string {
   return `♂ ${mountName(p.a)} (G${ga}, niv. ${p.a.level}) × ♀ ${mountName(p.b)} (G${gb}, niv. ${p.b.level}) → ${targets} : ${formatPercent(p.result.targetChance, 0)} de G${p.result.targetGeneration}`
 }
 
+const THEN_VERB: Record<'vente' | 'extraction' | 'brisage', string> = { vente: 'vendre', extraction: 'extraire', brisage: 'briser' }
+
+/**
+ * Conseil d'Optimakina d'un couple, en clair : même décision que la page Accouplement
+ * (`pairing.adviseOptimakina` : règle de prix dès que le prix et C_eff sont connus, sinon heuristique de
+ * la recherche — systématique dès la G6, étape G4–G5 de l'objectif, jamais G2–G3 sans prix).
+ */
+function makinaHint(p: PairSuggestion): string | null {
+  const ad = p.makinaAdvice
+  const price = p.makinaPrice?.price ?? ad.price
+  const complete = p.makinaPrice?.complete ?? ad.priceComplete
+  const priceTxt = price !== null && price !== undefined ? `${formatKamas(price)}${complete ? '' : ', minimum'}` : 'prix inconnu'
+  const seuil = ad.threshold !== null ? `${ad.thresholdIsUpperBound ? 'maximal ' : ''}${formatKamas(ad.threshold)}` : null
+  if (p.makina === 'optimakina') {
+    if (ad.basis === 'regle-prix' && seuil) return `Optimakina G${ad.generation} conseillée (${priceTxt} < seuil ${seuil} = C_eff × Δ / p)`
+    const why = ad.generation >= OPTIMAKINA_SYSTEMATIC_GENERATION ? `systématique dès la G${OPTIMAKINA_SYSTEMATIC_GENERATION}` : `étape G${OPTIMAKINA_GOAL_STEP_GENERATION}–G5 de l'objectif`
+    return `Optimakina G${ad.generation} conseillée (${priceTxt} ; ${why}, faute de prix décisif)`
+  }
+  if (ad.gain <= 0) return null
+  if (ad.basis === 'jamais') return 'sans makina (désactivée dans vos réglages)'
+  if (ad.basis === 'regle-prix' && seuil) return `sans makina (Optimakina ${priceTxt} ≥ seuil ${seuil})`
+  return `sans makina (cible G${ad.generation}, prix ou C_eff non décisifs : la recherche la réserve aux cibles ≥ G${OPTIMAKINA_SYSTEMATIC_GENERATION})`
+}
+
 function matingAdvice({ input, a, byId }: Ctx): Advice[] {
   const out: Advice[] = []
   const takeza = nextTakeza(a.day)
   const inPlan = new Set(a.pairs.flatMap((p) => [p.a.id, p.b.id]))
+  // Montures de l'objectif dont la partenaire est encore fertile : attendre plutôt que les consommer ailleurs.
+  const waitItems: AdviceItem[] = []
+  for (const w of a.waiting) {
+    const m = byId.get(w.mountId)
+    const partner = byId.get(w.partnerId)
+    if (!m || !partner) continue
+    waitItems.push({
+      id: `attendre-${w.mountId}`,
+      text: `Attendre que ${mountName(partner)} soit féconde, puis ${mountName(m)} × ${mountName(partner)} → ${w.targetSpecies.map(nameOf).join(' ou ') || 'étape de l’objectif'}`,
+      hint: `${mountName(m)} sert à votre objectif : ne l'accouplez pas sur un autre croisement ; rendez ${mountName(partner)} féconde en priorité.`,
+      tone: 'info',
+      link: { page: 'enclos', params: { onglet: 'repartition' }, label: 'Enclos' },
+    })
+  }
   if (a.pairs.length) {
     const sorted = [...a.pairs].sort((x, y) => x.result.targetGeneration - y.result.targetGeneration || y.score - x.score)
     const items: AdviceItem[] = []
-    if (takeza && takeza.days > 0 && takeza.days <= 3 && sorted.some((p) => p.result.targetGeneration >= 6))
+    if (takeza && takeza.days > 0 && takeza.days <= 3 && sorted.some((p) => p.result.targetGeneration >= TAKEZA_PRIORITY_GENERATION))
       items.push({
         id: 'takeza',
-        text: `Takeza dans ${nb(takeza.days, 'jour')} : gardez pour ce jour les couples dont la cible est ≥ G6 (+20 %)`,
+        text: `Takeza dans ${nb(takeza.days, 'jour')} : gardez pour ce jour les couples dont la cible est ≥ G${TAKEZA_PRIORITY_GENERATION} (+20 %)`,
         tone: 'info',
       })
     if (a.summary.fecundInPaddock > 0)
@@ -1275,19 +2047,41 @@ function matingAdvice({ input, a, byId }: Ctx): Advice[] {
       })
     for (const p of sorted) {
       const hints: string[] = []
-      if (p.makina === 'optimakina')
-        hints.push(
-          `Optimakina G${p.makinaAdvice.generation} conseillée${p.makinaPrice?.price !== null && p.makinaPrice ? ` (${formatKamas(p.makinaPrice.price)}${p.makinaPrice.complete ? '' : ', minimum'})` : ' (prix inconnu)'}`,
-        )
-      else if (p.makinaAdvice.gain > 0) hints.push('sans makina')
-      const g = p.result.expectedGenetons * p.result.babies
+      let tone: AdviceItem['tone']
+      const mk = makinaHint(p)
+      if (mk) hints.push(mk)
+      // `result.expectedGenetons` compte déjà les bébés (Reproducteur compris).
+      const g = p.result.expectedGenetons
       if (g > 0) hints.push(`≈ ${formatNumber(g, 1)} ${plural(g, 'généton')} ${plural(g, 'attendu')}`)
       if (p.result.jobXp > 0) hints.push(`${formatNumber(p.result.jobXp)} XP d'Éleveur`)
       const stable = [p.a, p.b].filter((m) => m.location.kind !== 'etable')
-      if (stable.length) hints.push(`à mettre dans l'étable : ${stable.map(mountName).join(', ')}`)
-      items.push({ id: p.key, text: pairText(p), hint: hints.join(' · '), tone: stable.length ? 'warn' : undefined })
+      if (stable.length) {
+        hints.push(`à mettre dans l'étable : ${stable.map(mountName).join(', ')}`)
+        tone = 'warn'
+      }
+      // M-STACK-01 : une seule tentative d'une haute génération de l'objectif échoue souvent.
+      if (p.stackAttempts !== null && p.stackAttempts < STACK_MIN_ATTEMPTS) {
+        const chance = p.goalChance > 0 ? p.goalChance : p.result.targetChance
+        hints.push(
+          `${resolveRuleRefs('M-STACK-01')} : ${nb(p.stackAttempts, 'tentative')} ${plural(p.stackAttempts, 'possible')} avec vos montures, une tentative à ${formatPercent(chance, 0)} échoue ${formatPercent(1 - chance, 0)} du temps — produisez d'abord des parents pour au moins ${STACK_MIN_ATTEMPTS} tentatives (simple avertissement)`,
+        )
+        tone = 'warn'
+      }
+      if (p.consumesGoalParents.length) {
+        hints.push(`consomme ${p.consumesGoalParents.map(nameOf).join(' et ')}, utile à votre objectif, sur un croisement hors objectif`)
+        tone = 'warn'
+      }
+      // Ensuite : la sortie de chaque stérile (sort « Accoupler (plan) puis … »), jamais avant l'accouplement.
+      const after: string[] = []
+      for (const m of [p.a, p.b]) {
+        const f = a.fates.get(m.id)
+        if (f?.action === 'accoupler' && f.exit) after.push(`${THEN_VERB[f.exit]} ${mountName(m)} stérile${f.value !== null ? ` (${f.complete ? '≈' : '≥'} ${formatKamas(f.value)}${f.complete ? '' : ', minimum'})` : ''}`)
+      }
+      if (after.length) hints.push(`ensuite : ${after.join(' ; ')}`)
+      items.push({ id: p.key, text: pairText(p), hint: hints.join(' · '), tone })
     }
-    const idle = input.mounts.filter((m) => effectiveFertility(m) === 'feconde' && !inPlan.has(m.id) && a.fates.get(m.id)?.action !== 'accoupler')
+    items.push(...waitItems)
+    const idle = input.mounts.filter((m) => effectiveFertility(m) === 'feconde' && !inPlan.has(m.id) && a.fates.get(m.id)?.action !== 'accoupler' && !a.waiting.some((w) => w.mountId === m.id))
     if (idle.length)
       items.push({
         id: 'seules',
@@ -1300,14 +2094,26 @@ function matingAdvice({ input, a, byId }: Ctx): Advice[] {
       priority: 2,
       category: 'accouplement',
       title: `Accoupler ${nb(a.pairs.length, 'couple')} ${plural(a.pairs.length, 'fécond')}`,
-      detail: `Plan d'appariement pour l'objectif « ${objectiveLabel(input.settings.goal)} » : chaque monture n'est utilisée qu'une fois, sur ${nb(a.pairCandidates, 'couple')} possible${a.pairCandidates > 1 ? 's' : ''}. Accouplez depuis l'étable, par génération croissante, puis clonez les stériles. ${
-        opti ? `Optimakina sur ${nb(opti, 'couple')} : prix < C_eff × Δ / p, ou cible ≥ G${OPTIMAKINA_SYSTEMATIC_GENERATION} quand les prix manquent.` : ''
+      detail: `Plan d'appariement pour l'objectif « ${objectiveLabel(input.settings.goal)} » : chaque monture n'est utilisée qu'une fois, sur ${nb(a.pairCandidates, 'couple')} possible${a.pairCandidates > 1 ? 's' : ''}. Accouplez depuis l'étable, par génération croissante, puis clonez ou sortez les stériles (indiqué « ensuite »). ${
+        opti
+          ? `Optimakina sur ${nb(opti, 'couple')} : règle de prix (prix < C_eff × Δ / p) dès que le prix et le coût du couple sont connus ; sinon systématique dès la cible G${OPTIMAKINA_SYSTEMATIC_GENERATION} (G${OPTIMAKINA_GOAL_STEP_GENERATION}–G5 pour les étapes de l'objectif).`
+          : ''
       }`.trim(),
       link: { page: 'accouplement', params: { onglet: 'couples' }, label: 'Plan d’accouplement' },
       items,
-      amount: a.expectedGenetons > 0 ? { label: 'Génétons attendus', value: a.expectedGenetons * a.genetonValue, complete: true } : undefined,
+      amount: a.expectedGenetons > 0 ? { label: 'Génétons attendus (net de taxe, estimation)', value: a.expectedGenetons * a.genetonValue * (1 - Math.max(0, Math.min(1, input.settings.saleTax))), complete: true } : undefined,
     })
-  }
+  } else if (waitItems.length)
+    out.push({
+      id: `attendre:${hashKey(a.waiting.map((w) => `${w.mountId}|${w.partnerId}`).join(','))}`,
+      priority: 3,
+      category: 'accouplement',
+      title: `Attendre ${nb(waitItems.length, 'partenaire')} de l'objectif avant d'accoupler`,
+      detail:
+        "Ces montures servent à votre objectif et leur partenaire du plan est encore en préparation (fertile) : un croisement hors objectif les consommerait. Rendez la partenaire féconde en priorité, puis accouplez-les ensemble.",
+      link: { page: 'accouplement', params: { onglet: 'couples' }, label: 'Plan d’accouplement' },
+      items: waitItems,
+    })
   // Fécondes « condamnées » hors plan : accoupler entre elles avant de sortir (M-FREEBABY-01).
   const seen = new Set<string>()
   const free: AdviceItem[] = []
@@ -1373,8 +2179,10 @@ function fateAdvice({ input, a, byId }: Ctx): Advice[] {
       items: clones,
       confidence: 'high',
     })
-  // Sorties
-  const exits = fates.filter((f) => f.action === 'vente' || f.action === 'extraction' || f.action === 'brisage')
+  // Sorties immédiates : jamais une monture prévue au plan d'accouplement (son sort est « Accoupler (plan)
+  // puis … », la sortie de la stérile est indiquée « ensuite » dans le conseil d'accouplement).
+  const planned = new Set(a.pairs.flatMap((p) => [p.a.id, p.b.id]))
+  const exits = fates.filter((f) => (f.action === 'vente' || f.action === 'extraction' || f.action === 'brisage') && !planned.has(f.mountId))
   if (exits.length) {
     const counts = { vente: 0, extraction: 0, brisage: 0 }
     for (const f of exits) counts[f.action as 'vente' | 'extraction' | 'brisage']++
@@ -1415,18 +2223,24 @@ function fateAdvice({ input, a, byId }: Ctx): Advice[] {
       priority: 4,
       category: 'enclos',
       title: `Monter ${nb(levelUp.length, 'monture')} en niveau avant de les sortir`,
-      detail: 'Un palier de valeur proche (brisage, tranche de prix 100/200) rapporte plus que le carburant de Mangeoire nécessaire. Placez-les en complément XP dans les enclos.',
+      detail:
+        'Un palier de valeur proche (brisage, tranche de prix 100/200) rapporte plus que le carburant de Mangeoire nécessaire, calculé pour le lot réel (montures montées ensemble) au palier le moins cher. Placez-les ensemble en complément XP dans les enclos.',
       link: { page: 'montures', params: { sort: 'monter' }, label: 'Voir ces montures' },
       items: levelUp.slice(0, 10).map((f) => {
         const m = byId.get(f.mountId)
-        return { id: f.mountId, text: `${m ? mountName(m) : f.mountId} → niveau ${f.targetLevel ?? '?'}`, hint: f.label }
+        const batch = /si vous montez \d+ montures ensemble|pour cette monture seule dans l'enclos/.exec(f.reason)?.[0]
+        return {
+          id: f.mountId,
+          text: `${m ? mountName(m) : f.mountId} → niveau ${f.targetLevel ?? '?'}`,
+          hint: [f.label, f.value !== null ? `≈ ${formatKamas(f.value)}${f.complete ? '' : ' (au plus)'} net` : '', batch ?? ''].filter(Boolean).join(' · '),
+        }
       }),
       confidence: 'low',
     })
   return out
 }
 
-function placementAdvice({ input, a, byId }: Ctx): Advice[] {
+function placementAdvice({ input, a, byId, now }: Ctx): Advice[] {
   const res = a.assignment
   if (!res) return []
   // Les montures à accoupler maintenant restent dans l'étable (l'accouplement passe avant le placement).
@@ -1436,8 +2250,12 @@ function placementAdvice({ input, a, byId }: Ctx): Advice[] {
   let added = 0
   let starts = 0
   for (const pa of res.paddocks) {
+    // Un plan démarré (en cours, terminé ou dépassé) occupe l'enclos : jamais « démarrer le plan » à côté de
+    // « plan terminé » — le plan terminé s'applique au lot d'abord (conseil « Appliquer au lot »).
     const plan = input.paddockPlans[String(pa.paddockId)]
-    const running = !!plan && plan.acknowledgedStepIndex < plan.steps.length
+    const planState = plan ? planStatus(plan, now).state : null
+    const finished = planState === 'finished' || planState === 'end-overdue'
+    const running = !!plan && !finished
     const addMs = pa.addedIds.filter((id) => !mating.has(id)).map((id) => byId.get(id)).filter((m): m is Mount => !!m)
     const current = input.paddocks.find((p) => p.id === pa.paddockId)?.active ?? []
     const sw = pa.firstGauges.length ? gaugeSwitch(current, pa.firstGauges) : null
@@ -1448,12 +2266,17 @@ function placementAdvice({ input, a, byId }: Ctx): Advice[] {
       items.push({
         id: `enclos-${pa.paddockId}`,
         text: `Enclos ${pa.paddockId} : poser ${nb(addMs.length, 'monture')}${gauges ? `, puis ${gauges}` : ''}`,
-        hint: [role, speciesSummary(addMs), pa.totalSeconds > 0 ? `fécondes en ≈ ${formatDuration(pa.totalSeconds)}` : '', running ? 'un plan tourne déjà : relancez-le après' : '']
+        hint: [
+          role,
+          speciesSummary(addMs),
+          pa.totalSeconds > 0 ? `fécondes en ≈ ${formatDuration(pa.totalSeconds)}` : '',
+          running ? 'un plan tourne déjà : relancez-le après' : finished ? 'appliquez d’abord le plan terminé au lot' : '',
+        ]
           .filter(Boolean)
           .join(' · '),
         link: { page: 'enclos', params: { enclos: pa.paddockId }, label: `Enclos ${pa.paddockId}` },
       })
-    } else if (pa.plan && !running && pa.mountIds.length) {
+    } else if (pa.plan && !plan && pa.plan.converges !== false && pa.mountIds.length) {
       starts++
       items.push({
         id: `demarrer-${pa.paddockId}`,
@@ -1485,26 +2308,27 @@ function placementAdvice({ input, a, byId }: Ctx): Advice[] {
   ]
 }
 
-function captureAdvice({ input, a }: Ctx): Advice[] {
+function captureAdvice({ input, a, goal }: Ctx): Advice[] {
   if (input.mounts.length === 0) return []
   const s = input.settings
   const items: AdviceItem[] = []
-  const goal = a.goal
   const cap = a.capture
   const family = cap.family
   const famInfo = FAMILIES[family]
+  const simulated = goal?.captureBasis === 'simulation'
   let total = 0
   if (goal && !goal.reached && goal.captures.length) {
     for (const c of goal.captures) {
       if (c.expected <= 0) continue
       total += c.expected
-      const sexes = [c.females ? `${c.females} ♀` : '', c.males ? `${c.males} ♂` : ''].filter(Boolean).join(', ')
+      const sexes = [c.males ? `${c.males} ♂` : '', c.females ? `${c.females} ♀` : ''].filter(Boolean).join(', ')
       items.push({
         id: `g1-${c.speciesId}`,
-        text: `${nameOf(c.speciesId)} : ${formatNumber(c.expected)}${sexes ? ` (${sexes})` : ''}`,
+        text: `${nameOf(c.speciesId)} : ${simulated ? '≈ ' : 'jusqu’à ≈ '}${formatNumber(c.expected)}${sexes ? ` (${sexes})` : ''}`,
         hint: `recette idéale : encore ${c.idealRemaining} sur ${c.idealTotal} ; vous en avez ${c.ownedMales} ♂ / ${c.ownedFemales} ♀`,
       })
     }
+    for (const [i, note] of (goal.supply?.notes ?? []).slice(0, 3).entries()) items.push({ id: `stock-${i}`, text: note, tone: 'info' })
   }
   if (!goal) {
     const owned = new Set(input.mounts.map((m) => m.speciesId))
@@ -1524,8 +2348,17 @@ function captureAdvice({ input, a }: Ctx): Advice[] {
       hint: 'le rendement d’une jauge = montures éligibles / 10',
     })
   if (!items.length) return []
-  if (cap.spot) items.push({ id: 'zone', text: `Où : ${captureSpotText(cap.spot)}`, hint: cap.spot.note })
   const c = cap.cost
+  // Combats : chaque personnage du combat lance son filet (réglage « personnages pour les captures »).
+  const perFight = capturesPerFight(s.accounts, c.mountsPerCast)
+  const toCatch = total > 0 ? total : a.freeSlots > 0 && waiting === 0 ? a.freeSlots : 0
+  if (toCatch > 0)
+    items.push({
+      id: 'combats',
+      text: `≈ ${nb(Math.ceil(toCatch / perFight), 'combat')} de capture pour ${nb(toCatch, 'monture')}`,
+      hint: `${nb(Math.max(1, Math.round(s.accounts ?? 1)), 'personnage')} × ${nb(c.mountsPerCast, 'monture')} par lancer = ${nb(perFight, 'capture')} par combat (réglage « Personnages pour les captures »)`,
+    })
+  if (cap.spot) items.push({ id: 'zone', text: `Où : ${captureSpotText(cap.spot)}`, hint: cap.spot.note })
   if (c.net)
     items.push({
       id: 'filet',
@@ -1535,7 +2368,9 @@ function captureAdvice({ input, a }: Ctx): Advice[] {
       }`,
       tone: c.complete ? undefined : 'warn',
     })
-  const title = goal && total > 0 ? `Capturer ${formatNumber(total)} ${famInfo?.plural ?? family} pour ${goal.name}` : `Capturer des ${famInfo?.plural ?? family}`
+  const famName = famInfo?.plural ?? family
+  const title = goal && total > 0 ? `Capturer ${simulated ? '≈ ' : 'jusqu’à ≈ '}${formatNumber(total)} ${famName} pour ${goal.name}` : `Capturer des ${famName}`
+  const strategy = `parents niveau ${s.parentTargetLevel}, ${s.useOptimakina ? `Optimakina dès la G${OPTIMAKINA_SYSTEMATIC_GENERATION}` : 'sans makina'}, clonage`
   return [
     {
       id: `capture:${a.day}:${hashKey(items.map((i) => i.text).join('|'))}`,
@@ -1544,20 +2379,38 @@ function captureAdvice({ input, a }: Ctx): Advice[] {
       title,
       detail:
         goal && total > 0
-          ? `Captures restantes estimées avec votre stratégie (parents niveau ${s.parentTargetLevel}, ${s.useOptimakina ? `Optimakina dès la G${OPTIMAKINA_SYSTEMATIC_GENERATION}` : 'sans makina'}, clonage) : besoin moyen de l'effort attendu, au prorata de ce que vos montures couvrent déjà. Capturez le sexe en déficit d'abord ; 30 XP d'Éleveur par capture.`
+          ? simulated
+            ? `Captures restantes estimées pour votre stratégie (${strategy}) : simulation Monte-Carlo du programme (${nb(goal.sim?.runs ?? 0, 'tirage')}, sexes, places et bébés hors cible réutilisés), ramenée à ce que vos montures couvrent déjà (une tentative peut rater : une monture du haut de l'arbre ne couvre pas tout son sous-arbre). Capturez le sexe en déficit d'abord ; 30 XP d'Éleveur par capture.`
+            : `Borne haute (modèle analytique, ${strategy}) : il suppose que les bébés hors cible ne sont jamais réutilisés ; la simulation du Plan d'élevage donne en général 1,5 à 2,5 fois moins de captures (ouvrez le Plan pour la calculer). Vos montures couvrent déjà une partie de la demande attendue. Capturez le sexe en déficit d'abord ; 30 XP d'Éleveur par capture.`
           : "Gardez les enclos pleins : l'élevage ne s'auto-alimente pas (un bébé par couple). Capturez le sexe en déficit d'abord ; 30 XP d'Éleveur par capture.",
-      link: { page: 'montures', params: { captures: 1 }, label: 'Saisir les captures' },
+      link: goal && total > 0 && !simulated ? { page: 'plan', label: 'Calculer la simulation (Plan)' } : { page: 'montures', params: { captures: 1 }, label: 'Saisir les captures' },
       items,
-      amount: c.perMount !== null && total > 0 ? { label: 'Filets', value: c.perMount * total, complete: c.complete } : undefined,
+      amount: c.perMount !== null && total > 0 ? { label: simulated ? 'Filets (estimation)' : 'Filets (borne haute)', value: c.perMount * total, complete: c.complete } : undefined,
       missing: c.complete ? undefined : c.missing,
-      confidence: goal && total > 0 ? 'medium' : undefined,
+      confidence: goal && total > 0 ? (simulated ? 'medium' : 'low') : undefined,
     },
   ]
 }
 
 function jobAdvice({ a }: Ctx): Advice[] {
   const j = a.job
-  if (j.level >= 200) return []
+  const out: Advice[] = []
+  // XP du journal depuis la dernière saisie du niveau : niveau estimé (plancher, bonus Almanax non comptés).
+  if (j.estimatedLevel > j.level)
+    out.push({
+      id: `metier:niveau-estime:${j.level}:${j.estimatedLevel}`,
+      priority: j.paddockUnlockedSinceEntry ? 2 : 4,
+      category: 'metier',
+      title: j.paddockUnlockedSinceEntry
+        ? `Niveau d'Éleveur ≈ ${j.estimatedLevel} : un nouvel enclos est probablement débloqué`
+        : `Niveau d'Éleveur estimé : ${j.estimatedLevel} (saisi : ${j.level})`,
+      detail: `Le journal compte ${formatNumber(j.xpGained)} XP d'Éleveur depuis votre dernière saisie du niveau (captures, accouplements, crafts ; bonus Almanax non comptés : c'est un minimum). Vérifiez votre niveau en jeu et mettez-le à jour dans les réglages${
+        j.paddockUnlockedSinceEntry ? ' : les enclos, la répartition et les plans en dépendent' : ''
+      }.`,
+      link: { page: 'reglages', label: 'Mettre à jour le niveau' },
+      confidence: 'medium',
+    })
+  if (j.estimatedLevel >= 200) return out
   const items: AdviceItem[] = []
   const best = j.bestNow?.option
   if (best)
@@ -1571,8 +2424,9 @@ function jobAdvice({ a }: Ctx): Advice[] {
     items.push({
       id: 'plan',
       text: `≈ ${formatNumber(j.plan.totals.crafts)} crafts${j.plan.totals.captures ? ` et ${formatNumber(j.plan.totals.captures)} captures` : ''} jusqu'au niveau ${j.nextPaddockLevel}`,
-      hint: `${j.plan.totals.cost > 0 || j.plan.totals.costComplete ? `≈ ${formatKamas(j.plan.totals.cost)}${j.plan.totals.costComplete ? '' : ' (minimum, prix manquants)'}` : 'coût incomplet'}`,
+      hint: `${j.plan.totals.cost > 0 || j.plan.totals.costComplete ? `${j.plan.totals.costComplete ? '≈' : '≥'} ${formatKamas(j.plan.totals.cost)}${j.plan.totals.costComplete ? '' : ' (minimum, prix manquants)'}` : 'coût incomplet'}`,
     })
+  if (j.xpGained > 0) items.push({ id: 'journal', text: `${formatNumber(j.xpGained)} XP déjà gagnée d'après le journal depuis votre dernière saisie du niveau (déduite)` })
   if (j.nextMilestone) items.push({ id: 'jalon', text: `Prochain jalon : ${j.nextMilestone.label} au niveau ${j.nextMilestone.level}`, hint: j.nextMilestone.detail })
   if (a.matingJobXp > 0) items.push({ id: 'accouplements', text: `Les accouplements prévus rapportent ${formatNumber(a.matingJobXp)} XP d'Éleveur` })
   for (const d of j.almanax.filter((x) => x.xpBonus > 0 || x.ingredientSaving > 0 || x.doubleCraftChance > 0).slice(0, 2))
@@ -1584,21 +2438,20 @@ function jobAdvice({ a }: Ctx): Advice[] {
     })
   const bonusSoon = j.almanax.find((d) => d.xpBonus > 0 && d.daysUntil <= 7)
   const missing = j.plan && !j.plan.totals.costComplete ? j.plan.toPrice : []
-  return [
-    {
-      id: `metier:${j.level}`,
-      priority: j.level < 120 ? 3 : 4,
-      category: 'metier',
-      title: `Métier : ${formatNumber(j.xpToNext)} XP jusqu'au niveau ${j.nextPaddockLevel} (${j.nextPaddockIndex}e enclos)`,
-      detail: `Objectif minimal : niveau 120 (4 enclos). Une recette rapporte son niveau en XP quand on a le même niveau, puis chute vite : craftez la dernière taille débloquée.${
-        bonusSoon ? ` ${bonusSoon.daysUntil === 0 ? "Aujourd'hui" : `Le ${formatIsoDay(bonusSoon.date)}`} : ${bonusSoon.effect} — gardez-y vos gros crafts.` : ''
-      }`,
-      link: { page: 'metier', label: 'Plan de montée du métier' },
-      items,
-      amount: j.plan ? { label: `Jusqu'au niveau ${j.nextPaddockLevel}`, value: j.plan.totals.cost > 0 || j.plan.totals.costComplete ? j.plan.totals.cost : null, complete: j.plan.totals.costComplete } : undefined,
-      missing: missing.length ? missing : undefined,
-    },
-  ]
+  out.push({
+    id: `metier:${j.estimatedLevel}`,
+    priority: j.estimatedLevel < 120 ? 3 : 4,
+    category: 'metier',
+    title: `Métier : ${formatNumber(j.xpToNext)} XP jusqu'au niveau ${j.nextPaddockLevel} (${j.nextPaddockIndex}e enclos)`,
+    detail: `Objectif minimal : niveau 120 (4 enclos). Une recette rapporte son niveau en XP quand on a le même niveau, puis chute vite : craftez la dernière taille débloquée.${
+      bonusSoon ? ` ${bonusSoon.daysUntil === 0 ? "Aujourd'hui" : `Le ${formatIsoDay(bonusSoon.date)}`} : ${bonusSoon.effect} — gardez-y vos gros crafts.` : ''
+    }`,
+    link: { page: 'metier', label: 'Plan de montée du métier' },
+    items,
+    amount: j.plan ? { label: `Jusqu'au niveau ${j.nextPaddockLevel}`, value: j.plan.totals.cost > 0 || j.plan.totals.costComplete ? j.plan.totals.cost : null, complete: j.plan.totals.costComplete } : undefined,
+    missing: missing.length ? missing : undefined,
+  })
+  return out
 }
 
 function priceAdvice({ input, a, missing }: Ctx): Advice[] {
@@ -1644,30 +2497,64 @@ export function sortAdvice(list: Advice[]): Advice[] {
   )
 }
 
+/** Conseil visible quand une section n'a pas pu être calculée (au lieu de la faire disparaître). */
+function sectionErrorAdvice(e: AdvisorSectionError): Advice {
+  return {
+    id: `indisponible:${e.section}:${hashKey(e.message)}`,
+    priority: 2,
+    category: 'erreur',
+    title: `Section indisponible : ${e.label}`,
+    detail: `Cette partie des conseils n'a pas pu être calculée (${e.message}). Les autres conseils restent valables, mais celle-ci manque : ce n'est pas « rien à faire ». Vérifiez les données concernées (montures, prix, réglages) ou téléchargez une sauvegarde pour signaler le problème.`,
+    link: { page: 'reglages', label: 'Sauvegarde et réglages' },
+    items: [{ id: 'message', text: e.message, tone: 'warn' }],
+    confidence: 'low',
+  }
+}
+
 /**
  * Liste ordonnée des actions à faire à l'instant `input.now` : alarmes des plans d'enclos, jauges
  * vides ou à recharger, Almanax, accouplements, clonages, sorties, placement en enclos, captures,
  * métier, prix manquants, premiers pas et objectif. `analysis` (calculs lourds) est recalculée si
- * absente.
+ * absente. Une section qui échoue (analyse ou générateur) donne un conseil « Section indisponible ».
  */
 export function adviseNow(input: AdvisorInput, analysis: AdvisorAnalysis = analyzeState(input)): Advice[] {
   const missing = new MissingCollector()
   missing.merge(analysis.missingPrices)
-  const ctx: Ctx = { input, a: analysis, now: input.now, byId: new Map(input.mounts.map((m) => [m.id, m])), missing }
-  const list = [
-    ...onboardingAdvice(ctx),
-    ...alarmAdvice(ctx),
-    ...gaugeAdvice(ctx),
-    ...almanaxAdvice(ctx),
-    ...matingAdvice(ctx),
-    ...fateAdvice(ctx),
-    ...placementAdvice(ctx),
-    ...captureAdvice(ctx),
-    ...jobAdvice(ctx),
-    ...goalAdvice(ctx),
-  ]
+  const errors: AdvisorSectionError[] = [...analysis.errors]
+  let goal = analysis.goal
+  try {
+    goal = withGoalSimulation(analysis.goal, input.mounts, input.goalSim, input.rules)
+  } catch (e) {
+    errors.push({ section: 'goal', label: ADVISOR_SECTION_LABELS.goal, message: errorMessage(e) })
+  }
+  const ctx: Ctx = { input, a: analysis, now: input.now, byId: new Map(input.mounts.map((m) => [m.id, m])), missing, goal }
+  const list: Advice[] = []
+  const run = (section: AdvisorSection, gen: (c: Ctx) => Advice[]) => {
+    try {
+      list.push(...gen(ctx))
+    } catch (e) {
+      console.error('[conseiller]', section, e)
+      errors.push({ section, label: ADVISOR_SECTION_LABELS[section], message: errorMessage(e) })
+    }
+  }
+  run('onboarding', onboardingAdvice)
+  run('alarms', alarmAdvice)
+  run('gauges', gaugeAdvice)
+  run('almanax', almanaxAdvice)
+  run('mating', matingAdvice)
+  run('exits', fateAdvice)
+  run('placement', placementAdvice)
+  run('captures', captureAdvice)
+  run('job', jobAdvice)
+  run('goal', goalAdvice)
   // Les prix en dernier : les recharges de carburant y ajoutent leurs objets manquants.
-  list.push(...priceAdvice(ctx))
+  run('prices', priceAdvice)
+  const seen = new Set<string>()
+  for (const e of errors) {
+    if (seen.has(e.section)) continue
+    seen.add(e.section)
+    list.push(sectionErrorAdvice(e))
+  }
   return sortAdvice(list)
 }
 

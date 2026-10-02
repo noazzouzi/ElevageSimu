@@ -6,8 +6,9 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { FAMILIES, STRATEGY, getSpecies, itemName } from '../../data'
 import { minCaptures } from '../../domain/breedingPath'
+import { goalStatus, sessionsPerDayFor } from '../../domain/advisor'
 import { FUEL_TIER_NAMES } from '../../domain/constants'
-import { NET_KIND_LABELS, findNet, genetonKamasValue, type NetKind } from '../../domain/economy'
+import { NET_KIND_LABELS, batchProfile, findNet, genetonKamasValue, type NetKind } from '../../domain/economy'
 import {
   FUEL_GAUGES,
   MAX_DAYS,
@@ -31,9 +32,11 @@ import {
   type StrategyOutcome,
 } from '../../domain/programSim'
 import type { ProgramWorkerMessage, ProgramWorkerRequest } from '../../domain/programSim.worker'
+import type { Ruleset } from '../../domain/rules'
 import type { FamilyId, FuelTier } from '../../domain/types'
 import { jobLevelFromXp, jobXpForLevel } from '../../domain/xp'
-import { formatKamas, formatNumber, formatPercent } from '../../lib/format'
+import { formatDuration, formatKamas, formatNumber, formatPercent } from '../../lib/format'
+import { useInventory } from '../../store/inventory'
 import { usePriceContext, usePrices } from '../../store/prices'
 import { useRules, useSettings } from '../../store/settings'
 import { Badge, Callout, Card, Empty, GaugeChip, NumberField, PageHeader, Progress, SelectField, Stat, Tabs } from '../components'
@@ -100,21 +103,77 @@ const CUSTOM_ID = 'perso'
 /** Dernière simulation, gardée en mémoire le temps de la session (navigation entre pages). */
 let lastRun: RunRecord | null = null
 
-function loadStored(): Partial<Params> {
+/**
+ * Champs issus des Réglages (enclos débloqués, palier, objectif, niveau des parents, Optimakina) : ils
+ * suivent les Réglages en direct ; seule une modification faite sur cette page est mémorisée comme écart.
+ */
+interface SettingsOverrides {
+  targetId?: number | null
+  paddocks?: number
+  tier?: FuelTier
+  parentLevel?: number
+  makinaMode?: MakinaMode
+}
+
+type PageFields = Omit<Params, 'targetId' | 'paddocks' | 'tier' | 'custom'> & { custom: Pick<CustomStrategy, 'enabled' | 'fromGeneration' | 'cloning'> }
+
+interface StoredV2 {
+  v: 2
+  page: Partial<PageFields>
+  overrides: SettingsOverrides
+}
+
+const OVERRIDE_LABELS: Record<keyof SettingsOverrides, string> = {
+  targetId: 'Monture cible',
+  paddocks: 'Enclos utilisés',
+  tier: 'Palier de jauge',
+  parentLevel: 'Niveau des parents (stratégie personnalisée)',
+  makinaMode: 'Optimakina (stratégie personnalisée)',
+}
+
+function loadStored(): StoredV2 {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as Partial<Params>) : {}
+    const o = raw ? (JSON.parse(raw) as Record<string, unknown>) : null
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return { v: 2, page: {}, overrides: {} }
+    if (o.v === 2) return { v: 2, page: (o.page as Partial<PageFields>) ?? {}, overrides: (o.overrides as SettingsOverrides) ?? {} }
+    // Ancien format (copie complète, réglages figés compris) : seuls les champs propres à la page sont repris.
+    const old = o as Partial<Params>
+    const page: Partial<PageFields> = {}
+    for (const k of ['family', 'runs', 'batchSize', 'sessionsPerDay', 'maxDays', 'netKind', 'selected', 'cloneKeepsLevel', 'seed'] as const)
+      if (old[k] !== undefined) (page as Record<string, unknown>)[k] = old[k]
+    if (old.custom) page.custom = { enabled: !!old.custom.enabled, fromGeneration: old.custom.fromGeneration ?? 6, cloning: old.custom.cloning ?? true }
+    return { v: 2, page, overrides: {} }
   } catch {
-    return {}
+    return { v: 2, page: {}, overrides: {} }
   }
 }
 
-function saveStored(p: Params) {
+function saveStored(s: StoredV2) {
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(p))
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s))
   } catch {
     // Stockage indisponible (navigation privée) : les paramètres ne sont simplement pas mémorisés.
   }
+}
+
+/** Écart entre un lot idéal (hypothèse du simulateur) et un lot typique du planificateur d'enclos. */
+function batchGap(tier: FuelTier, rules: Ruleset): { fuel: number; time: number; idealSeconds: number; typicalSeconds: number } {
+  const ideal = batchProfile('ideal', tier, rules)
+  const typical = batchProfile('typique', tier, rules)
+  const sum = (p: typeof ideal) => Object.values(p.points).reduce((a: number, b) => a + (b ?? 0), 0)
+  return { fuel: sum(typical) / sum(ideal) - 1, time: typical.seconds / ideal.seconds - 1, idealSeconds: ideal.seconds, typicalSeconds: typical.seconds }
+}
+
+function BatchAssumption({ tier, rules }: { tier: FuelTier; rules: Ruleset }) {
+  const g = batchGap(tier, rules)
+  return (
+    <Callout>
+      <strong>Hypothèse de lot idéal</strong> : le simulateur compte 20 000 points par statistique et la fécondité la plus rapide (≈ {formatDuration(g.idealSeconds)} au palier {tier}). Un lot réel du planificateur d'enclos
+      consomme ≈ +{formatPercent(g.fuel, 0)} de carburant et dure ≈ +{formatPercent(g.time, 0)} (≈ {formatDuration(g.typicalSeconds)}) : coûts de carburant et durées sont des <strong>minimums</strong>. Le socle des paliers ≥ 2
+      (investissement initial qui reste dans les jauges) n'est pas compté — voir <a href={href('rentabilite')}>Rentabilité</a>.
+    </Callout>
+  )
 }
 
 function customMakina(c: CustomStrategy): MakinaPolicy {
@@ -307,34 +366,94 @@ export default function OptimizerPage() {
   const preferredTier = useSettings((s) => s.preferredTier)
   const parentTargetLevel = useSettings((s) => s.parentTargetLevel)
   const useOptimakina = useSettings((s) => s.useOptimakina)
+  const hoursPerDay = useSettings((s) => s.hoursPerDay)
+  const mounts = useInventory((s) => s.mounts)
   const updateSettings = useSettings((s) => s.update)
   const rules = useRules()
   const ctx = usePriceContext()
   const genetonValue = genetonKamasValue(usePrices((s) => s.genetonValue)).value
 
-  const [params, setParams] = useState<Params>(() => {
-    const stored = loadStored()
-    const target = validTarget(stored.targetId ?? null) ?? validTarget(goalSpeciesId)
-    const defaults: Params = {
-      targetId: target,
-      family: (target !== null ? getSpecies(target)?.family : undefined) ?? settingsFamily,
+  // Réglages en direct + écarts saisis ici + champs propres à la page (aucune copie figée des réglages).
+  const live = useMemo(
+    () => ({
+      targetId: validTarget(goalSpeciesId),
       paddocks: paddocksForJobLevel(jobLevel),
-      runs: 20,
       tier: preferredTier,
-      batchSize: 10,
-      sessionsPerDay: 2,
-      maxDays: 365,
-      netKind: 'universel',
-      selected: STRATEGY_PRESETS.filter((p) => p.defaultSelected).map((p) => p.id),
-      custom: { enabled: false, parentLevel: parentTargetLevel, makinaMode: useOptimakina ? 'from' : 'none', fromGeneration: 6, cloning: true },
-      cloneKeepsLevel: true,
-      seed: 1,
+      parentLevel: parentTargetLevel,
+      makinaMode: (useOptimakina ? 'from' : 'none') as MakinaMode,
+      // Passages aux enclos par jour : temps de jeu des Réglages (comme le calendrier du Plan).
+      sessionsPerDay: sessionsPerDayFor(hoursPerDay),
+    }),
+    [goalSpeciesId, jobLevel, preferredTier, parentTargetLevel, useOptimakina, hoursPerDay],
+  )
+  const [stored, setStored] = useState<StoredV2>(() => loadStored())
+  const params = useMemo<Params>(() => {
+    const o = stored.overrides
+    const page = stored.page
+    const targetId = o.targetId !== undefined ? validTarget(o.targetId) : live.targetId
+    const targetFamily = targetId !== null ? getSpecies(targetId)?.family : undefined
+    return {
+      targetId,
+      family: page.family ?? targetFamily ?? settingsFamily,
+      paddocks: o.paddocks ?? live.paddocks,
+      runs: page.runs ?? 20,
+      tier: o.tier ?? live.tier,
+      batchSize: page.batchSize ?? 10,
+      sessionsPerDay: page.sessionsPerDay ?? live.sessionsPerDay,
+      maxDays: page.maxDays ?? 365,
+      netKind: page.netKind && NET_KINDS.includes(page.netKind) ? page.netKind : 'universel',
+      selected: Array.isArray(page.selected) ? page.selected : STRATEGY_PRESETS.filter((p) => p.defaultSelected).map((p) => p.id),
+      custom: {
+        enabled: page.custom?.enabled ?? false,
+        fromGeneration: page.custom?.fromGeneration ?? 6,
+        cloning: page.custom?.cloning ?? true,
+        parentLevel: o.parentLevel ?? live.parentLevel,
+        makinaMode: o.makinaMode ?? live.makinaMode,
+      },
+      cloneKeepsLevel: page.cloneKeepsLevel ?? true,
+      seed: page.seed ?? 1,
     }
-    return { ...defaults, ...stored, targetId: target, custom: { ...defaults.custom, ...stored.custom } }
-  })
-  const set = (patch: Partial<Params>) => setParams((p) => ({ ...p, ...patch }))
-  const setCustom = (patch: Partial<CustomStrategy>) => setParams((p) => ({ ...p, custom: { ...p.custom, ...patch } }))
-  useEffect(() => saveStored(params), [params])
+  }, [stored, live, settingsFamily])
+  const update = (fn: (s: StoredV2) => StoredV2) =>
+    setStored((s) => {
+      const next = fn(s)
+      saveStored(next)
+      return next
+    })
+  const setOverride = (o: SettingsOverrides, k: keyof SettingsOverrides, v: SettingsOverrides[keyof SettingsOverrides]) => {
+    if (v === live[k]) delete o[k]
+    else (o as Record<string, unknown>)[k] = v
+  }
+  const set = (patch: Partial<Params>) =>
+    update((s) => {
+      const overrides = { ...s.overrides }
+      const page: Partial<PageFields> = { ...s.page }
+      for (const [k, v] of Object.entries(patch)) {
+        if (k === 'targetId' || k === 'paddocks' || k === 'tier') setOverride(overrides, k, v as SettingsOverrides[typeof k])
+        else if (k !== 'custom') (page as Record<string, unknown>)[k] = v
+      }
+      if (patch.targetId !== undefined && patch.targetId !== null) page.family = getSpecies(patch.targetId)?.family ?? page.family
+      return { v: 2, page, overrides }
+    })
+  const setCustom = (patch: Partial<CustomStrategy>) =>
+    update((s) => {
+      const overrides = { ...s.overrides }
+      const custom = { enabled: params.custom.enabled, fromGeneration: params.custom.fromGeneration, cloning: params.custom.cloning, ...s.page.custom }
+      for (const [k, v] of Object.entries(patch)) {
+        if (k === 'parentLevel' || k === 'makinaMode') setOverride(overrides, k, v as SettingsOverrides[typeof k])
+        else (custom as Record<string, unknown>)[k] = v
+      }
+      return { v: 2, page: { ...s.page, custom }, overrides }
+    })
+  const resetOverride = (k: keyof SettingsOverrides) =>
+    update((s) => {
+      const overrides = { ...s.overrides }
+      delete overrides[k]
+      return { ...s, overrides }
+    })
+  const activeOverrides = (Object.keys(stored.overrides) as (keyof SettingsOverrides)[]).filter((k) => stored.overrides[k] !== undefined && stored.overrides[k] !== live[k])
+  const overrideValue = (k: keyof SettingsOverrides, v: SettingsOverrides[keyof SettingsOverrides]): string =>
+    k === 'targetId' ? (v === null || v === undefined ? 'aucune' : (getSpecies(v as number)?.name ?? '?')) : k === 'tier' ? `palier ${v}` : k === 'makinaMode' ? (v === 'none' ? 'aucune' : v === 'all' ? 'à chaque accouplement' : 'dès une génération') : String(v)
 
   const target = params.targetId !== null ? getSpecies(params.targetId) : undefined
   const unlocked = paddocksForJobLevel(jobLevel)
@@ -478,10 +597,28 @@ export default function OptimizerPage() {
   const apply = (o: StrategyOutcome) => {
     const cfg = o.summary.config
     updateSettings({ parentTargetLevel: cfg.parentLevel, useOptimakina: cfg.makina !== 'none', preferredTier: cfg.tier })
+    // Les réglages reprennent ces valeurs : les écarts correspondants n'ont plus lieu d'être.
+    update((st) => {
+      const overrides = { ...st.overrides }
+      delete overrides.tier
+      delete overrides.parentLevel
+      delete overrides.makinaMode
+      return { ...st, overrides }
+    })
     setApplied(
       `Réglages mis à jour : parents visés au niveau ${cfg.parentLevel}${cfg.levelByGeneration ? ' (niveau de base ; montez les hautes générations selon la stratégie)' : ''}, Optimakina ${cfg.makina === 'none' ? 'désactivée' : 'activée'}, palier ${cfg.tier} (${FUEL_TIER_NAMES[cfg.tier]}).`,
     )
   }
+
+  // Part du programme restant depuis l'étable du joueur (le simulateur part de zéro, ux F9).
+  const stableShare = useMemo(() => {
+    if (!target || mounts.length === 0) return null
+    try {
+      return goalStatus(target.id, mounts, { parentLevel: params.custom.parentLevel, useOptimakina: params.custom.makinaMode !== 'none', rules })?.remainingShare ?? null
+    } catch {
+      return null
+    }
+  }, [target, mounts, params.custom.parentLevel, params.custom.makinaMode, rules])
 
   const running = progress !== null
   const runningLabel = progress ? (jobs.find((j) => j.id === progress.jobId)?.label ?? progress.jobId) : ''
@@ -513,9 +650,22 @@ export default function OptimizerPage() {
                     Recette idéale : {fmtInt(minCaptures(target.id))} capture{minCaptures(target.id) > 1 ? 's' : ''} si chaque accouplement réussissait. Le simulateur ajoute le hasard des naissances, les sexes et
                     les places d'enclos.
                   </small>
+                  {stableShare !== null && stableShare < 0.995 && (
+                    <small className="muted">
+                      <strong>Le simulateur part de zéro (étable vide).</strong> Vos montures couvrent déjà une partie du programme : il en reste ≈{' '}
+                      {formatPercent(stableShare, 0)} (modèle analytique) — comptez environ cette part des durées et ressources ci-dessous. Le{' '}
+                      <a href={href('plan')}>Plan d'élevage</a> applique ce prorata à votre objectif.
+                    </small>
+                  )}
                   <div className="row">
                     {target.id !== goalSpeciesId ? (
-                      <button className="btn small" onClick={() => updateSettings({ goalSpeciesId: target.id })}>
+                      <button
+                        className="btn small"
+                        onClick={() => {
+                          updateSettings({ goalSpeciesId: target.id })
+                          resetOverride('targetId')
+                        }}
+                      >
                         Définir comme objectif du plan
                       </button>
                     ) : (
@@ -552,9 +702,26 @@ export default function OptimizerPage() {
             </div>
           </div>
           <p className="muted opt-hint">
-            Votre niveau d'Éleveur ({jobLevel}) débloque {unlocked} enclos{params.paddocks > unlocked ? ` : vous en simulez ${params.paddocks}, pensez à monter le métier` : ''}. Le palier fixe le prix au point du
+            Votre niveau d'Éleveur ({jobLevel}) débloque {unlocked} enclos{params.paddocks > unlocked ? ` : vous en simulez ${params.paddocks}, pensez à monter le métier` : params.paddocks < unlocked ? ` : vous n'en simulez que ${params.paddocks}` : ''}. Le palier fixe le prix au point du
             carburant, la vitesse d'XP au-delà du niveau 40 et, si les sessions sont rapprochées, le nombre de cycles pour rendre un lot fécond.
           </p>
+          {activeOverrides.length > 0 ? (
+            <div className="opt-overrides" role="status">
+              <strong>Différent de vos réglages :</strong>
+              <ul>
+                {activeOverrides.map((k) => (
+                  <li key={k}>
+                    {OVERRIDE_LABELS[k]} : {overrideValue(k, stored.overrides[k])} <span className="muted">(réglages : {overrideValue(k, live[k])})</span>{' '}
+                    <button className="btn small ghost" onClick={() => resetOverride(k)}>
+                      Revenir à mes réglages
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <small className="muted">Cible, enclos, palier, niveau des parents et Optimakina suivent vos <a href={href('reglages')}>Réglages</a> tant que vous ne les changez pas ici.</small>
+          )}
           <details className="opt-advanced">
             <summary>Hypothèses avancées</summary>
             <div className="row" style={{ alignItems: 'flex-end' }}>
@@ -857,13 +1024,18 @@ function StrategyDetail({ outcome, onApply, jobLevel, genetonValue }: { outcome:
         onChange={setTab}
       />
 
-      {tab === 'cout' && <CostDetail cost={outcome.cost} />}
+      {tab === 'cout' && (
+        <>
+          <BatchAssumption tier={cfg.tier} rules={cfg.rules} />
+          <CostDetail cost={outcome.cost} />
+        </>
+      )}
 
       {tab === 'carburant' && (
         <>
           <p className="muted">
             Points consommés par les jauges (la consommation d'une jauge est la même pour 1 ou 10 montures : un lot de {cfg.batchSize} se partage 20 000 points par statistique, plus ≈ {fmtInt(cfg.serenityPointsPerBatch)} points
-            de sérénité). La Mangeoire compte toute l'XP donnée (niv. {cfg.parentLevel}{cfg.levelByGeneration ? ' et plus' : ''}), clones exclus si le niveau est conservé.
+            de sérénité — lot idéal, minimum : un lot réel en consomme ≈ +{formatPercent(batchGap(cfg.tier, cfg.rules).fuel, 0)}). La Mangeoire compte toute l'XP donnée (niv. {cfg.parentLevel}{cfg.levelByGeneration ? ' et plus' : ''}), clones exclus si le niveau est conservé.
           </p>
           <div className="table-wrap">
             <table className="table">

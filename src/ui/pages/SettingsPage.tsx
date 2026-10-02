@@ -2,7 +2,7 @@
 // économie), sauvegarde des données (export / import / remise à zéro) et « à propos ».
 // Tous les réglages sont dans useSettings (persisté) ; la sauvegarde dans src/lib/backup.ts.
 // Les styles de la tranche « Guide & réglages » sont dans GuidePage.css.
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { FAMILIES, GAME, MAKINAS, NETS, PRICES_DEFAULT, getSpecies } from '../../data'
 import {
   FUEL_TIER_NAMES,
@@ -18,11 +18,10 @@ import { TAKEZA_BONUS, TARGET_BASE, TARGET_PER_LEVEL, targetChance } from '../..
 import { gaugeDrainSeconds } from '../../domain/paddock'
 import { RULESETS, type Ruleset } from '../../domain/rules'
 import type { FamilyId, FuelTier, RulesetId } from '../../domain/types'
-import { jobXpBetween, mountXpForLevel } from '../../domain/xp'
+import { jobLevelFromXp, jobXpBetween, jobXpForLevel, mountXpForLevel } from '../../domain/xp'
 import {
   TYPICAL_STORAGE_QUOTA_BYTES,
   downloadBackup,
-  exportAll,
   importAll,
   readBackupFile,
   resetAll,
@@ -32,10 +31,12 @@ import {
   type BackupValidation,
   type ImportMode,
 } from '../../lib/backup'
-import { formatDate, formatDuration, formatNumber, formatPercent } from '../../lib/format'
+import { formatDate, formatDuration, formatNumber, formatPercent, plural } from '../../lib/format'
+import { journalJobXp, useJournal } from '../../store/journal'
+import { useStorageHealth } from '../../store/persistence'
 import { useRules, useSettings, type Goal } from '../../store/settings'
 import { Badge, Callout, Card, NumberField, PageHeader, Progress, Stat } from '../components'
-import { href } from '../router'
+import { href, useRoute } from '../router'
 import { ConfidenceBadge, GenBadge, SpeciesPicker } from '../species'
 import './GuidePage.css'
 
@@ -244,6 +245,22 @@ function JobUnlocks({ level, family }: { level: number; family: FamilyId }) {
 
 // ---------- Section Données ----------
 
+/**
+ * Message « flash » laissé avant le rechargement (import, remise à zéro) : lu une seule fois par
+ * chargement de page (le double rendu du mode strict ne le perd pas), oublié dès le premier affichage.
+ */
+let flashOnce: string | null | undefined
+function readFlashOnce(): string | null {
+  if (flashOnce === undefined) flashOnce = takeFlash()
+  return flashOnce
+}
+
+const JOURNAL_KEEP_OPTIONS: { months: number; label: string }[] = [
+  { months: 12, label: 'plus d’un an' },
+  { months: 6, label: 'plus de 6 mois' },
+  { months: 3, label: 'plus de 3 mois' },
+]
+
 type ImportState =
   | { status: 'idle' }
   | { status: 'error'; message: string }
@@ -255,18 +272,30 @@ function DataSection() {
   const [exported, setExported] = useState<string | null>(null)
   const [imp, setImp] = useState<ImportState>({ status: 'idle' })
   const [confirmReset, setConfirmReset] = useState<'none' | 'all' | 'settings'>('none')
-  const [message, setMessage] = useState<{ tone: 'ok' | 'danger'; text: string } | null>(null)
+  const [message, setMessage] = useState<{ tone: 'ok' | 'danger'; text: string } | null>(() => {
+    const m = readFlashOnce()
+    return m ? { tone: 'ok', text: m } : null
+  })
   const fileRef = useRef<HTMLInputElement>(null)
   const resetSettings = useSettings((s) => s.reset)
+  const journal = useJournal((s) => s.entries)
+  const removeJournalBefore = useJournal((s) => s.removeBefore)
+  const writeFailed = useStorageHealth((s) => s.issues.some((i) => i.kind === 'ecriture'))
+  const [journalMonths, setJournalMonths] = useState(6)
+  // Horodatage du rendu figé au montage (pur) : suffit pour compter les entrées anciennes.
+  const [renderedAt] = useState(() => Date.now())
+  const journalCutoff = renderedAt - journalMonths * 30.44 * 86_400_000
+  const oldJournal = useMemo(() => journal.filter((e) => e.at < journalCutoff).length, [journal, journalCutoff])
 
   useEffect(() => {
-    const m = takeFlash()
-    if (m) setMessage({ tone: 'ok', text: m })
+    // Le message flash ne doit s'afficher qu'une fois, même si la page Réglages est rouverte ensuite.
+    flashOnce = null
   }, [])
 
   const doExport = () => {
     try {
-      const name = downloadBackup(exportAll())
+      // Sans argument : instantané actuel, modifications non enregistrées (quota plein) comprises.
+      const name = downloadBackup()
       setExported(name)
       refreshUsage()
     } catch {
@@ -407,6 +436,37 @@ function DataSection() {
       </div>
 
       <div className="divider" />
+      <h3>Alléger le journal</h3>
+      <p className="gs-help" style={{ marginTop: 0 }}>
+        Le journal ({plural(journal.length, 'entrée')}) est souvent la donnée la plus lourde. Supprimer les entrées anciennes libère de la place
+        {writeFailed ? ' — c’est la solution quand le navigateur refuse d’enregistrer (espace plein)' : ''}. Téléchargez une sauvegarde avant si vous voulez
+        les garder.
+      </p>
+      <div className="row">
+        <label className="field">
+          Entrées de
+          <select value={journalMonths} onChange={(e) => setJournalMonths(Number(e.target.value))}>
+            {JOURNAL_KEEP_OPTIONS.map((o) => (
+              <option key={o.months} value={o.months}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          className="btn"
+          disabled={oldJournal === 0}
+          onClick={() => {
+            const n = removeJournalBefore(journalCutoff)
+            setMessage({ tone: 'ok', text: `${plural(n, 'entrée ancienne supprimée', 'entrées anciennes supprimées')} du journal.` })
+            refreshUsage()
+          }}
+        >
+          Supprimer {plural(oldJournal, 'entrée', 'entrées')}
+        </button>
+      </div>
+
+      <div className="divider" />
       <h3>Remise à zéro</h3>
       {confirmReset === 'none' && (
         <div className="row">
@@ -470,8 +530,16 @@ export default function SettingsPage() {
   const rules = useRules()
   const goal = s.goalSpeciesId !== null ? getSpecies(s.goalSpeciesId) : undefined
   const paddocks = PADDOCK_UNLOCK_LEVELS.filter((p) => p.level <= s.jobLevel).length
+  const journalEntries = useJournal((st) => st.entries)
+  const journalXp = useMemo(() => journalJobXp(journalEntries, s.jobLevelUpdatedAt), [journalEntries, s.jobLevelUpdatedAt])
+  const estimatedJobLevel = Math.min(200, jobLevelFromXp(jobXpForLevel(s.jobLevel) + journalXp.xp))
 
   const jump = (id: string) => document.getElementById(`reglages-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  // Lien direct vers une section (#/reglages?s=donnees, ex. depuis l'alerte « espace plein »).
+  const section = useRoute().params.get('s')
+  useEffect(() => {
+    if (section && SECTIONS.some((x) => x.id === section)) document.getElementById(`reglages-${section}`)?.scrollIntoView({ block: 'start' })
+  }, [section])
 
   // Accouplements : effet du niveau visé des parents.
   const L = s.parentTargetLevel
@@ -562,8 +630,22 @@ export default function SettingsPage() {
                 <input value={s.server} onChange={(e) => update({ server: e.target.value })} placeholder="ex. Salar, Tal Kasha…" maxLength={40} />
               </label>
             </Field>
-            <Field help="Meilleur niveau d’Éleveur parmi les personnages du compte : c’est lui qui débloque les enclos (liés au compte).">
-              <NumberField label="Niveau du métier d’Éleveur" value={s.jobLevel} min={1} max={200} onChange={(v) => update({ jobLevel: Math.round(v) })} />
+            <Field
+              help={
+                <>
+                  Meilleur niveau d’Éleveur parmi les personnages du compte : c’est lui qui débloque les enclos (liés au compte).
+                  {s.jobLevelUpdatedAt > 0 && <> Saisi le {formatDate(s.jobLevelUpdatedAt)}.</>}
+                  {journalXp.xp > 0 && (
+                    <>
+                      {' '}
+                      Depuis, le journal compte {formatNumber(journalXp.xp)} XP d’Éleveur : niveau estimé <strong>{estimatedJobLevel}</strong>{' '}
+                      <Badge tone="warn">estimation</Badge> (<a href={href('metier')}>Métier</a>).
+                    </>
+                  )}
+                </>
+              }
+            >
+              <NumberField label="Niveau du métier d’Éleveur" value={s.jobLevel} min={1} max={200} onChange={(v) => update({ jobLevel: v })} />
               <div className="row gs-quick" role="group" aria-label="Niveaux clés">
                 {PADDOCK_UNLOCK_LEVELS.map((p) => (
                   <button key={p.level} className="btn small" aria-pressed={s.jobLevel === p.level} onClick={() => update({ jobLevel: p.level })}>
@@ -575,12 +657,13 @@ export default function SettingsPage() {
             <Field
               help={
                 <>
-                  Chaque personnage du combat lance son propre filet (un par combat) : plus de personnages = plus de captures par combat. Un 2e personnage du
-                  même compte n’ajoute pas d’enclos ; un 2e compte, si.
+                  Chaque personnage du combat lance son propre filet (un par combat) : les conseils de capture comptent{' '}
+                  <strong>{plural(s.accounts, 'capture', 'captures')} par combat</strong> avec un filet simple (le double avec un filet
+                  multiplicateur), pour estimer le nombre de combats. Un 2e personnage du même compte n’ajoute pas d’enclos ; un 2e compte, si.
                 </>
               }
             >
-              <NumberField label="Personnages pour les captures" value={s.accounts} min={1} max={8} onChange={(v) => update({ accounts: Math.round(v) })} suffix="perso." />
+              <NumberField label="Personnages pour les captures" value={s.accounts} min={1} max={8} onChange={(v) => update({ accounts: v })} suffix="perso." />
             </Field>
           </div>
           <div className="divider" />
@@ -687,15 +770,15 @@ export default function SettingsPage() {
                 Mangeoire en complément
               </Check>
             </Field>
-            <Field help="Sert à dimensionner les plannings (nombre de sessions, captures possibles par jour).">
+            <Field help="Sert aux estimations de calendrier (plan d’élevage, optimiseur) : nombre de passages par jour, donc durée réelle en jours d’un objectif. Les jauges, elles, tournent 24 h sur 24.">
               <NumberField label="Temps de jeu par jour" value={s.hoursPerDay} min={0.5} max={24} step={0.5} onChange={(v) => update({ hoursPerDay: v })} suffix="h" />
             </Field>
             <Field
               help={
                 <>
-                  Les plans évitent de vous demander un changement de jauges moins de {formatDuration(s.checkIntervalMinutes * 60)} après le précédent
-                  (et privilégient un palier lent si vous passez rarement). Une jauge de sérénité active (Baffeur, Caresseur) demande quand même une
-                  alarme.
+                  Durée minimale visée d’une étape des plans d’enclos : une étape de moins de {formatDuration(s.checkIntervalMinutes * 60, { long: true })} est
+                  allongée quand c’est sans danger pour le lot (aucune monture ne sort de sa zone de sérénité), quitte à rallonger un peu le plan. Une
+                  étape qu’on ne peut pas allonger (poussée de sérénité avec Baffeur ou Caresseur) reste courte et est signalée « alarme indispensable ».
                 </>
               }
             >
@@ -705,9 +788,14 @@ export default function SettingsPage() {
                 min={5}
                 max={1440}
                 step={5}
-                onChange={(v) => update({ checkIntervalMinutes: Math.round(v) })}
+                onChange={(v) => update({ checkIntervalMinutes: v })}
                 suffix="min"
               />
+            </Field>
+            <Field help="Certains jours d’Almanax, une jauge a un « effet doublé » (non vérifié en jeu : on ne sait pas si c’est le gain, la consommation ou les deux). Coché, les plans d’enclos comptent un gain doublé pour cette jauge, seulement pendant ce jour de jeu (heure de Paris). Décoché (conseillé tant que l’effet n’est pas confirmé), les poussées de sérénité sont calculées au rythme normal : vérifiez la sérénité en jeu ces jours-là.">
+              <Check checked={s.almanaxGaugeDoubling} onChange={(v) => update({ almanaxGaugeDoubling: v })}>
+                Appliquer le doublement Almanax des jauges (non vérifié)
+              </Check>
             </Field>
           </div>
         </Card>
@@ -731,7 +819,7 @@ export default function SettingsPage() {
                 value={s.parentTargetLevel}
                 min={1}
                 max={200}
-                onChange={(v) => update({ parentTargetLevel: Math.round(v) })}
+                onChange={(v) => update({ parentTargetLevel: v })}
               />
               <div className="row gs-quick" role="group" aria-label="Niveaux types">
                 {[1, 20, 40, 60, 100, 200].map((l) => (
@@ -762,9 +850,10 @@ export default function SettingsPage() {
               help={
                 <>
                   L’Optimakina ajoute {formatPercent(rules.optimakinaBonus, 0)} de génération cible (règles {rules.id}). Une seule makina par
-                  accouplement, de la même famille et de génération ≥ génération cible. Elle est rentable si son prix est inférieur à (valeur du bébé
-                  cible × {formatPercent(rules.optimakinaBonus, 0)}) ÷ chance actuelle : la page{' '}
-                  <a href={href('rentabilite')}>Rentabilité</a> fait le calcul avec vos prix.
+                  accouplement, de la même famille et de génération ≥ génération cible. Elle est rentable si son prix est inférieur à C_eff × Δ ÷ p
+                  (C_eff = coût net d’un couple : remplacement des deux parents moins la valeur de leurs stériles ; Δ = chance gagnée ; p = chance
+                  actuelle) : l’<a href={href('accouplement')}>Accouplement</a>, l’Accueil et la <a href={href('rentabilite')}>Rentabilité</a> font
+                  ce calcul avec vos prix. Sans prix décisif : Optimakina dès la cible G6 (G4–G5 pour les étapes de votre objectif), jamais en G2–G3.
                 </>
               }
             >

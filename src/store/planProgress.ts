@@ -5,6 +5,8 @@
 //   item:<id du conseil>:<id de la ligne>.
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { persistOptions, syncAcrossTabs } from './persistence'
+import { isPlainObject, registerStoreSchema, STORE_KEYS, type Sanitized } from './schema'
 
 /** Durée de conservation des conseils « faits » et des cases de routine (au-delà : purgés). */
 export const PLAN_PROGRESS_RETENTION_MS = 30 * 86_400_000
@@ -67,11 +69,44 @@ export const usePlanProgress = create<PlanProgressStore>()(
         })),
       replaceAll: (p) => set({ checked: { ...p.checked }, done: { ...p.done } }),
     }),
-    { name: 'elevagesimu:planProgress', version: 1 },
+    persistOptions<PlanProgressStore, PlanProgressState>({
+      name: STORE_KEYS.planProgress,
+      sanitize: sanitizePlanProgress,
+      partialize: (s) => ({ checked: s.checked, done: s.done }),
+    }),
   ),
 )
+syncAcrossTabs(usePlanProgress)
+
+/**
+ * Normalisation de l'avancement lu (stockage, autre onglet, sauvegarde) : seules les entrées
+ * « clé → instant (ms) » valides sont gardées ; jamais d'exception (R3/R4).
+ */
+export function sanitizePlanProgress(raw: unknown): Sanitized<PlanProgressState> {
+  const issues: string[] = []
+  const clean = (v: unknown, label: string): Record<string, number> => {
+    if (v === undefined) return {}
+    if (!isPlainObject(v)) {
+      issues.push(`${label} illisibles écartés`)
+      return {}
+    }
+    const out: Record<string, number> = {}
+    let dropped = 0
+    for (const [k, t] of Object.entries(v)) {
+      if (typeof t === 'number' && Number.isFinite(t) && t >= 0) out[k] = t
+      else dropped++
+    }
+    if (dropped) issues.push(`${dropped} ${label} invalide${dropped > 1 ? 's' : ''} écarté${dropped > 1 ? 's' : ''}`)
+    return out
+  }
+  const src = isPlainObject(raw) ? raw : {}
+  return { state: { checked: clean(src.checked, 'cases cochées'), done: clean(src.done, 'conseils faits') }, issues }
+}
 
 /** La case `key` est-elle cochée ? */
 export function isChecked(state: Pick<PlanProgressState, 'checked'>, key: string): boolean {
   return state.checked[key] !== undefined
 }
+
+// Import d'une sauvegarde : même normalisation qu'au chargement (schema.normalizeStoreValue).
+registerStoreSchema(STORE_KEYS.planProgress, { sanitize: (raw) => sanitizePlanProgress(raw) as unknown as Sanitized<Record<string, unknown>> })

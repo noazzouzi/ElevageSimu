@@ -16,11 +16,22 @@
 // Module pur : aucun React, aucun accès au store.
 import { STRATEGY, getSpecies } from '../data'
 import { FUEL_TIER_NAMES, GAUGE_IDS, GAUGE_LABELS, MOUNT_MAX_LEVEL, MOUNT_STAT_MAX, PADDOCK_SLOTS, PADDOCK_UNLOCK_LEVELS, TICK_SECONDS } from './constants'
-import { decideGauges, planFertility, type FertilityOptions, type FertilityPlan, type FertilityStep } from './fertility'
+import {
+  bestSerenityWindow,
+  decideGauges,
+  gaugeTiers,
+  mergeSteps,
+  planAlmanax,
+  planFertility,
+  splitLot,
+  type FertilityOptions,
+  type FertilityPlan,
+  type FertilityStep,
+} from './fertility'
 import { bestFuel, fillPlan, type FillPlan, type GaugePointCost } from './fuel'
 import { SERENITY_SMILEYS } from './mountFate'
 import { effectiveFertility } from './mounts'
-import { canBenefit, formatDuration, gainMultiplier, isFecund, simulatePaddock, type SimMount, type SimulateResult } from './paddock'
+import { almanaxAtTime, canBenefit, formatDuration, gainMultiplier, isFecund, simulatePaddock, type SimMount, type SimulateResult } from './paddock'
 import type { PriceContext } from './pricing'
 import { RULESETS, type Ruleset } from './rules'
 import type { FuelTier, GaugeId, Mount, MountLocation, PaddockState } from './types'
@@ -128,6 +139,13 @@ const zeroGauges = (): Record<GaugeId, number> => ({ baffeur: 0, caresseur: 0, f
 
 /** Marge de sérénité gardée pour une monture qui a encore besoin de maturité (comme le planificateur). */
 const MATURITY_SAFE = 1_000
+/** Durée minimale d'une étape non finale par défaut (s) : `FertilityOptions.minStepSeconds`. */
+export const DEFAULT_MIN_STEP_SECONDS = 300
+/**
+ * Part du socle (bas du palier) sous laquelle la consommation d'une jauge ne justifie pas de socle :
+ * la jauge tourne alors au palier inférieur (« une étape courte ne déclenche jamais de socle »).
+ */
+export const SOCLE_MIN_SHARE = 0.1
 
 /** Étape qui pousse la sérénité (Caresseur ou Baffeur). */
 const isCrossing = (s: FertilityStep) => s.gauges.includes('caresseur') || s.gauges.includes('baffeur')
@@ -136,26 +154,68 @@ const isFreeCrossing = (s: FertilityStep) => !s.switchWindow && isCrossing(s)
 /** En dessous, une poussée de sérénité qui revient plus loin est une alternance à corriger. */
 const PING_PONG_SECONDS = 120
 
-/**
- * Plan de fécondité d'un lot : `planFertility`, puis correction des traversées de 0 « libres »
- * (Caresseur + Dragofesse, Baffeur + Foudroyeur). Le planificateur suit la phase majoritaire et
- * alterne alors toutes les une ou deux minutes à mesure que les montures traversent une à une, ce
- * qui est inapplicable en jeu (et peut tourner en boucle quand le lot chevauche 0). Ici, la poussée
- * continue jusqu'à ce que plus aucune monture n'en ait besoin, sans sortir de la zone de maturité
- * (±1 000) une monture qui en a encore besoin, puis la planification reprend. Même forme de
- * résultat que `planFertility`.
- */
-export function planPaddock(input: SimMount[], opts: FertilityOptions): FertilityPlan {
+interface CorePlan {
+  steps: FertilityStep[]
+  totalSeconds: number
+  fecundAt: Record<string, number>
+  consumed: Record<GaugeId, number>
+  warnings: string[]
+  mounts: SimMount[]
+  /** Le garde-fou (40 tours ou durée max) a coupé le plan avant la fin. */
+  exhausted: boolean
+}
+
+/** Simulation d'une étape du plan (jauges entretenues aux paliers du plan, Almanax à l'instant `at`). */
+function runStep(
+  mounts: SimMount[],
+  gauges: GaugeId[],
+  seconds: number,
+  at: number,
+  opts: FertilityOptions,
+  tiers: Record<GaugeId, FuelTier>,
+  stopWhen?: (ms: SimMount[], secs: number) => boolean,
+): SimulateResult {
+  const maintainTier: Partial<Record<GaugeId, FuelTier>> = {}
+  for (const g of gauges) maintainTier[g] = tiers[g]
+  return simulatePaddock({
+    gauges: zeroGauges(),
+    active: gauges,
+    mounts,
+    almanaxDoubled: planAlmanax(opts, at),
+    maintainTier,
+    rules: opts.rules ?? RULESETS['3.6'],
+    maxSeconds: seconds,
+    stopWhen,
+  })
+}
+
+/** Étape décalée de `t0` secondes (fenêtre de changement comprise). */
+function shiftStep(st: FertilityStep, t0: number): FertilityStep {
+  const out: FertilityStep = { ...st, startSeconds: t0 + st.startSeconds, consumed: { ...st.consumed } }
+  if (st.switchWindow) out.switchWindow = { earliestSeconds: t0 + st.switchWindow.earliestSeconds, latestSeconds: t0 + st.switchWindow.latestSeconds }
+  return out
+}
+
+/** Options d'un sous-plan qui démarre `t0` secondes après le début du plan. */
+const subOptions = (opts: FertilityOptions, tiers: Record<GaugeId, FuelTier>, t0: number, maxSeconds: number): FertilityOptions => ({
+  ...opts,
+  tierByGauge: tiers,
+  startMs: opts.startMs === undefined ? undefined : opts.startMs + t0 * 1000,
+  maxSeconds: maxSeconds - t0,
+})
+
+/** Cœur de `planPaddock` : `planFertility` corrigé des traversées de 0 qui alternent (voir planPaddock). */
+function planCore(input: SimMount[], opts: FertilityOptions, tiers: Record<GaugeId, FuelTier>): CorePlan {
   const rules = opts.rules ?? RULESETS['3.6']
   const maxSeconds = opts.maxSeconds ?? 7 * 86_400
   const withXp = opts.withXp ?? false
-  const almanax = opts.almanaxDoubled ?? null
   let mounts: SimMount[] = input.map((m) => ({ ...m }))
   const steps: FertilityStep[] = []
   const consumed = zeroGauges()
   const fecundAt: Record<string, number> = {}
   const warnings: string[] = []
   let t = 0
+  let finished = false
 
   const addStep = (step: FertilityStep) => {
     steps.push(step)
@@ -164,18 +224,9 @@ export function planPaddock(input: SimMount[], opts: FertilityOptions): Fertilit
   const addFecund = (offset: number, map: Record<string, number>) => {
     for (const [id, at] of Object.entries(map)) if (fecundAt[id] === undefined) fecundAt[id] = offset + at
   }
-  const run = (gauges: GaugeId[], seconds: number, stopWhen?: (ms: SimMount[]) => boolean) => {
-    const maintainTier: Partial<Record<GaugeId, FuelTier>> = {}
-    for (const g of gauges) maintainTier[g] = opts.tier
-    return simulatePaddock({ gauges: zeroGauges(), active: gauges, mounts, almanaxDoubled: almanax, maintainTier, rules, maxSeconds: seconds, stopWhen })
-  }
+  const run = (gauges: GaugeId[], seconds: number, stopWhen?: (ms: SimMount[], secs: number) => boolean) => runStep(mounts, gauges, seconds, t, opts, tiers, stopWhen)
   /** Reprend tel quel le plan `p` (démarré à `t0`) à partir de l'étape `from` (état courant = début de cette étape). */
-  const shifted = (st: FertilityStep, t0: number): FertilityStep => ({
-    ...st,
-    startSeconds: t0 + st.startSeconds,
-    consumed: { ...st.consumed },
-    switchWindow: st.switchWindow && { earliestSeconds: t0 + st.switchWindow.earliestSeconds, latestSeconds: t0 + st.switchWindow.latestSeconds },
-  })
+  const shifted = (st: FertilityStep, t0: number): FertilityStep => shiftStep(st, t0)
   const appendRest = (p: FertilityPlan, t0: number, from: number) => {
     for (const st of p.steps.slice(from)) addStep(shifted(st, t0))
     addFecund(t0, p.fecundAt)
@@ -186,7 +237,7 @@ export function planPaddock(input: SimMount[], opts: FertilityOptions): Fertilit
 
   for (let guard = 0; guard < 40 && t < maxSeconds; guard++) {
     const t0 = t
-    const p = planFertility(mounts, { ...opts, maxSeconds: maxSeconds - t })
+    const p = planFertility(mounts, subOptions(opts, tiers, t0, maxSeconds))
     // Traversée qui revient plus loin : libre, ou très courte (alternance entre deux poussées).
     const k = p.steps.findIndex(
       (st, i) =>
@@ -195,6 +246,7 @@ export function planPaddock(input: SimMount[], opts: FertilityOptions): Fertilit
     )
     if (k < 0) {
       appendRest(p, t0, 0)
+      finished = true
       break
     }
     // Rejouer les étapes qui précèdent la traversée (simulation déterministe) pour retrouver l'état du lot.
@@ -208,7 +260,7 @@ export function planPaddock(input: SimMount[], opts: FertilityOptions): Fertilit
     const cross = p.steps[k]
     const push: GaugeId = cross.gauges.includes('caresseur') ? 'caresseur' : 'baffeur'
     const up = push === 'caresseur'
-    const delta = rules.gaugeRatePerTick[opts.tier] * gainMultiplier(push, null, almanax)
+    const delta = rules.gaugeRatePerTick[tiers[push]] * gainMultiplier(push, null, almanaxAtTime(planAlmanax(opts, t), 0))
     const needsPush = (m: SimMount) => decideGauges(m, withXp)?.gauges.includes(push) ?? false
     // Monture qui perdrait sa progression si on poussait le lot maintenant : elle a encore besoin de
     // maturité au bord de la zone (±1 000), ou de la statistique de son côté de 0 (endurance < 0 pour
@@ -237,6 +289,7 @@ export function planPaddock(input: SimMount[], opts: FertilityOptions): Fertilit
       }))
       if (res.seconds === 0) {
         appendRest(p, t0, k)
+        finished = true
         break
       }
       addStep({
@@ -257,6 +310,7 @@ export function planPaddock(input: SimMount[], opts: FertilityOptions): Fertilit
     const res = run(cross.gauges, maxSeconds - t, (ms) => !ms.some(needsPush) || ms.some((m) => blocker(m) === 'abreuvoir'))
     if (res.seconds === 0) {
       appendRest(p, t0, k)
+      finished = true
       break
     }
     addStep({
@@ -270,17 +324,210 @@ export function planPaddock(input: SimMount[], opts: FertilityOptions): Fertilit
     t += res.seconds
     mounts = res.mounts
   }
+  const exhausted = !finished && mounts.some((m) => fecundAt[m.id] === undefined)
+  return { steps: mergeSteps(steps), totalSeconds: t, fecundAt, consumed, warnings, mounts, exhausted }
+}
 
-  const merged: FertilityStep[] = []
-  for (const st of steps) {
-    const last = merged[merged.length - 1]
-    if (last && sortedKey(last.gauges) === sortedKey(st.gauges) && last.purpose === st.purpose && !last.switchWindow && !st.switchWindow) {
-      last.durationSeconds += st.durationSeconds
-      for (const [g, v] of Object.entries(st.consumed)) last.consumed[g as GaugeId] = (last.consumed[g as GaugeId] ?? 0) + (v ?? 0)
-    } else merged.push({ ...st, consumed: { ...st.consumed } })
+/** Rejoue les `upto` premières étapes d'un plan depuis `input` : état du lot, montures fécondes, consommation. */
+function replaySteps(input: SimMount[], steps: FertilityStep[], upto: number, opts: FertilityOptions, tiers: Record<GaugeId, FuelTier>) {
+  let mounts = input.map((m) => ({ ...m }))
+  const fecundAt: Record<string, number> = {}
+  const consumed = zeroGauges()
+  for (const st of steps.slice(0, upto)) {
+    const res = runStep(mounts, st.gauges, st.durationSeconds, st.startSeconds, opts, tiers)
+    for (const [id, at] of Object.entries(res.fecundAt)) if (fecundAt[id] === undefined) fecundAt[id] = st.startSeconds + at
+    for (const g of st.gauges) consumed[g] += res.consumed[g]
+    mounts = res.mounts
   }
-  if (mounts.some((m) => fecundAt[m.id] === undefined)) warnings.push('Certaines montures ne sont pas fécondes à la fin du plan.')
-  return { steps: merged, totalSeconds: t, fecundAt, consumed, warnings: [...new Set(warnings)], mounts }
+  return { mounts, fecundAt, consumed }
+}
+
+/**
+ * Le prochain tick de cette étape ferait-il perdre quelque chose à une monture ? (sortir de la zone de
+ * maturité alors qu'il lui en manque, ou traverser 0 en perdant l'endurance / l'amour qui lui manque).
+ * Seules les jauges de sérénité déplacent les montures : une étape sans elles est toujours sans danger.
+ */
+function extensionHarms(ms: SimMount[], gauges: GaugeId[], step: number, withXp: boolean): boolean {
+  const up = gauges.includes('caresseur')
+  if (!up && !gauges.includes('baffeur')) return false
+  for (const m of ms) {
+    if (decideGauges(m, withXp) === null) continue
+    const next = up ? Math.min(5_000, m.serenity + step) : Math.max(-5_000, m.serenity - step)
+    if (m.maturity < MOUNT_STAT_MAX && Math.abs(m.serenity) <= 2_000 && Math.abs(next) > 2_000) return true
+    if (up && m.endurance < MOUNT_STAT_MAX && m.serenity < 0 && next >= 0) return true
+    if (!up && m.love < MOUNT_STAT_MAX && m.serenity >= 0 && next < 0) return true
+  }
+  return false
+}
+
+/**
+ * Allonge les étapes non finales plus courtes que `minStep` quand c'est sans danger (aucune monture ne
+ * perd sa zone ou son côté de 0), puis replanifie la suite ; refusé si le lot ne finit plus fécond ou
+ * si le plan s'allonge de plus de deux fois l'allongement. Les poussées vers la zone de maturité
+ * (fenêtre de changement) ne sont pas allongées : leur durée centre le lot dans la zone.
+ */
+function absorbShortSteps(input: SimMount[], opts: FertilityOptions, tiers: Record<GaugeId, FuelTier>, plan: CorePlan, minStep: number): CorePlan {
+  const rules = opts.rules ?? RULESETS['3.6']
+  const withXp = opts.withXp ?? false
+  const maxSeconds = opts.maxSeconds ?? 7 * 86_400
+  const fecundCount = (p: CorePlan) => p.mounts.filter((m) => p.fecundAt[m.id] !== undefined).length
+  const tried = new Set<number>()
+  let cur = plan
+  for (let pass = 0; pass < 30; pass++) {
+    const i = cur.steps.findIndex((s, idx) => idx < cur.steps.length - 1 && s.durationSeconds < minStep && !tried.has(s.startSeconds))
+    if (i < 0) break
+    const st = cur.steps[i]
+    tried.add(st.startSeconds)
+    if (st.switchWindow) continue
+    const before = replaySteps(input, cur.steps, i, opts, tiers)
+    const push = st.gauges.find((g) => g === 'baffeur' || g === 'caresseur')
+    const ext = runStep(before.mounts, st.gauges, minStep, st.startSeconds, opts, tiers, (ms, secs) => {
+      const step = push ? rules.gaugeRatePerTick[tiers[push]] * (almanaxAtTime(planAlmanax(opts, st.startSeconds), secs) === push ? 2 : 1) : 0
+      return extensionHarms(ms, st.gauges, step, withXp)
+    })
+    if (ext.seconds <= st.durationSeconds) continue
+    const t1 = st.startSeconds + ext.seconds
+    const rest = planCore(ext.mounts, subOptions(opts, tiers, t1, maxSeconds), tiers)
+    const steps = mergeSteps([
+      ...cur.steps.slice(0, i),
+      { ...st, durationSeconds: ext.seconds, consumed: Object.fromEntries(st.gauges.map((g) => [g, ext.consumed[g]])) },
+      ...rest.steps.map((x) => shiftStep(x, t1)),
+    ])
+    const fecundAt = { ...before.fecundAt }
+    for (const [id, at] of Object.entries(ext.fecundAt)) if (fecundAt[id] === undefined) fecundAt[id] = st.startSeconds + at
+    for (const [id, at] of Object.entries(rest.fecundAt)) if (fecundAt[id] === undefined) fecundAt[id] = t1 + at
+    const consumed = { ...before.consumed }
+    for (const g of st.gauges) consumed[g] += ext.consumed[g]
+    for (const g of GAUGE_IDS) consumed[g] += rest.consumed[g]
+    const candidate: CorePlan = { steps, totalSeconds: t1 + rest.totalSeconds, fecundAt, consumed, warnings: [...cur.warnings, ...rest.warnings], mounts: rest.mounts, exhausted: rest.exhausted }
+    const grown = candidate.totalSeconds - cur.totalSeconds
+    if (fecundCount(candidate) >= fecundCount(cur) && grown <= 2 * (ext.seconds - st.durationSeconds)) cur = candidate
+  }
+  return cur
+}
+
+/**
+ * Plan de fécondité d'un lot : `planFertility`, puis correction des traversées de 0 « libres »
+ * (Caresseur + Dragofesse, Baffeur + Foudroyeur). Le planificateur suit la phase majoritaire et
+ * alterne alors toutes les une ou deux minutes à mesure que les montures traversent une à une, ce
+ * qui est inapplicable en jeu (et peut tourner en boucle quand le lot chevauche 0). Ici, la poussée
+ * continue jusqu'à ce que plus aucune monture n'en ait besoin, sans sortir de la zone de maturité
+ * (±1 000) une monture qui en a encore besoin, puis la planification reprend.
+ * Ensuite : paliers par jauge (sérénité au palier 1 par défaut ; pas de socle pour une jauge peu
+ * consommée, voir `SOCLE_MIN_SHARE`), étapes de mêmes jauges fusionnées, étapes trop courtes
+ * allongées quand c'est sans danger (`minStepSeconds`), et `converges`/`split` pour un lot qui ne
+ * peut pas devenir fécond tel quel. Même forme de résultat que `planFertility`.
+ */
+export function planPaddock(input: SimMount[], opts: FertilityOptions): FertilityPlan {
+  const rules = opts.rules ?? RULESETS['3.6']
+  const withXp = opts.withXp ?? false
+  const notes: string[] = []
+  let tiers = gaugeTiers(opts)
+  let core = planCore(input, opts, tiers)
+
+  // 1. Socle de palier seulement s'il vaut la peine : une jauge peu consommée tourne au palier inférieur.
+  for (let pass = 0; pass < 3; pass++) {
+    const next = { ...tiers }
+    const changed: { g: GaugeId; from: FuelTier; to: FuelTier; used: number; floor: number }[] = []
+    for (const g of GAUGE_IDS) {
+      const T = tiers[g]
+      if (opts.tierByGauge?.[g] !== undefined || T <= 1) continue
+      const floor = rules.gaugeTierMax[(T - 1) as FuelTier]
+      const level = Math.max(0, opts.gaugeLevels?.[g] ?? 0)
+      const used = core.consumed[g]
+      if (used <= 0 || level >= floor || used >= SOCLE_MIN_SHARE * floor) continue
+      let to: FuelTier = 1
+      for (const t of [2, 3, 4] as FuelTier[]) if (t < T && rules.gaugeTierMax[(t - 1) as FuelTier] <= level) to = t
+      next[g] = to
+      changed.push({ g, from: T, to, used, floor })
+    }
+    if (changed.length === 0) break
+    const replanned = planCore(input, opts, next)
+    const extra = replanned.totalSeconds - core.totalSeconds
+    for (const c of changed)
+      notes.push(
+        `${GAUGE_LABELS[c.g]} au palier ${c.to} (au lieu de ${c.from}) : le plan n'en consomme que ${fmt(c.used)} points, un socle de ${fmt(c.floor)} points ne vaut pas la peine${extra > 0 ? ` (plan plus long de ${formatDuration(extra)})` : ''}.`,
+      )
+    tiers = next
+    core = replanned
+  }
+
+  // 2. Étapes trop courtes pour être suivies en jeu.
+  const minStep = Math.max(0, opts.minStepSeconds ?? DEFAULT_MIN_STEP_SECONDS)
+  if (minStep > 0) {
+    const before = core.totalSeconds
+    core = absorbShortSteps(input, opts, tiers, core, minStep)
+    if (core.totalSeconds > before) notes.push(`Étapes de moins de ${formatDuration(minStep)} allongées quand c'était sans danger (plan plus long de ${formatDuration(core.totalSeconds - before)}).`)
+  }
+
+  const warnings = [...core.warnings]
+  const last = core.steps.length - 1
+  const short = core.steps.filter((s, i) => i < last && s.durationSeconds < Math.min(minStep, PING_PONG_SECONDS))
+  if (short.length > 0)
+    warnings.push(
+      `${short.length > 1 ? `${short.length} étapes durent` : 'Une étape dure'} moins de ${formatDuration(PING_PONG_SECONDS)} (l'allonger ferait sortir une monture de sa zone ou rallongerait trop le plan) : alarme indispensable.`,
+    )
+  const underMin = core.steps.filter((s, i) => i < last && s.durationSeconds < minStep && s.durationSeconds >= Math.min(minStep, PING_PONG_SECONDS))
+  if (underMin.length > 0)
+    notes.push(
+      `${underMin.length > 1 ? `${underMin.length} étapes restent` : 'Une étape reste'} plus courte${underMin.length > 1 ? 's' : ''} que ${formatDuration(minStep)} (étape${underMin.length > 1 ? 's' : ''} ${underMin.map((s) => core.steps.indexOf(s) + 1).join(', ')}) : poussée de sérénité centrée dans la zone ou allongement qui ferait perdre du temps ou une zone — gardez une alarme.`,
+    )
+  if (tiers.baffeur === 1 && tiers.caresseur === 1 && opts.tier > 1 && core.steps.some(isCrossing))
+    notes.push('Baffeur et Caresseur au palier 1 : elles consomment peu, pas de socle à poser. Coupez-les à l’heure indiquée dans « Carburant » (une jauge ne s’arrête d’elle-même que si elle contient exactement les points d’une seule étape).')
+
+  // 3. Convergence : un lot qui ne devient pas fécond n'a pas de plan applicable.
+  const converges = !core.exhausted && core.mounts.every((m) => core.fecundAt[m.id] !== undefined)
+  const needing = input.filter((m) => decideGauges(m, withXp) !== null)
+  const width = needing.length ? Math.max(...needing.map((m) => m.serenity)) - Math.min(...needing.map((m) => m.serenity)) : 0
+  const split = !converges || width > BATCH_SERENITY_WINDOW ? splitLot(input, withXp) : null
+  if (converges && split && split.groups.length > 1) {
+    const sers = needing.map((m) => m.serenity)
+    // Remplace l'avertissement générique de poussée (même cause, conseil plus précis).
+    for (let i = warnings.length - 1; i >= 0; i--) if (warnings[i].startsWith('Lot trop large (écart')) warnings.splice(i, 1)
+    warnings.push(
+      `Lot trop large (sérénités de ${fmt(Math.min(...sers))} à ${fmt(Math.max(...sers))}, écart ${fmt(width)} > 2 000) : le plan tient en ${core.steps.length} étapes et ${formatDuration(core.totalSeconds)} parce que les montures avancent chacune leur tour. Scindez-le en ${split.groups.length} lots de sérénité ≤ 2 000 d'un seul côté de 0 pour aller bien plus vite.`,
+    )
+  }
+  if (!converges) {
+    const n = core.mounts.filter((m) => core.fecundAt[m.id] === undefined).length
+    warnings.push('Certaines montures ne sont pas fécondes à la fin du plan.')
+    const timedOut = core.totalSeconds >= (opts.maxSeconds ?? 7 * 86_400) - TICK_SECONDS
+    warnings.push(
+      `Plan non applicable : ${n} monture${n > 1 ? 's ne deviennent' : ' ne devient'} pas féconde${n > 1 ? 's' : ''}${timedOut ? ` dans la durée maximale (${formatDuration(opts.maxSeconds ?? 7 * 86_400)})` : core.exhausted ? ` (le planificateur s'arrête après ${core.steps.length} étapes)` : ''}. Scindez le lot${split && split.groups.length > 1 ? ` en ${split.groups.length} lots de sérénité ≤ 2 000 d'un seul côté de 0` : ''}.`,
+    )
+  }
+  return {
+    steps: core.steps,
+    totalSeconds: core.totalSeconds,
+    fecundAt: core.fecundAt,
+    consumed: core.consumed,
+    warnings: [...new Set(warnings)],
+    mounts: core.mounts,
+    tiers,
+    converges,
+    notes,
+    split,
+  }
+}
+
+/** Plan d'un lot à chaque palier (1 à 4), pour comparer durée et carburant (socle compris) avant de choisir. */
+export interface TierOption {
+  tier: FuelTier
+  plan: FertilityPlan
+  refill: RefillAdvice
+}
+
+/**
+ * Compare les paliers 1 à 4 pour un lot : plan (`planPaddock`, mêmes options sauf `tier`) et carburant
+ * (`refillAdvice` avec les paliers du plan et les jauges actuelles). Coûts incomplets signalés comme
+ * tels (`refill.complete`, `refill.upperBound`).
+ */
+export function compareTiers(mounts: SimMount[], opts: FertilityOptions, refill: Omit<RefillOptions, 'tier'> & { gauges: Partial<Record<GaugeId, number>> }): TierOption[] {
+  return ([1, 2, 3, 4] as FuelTier[]).map((tier) => {
+    const plan = planPaddock(mounts, { ...opts, tier })
+    const { gauges, ...ro } = refill
+    return { tier, plan, refill: refillAdvice({ gauges: { ...zeroGauges(), ...gauges } }, plan, { ...ro, tier }) }
+  })
 }
 
 // ---------- Répartition automatique ----------
@@ -306,6 +553,16 @@ export interface AssignOptions {
   includeInventory?: boolean
   /** Durée maximale planifiée par lot (défaut : 7 jours). */
   maxPlanSeconds?: number
+  /** Palier des jauges de sérénité (défaut 1, voir `FertilityOptions.serenityTier`). */
+  serenityTier?: FuelTier
+  /** Heure absolue (ms) du début des plans : Almanax limité au jour Almanax (voir `FertilityOptions.startMs`). */
+  startMs?: number
+  /** Appliquer le doublement Almanax (non vérifié). Défaut : oui. */
+  applyAlmanax?: boolean
+  /** Durée minimale d'une étape (s), ex. `settings.checkIntervalMinutes × 60` (défaut 300). */
+  minStepSeconds?: number
+  /** Niveaux actuels des jauges par enclos (socle de palier seulement s'il vaut la peine). */
+  paddockGauges?: Record<number, Partial<Record<GaugeId, number>>>
 }
 
 export interface PaddockAssignment {
@@ -538,6 +795,19 @@ export function assignPaddocks(mounts: Mount[], opts: AssignOptions): AssignResu
     else free.push(c)
   }
 
+  // 0. Un enclos occupé par un lot trop large (> 2 000) ne deviendra pas fécond tel quel : on n'y garde
+  // que la meilleure fenêtre (≤ 2 000, un seul côté de 0, de préférence la phase majoritaire) ; les
+  // autres montures sont replacées comme les montures libres (autre enclos ou attente).
+  const splitOut = new Map<number, Cand[]>()
+  for (const [p, seed] of seeds) {
+    if (seed.members.length < 2 || spreadWith(seed.members) <= BATCH_SERENITY_WINDOW) continue
+    const keep = bestSerenityWindow(seed.members, { serenity: (c) => c.m.serenity, side: sideOf, key: (c) => c.key })
+    const out = seed.members.filter((c) => !keep.includes(c))
+    splitOut.set(p, out)
+    free.push(...out)
+    seed.members = keep
+  }
+
   // 1. Compléter les enclos déjà occupés avec des montures compatibles.
   const seeded = [...seeds.entries()].filter(([, b]) => b.members.length > 0).sort((a, b) => b[1].members.length - a[1].members.length)
   for (const [, seed] of seeded) {
@@ -593,8 +863,14 @@ export function assignPaddocks(mounts: Mount[], opts: AssignOptions): AssignResu
   // 4. Plans, compléments XP et enclos Mangeoire.
   const assigned = new Set<string>()
   for (const b of finalBatch.values()) for (const c of b.members) assigned.add(c.m.id)
+  // Une féconde qui a un partenaire féconde de sexe opposé (même famille) s'accouple d'abord : on ne
+  // l'immobilise pas en enclos pour quelques niveaux (le plan d'accouplement la prend tout de suite).
+  const fecundBreedable = pool.filter((m) => effectiveFertility(m) === 'feconde' && !!getSpecies(m.speciesId)?.breedable)
+  const familyOf = (m: Mount) => getSpecies(m.speciesId)?.family
+  const hasPartner = (m: Mount) => fecundBreedable.some((o) => o.id !== m.id && o.gender !== m.gender && familyOf(o) === familyOf(m))
   const levelers = pool
     .filter((m) => !needsFertility(m) && m.level < MOUNT_MAX_LEVEL && xpTargetOf(m, opts) !== null)
+    .filter((m) => opts.xpTargets?.[m.id] !== undefined || effectiveFertility(m) !== 'feconde' || !hasPartner(m))
     .sort((a, b) => a.level - b.level)
   const usedFillers = new Set<string>()
   const pickFillers = (p: number, n: number): Mount[] => {
@@ -611,7 +887,18 @@ export function assignPaddocks(mounts: Mount[], opts: AssignOptions): AssignResu
     }
     return out
   }
-  const planOpts = { tier: opts.tier, withXp, almanaxDoubled: opts.almanaxDoubled ?? null, rules: opts.rules, maxSeconds: opts.maxPlanSeconds }
+  const planOptsOf = (p: number): FertilityOptions => ({
+    tier: opts.tier,
+    serenityTier: opts.serenityTier,
+    withXp,
+    almanaxDoubled: opts.almanaxDoubled ?? null,
+    startMs: opts.startMs,
+    applyAlmanax: opts.applyAlmanax,
+    rules: opts.rules,
+    maxSeconds: opts.maxPlanSeconds,
+    minStepSeconds: opts.minStepSeconds,
+    gaugeLevels: opts.paddockGauges?.[p],
+  })
 
   const paddocks: PaddockAssignment[] = []
   const placedAt = new Map<string, { paddock: number; reason: string }>()
@@ -626,12 +913,18 @@ export function assignPaddocks(mounts: Mount[], opts: AssignOptions): AssignResu
     let totalSeconds = 0
     const r = range(members)
     if (members.length > 0) {
+      const planOpts = planOptsOf(p)
       plan = planPaddock(members.map((c) => c.sim), planOpts)
       const usesXp = plan.steps.some((s) => s.gauges.includes('mangeoire'))
       if (includeLeveling && usesXp) {
         fillers = pickFillers(p, PADDOCK_SLOTS - members.length)
         if (fillers.length > 0) plan = planPaddock([...members.map((c) => c.sim), ...fillers.map(toFillerSim)], planOpts)
       }
+      const out = splitOut.get(p) ?? []
+      if (out.length > 0)
+        rationale.push(
+          `Lot scindé : ${out.length} monture${out.length > 1 ? 's' : ''} hors de la fenêtre de sérénité gardée (≤ 2 000, un seul côté de 0) ${out.length > 1 ? 'sortent' : 'sort'} de l'enclos — un lot plus large ne devient jamais fécond en entier.`,
+        )
       firstGauges = plan.steps[0]?.gauges ?? majority(members).gauges
       totalSeconds = plan.totalSeconds
       const role = paddockRole(firstGauges)
@@ -795,10 +1088,23 @@ export interface RefillOptions {
   ctx: PriceContext
   rules: Ruleset
   jobLevel: number
-  /** Palier entretenu. */
+  /** Palier entretenu sur les jauges de statistiques et la Mangeoire (si le plan ne précise pas `tiers`). */
   tier: FuelTier
+  /** Palier des jauges de sérénité si le plan ne précise pas `tiers` (défaut 1, comme le planificateur). */
+  serenityTier?: FuelTier
+  /** Paliers imposés jauge par jauge (prioritaires sur le plan ; jamais rétrogradés). */
+  tierByGauge?: Partial<Record<GaugeId, FuelTier>>
   /** Exclure les prix « craft » des carburants que le joueur ne sait pas fabriquer. */
   craftableOnly?: boolean
+}
+
+/** Ce que `refillAdvice` lit d'un plan (un `FertilityPlan` convient tel quel). */
+export interface RefillPlanInput {
+  consumed: Partial<Record<GaugeId, number>>
+  /** Paliers du plan (`FertilityPlan.tiers`) : socles et recharges suivent alors exactement le plan. */
+  tiers?: Partial<Record<GaugeId, FuelTier>>
+  /** Étapes (restantes) du plan : dépôts exacts des jauges de sérénité et heures de coupure. */
+  steps?: FertilityStep[]
 }
 
 export interface RefillItem {
@@ -815,6 +1121,8 @@ export interface RefillItem {
 
 export interface RefillLine {
   gauge: GaugeId
+  /** Palier entretenu sur cette jauge (plan, réglage ou palier inférieur si le socle ne vaut pas la peine). */
+  tier: FuelTier
   current: number
   /** Points que le plan consomme sur cette jauge. */
   consumed: number
@@ -845,8 +1153,23 @@ export interface RefillLine {
   runCost: number | null
   complete: boolean
   missing: number[]
-  /** Points qui resteront dans la jauge à la fin du plan (réutilisables). */
+  /**
+   * Coût incomplet seulement : coût du même remplissage avec des carburants tous chiffrés (souvent de
+   * famille supérieure, estimés) — BORNE HAUTE, à afficher comme telle (« ≤ »), jamais comme le coût.
+   */
+  upperBound: number | null
+  /** Points qui resteront dans la jauge à la fin du plan (réutilisables ; excédent pour une jauge de sérénité). */
   leftover: number
+  /**
+   * `leftover` découpé par tranche de palier (socle compris), chaque tranche avec le coût au point du
+   * carburant de SON palier : le socle se remplit en carburant de palier inférieur (moins cher), il ne
+   * vaut pas le prix au point du palier entretenu. Pour valoriser le reste : Σ points × coût au point.
+   */
+  leftoverByTier: { tier: FuelTier; points: number; pointCost: GaugePointCost }[]
+  /** Jauge de sérénité remplie exactement pour une seule étape : elle s'arrête d'elle-même (étapes connues). */
+  stopsByItself: boolean
+  /** Jauge de sérénité : fins d'étape où la couper (index d'étape, secondes depuis le début du plan). */
+  cutoffs: { stepIndex: number; atSeconds: number }[]
   /** Coût au point du carburant le moins cher du palier (bestFuel). */
   pointCost: GaugePointCost
   notes: string[]
@@ -860,6 +1183,10 @@ export interface RefillAdvice {
   runCost: number | null
   complete: boolean
   missing: number[]
+  /** Coût incomplet : borne haute du total (lignes chiffrées + bornes hautes), null si inconnue. */
+  upperBound: number | null
+  /** Palier retenu par jauge consommée. */
+  tiers: Partial<Record<GaugeId, FuelTier>>
 }
 
 interface CostSum {
@@ -867,15 +1194,20 @@ interface CostSum {
   cost: number
   complete: boolean
   missing: number[]
+  /** Somme des coûts exacts et des bornes hautes ; null si une partie incomplète n'a pas de borne haute. */
+  upper: number | null
 }
 
 function sumPlans(parts: [FillPlan | null, number][]): CostSum {
   const items = new Map<number, RefillItem>()
   let complete = true
+  let upper: number | null = 0
   const missing: number[] = []
   for (const [plan, times] of parts) {
     if (!plan || times <= 0) continue
     if (!plan.complete || !plan.feasible) complete = false
+    const ub = plan.complete && plan.feasible ? plan.cost : (plan.upperBound?.cost ?? null)
+    upper = upper === null || ub === null ? null : upper + ub * times
     missing.push(...plan.missing)
     for (const it of plan.items) {
       const o = it.option
@@ -888,7 +1220,7 @@ function sumPlans(parts: [FillPlan | null, number][]): CostSum {
           count: it.count * times,
           unitPrice: o.unitPrice,
           subtotal: null,
-          complete: o.complete,
+          complete: o.complete && o.unitPrice !== null,
           canCraft: o.canCraft,
           craftLevel: o.craftLevel,
           durability: o.durability,
@@ -900,7 +1232,7 @@ function sumPlans(parts: [FillPlan | null, number][]): CostSum {
     it.subtotal = it.unitPrice === null ? null : it.unitPrice * it.count
     cost += it.subtotal ?? 0
   }
-  return { items, cost, complete, missing }
+  return { items, cost, complete, missing, upper }
 }
 
 /** Montant affichable : exact si complet, borne basse si incomplet mais partiellement chiffré, sinon null. */
@@ -910,28 +1242,41 @@ const pointsOf = (p: FillPlan | null) => (p?.feasible ? p.reached - p.from : 0)
 
 /**
  * Quel carburant acheter ou fabriquer, et combien, pour mener un plan à son terme en entretenant le
- * palier : socle (paliers ≥ 2 : remonter la jauge au bas du palier, points qui restent dans la
- * jauge), dépôt initial (juste ce que le plan consomme, au plus le plafond du palier), puis
- * recharges du bas au haut du palier. Utilise `fillPlan` (le moins cher au point, sans
- * débordement) ; un prix manquant rend le coût incomplet (jamais compté 0).
+ * palier de chaque jauge (`plan.tiers` d'un `FertilityPlan`, sinon `tier` et `serenityTier` = 1) :
+ * socle (paliers ≥ 2 : remonter la jauge au bas du palier, points qui restent dans la jauge — pas de
+ * socle pour une jauge que le plan consomme peu, voir `SOCLE_MIN_SHARE`), dépôt initial (ce qui
+ * manque : consommation − points utilisables déjà dans la jauge, au plus le plafond du palier), puis
+ * recharges du bas au haut du palier. Utilise `fillPlan` (famille minimale par tranche, sans
+ * débordement) ; un prix manquant rend le coût incomplet (jamais compté 0) et `upperBound` donne la
+ * borne haute chiffrée quand elle existe. Avec `plan.steps`, les jauges de sérénité reçoivent des
+ * consignes exactes (s'arrête d'elle-même ou heure de coupure).
  */
-export function refillAdvice(
-  state: Pick<PaddockState, 'gauges'>,
-  plan: { consumed: Partial<Record<GaugeId, number>> },
-  opts: RefillOptions,
-): RefillAdvice {
-  const T = opts.tier
-  const cap = opts.rules.gaugeTierMax[T]
-  const floor = T > 1 ? opts.rules.gaugeTierMax[(T - 1) as FuelTier] : 0
-  const span = cap - floor
+export function refillAdvice(state: Pick<PaddockState, 'gauges'>, plan: RefillPlanInput, opts: RefillOptions): RefillAdvice {
   const fuelOpts = { jobLevel: opts.jobLevel, rules: opts.rules, craftableOnly: opts.craftableOnly }
   const lines: RefillLine[] = []
+  const tiersUsed: Partial<Record<GaugeId, FuelTier>> = {}
   for (const g of GAUGE_IDS) {
     const consumed = Math.max(0, Math.round(plan.consumed[g] ?? 0))
     if (consumed <= 0) continue
     const current = Math.max(0, state.gauges[g] ?? 0)
     const serenityGauge = g === 'baffeur' || g === 'caresseur'
     const notes: string[] = []
+    const forced = opts.tierByGauge?.[g] ?? plan.tiers?.[g]
+    let T: FuelTier = forced ?? (serenityGauge ? (opts.serenityTier ?? 1) : opts.tier)
+    if (forced === undefined && T > 1) {
+      // Même règle que le planificateur : pas de socle pour une jauge peu consommée.
+      const floorT = opts.rules.gaugeTierMax[(T - 1) as FuelTier]
+      if (current < floorT && consumed < SOCLE_MIN_SHARE * floorT) {
+        let to: FuelTier = 1
+        for (const t of [2, 3, 4] as FuelTier[]) if (t < T && opts.rules.gaugeTierMax[(t - 1) as FuelTier] <= current) to = t
+        notes.push(`Palier ${to} au lieu de ${T} : le plan n'en consomme que ${fmt(consumed)} points, un socle de ${fmt(floorT)} points ne vaut pas la peine.`)
+        T = to
+      }
+    }
+    tiersUsed[g] = T
+    const cap = opts.rules.gaugeTierMax[T]
+    const floor = T > 1 ? opts.rules.gaugeTierMax[(T - 1) as FuelTier] : 0
+    const span = cap - floor
     // Points du palier disponibles sans rien ajouter (au-dessus du bas du palier).
     let level = current
     let usable = Math.max(0, level - floor)
@@ -942,7 +1287,8 @@ export function refillAdvice(
         base = fillPlan(g, level, floor, opts.ctx, fuelOpts)
         if (base.feasible) level = base.reached
       }
-      const target = Math.min(cap, Math.max(level, floor) + consumed)
+      // Ce qui manque seulement : les points utilisables déjà dans la jauge comptent.
+      const target = Math.min(cap, Math.max(level, floor + consumed))
       if (level < target) {
         initial = fillPlan(g, level, target, opts.ctx, fuelOpts)
         if (initial.feasible) level = initial.reached
@@ -975,14 +1321,42 @@ export function refillAdvice(
         `Socle : sous ${fmt(floor)}, la jauge tourne au palier inférieur. Les ${fmt(pointsOf(base))} points du socle restent dans la jauge après le plan (à faire une seule fois).`,
       )
     if (refillCount > 0) notes.push(`Rechargez quand la jauge passe sous ${fmt(floor)} (bas du palier ${T}) : ${refillCount} recharge${refillCount > 1 ? 's' : ''}.`)
-    if (serenityGauge)
-      notes.push(
-        T === 1 && current === 0
-          ? 'Jauge de sérénité remplie au plus juste : elle s’arrête d’elle-même, gardez quand même une alarme.'
-          : 'Jauge de sérénité : mettez une alarme et coupez-la à distance à l’heure prévue (elle continue de pousser les montures arrivées).',
-      )
+    if (!all.complete && all.upper !== null && all.items.size > 0)
+      notes.push(`Coût incomplet : au plus ${fmt(all.upper)} K avec des carburants déjà chiffrés (souvent de famille supérieure, prix estimé) — saisissez les prix manquants pour le coût exact.`)
+    let stopsByItself = false
+    const cutoffs: { stepIndex: number; atSeconds: number }[] = []
+    if (serenityGauge) {
+      const uses = (plan.steps ?? []).map((st, i) => ({ st, i })).filter(({ st }) => (st.consumed[g] ?? 0) > 0)
+      for (const { st, i } of uses) cutoffs.push({ stepIndex: i, atSeconds: st.startSeconds + st.durationSeconds })
+      const steps = uses.map(({ i }) => i + 1)
+      if (T > 1)
+        notes.push('Jauge de sérénité : mettez une alarme et coupez-la à distance à l’heure prévue (elle continue de pousser les montures arrivées).')
+      else if (uses.length === 1 && leftover === 0) {
+        stopsByItself = true
+        notes.push(`Jauge de sérénité remplie au plus juste (${fmt(consumed)} points) : elle s’arrête d’elle-même à la fin de l’étape ${steps[0]}, gardez quand même une alarme.`)
+      } else if (uses.length === 1)
+        notes.push(`Jauge de sérénité : ${fmt(leftover)} points de trop (tailles de carburant) — elle ne s’arrête pas d’elle-même, coupez-la à la fin de l’étape ${steps[0]} (alarme).`)
+      else if (uses.length > 1)
+        notes.push(
+          `Jauge de sérénité utilisée à ${uses.length} étapes (${uses.map(({ st }) => fmt(st.consumed[g] ?? 0)).join(' puis ')} points) : coupez-la à la fin des étapes ${steps.join(', ')} (alarme)${leftover > 0 ? ` ; ${fmt(leftover)} points de trop restent ensuite dans la jauge` : ''}.`,
+        )
+      else
+        notes.push(
+          leftover > 0
+            ? `Jauge de sérénité : ${fmt(leftover)} points de trop — mettez une alarme et coupez-la à distance à l’heure prévue (elle continue de pousser les montures arrivées).`
+            : 'Jauge de sérénité : mettez une alarme et coupez-la à distance à l’heure prévue (elle continue de pousser les montures arrivées).',
+        )
+    }
+    const pointCost = bestFuel(g, T, opts.ctx, fuelOpts)
+    const leftoverByTier: RefillLine['leftoverByTier'] = []
+    for (const t of [1, 2, 3, 4] as FuelTier[]) {
+      const low = t === 1 ? 0 : opts.rules.gaugeTierMax[(t - 1) as FuelTier]
+      const pts = Math.max(0, Math.min(leftover, opts.rules.gaugeTierMax[t]) - low)
+      if (pts > 0) leftoverByTier.push({ tier: t, points: pts, pointCost: t === T ? pointCost : bestFuel(g, t, opts.ctx, fuelOpts) })
+    }
     lines.push({
       gauge: g,
+      tier: T,
       current,
       consumed,
       added,
@@ -999,8 +1373,12 @@ export function refillAdvice(
       runCost: shownCost(runSum, runSum.items.size === 0),
       complete: all.complete,
       missing: [...new Set(all.missing)],
+      upperBound: all.complete ? null : all.upper,
       leftover,
-      pointCost: bestFuel(g, T, opts.ctx, fuelOpts),
+      leftoverByTier,
+      stopsByItself,
+      cutoffs,
+      pointCost,
       notes,
     })
   }
@@ -1009,13 +1387,24 @@ export function refillAdvice(
     const sum = lines.reduce((s, l) => s + (pick(l) ?? 0), 0)
     return complete || sum > 0 ? sum : null
   }
+  const complete = lines.every((l) => l.complete)
+  let upperBound: number | null = null
+  if (!complete) {
+    upperBound = 0
+    for (const l of lines) {
+      const v = l.complete ? l.cost : l.upperBound
+      upperBound = upperBound === null || v === null ? null : upperBound + v
+    }
+  }
   return {
     lines,
     cost: lines.length === 0 ? 0 : total((l) => l.cost),
     baseCost: lines.length === 0 ? 0 : total((l) => l.baseCost),
     runCost: lines.length === 0 ? 0 : total((l) => l.runCost),
-    complete: lines.every((l) => l.complete),
+    complete,
     missing: [...new Set(lines.flatMap((l) => l.missing))],
+    upperBound,
+    tiers: tiersUsed,
   }
 }
 
@@ -1174,19 +1563,26 @@ export function stepTimes(s: PlanSchedule): { startAt: number; endAt: number }[]
   return s.steps.map((st) => ({ startAt: base + st.startSeconds * 1000, endAt: base + (st.startSeconds + st.durationSeconds) * 1000 }))
 }
 
-/** Prochain changement de jauges à faire (null si le plan est terminé ou vide). */
+/**
+ * Prochain changement de jauges à faire (null si le plan est terminé ou vide). Les étapes suivantes qui
+ * gardent les mêmes jauges sont sautées : le changement annoncé est le premier vrai changement (jamais
+ * « aucun changement » sauf en fin de plan).
+ */
 export function nextSwitchOf(s: PlanSchedule): NextSwitch | null {
   const ack = s.acknowledgedStepIndex
   if (ack < 0 || ack >= s.steps.length) return null
   const base = s.startedAt + (s.offsetMs ?? 0)
   const cur = s.steps[ack]
-  const next = s.steps[ack + 1]
-  const at = base + (next ? next.startSeconds : cur.startSeconds + cur.durationSeconds) * 1000
+  let j = ack
+  while (j + 1 < s.steps.length && sortedKey(s.steps[j + 1].gauges) === sortedKey(cur.gauges)) j++
+  const last = s.steps[j]
+  const next = s.steps[j + 1]
+  const at = base + (next ? next.startSeconds : last.startSeconds + last.durationSeconds) * 1000
   const to = next?.gauges ?? []
-  const w = cur.switchWindow
+  const w = last.switchWindow
   const sw = gaugeSwitch(cur.gauges, to)
   return {
-    index: ack + 1,
+    index: j + 1,
     at,
     earliest: w ? base + w.earliestSeconds * 1000 : null,
     latest: w ? base + w.latestSeconds * 1000 : null,

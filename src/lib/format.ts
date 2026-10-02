@@ -20,22 +20,82 @@ export function formatKamas(n: number | null | undefined, compact = false): stri
   return `${nf0.format(Math.round(n))} K`
 }
 
+/**
+ * Intervalle de kamas : exact (« 12 K »), « X à Y », « ≤ Y », « ≥ X » ou « inconnu » (bornes nulles =
+ * inconnues). Ne présente jamais une borne comme une estimation (« ≈ »).
+ */
+export function formatKamasRange(r: { low: number | null; high: number | null }, compact = false): string {
+  const f = (x: number) => formatKamas(x, compact)
+  if (r.low !== null && r.high !== null) return Math.abs(r.high - r.low) < 0.5 ? f(r.low) : `${f(r.low)} à ${f(r.high)}`
+  if (r.high !== null) return `≤ ${f(r.high)}`
+  if (r.low !== null) return `≥ ${f(r.low)}`
+  return 'inconnu'
+}
+
 /** Probabilité 0…1 → « 30,3 % ». */
 export function formatPercent(p: number, digits = 1): string {
   if (!Number.isFinite(p)) return '—'
   return `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: digits, minimumFractionDigits: 0 }).format(p * 100)} %`
 }
 
-export function formatDuration(seconds: number): string {
+/**
+ * Durée lisible (helper unique de l'application) :
+ *  - court (défaut, affichage compact) : « 45 s », « 25 min », « 4 h 09 », « 1 j 2 h » ;
+ *  - `long` (textes de plan, consignes) : « 4 h 09 min », « 1 j 2 h 05 min ».
+ * Durée infinie ou non numérique : « ∞ ».
+ */
+export function formatDuration(seconds: number, opts: { long?: boolean } = {}): string {
   if (!Number.isFinite(seconds)) return '∞'
   const s = Math.max(0, Math.round(seconds))
   const d = Math.floor(s / 86_400)
   const h = Math.floor((s % 86_400) / 3_600)
   const m = Math.floor((s % 3_600) / 60)
-  if (d > 0) return `${d} j ${h} h`
-  if (h > 0) return `${h} h ${String(m).padStart(2, '0')}`
+  const mm = String(m).padStart(2, '0')
+  if (opts.long) {
+    if (d > 0) return `${d} j ${h} h ${mm} min`
+    if (h > 0) return `${h} h ${mm} min`
+  } else {
+    if (d > 0) return `${d} j ${h} h`
+    if (h > 0) return `${h} h ${mm}`
+  }
   if (m > 0) return `${m} min`
   return `${s} s`
+}
+
+/** Accord en nombre (règle française : pluriel à partir de 2) : `pluralWord(3, 'monture')` → « montures ». */
+export function pluralWord(n: number, one: string, many = `${one}s`): string {
+  return Math.abs(n) >= 2 ? many : one
+}
+
+/** Nombre + mot accordé : `plural(3, 'monture')` → « 3 montures », `plural(1, 'enclos', 'enclos')` → « 1 enclos ». */
+export function plural(n: number, one: string, many = `${one}s`): string {
+  return `${formatNumber(n)} ${pluralWord(n, one, many)}`
+}
+
+/** Échéance en jours : « aujourd’hui », « demain », « dans 12 jours » (« il y a 3 jours » si négatif). */
+export function formatInDays(n: number): string {
+  if (n === 0) return 'aujourd’hui'
+  if (n === 1) return 'demain'
+  if (n === -1) return 'hier'
+  return n > 0 ? `dans ${formatNumber(n)} jours` : `il y a ${formatNumber(-n)} jours`
+}
+
+/** Première lettre en majuscule. */
+export function capitalize(text: string): string {
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : text
+}
+
+const isoDayLong = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })
+const isoDayLongYear = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+
+/**
+ * Date de calendrier AAAA-MM-JJ en toutes lettres : « lundi 12 octobre » (`year` : « lundi 12 octobre
+ * 2026 »). Indépendant du fuseau horaire du navigateur (la date affichée est celle de la chaîne).
+ */
+export function formatIsoDay(iso: string, opts: { year?: boolean } = {}): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  if (![y, m, d].every(Number.isFinite)) return iso
+  return (opts.year ? isoDayLongYear : isoDayLong).format(Date.UTC(y, m - 1, d, 12))
 }
 
 const dtf = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', hour: '2-digit', minute: '2-digit' })

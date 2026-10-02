@@ -3,7 +3,7 @@
 // Logique : src/domain/job.ts (+ xp.ts, pricing.ts) ; prix : page Prix.
 import { useMemo, useState, type ReactNode } from 'react'
 import { FAMILIES, STRATEGY, itemName } from '../../data'
-import { isoDay } from '../../domain/almanax'
+import { serverDayChangeIfNotLocalMidnight } from '../../domain/almanax'
 import { GAUGE_IDS, GAUGE_LABELS } from '../../domain/constants'
 import {
   JOB_COST_REPORTS,
@@ -31,16 +31,28 @@ import {
 } from '../../domain/job'
 import type { PriceOrigin } from '../../domain/pricing'
 import type { GaugeId } from '../../domain/types'
-import { craftXp, jobXpForLevel, MAX_LEVEL } from '../../domain/xp'
-import { formatKamas, formatNumber, formatPercent } from '../../lib/format'
+import { craftXp, jobLevelFromXp, jobXpForLevel, MAX_LEVEL } from '../../domain/xp'
+import { formatClock, formatDate, formatInDays, formatIsoDay, formatKamas, formatNumber, formatPercent, plural } from '../../lib/format'
+import { journalJobXp, useJournal, type JournalJobXp } from '../../store/journal'
 import { usePriceContext } from '../../store/prices'
+import type { PriceContext } from '../../domain/pricing'
 import { useRules, useSettings } from '../../store/settings'
 import { Badge, Callout, Card, Empty, NumberField, PageHeader, Progress, SelectField, Stat, Tabs } from '../components'
 import { href } from '../router'
 import { ConfidenceBadge } from '../species'
+import { useServerDay } from '../useServerDay'
 import './JobPage.css'
 
 // ---------- Préférences de la page (confort par navigateur) ----------
+
+/**
+ * Contexte de prix de la montée du métier : sans `jobLevel`, car un plan de montée fabrique des recettes
+ * (et leurs ingrédients intermédiaires) aux niveaux qu'il atteint, pas seulement au niveau actuel.
+ */
+function useLevelingPriceContext(): PriceContext {
+  const base = usePriceContext()
+  return useMemo(() => ({ overrides: base.overrides, useDefaults: base.useDefaults }), [base.overrides, base.useDefaults])
+}
 
 type TabId = 'plan' | 'courses' | 'crafts' | 'jalons' | 'xp' | 'almanax' | 'reperes'
 type SortKey = 'kamas' | 'ressources' | 'xp'
@@ -139,8 +151,6 @@ const MILESTONE_KIND_LABELS: Record<PlanMilestone['kind'], { label: string; tone
   makina: { label: 'Makina', tone: 'gold' },
 }
 
-const plural = (n: number, one: string, many: string) => `${formatNumber(n)} ${n > 1 ? many : one}`
-
 /** Coût : montant complet, borne basse « ≥ » si incomplet, ou « coût incomplet » (lien Prix) si rien n'est chiffré. */
 function Cost({ value, complete, q }: { value: number | null; complete: boolean; q?: string }) {
   if (complete && value !== null) return <>{formatKamas(value)}</>
@@ -177,25 +187,21 @@ function PriceLinks({ ids, max = 4 }: { ids: number[]; max?: number }) {
   )
 }
 
-function formatLongDate(iso: string): string {
-  const [y, m, d] = iso.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-}
+/** « lundi 12 octobre 2026 » (date de calendrier, indépendante du fuseau du navigateur). */
+const formatLongDate = (iso: string) => formatIsoDay(iso, { year: true })
 
-function inDays(n: number): string {
-  if (n === 0) return 'aujourd’hui'
-  if (n === 1) return 'demain'
-  return `dans ${formatNumber(n)} jours`
-}
+const inDays = formatInDays
 
 // ---------- Page ----------
 
 export default function JobPage() {
   const rules = useRules()
   const jobLevelRaw = useSettings((s) => s.jobLevel)
+  const jobLevelUpdatedAt = useSettings((s) => s.jobLevelUpdatedAt)
+  const journal = useJournal((s) => s.entries)
   const family = useSettings((s) => s.family)
   const updateSettings = useSettings((s) => s.update)
-  const ctx = usePriceContext()
+  const ctx = useLevelingPriceContext()
   const [prefs, setPrefsState] = useState<Prefs>(loadPrefs)
   const setPrefs = (patch: Partial<Prefs>) =>
     setPrefsState((p) => {
@@ -207,9 +213,15 @@ export default function JobPage() {
   const level = Math.max(1, Math.min(MAX_LEVEL, Math.floor(jobLevelRaw || 1)))
   const span = level < MAX_LEVEL ? jobXpForLevel(level + 1) - jobXpForLevel(level) : 0
   const startXp = Math.min(prefs.startXp, Math.max(0, span - 1))
-  const target = prefs.target !== null && prefs.target > level ? Math.min(MAX_LEVEL, prefs.target) : nextPaddockTarget(level)
-  const xpNow = jobXpForLevel(level) + startXp
+  const xpEntered = jobXpForLevel(level) + startXp
   const xpMax = jobXpForLevel(MAX_LEVEL)
+  // XP d'Éleveur enregistrée dans le journal depuis la dernière saisie du niveau : déduite du plan, comme à
+  // l'accueil (estimation ; « Passer au niveau … » l'enregistre dans les réglages).
+  const journalXp = useMemo(() => journalJobXp(journal, jobLevelUpdatedAt), [journal, jobLevelUpdatedAt])
+  const xpNow = Math.min(xpMax, xpEntered + Math.max(0, journalXp.xp))
+  const planLevel = Math.max(level, Math.min(MAX_LEVEL, jobLevelFromXp(xpNow)))
+  const planStartXp = planLevel >= MAX_LEVEL ? 0 : Math.max(0, xpNow - jobXpForLevel(planLevel))
+  const target = prefs.target !== null && prefs.target > planLevel ? Math.min(MAX_LEVEL, prefs.target) : nextPaddockTarget(planLevel)
 
   const planOpts: LevelingOptions = useMemo(
     () => ({
@@ -219,30 +231,31 @@ export default function JobPage() {
       almanaxXpBonus: prefs.almanax ? 0.5 : 0,
       kinds: prefs.kinds,
       fuelGauges: prefs.gauge === 'auto' ? undefined : [prefs.gauge],
-      startXp,
+      startXp: planStartXp,
       family,
     }),
-    [rules, prefs.metric, prefs.includeCaptures, prefs.almanax, prefs.kinds, prefs.gauge, startXp, family],
+    [rules, prefs.metric, prefs.includeCaptures, prefs.almanax, prefs.kinds, prefs.gauge, planStartXp, family],
   )
-  const plan = useMemo(() => levelingPlan(level, target, ctx, planOpts), [level, target, ctx, planOpts])
+  const plan = useMemo(() => levelingPlan(planLevel, target, ctx, planOpts), [planLevel, target, ctx, planOpts])
   const almanaxPlan = useMemo(
-    () => (prefs.almanax || level >= target ? null : levelingPlan(level, target, ctx, { ...planOpts, almanaxXpBonus: 0.5 })),
-    [prefs.almanax, level, target, ctx, planOpts],
+    () => (prefs.almanax || planLevel >= target ? null : levelingPlan(planLevel, target, ctx, { ...planOpts, almanaxXpBonus: 0.5 })),
+    [prefs.almanax, planLevel, target, ctx, planOpts],
   )
   const options = useMemo(() => {
-    const list = craftOptionsAt(level, ctx, rules, { kinds: prefs.kinds, fuelGauges: planOpts.fuelGauges, almanaxXpBonus: planOpts.almanaxXpBonus })
+    const list = craftOptionsAt(planLevel, ctx, rules, { kinds: prefs.kinds, fuelGauges: planOpts.fuelGauges, almanaxXpBonus: planOpts.almanaxXpBonus })
     if (prefs.includeCaptures) {
-      const cap = captureOption(level, ctx, rules, { almanaxXpBonus: planOpts.almanaxXpBonus })
+      const cap = captureOption(planLevel, ctx, rules, { almanaxXpBonus: planOpts.almanaxXpBonus })
       if (cap) list.push(cap)
     }
     return list
-  }, [level, ctx, rules, prefs.kinds, prefs.includeCaptures, planOpts.fuelGauges, planOpts.almanaxXpBonus])
-  const today = useMemo(() => isoDay(Date.now()), [])
+  }, [planLevel, ctx, rules, prefs.kinds, prefs.includeCaptures, planOpts.fuelGauges, planOpts.almanaxXpBonus])
+  // Jour de jeu (heure de Paris), mis à jour à minuit : la page ne reste pas figée au jour de son ouverture.
+  const today = useServerDay()
   const almanaxDays = useMemo(() => jobAlmanaxDays(today), [today])
   const nextXpDay = almanaxDays.find((d) => d.xpBonus > 0)
 
-  const nextUnlock = plan.milestones.find((m) => m.level > level)
-  const atMax = level >= MAX_LEVEL
+  const nextUnlock = plan.milestones.find((m) => m.level > planLevel)
+  const atMax = planLevel >= MAX_LEVEL
 
   return (
     <div className="job-page">
@@ -259,13 +272,22 @@ export default function JobPage() {
           startXp={startXp}
           target={target}
           customTarget={prefs.target !== null && prefs.target > level}
+          estLevel={planLevel}
           xpNow={xpNow}
+          xpEntered={xpEntered}
           xpMax={xpMax}
           xpNeeded={plan.xpNeeded}
           nextUnlock={nextUnlock}
+          journalXp={journalXp}
+          levelSince={jobLevelUpdatedAt}
           onLevel={(v) => {
             updateSettings({ jobLevel: Math.max(1, Math.min(MAX_LEVEL, Math.round(v))) })
             setPrefs({ startXp: 0 })
+          }}
+          onApplyEstimate={(lvl, xpInLevel) => {
+            // Le niveau est daté de maintenant : l'XP du journal déjà comptée ne le sera plus.
+            updateSettings({ jobLevel: lvl, jobLevelUpdatedAt: Date.now() })
+            setPrefs({ startXp: xpInLevel })
           }}
           onStartXp={(v) => setPrefs({ startXp: Math.max(0, Math.round(v)) })}
           onTarget={(v) => setPrefs({ target: v })}
@@ -296,7 +318,7 @@ export default function JobPage() {
         )}
         {prefs.tab === 'jalons' && <MilestonesTab plan={plan} target={target} familyLabel={FAMILIES[family]?.label ?? family} onTarget={(t) => setPrefs({ target: t })} />}
         {prefs.tab === 'xp' && <XpSourcesTab xpNeeded={plan.xpNeeded} target={target} />}
-        {prefs.tab === 'almanax' && <AlmanaxTab days={almanaxDays} plan={plan} almanaxPlan={almanaxPlan} almanaxOn={prefs.almanax} />}
+        {prefs.tab === 'almanax' && <AlmanaxTab days={almanaxDays} today={today} plan={plan} almanaxPlan={almanaxPlan} almanaxOn={prefs.almanax} />}
         {prefs.tab === 'reperes' && <ReferenceTab planOpts={planOpts} />}
       </Card>
     </div>
@@ -311,17 +333,26 @@ function LevelCard(props: {
   startXp: number
   target: number
   customTarget: boolean
+  /** Niveau estimé maintenant (saisie + journal) : objectifs proposés, enclos débloqués. */
+  estLevel: number
+  /** XP estimée maintenant (saisie + journal). */
   xpNow: number
+  /** XP saisie (niveau + XP dans le niveau), sans le journal. */
+  xpEntered: number
   xpMax: number
   xpNeeded: number
   nextUnlock: PlanMilestone | undefined
+  journalXp: JournalJobXp
+  levelSince: number
   onLevel: (v: number) => void
   onStartXp: (v: number) => void
   onTarget: (v: number | null) => void
+  onApplyEstimate: (level: number, xpInLevel: number) => void
 }) {
-  const { level, span, startXp, target, customTarget, xpNow, xpMax, xpNeeded, nextUnlock } = props
-  const nextPaddock = nextPaddockTarget(level)
-  const quick = [40, 80, 100, 120, 150, 160, 200].filter((l) => l > level)
+  const { level, estLevel, span, startXp, target, customTarget, xpNow, xpEntered, xpMax, xpNeeded, nextUnlock, journalXp, levelSince } = props
+  const withJournal = xpNow > xpEntered
+  const nextPaddock = nextPaddockTarget(estLevel)
+  const quick = [40, 80, 100, 120, 150, 160, 200].filter((l) => l > estLevel)
   const quickWhy: Record<number, string> = {
     40: '2e enclos',
     80: '3e enclos',
@@ -345,11 +376,12 @@ function LevelCard(props: {
           suffix={span > 0 ? `/ ${formatNumber(span)}` : undefined}
           onChange={props.onStartXp}
         />
-        <TargetField level={level} target={target} onTarget={props.onTarget} />
+        <TargetField level={estLevel} target={target} onTarget={props.onTarget} />
       </div>
+      <JournalEstimate level={level} xpNow={xpEntered} journalXp={journalXp} levelSince={levelSince} onApply={props.onApplyEstimate} />
       <div className="stack" style={{ marginTop: 12 }}>
         <div className="quick-levels" role="group" aria-label="Objectifs rapides">
-          {level < MAX_LEVEL && (
+          {estLevel < MAX_LEVEL && (
             <button type="button" className="btn small" aria-pressed={!customTarget} onClick={() => props.onTarget(null)}>
               Prochain enclos (niv. {nextPaddock})
             </button>
@@ -364,7 +396,7 @@ function LevelCard(props: {
           <div className="xp-bar">
             <div className="row">
               <span>
-                Vers le niveau {target} : {formatNumber(Math.max(0, xpNow - fromXp))} / {formatNumber(targetXp - fromXp)} XP
+                Vers le niveau {target} : {formatNumber(Math.max(0, xpNow - fromXp))} / {formatNumber(targetXp - fromXp)} XP{withJournal ? ' (journal compris)' : ''}
               </span>
               <span className="muted">{formatPercent(targetXp > fromXp ? (xpNow - fromXp) / (targetXp - fromXp) : 1, 0)}</span>
             </div>
@@ -382,8 +414,8 @@ function LevelCard(props: {
         </div>
       </div>
       <div className="kpis" style={{ marginTop: 12 }}>
-        <Stat label="Enclos débloqués" value={`${paddocksAt(level)} / 6`} hint={`${paddocksAt(level) * 10} places en enclos`} />
-        <Stat label={`XP restante (niv. ${target})`} value={formatNumber(xpNeeded)} hint="table 10 × L × (L − 1)" />
+        <Stat label="Enclos débloqués" value={`${paddocksAt(estLevel)} / 6`} hint={`${paddocksAt(estLevel) * 10} places en enclos${paddocksAt(estLevel) > paddocksAt(level) ? ' (niveau estimé : mettez-le à jour)' : ''}`} />
+        <Stat label={`XP restante (niv. ${target})`} value={formatNumber(xpNeeded)} hint={withJournal ? 'XP du journal déduite (estimation)' : 'table 10 × L × (L − 1)'} />
         <Stat
           label="Prochain déblocage"
           value={nextUnlock ? `Niv. ${nextUnlock.level}` : '—'}
@@ -391,6 +423,49 @@ function LevelCard(props: {
         />
       </div>
     </Card>
+  )
+}
+
+/**
+ * Niveau estimé d'après le journal : XP d'Éleveur enregistrée (captures, accouplements, crafts) depuis la
+ * dernière saisie du niveau, ajoutée au niveau saisi. Plancher (bonus Almanax et XP non journalisée non
+ * comptés) : affiché comme estimation, appliqué seulement si le joueur le demande.
+ */
+function JournalEstimate({
+  level,
+  xpNow,
+  journalXp,
+  levelSince,
+  onApply,
+}: {
+  level: number
+  xpNow: number
+  journalXp: JournalJobXp
+  levelSince: number
+  onApply: (level: number, xpInLevel: number) => void
+}) {
+  if (journalXp.xp <= 0 || level >= MAX_LEVEL) return null
+  const total = Math.min(jobXpForLevel(MAX_LEVEL), xpNow + journalXp.xp)
+  const estLevel = Math.min(MAX_LEVEL, jobLevelFromXp(total))
+  const xpInLevel = estLevel >= MAX_LEVEL ? 0 : total - jobXpForLevel(estLevel)
+  const parts = [
+    journalXp.captures ? plural(journalXp.captures, 'capture') : null,
+    journalXp.matings ? plural(journalXp.matings, 'accouplement') : null,
+    journalXp.crafts ? plural(journalXp.crafts, 'craft') : null,
+  ].filter(Boolean)
+  return (
+    <Callout>
+      <strong>Journal :</strong> +{formatNumber(journalXp.xp)} XP d’Éleveur enregistrés {levelSince > 0 ? `depuis la saisie du niveau (${formatDate(levelSince)})` : 'depuis le début du journal'}
+      {parts.length ? ` (${parts.join(', ')})` : ''}. Niveau estimé : <strong>{estLevel}</strong>
+      {estLevel < MAX_LEVEL && <> (+{formatNumber(xpInLevel)} XP dans le niveau)</>} <Badge tone="warn">estimation</Badge> Le plan ci-dessous en tient déjà compte,
+      comme l’accueil.
+      <div className="row" style={{ marginTop: 6 }}>
+        <button type="button" className="btn small" onClick={() => onApply(estLevel, xpInLevel)}>
+          {estLevel > level ? `Passer au niveau ${estLevel}` : 'Ajouter cette XP au niveau actuel'}
+        </button>
+        <small className="muted">Vérifiez en jeu : les bonus Almanax et l’XP non notée dans le journal ne sont pas comptés.</small>
+      </div>
+    </Callout>
   )
 }
 
@@ -1047,20 +1122,26 @@ function XpSourcesTab({ xpNeeded, target }: { xpNeeded: number; target: number }
 
 function AlmanaxTab({
   days,
+  today,
   plan,
   almanaxPlan,
   almanaxOn,
 }: {
   days: ReturnType<typeof jobAlmanaxDays>
+  today: string
   plan: LevelingPlan
   almanaxPlan: LevelingPlan | null
   almanaxOn: boolean
 }) {
+  // Heure locale du changement de jour de jeu, si le navigateur n'est pas à l'heure de Paris (recalculée chaque jour de jeu).
+  const changeAt = useMemo(() => serverDayChangeIfNotLocalMidnight(today), [today])
   if (!days.length) return <Empty>Aucun jour Almanax lié au métier dans le calendrier.</Empty>
   return (
     <div className="stack">
       <p className="muted" style={{ margin: 0 }}>
         Jours de l’Almanax utiles pour monter le métier (calendrier DofusDB, dates annuelles). Gardez vos ressources pour ces jours-là si vous le pouvez.
+        Les dates suivent l’heure des serveurs (Paris).
+        {changeAt !== null && <> Chez vous, le jour de jeu change à {formatClock(changeAt, changeAt)}.</>}
       </p>
       <ul className="almanax-list">
         {days.map((d) => {
@@ -1113,7 +1194,7 @@ interface ResearchStep {
 }
 
 function ReferenceTab({ planOpts }: { planOpts: LevelingOptions }) {
-  const ctx = usePriceContext()
+  const ctx = useLevelingPriceContext()
   const reference = useMemo(
     () => levelingPlan(1, MAX_LEVEL, ctx, { rules: planOpts.rules, metric: 'ressources', family: planOpts.family }),
     [ctx, planOpts.rules, planOpts.family],

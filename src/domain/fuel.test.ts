@@ -167,14 +167,26 @@ describe('plan de remplissage', () => {
     expect(p.cost).toBe(20_000)
   })
 
-  it('respecte les plafonds : Extraits jusqu’à 40 000 puis palier supérieur', () => {
+  it('respecte les plafonds et la famille minimale de chaque tranche ; Élixir seul chiffré = borne haute', () => {
     const ctx = ctxOf({ [id('abreuvoir', 1, 'gigantesque')]: 100, [id('abreuvoir', 4, 'gigantesque')]: 1_000 })
     const p = fillPlan('abreuvoir', 0, 100_000, ctx, opts)
+    // L'Élixir (0,2 K/pt) est plus cher au point que l'Extrait chiffré (0,02 K/pt) : il ne remplace pas
+    // les Philtres et Potions non chiffrés (« prix à saisir »), il ne sert qu'à la borne haute.
     expect(p.steps.map((s) => [s.option.tier, s.count, s.to])).toEqual([
+      [1, 8, 40_000],
+      [2, 6, 70_000],
+      [3, 4, 90_000],
+      [4, 2, 100_000],
+    ])
+    expect(p.complete).toBe(false)
+    expect(p.cost).toBe(800 + 2_000) // borne basse : seuls les objets chiffrés
+    expect(p.missing.length).toBeGreaterThan(0)
+    expect(p.upperBound?.complete).toBe(true)
+    expect(p.upperBound?.steps.map((s) => [s.option.tier, s.count, s.to])).toEqual([
       [1, 8, 40_000],
       [4, 12, 100_000],
     ])
-    expect(p.cost).toBe(800 + 12_000)
+    expect(p.upperBound?.cost).toBe(800 + 12_000)
   })
 
   it('évite le gaspillage quand c’est moins cher, sinon le chiffre', () => {
@@ -189,7 +201,8 @@ describe('plan de remplissage', () => {
   })
 
   it('l’objectif peut être dépassé sans perte (overshoot) ; from ≥ to = plan vide', () => {
-    const ctx = ctxOf({ [id('mangeoire', 2, 'gigantesque')]: 1_000 })
+    // Philtre (0,2 K/pt) moins cher au point que l'Extrait chiffré (0,4 K/pt) : il remplit aussi la tranche du palier 1.
+    const ctx = ctxOf({ [id('mangeoire', 1, 'gigantesque')]: 2_000, [id('mangeoire', 2, 'gigantesque')]: 1_000 })
     const p = fillPlan('mangeoire', 0, 12_000, ctx, opts)
     expect(p.count).toBe(3)
     expect(p.overshoot).toBe(3_000)
@@ -214,6 +227,65 @@ describe('plan de remplissage', () => {
   })
 })
 
+describe('plan de remplissage : famille minimale par tranche (prix par défaut)', () => {
+  const defaults: PriceContext = { overrides: {}, useDefaults: true }
+  const low = { jobLevel: 1, rules: R36 }
+
+  it('Baffeur 0 → 20 : un Minuscule Extrait « prix à saisir », jamais l’Élixir estimé (borne haute seulement)', () => {
+    const p = fillPlan('baffeur', 0, 20, defaults, low)
+    expect(p.items.map((it) => it.option.fuel.id)).toEqual([id('baffeur', 1, 'minuscule')])
+    expect(p.items[0].count).toBe(1)
+    expect(p.complete).toBe(false)
+    expect(p.missing.length).toBeGreaterThan(0)
+    expect(p.cost === null || p.cost < 200_000).toBe(true)
+    // Le seul carburant chiffré (Gigantesque Élixir, estimation) donne la borne haute.
+    expect(p.upperBound?.complete).toBe(true)
+    expect(p.upperBound?.items[0].option.tier).toBe(4)
+    expect(p.upperBound?.cost).toBe(200_000)
+  })
+
+  it('Dragofesse 0 → 20 000 et 0 → 70 000 : Extraits puis Philtres, aucun Élixir', () => {
+    const a = fillPlan('dragofesse', 0, 20_000, defaults, low)
+    expect(a.items.every((it) => it.option.tier === 1)).toBe(true)
+    expect(a.complete).toBe(false)
+    const b = fillPlan('dragofesse', 0, 70_000, defaults, low)
+    expect(b.steps.every((s) => (s.to <= 40_000 ? s.option.tier === 1 : s.option.tier === 2))).toBe(true)
+    expect(b.items.some((it) => it.option.tier > 2)).toBe(false)
+    expect(b.upperBound?.cost).toBe(14 * 200_000)
+  })
+
+  it('un prix saisi sur la bonne famille est retenu et rend le plan complet', () => {
+    const min = id('baffeur', 1, 'minuscule')
+    const p = fillPlan('baffeur', 0, 20, { overrides: { [min]: 900 }, useDefaults: true }, low)
+    expect(p.items.map((it) => it.option.fuel.id)).toEqual([min])
+    expect(p.complete).toBe(true)
+    expect(p.cost).toBe(900)
+    expect(p.upperBound).toBeNull()
+  })
+
+  it('complément 40 000 → 40 060 : un Philtre, jamais une Potion de palier supérieur', () => {
+    const p = fillPlan('caresseur', 40_000, 40_060, defaults, low)
+    expect(p.items).toHaveLength(1)
+    expect(p.items[0].option.tier).toBe(2)
+  })
+
+  it('une famille supérieure chiffrée moins chère au point qu’un carburant chiffré de la tranche reste retenue', () => {
+    const ctx = ctxOf({ [id('mangeoire', 2, 'gigantesque')]: 16_000, [id('mangeoire', 3, 'grand')]: 8_000 }) // 3,2 contre 2 K/pt
+    const p = fillPlan('mangeoire', 40_000, 70_000, ctx, opts)
+    expect(p.complete).toBe(true)
+    expect(p.items.every((it) => it.option.tier === 3)).toBe(true)
+  })
+
+  it('craftableOnly : un prix de craft hors de portée compte comme non chiffré (le carburant reste proposé)', () => {
+    const gig = findFuel('caresseur', 1, 'gigantesque')!
+    const ctx = ctxOf(Object.fromEntries(gig.ingredients.map((i) => [i.id, 100])))
+    const p = fillPlan('caresseur', 0, 5_000, ctx, { jobLevel: 10, rules: R36, craftableOnly: true })
+    expect(p.feasible).toBe(true)
+    expect(p.complete).toBe(false)
+    expect(fillPlan('caresseur', 0, 5_000, ctx, { jobLevel: 10, rules: R36 }).complete).toBe(true)
+  })
+})
+
 describe('poussière d’élevage (héritage)', () => {
   it('Gigantesque Extrait = 50 poussières, 100 points par poussière', () => {
     const d = dustOption('mangeoire', 1, R36)!
@@ -221,5 +293,20 @@ describe('poussière d’élevage (héritage)', () => {
     expect(d.pointsPerDust).toBe(100)
     expect(d.legacy).toBe(true)
     expect(dustOption('mangeoire', 4, R36)!.dustCost).toBe(3200)
+  })
+})
+
+describe('ECO-12 — recette hors de portée du métier', () => {
+  it('niveau 1 : l’Extrait de Mangeoire (recette niv. 25) prend le prix HDV, pas le coût des ingrédients ; niveau 60 : le craft', () => {
+    const defaults: PriceContext = { overrides: {}, useDefaults: true }
+    const ex = findFuel('mangeoire', 1, 'normal')!
+    const low = fuelOptions('mangeoire', 1, defaults, { jobLevel: 1, rules: R36 }).find((o) => o.fuel.id === ex.id)!
+    expect(low.canCraft).toBe(false)
+    expect(low.origin).toBe('defaut')
+    expect(low.craftPriceOnly).toBe(false)
+    const high = fuelOptions('mangeoire', 1, defaults, { jobLevel: 60, rules: R36 }).find((o) => o.fuel.id === ex.id)!
+    expect(high.canCraft).toBe(true)
+    expect(high.origin).toBe('craft')
+    expect(high.unitPrice!).toBeLessThan(low.unitPrice!)
   })
 })

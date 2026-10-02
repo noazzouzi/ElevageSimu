@@ -91,6 +91,14 @@
   font-size: 0.9rem;
 }
 
+/* ---------- Sections indisponibles ---------- */
+.hp-failures {
+  margin: 6px 0 8px;
+  padding-left: 18px;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
 /* ---------- Premiers pas ---------- */
 .hp-onboarding {
   border-color: var(--accent);

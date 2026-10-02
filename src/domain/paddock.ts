@@ -3,6 +3,7 @@
 // (10/20/30/40) et chaque monture de l'enclos qui peut en profiter gagne N points dans la jauge
 // correspondante (×2 avec la capacité adaptée ou le bonus Almanax du jour). Une jauge ne se vide pas
 // si aucune monture de l'enclos ne peut en profiter.
+import { formatDuration as formatDurationLong } from '../lib/format'
 import {
   ABILITY_DOUBLES,
   ENDURANCE_SERENITY_MAX,
@@ -104,6 +105,19 @@ export function canBenefit(gauge: GaugeId, m: SimMount): boolean {
   }
 }
 
+/**
+ * Jour Almanax « effet doublé » : une jauge constante (toute la simulation), ou une fonction du temps
+ * (secondes depuis le début de la simulation, au début du tick) pour ne doubler que les ticks qui
+ * tombent le jour Almanax (voir `almanaxScheduleFrom` dans fertility.ts).
+ */
+export type AlmanaxInput = GaugeId | null | ((tSeconds: number) => GaugeId | null)
+
+/** Jauge doublée par l'Almanax à l'instant `tSeconds` de la simulation. */
+export function almanaxAtTime(input: AlmanaxInput | undefined, tSeconds: number): GaugeId | null {
+  if (typeof input === 'function') return input(tSeconds)
+  return input ?? null
+}
+
 /** Multiplicateur de gain pour une monture (capacité + Almanax). */
 export function gainMultiplier(gauge: GaugeId, ability: Ability | null, almanaxDoubled: GaugeId | null): number {
   let k = 1
@@ -133,8 +147,11 @@ export interface SimulateInput {
   gauges: Record<GaugeId, number>
   active: GaugeId[]
   mounts: SimMount[]
-  /** Jauge dont l'effet est doublé par l'Almanax du jour. */
-  almanaxDoubled?: GaugeId | null
+  /**
+   * Jauge dont l'effet est doublé par l'Almanax : constante, ou fonction du temps de simulation
+   * (secondes au début du tick) pour un doublement limité au jour Almanax.
+   */
+  almanaxDoubled?: AlmanaxInput
   /**
    * Tier maintenu par le joueur (recharges régulières) : la jauge agit toujours à ce tier et la
    * consommation est comptabilisée sans vider la jauge. Sinon la jauge se vide normalement.
@@ -178,10 +195,13 @@ const ZERO_GAUGES = (): Record<GaugeId, number> => ({
 export function simulatePaddock(input: SimulateInput): SimulateResult {
   const err = validateActiveGauges(input.active)
   if (err) throw new Error(err)
-  const almanax = input.almanaxDoubled ?? null
   const rules = input.rules ?? LIVE
   const stopWhenIdle = input.stopWhenIdle ?? true
+  // Niveaux bornés au plafond des règles actives (une saisie faite sous une autre version peut le
+  // dépasser) : même borne que `gaugeDrainSeconds`, pour que l'Enclos et l'Accueil concordent (R9).
   const gauges = { ...ZERO_GAUGES(), ...input.gauges }
+  const cap = rules.gaugeTierMax[4]
+  for (const g of Object.keys(gauges) as GaugeId[]) gauges[g] = Math.max(0, Math.min(cap, Number.isFinite(gauges[g]) ? gauges[g] : 0))
   const mounts = input.mounts.map((m) => ({ ...m, xpGained: m.xpGained ?? 0 }))
   const consumed = ZERO_GAUGES()
   const events: SimEvent[] = []
@@ -194,6 +214,7 @@ export function simulatePaddock(input: SimulateInput): SimulateResult {
   let tick = 0
   for (; tick < maxTicks; tick++) {
     const t = (tick + 1) * TICK_SECONDS
+    const almanax = almanaxAtTime(input.almanaxDoubled, tick * TICK_SECONDS)
     // Gains calculés sur l'état en début de tick, pour toutes les jauges actives.
     const gains: { gauge: GaugeId; rate: number; who: SimMount[] }[] = []
     for (const g of input.active) {
@@ -285,12 +306,6 @@ function applyGain(gauge: GaugeId, m: SimMount, amount: number, t: number, event
 
 /** Formate une durée en secondes, ex. « 4 h 09 min ». */
 export function formatDuration(seconds: number): string {
-  const s = Math.max(0, Math.round(seconds))
-  const d = Math.floor(s / 86_400)
-  const h = Math.floor((s % 86_400) / 3_600)
-  const m = Math.floor((s % 3_600) / 60)
-  if (d > 0) return `${d} j ${h} h ${String(m).padStart(2, '0')} min`
-  if (h > 0) return `${h} h ${String(m).padStart(2, '0')} min`
-  if (m > 0) return `${m} min`
-  return `${s} s`
+  // Helper unique (lib/format) : format long « 4 h 09 min », « 1 j 2 h 05 min » (R14).
+  return formatDurationLong(seconds, { long: true })
 }

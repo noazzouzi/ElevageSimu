@@ -5,39 +5,47 @@ import { useEffect, useMemo, useState } from 'react'
 import { FAMILIES, GAME, STRATEGY, getSpecies, itemName, type StrategyPhase } from '../../data'
 import {
   bestNetKind,
+  capturesPerFight,
   captureStatus,
   captureSpotText,
   checklistKey,
   currentPhase,
   daysBetween,
+  estimatedJobLevel,
   evaluateCriterion,
   formatIsoDay,
+  goalProgramConfig,
   goalStatus,
   isoWeekKey,
+  remainingProgram,
   resolveRuleRefs,
+  sessionsPerDayFor,
   strategyHighlights,
+  withGoalSimulation,
   type GoalStatus,
 } from '../../domain/advisor'
-import { almanaxOn, isoDay, upcomingAlmanax } from '../../domain/almanax'
+import { almanaxOn, serverDay, upcomingAlmanax } from '../../domain/almanax'
 import { requiredSpecies } from '../../domain/breedingPath'
 import { GAUGE_LABELS, PADDOCK_UNLOCK_LEVELS } from '../../domain/constants'
-import { NET_KIND_LABELS, crossingRanking, genetonKamasValue, type CrossingRank, type MountPriceContext } from '../../domain/economy'
+import { NET_KIND_LABELS, batchProfile, crossingRanking, genetonKamasValue, type CrossingRank, type MountPriceContext } from '../../domain/economy'
 import { jobAlmanaxDays } from '../../domain/job'
 import { unlockedPaddocks } from '../../domain/mountFate'
 import { effectiveFertility } from '../../domain/mounts'
 import { OPTIMAKINA_SYSTEMATIC_GENERATION } from '../../domain/pairing'
 import type { PriceContext } from '../../domain/pricing'
-import { estimateProgramCost, runStrategiesAsync, type ProgramConfig, type ProgramSummary } from '../../domain/programSim'
+import { estimateProgramCost, type ProgramSummary } from '../../domain/programSim'
 import type { Ruleset } from '../../domain/rules'
 import type { FamilyId, FuelTier, Mount } from '../../domain/types'
-import { formatKamas, formatNumber, formatPercent } from '../../lib/format'
+import { formatDuration, formatKamas, formatKamasRange, formatNumber, formatPercent } from '../../lib/format'
 import { useInventory } from '../../store/inventory'
+import { journalJobXp, useJournal } from '../../store/journal'
 import { usePlanProgress } from '../../store/planProgress'
 import { usePriceContext, usePrices } from '../../store/prices'
 import { useRules, useSettings, type Goal } from '../../store/settings'
 import { Badge, Callout, Card, Empty, PageHeader, Progress, SelectField, Stat, Tabs } from '../components'
 import { navigate, href, useRoute } from '../router'
 import { ConfidenceBadge, SpeciesName, SpeciesPicker } from '../species'
+import { useGoalSimulation, type GoalSimulationStatus } from '../useGoalSimulation'
 import './PlanPage.css'
 
 type TabId = 'chemin' | 'phase' | 'strategie' | 'routines' | 'erreurs'
@@ -67,6 +75,16 @@ interface PlanSettings {
   useOptimakina: boolean
   saleTax: number
   useDefaultPrices: boolean
+  accounts: number
+  hoursPerDay: number
+}
+
+/** Simulation Monte-Carlo de l'objectif (partagée avec l'accueil). */
+interface SimState {
+  summary: ProgramSummary | null
+  status: GoalSimulationStatus
+  progress: number
+  error: string | null
 }
 
 function usePlanSettings(): PlanSettings {
@@ -80,9 +98,11 @@ function usePlanSettings(): PlanSettings {
   const useOptimakina = useSettings((s) => s.useOptimakina)
   const saleTax = useSettings((s) => s.saleTax)
   const useDefaultPrices = useSettings((s) => s.useDefaultPrices)
+  const accounts = useSettings((s) => s.accounts)
+  const hoursPerDay = useSettings((s) => s.hoursPerDay)
   return useMemo(
-    () => ({ jobLevel, family, goalSpeciesId, goal, preferredTier, xpFiller, parentTargetLevel, useOptimakina, saleTax, useDefaultPrices }),
-    [jobLevel, family, goalSpeciesId, goal, preferredTier, xpFiller, parentTargetLevel, useOptimakina, saleTax, useDefaultPrices],
+    () => ({ jobLevel, family, goalSpeciesId, goal, preferredTier, xpFiller, parentTargetLevel, useOptimakina, saleTax, useDefaultPrices, accounts, hoursPerDay }),
+    [jobLevel, family, goalSpeciesId, goal, preferredTier, xpFiller, parentTargetLevel, useOptimakina, saleTax, useDefaultPrices, accounts, hoursPerDay],
   )
 }
 
@@ -95,6 +115,9 @@ function useToday(): number {
   }, [])
   return now
 }
+
+/** « 3 tirages », « 1 passage ». */
+const nb = (n: number, one: string, many = `${one}s`) => `${formatNumber(n)} ${Math.abs(n) >= 2 ? many : one}`
 
 const phaseRange = (p: StrategyPhase) =>
   p.jobLevelRange[0] === p.jobLevelRange[1] ? `niv. ${p.jobLevelRange[0]}` : `niv. ${p.jobLevelRange[0]}–${p.jobLevelRange[1]}`
@@ -117,15 +140,25 @@ export default function PlanPage() {
   )
   const genetonValue = genetonKamasValue(genetonOverride).value
   const now = useToday()
-  const phase = currentPhase(settings.jobLevel, mounts)
+  // XP du journal depuis la dernière saisie du niveau : niveau estimé (plancher) pour la phase.
+  const jobLevelUpdatedAt = useSettings((s) => s.jobLevelUpdatedAt)
+  const journal = useJournal((s) => s.entries)
+  const xpGained = useMemo(() => journalJobXp(journal, jobLevelUpdatedAt).xp, [journal, jobLevelUpdatedAt])
+  const jobLevel = estimatedJobLevel(settings.jobLevel, xpGained)
+  const phase = currentPhase(jobLevel, mounts)
   const unlocked = unlockedPaddocks(settings.jobLevel)
-  const goal = useMemo(
-    () =>
-      settings.goalSpeciesId !== null
-        ? goalStatus(settings.goalSpeciesId, mounts, { parentLevel: settings.parentTargetLevel, useOptimakina: settings.useOptimakina, rules })
-        : null,
-    [settings.goalSpeciesId, settings.parentTargetLevel, settings.useOptimakina, mounts, rules],
-  )
+  const base = useMemo(() => {
+    if (settings.goalSpeciesId === null) return { goal: null, error: null }
+    try {
+      return { goal: goalStatus(settings.goalSpeciesId, mounts, { parentLevel: settings.parentTargetLevel, useOptimakina: settings.useOptimakina, rules }), error: null }
+    } catch (e) {
+      return { goal: null, error: e instanceof Error ? e.message : String(e) }
+    }
+  }, [settings.goalSpeciesId, settings.parentTargetLevel, settings.useOptimakina, mounts, rules])
+  // Simulation Monte-Carlo de la stratégie (partagée avec l'accueil) : chiffres de référence et captures calibrées.
+  const simConfig = useMemo(() => (base.goal?.tree ? goalProgramConfig(settings, rules) : null), [base.goal, settings, rules])
+  const sim = useGoalSimulation(simConfig)
+  const goal = useMemo(() => withGoalSimulation(base.goal, mounts, sim.summary, rules), [base.goal, mounts, sim.summary, rules])
 
   return (
     <div className="pl-page">
@@ -138,14 +171,20 @@ export default function PlanPage() {
           </a>
         }
       />
+      {base.error && (
+        <Callout tone="warn">
+          <strong>Section indisponible : objectif et captures.</strong> Le calcul a échoué ({base.error}) ; les autres onglets restent valables. Vérifiez vos montures et vos
+          réglages, ou téléchargez une sauvegarde depuis les <a href={href('reglages')}>réglages</a> pour signaler le problème.
+        </Callout>
+      )}
       <div className="grid grid-2 pl-top">
         <GoalCard settings={settings} update={update} goal={goal} mounts={mounts} />
-        <PhaseCard phase={phase} jobLevel={settings.jobLevel} mounts={mounts} />
+        <PhaseCard phase={phase} jobLevel={jobLevel} savedLevel={settings.jobLevel} mounts={mounts} />
       </div>
       <Tabs<TabId> tabs={TABS} value={tab} onChange={(t) => navigate('plan', { onglet: t })} />
       {tab === 'chemin' &&
         (goal ? (
-          <PathTab goal={goal} settings={settings} rules={rules} mounts={mounts} ctx={ctx} unlocked={unlocked} genetonValue={genetonValue} now={now} />
+          <PathTab goal={goal} settings={settings} rules={rules} mounts={mounts} ctx={ctx} unlocked={unlocked} genetonValue={genetonValue} now={now} sim={sim} />
         ) : (
           <ProfitTab
             settings={settings}
@@ -157,8 +196,8 @@ export default function PlanPage() {
             onPick={(id) => update({ goalSpeciesId: id })}
           />
         ))}
-      {tab === 'phase' && <PhaseTab phase={phase} jobLevel={settings.jobLevel} mounts={mounts} />}
-      {tab === 'strategie' && <StrategyTab settings={settings} rules={rules} unlocked={unlocked} />}
+      {tab === 'phase' && <PhaseTab phase={phase} jobLevel={jobLevel} mounts={mounts} />}
+      {tab === 'strategie' && <StrategyTab settings={settings} rules={rules} unlocked={unlocked} estimatedLevel={jobLevel} />}
       {tab === 'routines' && <RoutinesTab now={now} settings={settings} />}
       {tab === 'erreurs' && <MistakesTab />}
     </div>
@@ -228,12 +267,17 @@ function GoalCard({
             <SpeciesName id={goal.speciesId} />
             {goal.reached ? (
               <Badge tone="ok">atteint ({owned.length})</Badge>
-            ) : goal.capturesRemaining > 0 ? (
-              <Badge tone="info" title="Estimation (effort attendu au prorata de ce que vous possédez déjà)">
+            ) : goal.captureBasis === 'simulation' ? (
+              <Badge
+                tone="info"
+                title="Estimation : simulation Monte-Carlo de votre stratégie, ramenée à ce que vos montures couvrent déjà (une tentative peut rater, il en faut alors d'autres)"
+              >
                 ≈ {formatNumber(goal.capturesRemaining)} captures restantes
               </Badge>
             ) : (
-              <Badge tone="accent">recette couverte par vos montures</Badge>
+              <Badge tone="warn" title="Borne haute du modèle analytique (bébés hors cible jamais réutilisés), en attendant la simulation">
+                jusqu’à ≈ {formatNumber(goal.capturesRemaining)} captures restantes
+              </Badge>
             )}
             <a href={href('genetique', { id: goal.speciesId })}>Arbre génétique →</a>
           </div>
@@ -245,7 +289,7 @@ function GoalCard({
 
 // ---------- Phase ----------
 
-function PhaseCard({ phase, jobLevel, mounts }: { phase: StrategyPhase; jobLevel: number; mounts: Mount[] }) {
+function PhaseCard({ phase, jobLevel, savedLevel, mounts }: { phase: StrategyPhase; jobLevel: number; savedLevel: number; mounts: Mount[] }) {
   const checked = usePlanProgress((s) => s.checked)
   const idx = STRATEGY.phases.findIndex((p) => p.id === phase.id)
   const criteria = phase.exitCriteria.map((c, i) => {
@@ -266,7 +310,8 @@ function PhaseCard({ phase, jobLevel, mounts }: { phase: StrategyPhase; jobLevel
         {phase.id} — {phase.title}
       </h3>
       <p className="muted pl-phase-meta">
-        Éleveur {phaseRange(phase)} · vous : niveau {jobLevel} · {phase.paddocks ?? 1} enclos conseillé{(phase.paddocks ?? 1) > 1 ? 's' : ''}
+        Éleveur {phaseRange(phase)} · vous : niveau {jobLevel}
+        {jobLevel > savedLevel ? ` (estimé d'après le journal ; saisi : ${savedLevel})` : ''} · {phase.paddocks ?? 1} enclos conseillé{(phase.paddocks ?? 1) > 1 ? 's' : ''}
       </p>
       <div className="pl-exit">
         <span>
@@ -383,6 +428,7 @@ function PathTab({
   unlocked,
   genetonValue,
   now,
+  sim,
 }: {
   goal: GoalStatus
   settings: PlanSettings
@@ -392,6 +438,7 @@ function PathTab({
   unlocked: number
   genetonValue: number
   now: number
+  sim: SimState
 }) {
   const effort = goal.effort
   const required = goal.tree ? requiredSpecies(goal.tree) : []
@@ -407,6 +454,10 @@ function PathTab({
   const cap = goal.captures
   const checked = usePlanProgress((s) => s.checked)
   const toggle = usePlanProgress((s) => s.toggle)
+  const summary = sim.summary && sim.summary.config.targetSpeciesId === goal.speciesId ? sim.summary : null
+  const simulated = goal.captureBasis === 'simulation'
+  const remaining = goal.remaining
+  const m = summary?.metrics
   return (
     <>
       {goal.reached && (
@@ -416,17 +467,84 @@ function PathTab({
       )}
       {goal.error && <Callout tone="warn">{goal.error}</Callout>}
       {effort && (
-        <Card title={`Effort attendu pour 1 ${goal.name}`} actions={<ConfidenceBadge level="medium" />}>
-          <div className="grid grid-4 pl-stats">
-            <Stat label="Captures G1" value={`≈ ${formatNumber(effort.captures)}`} hint={goal.reached ? 'objectif atteint' : `≈ ${formatNumber(goal.capturesRemaining)} encore à faire`} />
-            <Stat label="Accouplements" value={`≈ ${formatNumber(effort.matings)}`} hint={`recette idéale : ${formatNumber(effort.ideal.matings)}`} />
-            <Stat label="Fécondations" value={`≈ ${formatNumber(effort.fecundations)}`} hint="2 par accouplement" />
-            <Stat label="Clonages" value={`≈ ${formatNumber(effort.clonings)}`} hint="clonage systématique" />
-            <Stat label="Optimakinas" value={`≈ ${formatNumber(effort.optimakinas)}`} hint={settings.useOptimakina ? `dès la G${OPTIMAKINA_SYSTEMATIC_GENERATION}` : 'désactivées'} />
-            <Stat label="Génétons en route" value={`≈ ${formatNumber(effort.genetons)}`} hint={`≈ ${formatKamas(effort.genetons * genetonValue, true)}`} />
-            <Stat label="XP d'Éleveur" value={`≈ ${formatNumber(effort.jobXp.total)}`} hint="accouplements + captures" />
-            <Stat label="Recette idéale" value={`${formatNumber(effort.ideal.captures)} captures`} hint="chaque accouplement réussi" />
+        <Card title={`Effort attendu pour 1 ${goal.name}`} actions={<ConfidenceBadge level={summary ? 'medium' : 'low'} />}>
+          <div className="table-wrap">
+            <table className="table pl-effort">
+              <thead>
+                <tr>
+                  <th />
+                  <th className="num">Simulation (retenue)</th>
+                  <th className="num">Modèle analytique (référence)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Captures G1</th>
+                  <td className="num">
+                    <strong>{m ? `≈ ${formatNumber(m.captures.mean)}` : sim.status === 'error' ? '—' : '…'}</strong>
+                  </td>
+                  <td className="num">
+                    ≈ {formatNumber(effort.captures)} <span className="muted">(borne haute)</span>
+                  </td>
+                </tr>
+                {!goal.reached && (
+                  <tr>
+                    <th scope="row">dont encore à faire avec vos montures</th>
+                    <td className="num">{simulated ? <strong>≈ {formatNumber(goal.capturesRemaining)}</strong> : '…'}</td>
+                    <td className="num">≈ {formatNumber(remaining?.captures ?? effort.captures)}</td>
+                  </tr>
+                )}
+                <tr>
+                  <th scope="row">Accouplements</th>
+                  <td className="num">{m ? `≈ ${formatNumber(m.matings.mean)}` : '…'}</td>
+                  <td className="num">
+                    ≈ {formatNumber(effort.matings)} <span className="muted">(idéal : {formatNumber(effort.ideal.matings)})</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Fécondations</th>
+                  <td className="num">{m ? `≈ ${formatNumber(m.fecundations.mean)}` : '…'}</td>
+                  <td className="num">≈ {formatNumber(effort.fecundations)}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Clonages</th>
+                  <td className="num">{m ? `≈ ${formatNumber(m.clones.mean)}` : '…'}</td>
+                  <td className="num">≈ {formatNumber(effort.clonings)}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Optimakinas {settings.useOptimakina ? `(dès la G${OPTIMAKINA_SYSTEMATIC_GENERATION})` : '(désactivées)'}</th>
+                  <td className="num">{m ? `≈ ${formatNumber(m.optimakinas.mean)}` : '…'}</td>
+                  <td className="num">≈ {formatNumber(effort.optimakinas)}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Génétons en route</th>
+                  <td className="num">{m ? `≈ ${formatNumber(m.genetons.mean)}` : '…'}</td>
+                  <td className="num">
+                    ≈ {formatNumber(effort.genetons)} <span className="muted">(≈ {formatKamas(effort.genetons * genetonValue, true)})</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">XP d'Éleveur</th>
+                  <td className="num">{m ? `≈ ${formatNumber(m.jobXp.mean)}` : '…'}</td>
+                  <td className="num">≈ {formatNumber(effort.jobXp.total)}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
+          {sim.status === 'running' && !summary && (
+            <div className="pl-sim-progress">
+              <span className="muted">Simulation en cours… {formatPercent(sim.progress, 0)}</span>
+              <Progress value={sim.progress} max={1} />
+            </div>
+          )}
+          {sim.error && <Callout tone="danger">Simulation impossible : {sim.error}. Les captures affichées sont alors la borne haute du modèle analytique.</Callout>}
+          <p className="muted pl-note">
+            <strong>Pourquoi deux chiffres ?</strong> Le modèle analytique de la recherche calcule une espérance sans jamais réutiliser les bébés hors cible (≈ 58 % des
+            naissances à 42 %) : c'est un <em>majorant prudent</em> des captures (recette idéale : {formatNumber(effort.ideal.captures)} captures si tout réussit). La
+            simulation Monte-Carlo ({summary ? nb(summary.runs, 'tirage') : '24 tirages'}) joue le programme session par session — sexes 50/50, {unlocked} enclos de 10
+            places, clonage, bébés hors cible remis en jeu : c'est le chiffre retenu pour les conseils (accueil, captures). « Encore à faire » tient compte de vos montures :
+            une monture du haut de l'arbre couvre une partie de la demande attendue, pas tout son sous-arbre (une tentative peut rater).
+          </p>
           <details className="pl-assumptions">
             <summary>Hypothèses du calcul</summary>
             <ul>
@@ -437,7 +555,7 @@ function PathTab({
           </details>
         </Card>
       )}
-      {goal.tree && <TimelineCard goalId={goal.speciesId} settings={settings} rules={rules} unlocked={unlocked} ctx={ctx} genetonValue={genetonValue} now={now} />}
+      {goal.tree && <TimelineCard goal={goal} settings={settings} rules={rules} unlocked={unlocked} ctx={ctx} genetonValue={genetonValue} now={now} sim={sim} />}
       {required.length > 0 && (
         <Card title="Étapes de la recette (de la cible aux captures)" actions={<a href={href('genetique', { id: goal.speciesId })}>Arbre complet →</a>}>
           <div className="table-wrap">
@@ -502,8 +620,8 @@ function PathTab({
           </div>
           <p className="muted pl-note">
             Chance = probabilité du bébé visé avec des parents « propres » au niveau {settings.parentTargetLevel} (modèle de naissance validé en jeu). Accouplements
-            attendus = besoin ÷ chance, clonage compris. « Obtenue » se coche toute seule quand vous possédez l'espèce ; sinon cochez-la à la main (enregistré pour cet
-            objectif).
+            attendus = besoin ÷ chance, clonage compris (modèle analytique, depuis zéro). « Obtenue » se coche toute seule quand vous possédez l'espèce ; sinon cochez-la à
+            la main (enregistré pour cet objectif).
           </p>
         </Card>
       )}
@@ -515,9 +633,9 @@ function PathTab({
                 <tr>
                   <th>Couleur G1</th>
                   <th className="num">Recette idéale</th>
-                  <th className="num">Non couvert</th>
-                  <th className="num">Captures attendues</th>
-                  <th className="num">À capturer ♀ / ♂</th>
+                  <th className="num">Non couvert (si tout réussit)</th>
+                  <th className="num">{simulated ? 'Captures attendues (simulation)' : 'Captures attendues (borne haute)'}</th>
+                  <th className="num">À capturer ♂ / ♀</th>
                   <th className="num">Possédées ♂ / ♀</th>
                 </tr>
               </thead>
@@ -533,7 +651,7 @@ function PathTab({
                       <strong>{c.expected}</strong>
                     </td>
                     <td className="num">
-                      {c.females} / {c.males}
+                      {c.males} / {c.females}
                     </td>
                     <td className="num">
                       {c.ownedMales} / {c.ownedFemales}
@@ -543,10 +661,19 @@ function PathTab({
               </tbody>
             </table>
           </div>
-          <CaptureWhere family={goal.family} jobLevel={settings.jobLevel} ctx={ctx} />
+          {(goal.supply?.notes.length ?? 0) > 0 && (
+            <ul className="pl-supply-notes">
+              {goal.supply?.notes.map((n) => (
+                <li key={n}>{n}</li>
+              ))}
+            </ul>
+          )}
+          <CaptureWhere family={goal.family} jobLevel={settings.jobLevel} ctx={ctx} accounts={settings.accounts} total={goal.capturesRemaining} />
           <p className="muted pl-note">
-            « Non couvert » : G1 de la recette idéale qu'aucune de vos montures fertiles ou fécondes ne remplace encore (une monture de l'arbre couvre tout son sous-arbre).
-            Captures attendues : effort moyen de la stratégie, au prorata (estimation). Répartition ♀/♂ pour équilibrer les sexes de chaque couleur.
+            « Non couvert » : G1 de la recette idéale qu'aucune de vos montures fertiles ou fécondes ne remplace encore, si chaque accouplement réussissait (porteuses et
+            sexes compris : deux mâles des deux couleurs d'un même croisement ne comptent qu'une fois). Captures attendues : effort restant avec vos montures (une
+            tentative peut rater), {simulated ? 'calibré par la simulation Monte-Carlo' : 'modèle analytique (borne haute, en attendant la simulation)'}, arrondi pour que
+            le total ne dépasse pas la somme. Répartition ♂ / ♀ pour équilibrer les sexes de chaque couleur.
           </p>
         </Card>
       )}
@@ -554,10 +681,11 @@ function PathTab({
   )
 }
 
-function CaptureWhere({ family, jobLevel, ctx }: { family: FamilyId; jobLevel: number; ctx: PriceContext }) {
+function CaptureWhere({ family, jobLevel, ctx, accounts, total }: { family: FamilyId; jobLevel: number; ctx: PriceContext; accounts: number; total: number }) {
   const st = captureStatus(family, jobLevel, ctx)
   const c = st.cost
   const next = jobLevel < 100 ? 'filet multiplicateur au niveau 100' : jobLevel < 150 ? 'filet renforcé au niveau 150' : jobLevel < 200 ? 'multiplicateur renforcé au niveau 200' : ''
+  const perFight = capturesPerFight(accounts, c.mountsPerCast)
   return (
     <p className="pl-where">
       <strong>Où :</strong> {st.spot ? captureSpotText(st.spot) : '—'}.{' '}
@@ -571,79 +699,47 @@ function CaptureWhere({ family, jobLevel, ctx }: { family: FamilyId; jobLevel: n
           </a>
         </>
       )}
-      {next ? ` ; ${next}` : ''}. 30 XP d'Éleveur par capture.
+      {next ? ` ; ${next}` : ''}. <strong>Combats :</strong> {nb(perFight, 'capture')} par combat ({nb(Math.max(1, Math.round(accounts)), 'personnage')})
+      {total > 0 ? `, soit ≈ ${nb(Math.ceil(total / perFight), 'combat')} pour les captures restantes` : ''}. 30 XP d'Éleveur par capture.
     </p>
   )
 }
 
 function TimelineCard({
-  goalId,
+  goal,
   settings,
   rules,
   unlocked,
   ctx,
   genetonValue,
   now,
+  sim,
 }: {
-  goalId: number
+  goal: GoalStatus
   settings: PlanSettings
   rules: Ruleset
   unlocked: number
   ctx: PriceContext
   genetonValue: number
   now: number
+  sim: SimState
 }) {
-  const config: ProgramConfig = useMemo(
-    () => ({
-      targetSpeciesId: goalId,
-      parentLevel: settings.parentTargetLevel,
-      makina: settings.useOptimakina ? { fromGeneration: OPTIMAKINA_SYSTEMATIC_GENERATION } : 'none',
-      cloning: true,
-      paddocks: unlocked,
-      tier: settings.preferredTier,
-      batchSize: 10,
-      rules,
-      maxDays: 730,
-      runs: 24,
-      seed: 1,
-    }),
-    [goalId, settings.parentTargetLevel, settings.useOptimakina, settings.preferredTier, unlocked, rules],
-  )
-  const [result, setResult] = useState<{ config: ProgramConfig; summary: ProgramSummary } | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [progress, setProgress] = useState(0)
-  useEffect(() => {
-    let stop = false
-    runStrategiesAsync([{ id: 'plan', label: 'Stratégie conseillée', config }], {
-      shouldStop: () => stop,
-      onProgress: (done, total) => {
-        if (!stop) setProgress(done / total)
-      },
-    })
-      .then((res) => {
-        if (stop || !res) return
-        setResult({ config, summary: res[0].summary })
-        setError(null)
-      })
-      .catch((e: unknown) => {
-        if (!stop) setError(e instanceof Error ? e.message : String(e))
-      })
-    return () => {
-      stop = true
-    }
-  }, [config])
-  const summary = result && result.config === config ? result.summary : null
+  const summary = sim.summary && sim.summary.config.targetSpeciesId === goal.speciesId ? sim.summary : null
   const cost = useMemo(
     () => (summary ? estimateProgramCost(summary, { ctx, rules, tier: settings.preferredTier, jobLevel: settings.jobLevel, netKind: bestNetKind(settings.jobLevel), genetonValue }) : null),
     [summary, ctx, rules, settings.preferredTier, settings.jobLevel, genetonValue],
   )
-  const days = summary?.metrics.days
-  const eta = days ? now + days.mean * 86_400_000 : null
+  const rest = summary ? remainingProgram(goal, summary) : null
+  const days = rest?.days ?? null
+  const full = summary?.metrics.days
+  const sessions = summary?.config.sessionsPerDay ?? sessionsPerDayFor(settings.hoursPerDay)
   const etaReal = days ? [now + days.mean * 1.5 * 86_400_000, now + days.mean * 2 * 86_400_000] : null
   const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+  const share = rest?.share ?? 1
+  const restCost = cost && cost.total !== null ? cost.total * share : null
   return (
     <Card
-      title="Calendrier estimé"
+      title="Calendrier estimé (depuis votre étable)"
       actions={
         <span className="row">
           <ConfidenceBadge level="low" />
@@ -652,50 +748,66 @@ function TimelineCard({
       }
     >
       <p className="muted">
-        Simulation rapide ({config.runs} tirages) de votre stratégie : {unlocked} enclos de 10 places, parents au niveau {settings.parentTargetLevel},{' '}
-        {settings.useOptimakina ? `Optimakina dès la G${OPTIMAKINA_SYSTEMATIC_GENERATION}` : 'sans makina'}, clonage systématique, palier {settings.preferredTier}, 2 sessions par jour.
+        Simulation rapide ({summary?.runs ?? 24} tirages) de votre stratégie : {unlocked} enclos de 10 places, parents au niveau {settings.parentTargetLevel},{' '}
+        {settings.useOptimakina ? `Optimakina dès la G${OPTIMAKINA_SYSTEMATIC_GENERATION}` : 'sans makina'}, clonage systématique, palier {settings.preferredTier},{' '}
+        {nb(sessions, 'passage')} aux enclos par jour (temps de jeu : {formatNumber(settings.hoursPerDay, 1)} h, réglages). La simulation part de zéro ; la durée restante
+        est ramenée à la part du programme qui reste avec vos montures (≈ {formatPercent(share, 0)}, modèle analytique) — estimation.
       </p>
-      {error && <Callout tone="danger">Simulation impossible : {error}</Callout>}
-      {!summary && !error && (
+      {sim.error && <Callout tone="danger">Simulation impossible : {sim.error}</Callout>}
+      {!summary && !sim.error && (
         <div className="pl-sim-progress">
-          <span className="muted">Simulation en cours… {formatPercent(progress, 0)}</span>
-          <Progress value={progress} max={1} />
+          <span className="muted">Simulation en cours… {formatPercent(sim.progress, 0)}</span>
+          <Progress value={sim.progress} max={1} />
         </div>
       )}
-      {summary && days && (
+      {summary && days && full && (
         <>
           <div className="grid grid-4 pl-stats">
-            <Stat label="Durée (jeu optimal)" value={`≈ ${formatNumber(days.mean, 0)} j`} hint={`de ${formatNumber(days.p10, 0)} à ${formatNumber(days.p90, 0)} j (p10–p90)`} />
+            <Stat
+              label="Reste (jeu optimal)"
+              value={goal.reached ? 'atteint' : `≈ ${formatNumber(days.mean, days.mean < 10 ? 1 : 0)} j`}
+              hint={`de ${formatNumber(days.p10, 0)} à ${formatNumber(days.p90, 0)} j (p10–p90) · depuis zéro : ≈ ${formatNumber(full.mean, 0)} j`}
+            />
             <Stat
               label="Joueur réel (× 1,5 à 2)"
-              value={`${formatNumber(days.mean * 1.5, 0)}–${formatNumber(days.mean * 2, 0)} j`}
-              hint={etaReal ? `vers le ${dateFmt.format(etaReal[0])} – ${dateFmt.format(etaReal[1])}` : undefined}
+              value={goal.reached ? '—' : `${formatNumber(days.mean * 1.5, 0)}–${formatNumber(days.mean * 2, 0)} j`}
+              hint={etaReal && !goal.reached ? `vers le ${dateFmt.format(etaReal[0])} – ${dateFmt.format(etaReal[1])}` : undefined}
             />
-            <Stat label="Captures" value={`≈ ${formatNumber(summary.metrics.captures.mean)}`} hint={`accouplements ≈ ${formatNumber(summary.metrics.matings.mean)}`} />
             <Stat
-              label="Coût matériel"
-              value={cost ? `${cost.complete ? '' : '≥ '}${formatKamas(cost.total, true)}` : '—'}
+              label="Captures restantes"
+              value={`≈ ${formatNumber(goal.capturesRemaining)}`}
+              hint={`accouplements restants ≈ ${formatNumber(rest?.matings ?? 0)} · depuis zéro : ${formatNumber(summary.metrics.captures.mean)} captures`}
+            />
+            <Stat
+              label="Coût matériel restant"
+              value={restCost !== null ? `${cost?.complete ? '≈ ' : '≥ '}${formatKamas(restCost, true)}` : '—'}
               hint={
                 cost && !cost.complete ? (
                   <a className="badge warn" href={cost.missing.length ? href('prix', { q: itemName(cost.missing[0]) }) : href('prix')}>
                     coût incomplet
                   </a>
+                ) : cost && cost.total !== null ? (
+                  `programme complet : ${formatKamas(cost.total, true)} (carburants, Optimakinas, filets)`
                 ) : (
                   'carburants, Optimakinas, filets'
                 )
               }
             />
           </div>
-          {eta && <p className="pl-note">En jeu optimal, l'objectif serait atteint vers le {dateFmt.format(eta)} (moyenne des tirages).</p>}
+          {!goal.reached && etaReal && (
+            <p className="pl-note">En jeu optimal, l'objectif serait atteint vers le {dateFmt.format(now + days.mean * 86_400_000)} (estimation depuis votre étable).</p>
+          )}
           {summary.successRate < 1 && (
             <Callout tone="warn">
-              {formatPercent(1 - summary.successRate, 0)} des tirages n'atteignent pas l'objectif en {config.maxDays} jours : plus d'enclos (niveau d'Éleveur), l'Optimakina ou une cible
-              intermédiaire raccourcissent beaucoup le programme.
+              {formatPercent(1 - summary.successRate, 0)} des tirages n'atteignent pas l'objectif en {summary.config.maxDays} jours : plus d'enclos (niveau d'Éleveur),
+              l'Optimakina ou une cible intermédiaire raccourcissent beaucoup le programme.
             </Callout>
           )}
           <p className="muted pl-note">
-            Le simulateur suppose un joueur parfait (deux passages par jour sans retard, sexes 50/50, pas d'achats). Carburant consommé ≈{' '}
-            {formatNumber(summary.metrics.totalFuelPoints.mean / 1e6, 1)} M de points ; génétons gagnés ≈ {formatNumber(summary.metrics.genetons.mean)}.
+            Le simulateur suppose un joueur parfait ({nb(sessions, 'passage')} par jour sans retard, sexes 50/50, pas d'achats) et des lots idéaux (fécondité ≈{' '}
+            {formatDuration(batchProfile('ideal', settings.preferredTier, rules).seconds)} au palier {settings.preferredTier} ; un lot typique du planificateur d'enclos ≈{' '}
+            {formatDuration(batchProfile('typique', settings.preferredTier, rules).seconds)}) : durées et carburant sont des minimums. Carburant consommé (programme
+            complet) ≈ {formatNumber(summary.metrics.totalFuelPoints.mean / 1e6, 1)} M de points ; génétons gagnés ≈ {formatNumber(summary.metrics.genetons.mean)}.
           </p>
         </>
       )}
@@ -772,9 +884,9 @@ function ProfitTab({
         }
       >
         <p className="muted">
-          Marge attendue par accouplement = bébés + génétons + stériles (meilleure sortie) − fécondation − XP des parents (niveau {settings.parentTargetLevel}) −{' '}
-          {settings.useOptimakina ? 'Optimakina' : 'makina'}, hors coût d'obtention des parents (il faut d'abord les élever). Les prix des montures sont souvent des planchers
-          estimés : saisissez vos prix pour fiabiliser le classement.
+          Marge attendue par accouplement = bébés + génétons + valeur ajoutée aux parents (leurs stériles, meilleure sortie, moins leur valeur actuelle) − fécondation −
+          XP des parents (niveau {settings.parentTargetLevel}) − {settings.useOptimakina ? 'Optimakina (règle de prix C_eff × Δ / p, sinon dès la G6)' : 'makina'}. Une
+          marge incomplète est un intervalle (« ≤ », « ≥ ») ou « inconnue » : saisissez vos prix pour fiabiliser le classement.
         </p>
         {top.length === 0 ? <Empty>Aucun croisement à classer.</Empty> : <RankingTable rows={top} onPick={onPick} />}
       </Card>
@@ -816,9 +928,21 @@ function RankingTable({ rows, onPick }: { rows: CrossingRank[]; onPick: (species
                 <SpeciesName id={r.child} />
               </td>
               <td className="num">{formatPercent(r.targetChance, 0)}</td>
-              <td className={`num ${r.margin >= 0 ? 'pl-pos' : 'pl-neg'}`}>
-                {r.complete ? '' : '≈ '}
-                {formatKamas(r.margin, true)}
+              <td
+                className={`num ${r.complete ? (r.margin >= 0 ? 'pl-pos' : 'pl-neg') : r.marginRange.high !== null && r.marginRange.high < 0 ? 'pl-neg' : r.marginRange.low !== null && r.marginRange.low >= 0 ? 'pl-pos' : ''}`}
+              >
+                {r.complete ? (
+                  formatKamas(r.margin, true)
+                ) : r.marginRange.low === null && r.marginRange.high === null ? (
+                  <>
+                    <span className="muted">inconnue</span>{' '}
+                    <small className="muted" title="Montants connus seulement (ni un minimum ni un maximum) : sert seulement à trier.">
+                      (partie connue {formatKamas(r.margin, true)})
+                    </small>
+                  </>
+                ) : (
+                  formatKamasRange(r.marginRange, true)
+                )}
                 {!r.complete && (
                   <a className="badge warn" href={r.missingItems.length ? href('prix', { q: itemName(r.missingItems[0]) }) : href('prix', { onglet: 'montures' })}>
                     incomplet
@@ -841,7 +965,7 @@ function RankingTable({ rows, onPick }: { rows: CrossingRank[]; onPick: (species
 
 // ---------- Stratégie ----------
 
-function StrategyTab({ settings, rules, unlocked }: { settings: PlanSettings; rules: Ruleset; unlocked: number }) {
+function StrategyTab({ settings, rules, unlocked, estimatedLevel }: { settings: PlanSettings; rules: Ruleset; unlocked: number; estimatedLevel: number }) {
   const highlights = strategyHighlights(settings, rules)
   const formulas: [string, string][] = [
     ['Chance de génération cible', STRATEGY.formulas.targetChance],
@@ -867,6 +991,12 @@ function StrategyTab({ settings, rules, unlocked }: { settings: PlanSettings; ru
           </li>
           <li>
             Niveau d'Éleveur {settings.jobLevel} : <strong>{unlocked}</strong> enclos ({unlocked < PADDOCK_UNLOCK_LEVELS.length ? `prochain au niveau ${PADDOCK_UNLOCK_LEVELS[unlocked].level}` : 'tous débloqués'})
+            {estimatedLevel > settings.jobLevel && (
+              <>
+                {' '}
+                — <strong>≈ niveau {estimatedLevel}</strong> d'après l'XP du journal depuis votre dernière saisie (estimation : <a href={href('reglages')}>mettez à jour le niveau</a>)
+              </>
+            )}
           </li>
           <li>
             Parents visés : niveau <strong>{settings.parentTargetLevel}</strong> ; Mangeoire en complément : <strong>{settings.xpFiller ? 'oui' : 'non'}</strong>
@@ -876,6 +1006,10 @@ function StrategyTab({ settings, rules, unlocked }: { settings: PlanSettings; ru
           </li>
           <li>
             Palier entretenu : <strong>{settings.preferredTier}</strong> ; taxe HDV : <strong>{formatPercent(settings.saleTax, 1)}</strong>
+          </li>
+          <li>
+            Captures : <strong>{nb(settings.accounts, 'personnage')}</strong> par combat ; temps de jeu : <strong>{formatNumber(settings.hoursPerDay, 1)} h</strong> par jour (
+            {nb(sessionsPerDayFor(settings.hoursPerDay), 'passage')} aux enclos dans le calendrier)
           </li>
         </ul>
       </Card>
@@ -935,7 +1069,7 @@ const KIND_LABELS: Record<CalendarRow['kind'], string> = {
 }
 
 function calendarRows(now: number, days: number): CalendarRow[] {
-  const today = isoDay(now)
+  const today = serverDay(now) // jour de jeu (Paris), comme upcomingAlmanax
   const rows = new Map<string, CalendarRow>()
   for (const e of upcomingAlmanax(now, days)) {
     const kind: CalendarRow['kind'] = e.takeza ? 'takeza' : e.doubledGauge ? 'jauge' : e.babyAbility ? 'bebes' : 'autre'
@@ -960,7 +1094,7 @@ function calendarRows(now: number, days: number): CalendarRow[] {
 }
 
 function RoutinesTab({ now, settings }: { now: number; settings: PlanSettings }) {
-  const today = isoDay(now)
+  const today = serverDay(now) // jour de jeu (Paris), comme upcomingAlmanax
   const week = isoWeekKey(now)
   const sessions = routineSessions()
   const weekly = weeklyRoutine()

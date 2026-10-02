@@ -21,11 +21,6 @@
   color: var(--text-muted);
 }
 
-.pd-notif {
-  font-size: 0.9rem;
-  gap: 6px;
-}
-
 /* ---------- Grille des enclos ---------- */
 .pd-grid {
   display: grid;
@@ -388,4 +383,165 @@
   border-radius: 999px;
   background: var(--bg-sunken);
   font-size: 0.85rem;
+}
+
+/* ---------- Sérénité modifiable ---------- */
+.pd-ser-cell {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+.pd-ser-edit {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.pd-ser-edit .field {
+  margin: 0;
+}
+.pd-ser-btns {
+  display: inline-flex;
+  gap: 3px;
+}
+.pd-ser-btn {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+.pd-ser-btn[aria-pressed='true'] {
+  border-color: var(--text);
+}
+.pd-ser-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.pd-estimate {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+/* ---------- Démarrage, fin et arrêt d'un plan ---------- */
+.pd-start,
+.pd-apply {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent-soft) 40%, var(--bg-elev));
+}
+.pd-start h3,
+.pd-apply h3 {
+  margin: 0 0 4px;
+}
+.pd-start .field,
+.pd-apply .field {
+  margin: 0;
+}
+.pd-warn-text {
+  display: block;
+  margin-top: 2px;
+  color: var(--warn);
+  font-weight: 600;
+}
+.pd-steps-details > summary,
+.pd-research > summary,
+.pd-fuel-notes > summary {
+  cursor: pointer;
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+.pd-steps-details {
+  margin-top: 10px;
+}
+.pd-fuel-notes > summary {
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+.pd-research {
+  margin: 8px 0;
+}
+.pd-split {
+  margin: 6px 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---------- Déplacements enregistrés ---------- */
+.pd-checklist-group h3 {
+  margin: 10px 0 4px;
+  font-size: 0.95rem;
+}
+.pd-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pd-checklist .pd-check {
+  flex-wrap: wrap;
+}
+
+/* ---------- Tableaux empilés sur mobile (carburant, démarrage, fin de plan, déplacements) ---------- */
+@media (max-width: 760px) {
+  .table.pd-stack,
+  .table.pd-stack tbody,
+  .table.pd-stack tr,
+  .table.pd-stack td {
+    display: block;
+    width: 100%;
+  }
+  .table.pd-stack thead {
+    display: none;
+  }
+  .table.pd-stack tr {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 10px;
+    padding: 6px 10px;
+    background: var(--bg-elev);
+  }
+  .table.pd-stack td {
+    border-bottom: 0;
+    padding: 4px 0;
+    text-align: left;
+  }
+  .table.pd-stack td.num {
+    text-align: left;
+  }
+  .table.pd-stack td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+  }
+  .table.pd-stack td:first-child::before {
+    display: none;
+  }
+  .table.pd-stack tr:hover td {
+    background: none;
+  }
+}
+
+/* Comparaison des paliers (plan recommandé). */
+.pd-tiers {
+  margin: 0.75rem 0;
+}
+.pd-tiers > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.pd-tiers tr[aria-current='true'] {
+  background: var(--bg-sunken);
 }

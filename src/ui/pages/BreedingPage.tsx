@@ -3,27 +3,37 @@
 // naissances, historique et calibration du modèle sur vos naissances réelles.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { FAMILIES, FAMILY_IDS, getSpecies, speciesOfFamily } from '../../data'
-import { almanaxOn, isoDay, TAKEZA_DATES, type AlmanaxEffect } from '../../domain/almanax'
+import { almanaxOn, isoDaysBetween, TAKEZA_DATES, type AlmanaxEffect } from '../../domain/almanax'
 import { cleanParent } from '../../domain/breedingPath'
 import { ABILITY_LABELS } from '../../domain/constants'
 import { genetonKamasValue, makinaCost, mountValuation, type MakinaCost, type MountValuation } from '../../domain/economy'
 import { POSITION_WEIGHT_PARENT, POSITION_WEIGHT_SELF, TARGET_BASE, TARGET_PER_LEVEL, TAKEZA_BONUS, type BreedingParent, type BreedingResult } from '../../domain/genetics'
 import { effectiveFertility, FERTILITY_LABELS, GENDER_ICONS, GENDER_LABELS, mountName } from '../../domain/mounts'
 import {
+  ACQUISITION_METHOD_LABELS,
   analyzePair,
   bestDisjointPairs,
   CALIBRATION_MIN_BIRTHS,
+  clonePairSummary,
+  economyCoupleCost,
   MAKINA_LABELS,
   MAKINA_POLICY_LABELS,
   matingCalibration,
   OBJECTIVE_LABELS,
   objectiveFromGoal,
+  OPTIMAKINA_SYSTEMATIC_GENERATION,
   rankPairs,
   recordMating,
+  STACK_MIN_ATTEMPTS,
   sterileClonePairs,
+  SUCCESS_BASIS_LABELS,
+  TAKEZA_PRIORITY_GENERATION,
   targetBreakdown,
   theMakina,
   type BabyChoice,
+  type CoupleCostBreakdown,
+  type CoupleCostModel,
+  type MakinaAdvice,
   type MakinaPolicy,
   type MatingCalibration,
   type MatingRecord,
@@ -34,7 +44,7 @@ import {
 } from '../../domain/pairing'
 import type { Ruleset } from '../../domain/rules'
 import type { Ability, FamilyId, Gender, MakinaKind, Mount, Species } from '../../domain/types'
-import { formatDate, formatKamas, formatNumber, formatPercent } from '../../lib/format'
+import { capitalize, formatDate, formatIsoDay, formatKamas, formatNumber, formatPercent } from '../../lib/format'
 import { useInventory } from '../../store/inventory'
 import { useJournal, type JournalEntry } from '../../store/journal'
 import { usePriceContext, usePrices } from '../../store/prices'
@@ -42,6 +52,7 @@ import { useRules, useSettings } from '../../store/settings'
 import { Badge, Callout, Card, Empty, NumberField, PageHeader, SelectField, Stat, Tabs } from '../components'
 import { href, useRoute } from '../router'
 import { ConfidenceBadge, GenBadge, SpeciesName, SpeciesPicker } from '../species'
+import { useServerDay } from '../useServerDay'
 import './BreedingPage.css'
 
 type TabId = 'simulateur' | 'couples' | 'historique'
@@ -60,8 +71,6 @@ const ABILITY_IDS = Object.keys(ABILITY_LABELS) as Ability[]
 const PLAN_PAGE = 12
 const TABLE_PAGE = 30
 
-const longDate = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-
 // ---------- Contexte économique (prix, valeurs, makinas) ----------
 
 interface EconomyKit {
@@ -70,16 +79,22 @@ interface EconomyKit {
   makina: (kind: MakinaKind, family: FamilyId, generation: number) => MakinaCost
   genetonValue: number
   genetonFromPlayer: boolean
+  /** C_eff de la règle de prix de l'Optimakina (remplacement des parents − valeur des stériles). */
+  coupleCost: CoupleCostModel
 }
 
 function useEconomyKit(rules: Ruleset): EconomyKit {
-  const ctx = usePriceContext()
+  const priceCtx = usePriceContext()
   const mountOverrides = usePrices((s) => s.mounts)
   const generationOverrides = usePrices((s) => s.generations)
   const genetonOverride = usePrices((s) => s.genetonValue)
   const useDefaults = useSettings((s) => s.useDefaultPrices)
   const saleTax = useSettings((s) => s.saleTax)
+  const jobLevel = useSettings((s) => s.jobLevel)
+  const tier = useSettings((s) => s.preferredTier)
   return useMemo(() => {
+    // Niveau d'Éleveur : une makina ou un filet hors de portée du métier est payé au prix HDV (economy.md).
+    const ctx = { ...priceCtx, jobLevel }
     const mountPrices = { mountOverrides, generationOverrides, useDefaults }
     const vals = new Map<string, MountValuation>()
     const valuation = (id: number, level: number) => {
@@ -102,38 +117,44 @@ function useEconomyKit(rules: Ruleset): EconomyKit {
       return m
     }
     const g = genetonKamasValue(genetonOverride)
-    return { valueOf: (id: number, level: number) => valuation(id, level).best, valuation, makina, genetonValue: g.value, genetonFromPlayer: g.origin === 'joueur' }
-  }, [ctx, mountOverrides, generationOverrides, useDefaults, saleTax, genetonOverride, rules])
+    const coupleCost = economyCoupleCost({ ctx, mountPrices, saleTax, rules, jobLevel, tier })
+    return { valueOf: (id: number, level: number) => valuation(id, level).best, valuation, makina, genetonValue: g.value, genetonFromPlayer: g.origin === 'joueur', coupleCost }
+  }, [priceCtx, mountOverrides, generationOverrides, useDefaults, saleTax, genetonOverride, rules, jobLevel, tier])
 }
 
 // ---------- Takeza et Almanax ----------
 
 interface DayInfo {
+  /** Jour de jeu (AAAA-MM-JJ, heure du serveur). */
+  iso: string
   today: AlmanaxEffect | null
   isTakeza: boolean
   nextTakeza: string | null
   daysToTakeza: number | null
 }
 
+/** Jour de jeu courant, mis à jour à minuit (heure du serveur) et au retour sur l'onglet (useServerDay). */
 function useDayInfo(): DayInfo {
+  const todayIso = useServerDay()
   return useMemo(() => {
-    const todayIso = isoDay(Date.now())
     const today = almanaxOn(todayIso)
     const nextTakeza = TAKEZA_DATES.find((d) => d >= todayIso) ?? null
-    const daysToTakeza = nextTakeza ? Math.round((Date.parse(`${nextTakeza}T12:00:00`) - Date.parse(`${todayIso}T12:00:00`)) / 86_400_000) : null
-    return { today, isTakeza: !!today?.takeza, nextTakeza, daysToTakeza }
-  }, [])
+    const daysToTakeza = nextTakeza ? isoDaysBetween(todayIso, nextTakeza) : null
+    return { iso: todayIso, today, isTakeza: !!today?.takeza, nextTakeza, daysToTakeza }
+  }, [todayIso])
 }
 
-function formatIsoDay(iso: string): string {
-  return longDate.format(new Date(`${iso}T12:00:00`))
+/** Case « Jour Takeza » : cochée par défaut le jour Takeza ; le choix du joueur vaut pour la journée. */
+function useTakezaToggle(day: DayInfo): [boolean, (v: boolean) => void] {
+  const [state, setState] = useState({ day: day.iso, value: day.isTakeza })
+  if (state.day !== day.iso) setState({ day: day.iso, value: day.isTakeza })
+  const value = state.day === day.iso ? state.value : day.isTakeza
+  return [value, (v: boolean) => setState({ day: day.iso, value: v })]
 }
+
+const longDay = (iso: string) => formatIsoDay(iso, { year: true })
 
 // ---------- Petits composants ----------
-
-function capitalize(t: string): string {
-  return t.charAt(0).toUpperCase() + t.slice(1)
-}
 
 function shortName(s: Species): string {
   const prefix = `${FAMILIES[s.family].label} `
@@ -531,11 +552,11 @@ function SimulatorTab({
   const goalSpeciesId = useSettings((s) => s.goalSpeciesId)
   const goal = useSettings((s) => s.goal)
   const [makina, setMakina] = useState<MakinaChoice>('none')
-  const [takeza, setTakeza] = useState(day.isTakeza)
+  const [takeza, setTakeza] = useTakezaToggle(day)
   const [kappa, setKappa] = useState(1)
   const [targetMode, setTargetMode] = useState<'exact' | 'max'>('exact')
 
-  const sim = useMemo((): { an: PairAnalysis | null; error: string | null } => {
+  const sim = useMemo((): { an: PairAnalysis | null; error: string | null; ceff?: CoupleCostBreakdown } => {
     const pa = toBreeding(a)
     const pb = toBreeding(b)
     if (!pa || !pb) return { an: null, error: null }
@@ -549,11 +570,12 @@ function SimulatorTab({
         mountValue: kit.valueOf,
         makinaCost: kit.makina,
         genetonValue: kit.genetonValue,
+        coupleCost: kit.coupleCost.cost,
         kappa,
         targetMode,
         forcedMakina: makina === 'none' ? null : makina,
       })
-      return { an, error: null }
+      return { an, error: null, ceff: kit.coupleCost.breakdown(pa, pb) }
     } catch (e) {
       return { an: null, error: e instanceof Error ? e.message : String(e) }
     }
@@ -605,7 +627,7 @@ function SimulatorTab({
               {day.isTakeza
                 ? "Aujourd'hui est un jour Takeza (Almanax) : bonus activé automatiquement."
                 : day.nextTakeza
-                  ? `Prochain Takeza : ${formatIsoDay(day.nextTakeza)}${day.daysToTakeza !== null ? ` (dans ${day.daysToTakeza} j)` : ''}.`
+                  ? `Prochain Takeza : ${longDay(day.nextTakeza)}${day.daysToTakeza !== null ? ` (dans ${day.daysToTakeza} j)` : ''}.`
                   : 'Aucune date de Takeza connue à venir.'}
               {day.today?.babyAbility && !day.today.takeza && ` Aujourd'hui (${day.today.name}) : les bébés naissent avec la capacité ${ABILITY_LABELS[day.today.babyAbility]}.`}
             </div>
@@ -716,12 +738,8 @@ function SimulatorTab({
                     {an.makinaAdvice.reason}
                     {` Conseil calculé pour l'objectif « ${OBJECTIVE_LABELS[objectiveFromGoal(goal)].toLowerCase()} » de vos réglages ; la makina du résultat est celle que vous choisissez ci-dessus.`}
                   </span>
-                  {an.makinaAdvice.threshold !== null && (
-                    <div className="br-subtle">
-                      Prix maximal rentable : {formatKamas(an.makinaAdvice.threshold)} (= gain de {formatPercent(an.makinaAdvice.gain, 1)} × valeur d'une réussite{' '}
-                      {formatKamas(an.makinaAdvice.successValue)}).
-                    </div>
-                  )}
+                  <ThresholdLine advice={an.makinaAdvice} />
+                  {sim.ceff && <CoupleCostView bd={sim.ceff} />}
                 </div>
                 <div>
                   <strong>Capacité du bébé</strong>
@@ -762,6 +780,84 @@ function SimulatorTab({
 
       <HowItWorks rules={rules} />
     </div>
+  )
+}
+
+/** Seuil de la règle de prix de l'Optimakina, avec le critère réellement utilisé (C_eff, valeur des bébés ou génétons). */
+function ThresholdLine({ advice }: { advice: MakinaAdvice }) {
+  if (advice.threshold === null || advice.successBasis === null) return null
+  const bound = advice.thresholdIsUpperBound ? '≤ ' : ''
+  return (
+    <div className="br-subtle">
+      Prix maximal rentable : {bound}
+      {formatKamas(advice.threshold)} ={' '}
+      {advice.successBasis === 'c-eff' ? (
+        <>
+          C_eff {bound}
+          {formatKamas(advice.coupleCost)} × Δ {formatPercent(advice.gain, 1)} / p {formatPercent(advice.baseChance, 1)}
+        </>
+      ) : (
+        <>
+          {SUCCESS_BASIS_LABELS[advice.successBasis]} (gain de {formatPercent(advice.gain, 1)} × {formatKamas(advice.successValue)})
+        </>
+      )}
+      .{advice.thresholdIsUpperBound && ' Borne haute : une sortie des stériles n’est pas chiffrée, seul un refus est certain.'}
+    </div>
+  )
+}
+
+/** Détail de C_eff : remplacement de chaque parent − valeur résiduelle de la stérile. */
+function CoupleCostView({ bd }: { bd: CoupleCostBreakdown }) {
+  return (
+    <details className="br-details" style={{ marginTop: 6 }}>
+      <summary>
+        C_eff du couple : {bd.value === null ? 'inconnu' : `${bd.complete ? '≈ ' : '≤ '}${formatKamas(Math.max(0, bd.value))}`} (coût net d'une tentative)
+      </summary>
+      <div className="table-wrap" style={{ marginTop: 6 }}>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Parent</th>
+              <th className="num">Obtention</th>
+              <th className="num">XP</th>
+              <th className="num">Fécondation</th>
+              <th className="num">Valeur de la stérile</th>
+              <th className="num">Net</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bd.parents.map((p, i) => (
+              <tr key={i}>
+                <td>
+                  <SpeciesName id={p.speciesId} /> <span className="muted">niv. {p.level}</span>
+                </td>
+                <td className="num" title={p.acquisitionMethod ? ACQUISITION_METHOD_LABELS[p.acquisitionMethod] : undefined}>
+                  {p.acquisition === null ? <span className="muted">inconnue</span> : formatKamas(p.acquisition)}
+                  {p.acquisitionMethod && <div className="br-subtle">{ACQUISITION_METHOD_LABELS[p.acquisitionMethod]}</div>}
+                </td>
+                <td className="num">{p.leveling === null ? <span className="muted">inconnue</span> : formatKamas(p.leveling)}</td>
+                <td className="num">{p.fertility === null ? <span className="muted">inconnue</span> : formatKamas(p.fertility)}</td>
+                <td className="num">
+                  {p.residual === null ? <span className="muted">inconnue</span> : `${p.residualComplete ? '' : '≥ '}${formatKamas(p.residual)}`}
+                  {p.residualKind && <div className="br-subtle">{p.residualKind === 'clone' ? '½ clone' : p.residualKind}</div>}
+                </td>
+                <td className="num">{p.net === null ? '—' : `${p.residualComplete ? '' : '≤ '}${formatKamas(p.net)}`}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="br-subtle">
+        C_eff = Σ (obtention d'une monture fertile niv. 1 + XP jusqu'au niveau du parent + fécondation, lot typique de 10) − valeur résiduelle de chaque stérile
+        (meilleure sortie nette, ou ½ clone − refécondation). Obtention : capture pour une G1, sinon la moins chère entre sa valeur actuelle et sa production estimée.
+        {bd.missing.length > 0 && (
+          <>
+            {' '}
+            À chiffrer : {bd.missing.join(' ; ')} — <PriceLink />.
+          </>
+        )}
+      </div>
+    </details>
   )
 }
 
@@ -880,9 +976,9 @@ function HowItWorks({ rules }: { rules: Ruleset }) {
       </p>
       <ol>
         <li>
-          Arbre de chaque parent = lui-même (poids {POSITION_WEIGHT_SELF}) + ses deux parents (poids {POSITION_WEIGHT_PARENT} chacun), multipliés par le poids génétique du
+          Arbre d'un parent = lui-même (poids {POSITION_WEIGHT_SELF}) + ses deux parents (poids {POSITION_WEIGHT_PARENT} chacun), multipliés par le poids génétique du
           client (90 pour les monocolores Dragodinde et Muldo, 20 pour les bicolores, la Dorée et les Muldos G9, 1 pour tous les Volkornes). Les doublons s'additionnent ;
-          chaque arbre est ramené à 1. Les grands-parents ne comptent pas.
+          chaque arbre est ramené à 1. Les parents de ceux-ci (arrière-grands-parents du bébé) ne comptent pas.
         </li>
         <li>
           Masse naturelle : chaque membre garde son poids, et chaque paire (membre de A, membre de B) qui possède un croisement ajoute pA × pB × κ à l'enfant.
@@ -892,7 +988,8 @@ function HowItWorks({ rules }: { rules: Ruleset }) {
           {formatPercent(rules.optimakinaBonus, 0)} + Takeza 20 %), au prorata de leur masse ; les autres issues se partagent le reste. S'il n'y a pas d'autre issue, B = 100 %.
         </li>
         <li>
-          Génétons : barème(parent A) + barème(parent B), seulement si le bébé dépasse toutes les générations des deux arbres (parents et grands-parents compris).
+          Génétons : barème(parent A) + barème(parent B), seulement si le bébé dépasse toutes les générations des deux arbres (les 2 parents et leurs 4 parents,
+          soit les parents et grands-parents du bébé).
         </li>
         <li>
           XP d'Éleveur = {rules.matingXpPerGeneration} × (génération A + génération B) × nombre de bébés. Makina : une seule, même famille, génération ≥ génération cible.
@@ -964,7 +1061,7 @@ function CouplesTab({ mounts, rules, kit, day, onSimulate }: { mounts: Mount[]; 
 
   const [objective, setObjective] = useState<PairingObjective>(() => objectiveFromGoal(settingsGoal))
   const [policy, setPolicy] = useState<MakinaPolicy>(useOptimakina ? 'auto' : 'jamais')
-  const [takeza, setTakeza] = useState(day.isTakeza)
+  const [takeza, setTakeza] = useTakezaToggle(day)
   const [familyFilter, setFamilyFilter] = useState<FamilyId | 'toutes'>('toutes')
   const [includeFertile, setIncludeFertile] = useState(false)
   const [goalId, setGoalId] = useState<number | null>(settingsGoalSpecies)
@@ -990,11 +1087,13 @@ function CouplesTab({ mounts, rules, kit, day, onSimulate }: { mounts: Mount[]; 
         mountValue: kit.valueOf,
         makinaCost: kit.makina,
         genetonValue: kit.genetonValue,
+        coupleCost: kit.coupleCost.cost,
         includeFertile,
       }),
     [pool, rules, objective, goalId, policy, takeza, kit, includeFertile],
   )
   const plan = useMemo(() => bestDisjointPairs(suggestions), [suggestions])
+  const takezaPairs = plan.filter((s) => s.result.targetGeneration >= TAKEZA_PRIORITY_GENERATION).length
   const totals = useMemo(() => planTotals(plan, kit), [plan, kit])
   const inPlan = new Set(plan.flatMap((s) => [s.a.id, s.b.id]))
   const planKeys = new Set(plan.map((s) => s.key))
@@ -1051,7 +1150,7 @@ function CouplesTab({ mounts, rules, kit, day, onSimulate }: { mounts: Mount[]; 
               <ul className="br-notes ok">
                 {afterClone.map((p) => (
                   <li key={`${p.a.id}-${p.b.id}`}>
-                    {mountName(p.a)} + {mountName(p.b)} (G{p.generation}) : {p.sameSpecies ? 'même couleur, résultat certain' : 'couleurs différentes, 50/50'}
+                    {mountName(p.a)} + {mountName(p.b)} (G{p.generation}) : {clonePairSummary(p)}
                   </li>
                 ))}
               </ul>
@@ -1120,12 +1219,13 @@ function CouplesTab({ mounts, rules, kit, day, onSimulate }: { mounts: Mount[]; 
           {objective === 'genetons' && `Score = génétons attendus par accouplement (1 généton ≈ ${formatKamas(kit.genetonValue)}${kit.genetonFromPlayer ? ', votre valeur' : ', valeur par défaut'}).`}
           {objective === 'profit' && 'Score = valeur attendue des bébés (niveau 1) + génétons − makina. Les parents deviennent stériles quel que soit le couple : leur valeur résiduelle ne change pas le classement.'}{' '}
           {policy === 'auto' &&
-            'Optimakina automatique : rentable si prix < C_eff × Δ / p ; à défaut de prix complet, dès la cible G6 ou sur une étape de votre objectif.'}
+            `Optimakina automatique (M-OPTI-01) : achetée si son prix < C_eff × Δ / p (C_eff = remplacement des deux parents − valeur de leurs stériles, calculé avec vos prix ; à défaut, écart de valeur des bébés ou de génétons). Si le prix ou cette valeur manque : dès la cible G${OPTIMAKINA_SYSTEMATIC_GENERATION}, et sur une étape G4–G5 de votre objectif ; jamais en G2–G3 sans prix.`}
         </div>
         {!day.isTakeza && day.nextTakeza && day.daysToTakeza !== null && day.daysToTakeza <= 21 && (
           <Callout>
-            <strong>Takeza le {formatIsoDay(day.nextTakeza)}</strong> (dans {day.daysToTakeza} j) : +20 % de génération cible. Gardez vos couples à fort enjeu (G8 et plus) pour ce
-            jour-là et préparez-les féconds la veille (M-TAKEZA-01).
+            <strong>Takeza le {longDay(day.nextTakeza)}</strong> (dans {day.daysToTakeza} j) : +20 % de génération cible. Gardez pour ce jour-là les couples dont la cible est ≥ G
+            {TAKEZA_PRIORITY_GENERATION} (fort enjeu) et préparez-les féconds la veille (M-TAKEZA-01).
+            {takezaPairs > 0 && ` ${takezaPairs} couple${takezaPairs > 1 ? 's' : ''} du plan ${takezaPairs > 1 ? 'sont concernés' : 'est concerné'}.`}
           </Callout>
         )}
       </Card>
@@ -1187,7 +1287,10 @@ function CouplesTab({ mounts, rules, kit, day, onSimulate }: { mounts: Mount[]; 
             actions={plan.length > 0 && <span className="br-subtle">chaque monture une seule fois · {OBJECTIVE_LABELS[objective].toLowerCase()}</span>}
           >
             {plan.length === 0 ? (
-              <NoPlanExplanation fecund={fecund} fertile={fertile} includeFertile={includeFertile} suggestions={suggestions} objective={objective} />
+              <>
+                <NoPlanExplanation fecund={fecund} fertile={fertile} includeFertile={includeFertile} suggestions={suggestions} objective={objective} />
+                <WaitingList suggestions={suggestions} plan={plan} mounts={mounts} />
+              </>
             ) : (
               <>
                 <p className="br-subtle">
@@ -1216,6 +1319,7 @@ function CouplesTab({ mounts, rules, kit, day, onSimulate }: { mounts: Mount[]; 
                     </ul>
                   </div>
                 )}
+                <WaitingList suggestions={suggestions} plan={plan} mounts={mounts} />
                 {idle.length > 0 && (
                   <div className="br-subtle" style={{ marginTop: 10 }}>
                     Sans couple dans ce plan ({idle.length}) : {idle.slice(0, 12).map((m) => `${GENDER_ICONS[m.gender]} ${mountName(m)}`).join(', ')}
@@ -1229,7 +1333,9 @@ function CouplesTab({ mounts, rules, kit, day, onSimulate }: { mounts: Mount[]; 
           {clonePairs.length > 0 && (
             <Callout>
               <strong>{clonePairs.length} clonage{clonePairs.length > 1 ? 's' : ''} possible{clonePairs.length > 1 ? 's' : ''}</strong> parmi vos stériles de même génération (
-              {clonePairs.filter((p) => p.sameSpecies).length} de même couleur, résultat certain). Clonez juste après les accouplements : <a href={href('montures')}>Mes montures</a>.
+              {clonePairs.filter((p) => p.sameSpecies).length} de même couleur, dont {clonePairs.filter((p) => p.certain).length} au résultat certain : même couleur, même sexe et
+              même arbre ; sinon le clone garde le sexe et la généalogie de la monture conservée, 50/50). Clonez juste après les accouplements :{' '}
+              <a href={href('montures')}>Mes montures</a>.
             </Callout>
           )}
 
@@ -1277,7 +1383,9 @@ function CouplesTab({ mounts, rules, kit, day, onSimulate }: { mounts: Mount[]; 
                           </span>
                         </td>
                         <td className="num">{formatPercent(s.result.targetChance, 1)}</td>
-                        <td>{s.makina ? <Badge tone="gold">{MAKINA_LABELS[s.makina]} G{s.result.makinaGenerationRequired}</Badge> : <span className="muted">—</span>}</td>
+                        <td title={s.makinaAdvice.reason}>
+                          {s.makina ? <Badge tone="gold">{MAKINA_LABELS[s.makina]} G{s.result.makinaGenerationRequired}</Badge> : <span className="muted">—</span>}
+                        </td>
                         <td className="num">{formatNumber(s.result.expectedGenetons, 1)}</td>
                         <td className="num">
                           {s.expectedValue !== undefined ? formatKamas(s.expectedValue, true) : '—'}
@@ -1319,6 +1427,37 @@ function CouplesTab({ mounts, rules, kit, day, onSimulate }: { mounts: Mount[]; 
   )
 }
 
+/** Montures utiles à l'objectif gardées hors du plan : leur partenaire du plan est encore en préparation. */
+function WaitingList({ suggestions, plan, mounts }: { suggestions: PairSuggestion[]; plan: PairSuggestion[]; mounts: Mount[] }) {
+  const inPlan = new Set(plan.flatMap((s) => [s.a.id, s.b.id]))
+  const byId = new Map(mounts.map((m) => [m.id, m]))
+  const seen = new Set<string>()
+  const items: { m: Mount; partner: Mount; targets: number[] }[] = []
+  for (const s of suggestions)
+    for (const w of s.waitFor) {
+      if (inPlan.has(w.mountId) || seen.has(w.mountId)) continue
+      const m = byId.get(w.mountId)
+      const partner = byId.get(w.partnerId)
+      if (!m || !partner) continue
+      seen.add(w.mountId)
+      items.push({ m, partner, targets: w.targetSpecies })
+    }
+  if (!items.length) return null
+  return (
+    <Callout>
+      <strong>En attente d'une partenaire de l'objectif</strong>
+      <ul className="br-notes">
+        {items.map(({ m, partner, targets }) => (
+          <li key={m.id}>
+            {GENDER_ICONS[m.gender]} {mountName(m)} : ne l'accouplez pas ailleurs — attendez que {GENDER_ICONS[partner.gender]} {mountName(partner)} soit féconde (
+            {targets.map((id) => getSpecies(id)?.name ?? `#${id}`).join(', ')}). Suivez ses jauges dans <a href={href('enclos')}>Enclos</a>.
+          </li>
+        ))}
+      </ul>
+    </Callout>
+  )
+}
+
 function NoPlanExplanation({
   fecund,
   fertile,
@@ -1355,11 +1494,19 @@ function NoPlanExplanation({
         <a href={href('montures')}>Mes montures</a>.
       </Empty>
     )
+  const consuming = suggestions.filter((s) => s.consumesGoalParents.length > 0).length
+  if (consuming === suggestions.length)
+    return (
+      <Empty>
+        {suggestions.length} couple{suggestions.length > 1 ? 's' : ''} possible{suggestions.length > 1 ? 's' : ''}, mais aucun n'est conseillé : {suggestions.length > 1 ? 'chacun consommerait' : 'il consommerait'}{' '}
+        une monture utile à votre objectif sur un croisement hors objectif. Gardez-la pour son croisement du plan (détail dans la liste ci-dessous).
+      </Empty>
+    )
   return (
     <Empty>
       {suggestions.length} couple{suggestions.length > 1 ? 's' : ''} possible{suggestions.length > 1 ? 's' : ''}, mais aucun ne rapporte{' '}
-      {objective === 'genetons' ? 'de généton' : objective === 'profit' ? 'de valeur positive' : 'de bébé nouveau'} selon l'objectif choisi. Essayez un autre objectif ou consultez
-      la liste complète ci-dessous.
+      {objective === 'genetons' ? 'de généton' : objective === 'profit' ? 'de valeur positive' : 'de bébé nouveau'} selon l'objectif choisi
+      {consuming > 0 ? ' (ou il consommerait une monture utile à votre objectif hors objectif)' : ''}. Essayez un autre objectif ou consultez la liste complète ci-dessous.
     </Empty>
   )
 }
@@ -1393,6 +1540,11 @@ function PairItem({
         <MountLabel m={s.b} />
         <span className="spacer" />
         {!s.ready && <Badge tone="warn">à préparer</Badge>}
+        {s.stackAttempts !== null && s.stackAttempts < STACK_MIN_ATTEMPTS && (
+          <Badge tone="warn" title={`Accumuler avant de tenter (M-STACK-01) : produisez des parents pour au moins ${STACK_MIN_ATTEMPTS} tentatives.`}>
+            {s.stackAttempts} tentative{s.stackAttempts > 1 ? 's' : ''} possible{s.stackAttempts > 1 ? 's' : ''}
+          </Badge>
+        )}
         {s.goalChance > 0 && goal && <Badge tone="gold">🎯 {shortName(goal)}</Badge>}
         <Badge tone="info" title="Score selon l'objectif">
           {scoreLabel(objective, s.score)}
@@ -1426,6 +1578,7 @@ function PairItem({
             ) : (
               <span className="muted">aucune</span>
             )}
+            <div className="br-subtle">{s.makinaAdvice.reason}</div>
           </dd>
           <dt>Génétons</dt>
           <dd>
@@ -1439,9 +1592,6 @@ function PairItem({
           <dt>XP</dt>
           <dd>{formatNumber(r.jobXp)}</dd>
         </dl>
-      </div>
-      <div className="br-subtle" style={{ marginTop: 6 }}>
-        {s.makinaAdvice.reason}
       </div>
       {(s.reasons.length > 0 || s.warnings.length > 0) && (
         <details className="br-details">

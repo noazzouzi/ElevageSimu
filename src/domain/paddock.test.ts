@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { gaugeDrainSeconds, gaugeRate, gaugeTier, serenityBand, simulatePaddock, validateActiveGauges, type SimMount } from './paddock'
 import { decideGauges, planFertility } from './fertility'
+import { RULESETS } from './rules'
 
 const mount = (over: Partial<SimMount> = {}): SimMount => ({
   id: 'm1',
@@ -100,8 +101,8 @@ describe('simulatePaddock', () => {
 })
 
 describe('planFertility', () => {
-  it('mène une monture neutre à la fécondité au tier 4 en ≈ 2 h 47', () => {
-    const plan = planFertility([mount({ serenity: 500 })], { tier: 4 })
+  it('mène une monture neutre à la fécondité au tier 4 en ≈ 2 h 47 (sérénité aussi au palier 4)', () => {
+    const plan = planFertility([mount({ serenity: 500 })], { tier: 4, serenityTier: 4 })
     expect(plan.warnings).toEqual([])
     expect(plan.fecundAt.m1).toBeDefined()
     // maturité + amour en parallèle (5 000 s) puis baffeur pour passer < 0 puis endurance (5 000 s)
@@ -124,5 +125,22 @@ describe('planFertility', () => {
     const group = Array.from({ length: 10 }, (_, i) => mount({ id: `g${i}`, serenity: -1_500 + i * 100 }))
     const plan = planFertility(group, { tier: 3, withXp: true })
     expect(Object.keys(plan.fecundAt)).toHaveLength(10)
+  })
+})
+
+describe('simulatePaddock — niveaux d’une autre version des règles (R9)', () => {
+  it('une jauge saisie à 150 000 (3.7) et lue en 3.6 se vide en même temps que gaugeDrainSeconds (plafond 3.6)', () => {
+    const R36 = RULESETS['3.6']
+    const sim = simulatePaddock({
+      gauges: { baffeur: 0, caresseur: 0, foudroyeur: 0, abreuvoir: 0, dragofesse: 0, mangeoire: 150_000 },
+      active: ['mangeoire'],
+      mounts: [mount({ canGainXp: true })],
+      maxSeconds: 200_000,
+      stopWhenIdle: false,
+      rules: R36,
+    })
+    const empty = sim.events.find((e) => e.kind === 'gauge-empty' && e.gauge === 'mangeoire')
+    expect(empty).toBeDefined()
+    expect(Math.abs(empty!.t - gaugeDrainSeconds(150_000, 0, R36))).toBeLessThanOrEqual(10)
   })
 })

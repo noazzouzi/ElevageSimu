@@ -1,10 +1,22 @@
-import { describe, expect, it } from 'vitest'
-import { FUELS, STRATEGY } from '../data'
-import { formatClock } from '../lib/format'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { FUELS, SPECIES, STRATEGY } from '../data'
+import { serverDayStart } from './almanax'
+import { formatClock, formatDuration } from '../lib/format'
 import {
   adviceHorizon,
   adviseNow,
+  analysisCacheStats,
   analyzeState,
+  analyzeStateCached,
+  capturesPerFight,
+  clearAnalysisCache,
+  goalProgramConfig,
+  typicalBatchSeconds,
+  jobStatus,
+  largestRemainder,
+  ownedRecipeSupply,
+  remainingProgram,
+  sessionsPerDayFor,
   bestNetKind,
   captureNeeds,
   captureSpot,
@@ -31,7 +43,10 @@ import {
   type AdvisorSettings,
 } from './advisor'
 import { cheapestRecipe } from './breedingPath'
-import type { MountPriceContext } from './economy'
+import { makinaCost, type MountPriceContext } from './economy'
+import { breed } from './genetics'
+import { TAKEZA_PRIORITY_GENERATION } from './pairing'
+import { runProgram } from './programSim'
 import type { FertilityStep } from './fertility'
 import type { PriceContext } from './pricing'
 import { RULESETS } from './rules'
@@ -39,6 +54,11 @@ import type { GaugeId, Mount, PaddockState } from './types'
 
 const R36 = RULESETS['3.6']
 const R37 = RULESETS['3.7']
+const sid = (name: string): number => {
+  const s = SPECIES.find((x) => x.name === name)
+  if (!s) throw new Error(`introuvable : ${name}`)
+  return s.id
+}
 
 // Muldos
 const DORE = 94
@@ -154,6 +174,9 @@ describe('utilitaires', () => {
     expect(bestNetKind(200)).toBe('multiplicateur_renforce')
     expect(captureSpot('dragodinde')?.subarea).toBe('Territoire des dragodindes sauvages')
     expect(captureSpot('muldo')?.subarea).toBe('Bassin des Muldos')
+    // Note des données (R14) : la Dorée ne se capture que dans cette zone, archimonstres listés.
+    expect(captureSpot('dragodinde')?.note).toMatch(/dorée sauvage : uniquement ici/i)
+    expect(captureSpot('dragodinde')?.note).toMatch(/archimonstres/)
   })
 
   it('remplace les identifiants de règles par leur titre', () => {
@@ -332,6 +355,19 @@ describe('adviseNow', () => {
     expect(ab === undefined || ab.priority > f.priority).toBe(true)
   })
 
+  it('niveaux saisis sous une autre version des règles (R9) : « à vérifier », ni recharge ni « jauge vide »', () => {
+    const lot = Array.from({ length: 10 }, () => mk(DORE, { serenity: -1_000, location: { kind: 'enclos', paddock: 1 } }))
+    const g = { ...zeroGauges(), foudroyeur: 150_000, abreuvoir: 30_000 }
+    const p1 = { gauges: g, active: ['foudroyeur', 'abreuvoir'] as GaugeId[], updatedAt: NOW, gaugeRulesets: { foudroyeur: '3.7', abreuvoir: '3.7' } } as Partial<PaddockState>
+    const list = adviseNow(input({ mounts: lot, paddocks: paddocks([p1]) }))
+    expect(list.find((a) => a.id === 'jauges-version:1:3.6')?.title).toBe('Enclos 1 : niveaux de jauges à vérifier')
+    expect(list.some((a) => a.id.startsWith('recharge:1:') || a.id.startsWith('jauge-vide:1:'))).toBe(false)
+    // Mêmes niveaux saisis en 3.6 : conseil de recharge normal.
+    const same = adviseNow(input({ mounts: lot, paddocks: paddocks([{ ...p1, gauges: { ...g, foudroyeur: 3_000 }, gaugeRulesets: { foudroyeur: '3.6', abreuvoir: '3.6' } } as Partial<PaddockState>]) }))
+    expect(same.some((a) => a.id.startsWith('jauges-version:1'))).toBe(false)
+    expect(same.some((a) => a.id.startsWith('recharge:1:foudroyeur'))).toBe(true)
+  })
+
   it('jauge vide et jauge inutile', () => {
     const lot = Array.from({ length: 10 }, () => mk(DORE, { serenity: -3_000, location: { kind: 'enclos', paddock: 1 } }))
     const g = { ...zeroGauges(), foudroyeur: 0, dragofesse: 5_000 }
@@ -400,7 +436,12 @@ describe('adviseNow', () => {
     const prep = adviseNow(input({ mounts }))
     const t = prep.find((a) => a.id === 'almanax:2026-10-12:takeza-prep')
     expect(t?.priority).toBe(3)
-    expect(t?.dueAt).toBe(new Date(2026, 9, 12).getTime())
+    // Début du jour de jeu (minuit à Paris), pas minuit local du navigateur (R7).
+    expect(t?.dueAt).toBe(serverDayStart('2026-10-12'))
+    // Durée d'un lot typique du planificateur (comme Rentabilité / Enclos), pas le minimum théorique,
+    // et heure limite de démarrage (ux F8).
+    expect(t?.detail).toContain(formatDuration(typicalBatchSeconds(2, R36)))
+    expect(t?.detail).toMatch(/démarrez-le au plus tard/)
     expect(t && adviceHorizon(t, NOW)).toBe('semaine')
     expect(t?.allDay).toBe(true)
 
@@ -486,10 +527,17 @@ describe('adviseNow', () => {
     expect(cap).toBeDefined()
     expect(cap.title).toContain('pour Muldo Roux')
     expect(cap.items?.some((i) => i.id === `g1-${DORE}`)).toBe(true)
-    expect(cap.items?.some((i) => i.id === `g1-${POURPRE}`)).toBe(false)
+    // La Doré et Pourpre possédée couvre la recette idéale de son côté (Pourpre : « encore 0 sur 1 »),
+    // mais pas toute la demande attendue (l'accouplement du haut peut rater) : moins de Pourpre que de Doré.
+    const status = goalStatus(ROUX, mounts, { parentLevel: 40, useOptimakina: true, rules: R36 })
+    const need = (id: number) => status?.captures.find((c) => c.speciesId === id)
+    expect(need(POURPRE)?.idealRemaining).toBe(0)
+    expect(need(POURPRE)!.expectedRaw).toBeLessThan(need(DORE)!.expectedRaw)
     expect(cap.items?.find((i) => i.id === 'zone')?.text).toContain('Bassin des Muldos')
     expect(cap.items?.find((i) => i.id === 'filet')?.text).toContain('Filet de capture universel')
-    expect(cap.confidence).toBe('medium')
+    // Sans simulation : modèle analytique annoncé comme borne haute (estimation grossière).
+    expect(cap.title).toContain('jusqu’à')
+    expect(cap.confidence).toBe('low')
   })
 
   it('métier : rien à conseiller au niveau 200', () => {
@@ -523,6 +571,406 @@ describe('adviseNow', () => {
     const ms = performance.now() - t0
     expect(list.length).toBeGreaterThan(3)
     expect(ms).toBeLessThan(8_000)
+  })
+})
+
+// ---------- Revue C2 : plan d'accouplement, sorts, captures, plans d'enclos, métier, cache ----------
+
+describe('conseiller : génétons, Optimakina, partenaires, sorties (revue)', () => {
+  it('génétons d’un couple Reproducteur comptés une seule fois (F5/ECO-09)', () => {
+    const mounts = [fecund(DORE, { gender: 'male', ability: 'reproducteur' }), fecund(INDIGO, { gender: 'femelle' })]
+    const inp = input({ mounts, settings: { jobLevel: 10 } })
+    const a = analyzeState(inp)
+    const r = breed({ speciesId: DORE, level: 1, parents: [], ability: 'reproducteur' }, { speciesId: INDIGO, level: 1, parents: [] }, { rules: R36 })
+    expect(r.babies).toBe(2)
+    expect(a.pairs).toHaveLength(1)
+    expect(a.expectedGenetons).toBeCloseTo(r.expectedGenetons, 6)
+    expect(a.expectedGenetons).toBeCloseTo(a.pairs.reduce((n, p) => n + p.result.expectedGenetons, 0), 9)
+    const item = byCat(adviseNow(inp, a), 'accouplement')[0].items?.find((i) => i.id === a.pairs[0].key)
+    expect(item?.hint).toContain(`≈ ${r.expectedGenetons.toFixed(1).replace('.', ',')} généton`)
+  })
+
+  it('Optimakina : la règle de prix décide aussi en « succès » (C_eff branché, F1/ECO-08)', () => {
+    const AMANDE = sid('Dragodinde Amande')
+    const DOREE = sid('Dragodinde Dorée')
+    const opti2 = makinaCost('optimakina', 'dragodinde', 2, fullCtx, R36).makina!.id
+    const mounts = [fecund(AMANDE, { gender: 'male', level: 40 }), fecund(DOREE, { gender: 'femelle', level: 40 })]
+    for (const goal of ['succes', 'mixte', 'profit'] as const) {
+      const inp = input({
+        mounts,
+        priceCtx: { ...fullCtx, overrides: { ...fullCtx.overrides, [String(opti2)]: 2_000_000 } },
+        settings: { goal, jobLevel: 200, family: 'dragodinde', goalSpeciesId: sid('Dragodinde Émeraude') },
+      })
+      const a = analyzeState(inp)
+      expect(a.pairs[0].makina, goal).toBeNull()
+      expect(a.pairs[0].makinaAdvice.basis, goal).toBe('regle-prix')
+      const hint = byCat(adviseNow(inp, a), 'accouplement')[0].items?.find((i) => i.id === a.pairs[0].key)?.hint ?? ''
+      expect(hint).not.toContain('Optimakina G2 conseillée')
+      expect(hint).toContain('≥ seuil')
+    }
+    // Bon marché mais C_eff seulement borné (vente des stériles non chiffrée) : seul un refus est certain,
+    // donc heuristique — jamais une cible G2 sans prix décisif.
+    const cheapCtx = { ...fullCtx, overrides: { ...fullCtx.overrides, [String(opti2)]: 1 } }
+    const settings = { jobLevel: 200, family: 'dragodinde' as const, goalSpeciesId: sid('Dragodinde Émeraude') }
+    const bounded = analyzeState(input({ mounts, priceCtx: cheapCtx, settings }))
+    expect(bounded.pairs[0].makinaAdvice.thresholdIsUpperBound).toBe(true)
+    expect(bounded.pairs[0].makina).toBeNull()
+    // Prix des montures saisis (C_eff complet) : la règle de prix la conseille, seuil chiffré à l'appui.
+    const priced: MountPriceContext = { mountOverrides: Object.fromEntries([AMANDE, DOREE].flatMap((id) => [[`${id}|1`, 100], [`${id}|100`, 100]])), generationOverrides: {}, useDefaults: true }
+    const cheap = input({ mounts, priceCtx: cheapCtx, mountPrices: priced, settings })
+    const ac = analyzeState(cheap)
+    expect(ac.pairs[0].makinaAdvice.basis).toBe('regle-prix')
+    expect(ac.pairs[0].makina).toBe('optimakina')
+    expect(byCat(adviseNow(cheap, ac), 'accouplement')[0].items?.find((i) => i.id === ac.pairs[0].key)?.hint).toContain('< seuil')
+  })
+
+  it('partenaire de l’objectif en préparation : pas de croisement hors objectif, « attendre » (F2)', () => {
+    const CORAIL = sid('Muldo Corail')
+    const tree = cheapestRecipe(CORAIL)!
+    const [l, r] = tree.crossing!
+    const OFF = sid('Muldo Roux et Émeraude')
+    const topA = fecund(l, { gender: 'male', level: 40, name: 'TOP-A' })
+    const topB = mk(r, { gender: 'femelle', level: 40, name: 'TOP-B' })
+    const off = fecund(OFF, { gender: 'femelle', level: 40, name: 'OFF' })
+    for (const goal of ['succes', 'mixte'] as const) {
+      const inp = input({ mounts: [topA, topB, off], settings: { goal, jobLevel: 200, goalSpeciesId: CORAIL } })
+      const a = analyzeState(inp)
+      expect(a.pairs.some((p) => p.a.id === topA.id && p.b.id === off.id), goal).toBe(false)
+      expect(a.waiting).toEqual([expect.objectContaining({ mountId: topA.id, partnerId: topB.id })])
+      const wait = adviseNow(inp, a)
+        .flatMap((x) => x.items ?? [])
+        .find((i) => i.id === `attendre-${topA.id}`)
+      expect(wait?.text).toContain('Attendre que TOP-B soit féconde')
+    }
+  })
+
+  it('monture prévue au plan : jamais en sortie immédiate, sa sortie arrive « ensuite » (F3)', () => {
+    // Objectif « kamas » sans monture visée : deux G10 fécondes (sans usage) sont accouplées pour leur bébé.
+    const mounts = [fecund(AIGUE_AMANDE, { gender: 'male', level: 40 }), fecund(340, { gender: 'femelle', level: 40 })]
+    const inp = input({ mounts, settings: { goal: 'profit', jobLevel: 10 } })
+    const a = analyzeState(inp)
+    expect(a.pairs).toHaveLength(1)
+    for (const m of mounts) expect(a.fates.get(m.id)?.action).toBe('accoupler')
+    const list = adviseNow(inp, a)
+    const exitIds = byCat(list, 'vente').flatMap((x) => x.items?.map((i) => i.id) ?? [])
+    for (const m of mounts) expect(exitIds).not.toContain(m.id)
+    const item = byCat(list, 'accouplement')[0].items?.find((i) => i.id === a.pairs[0].key)
+    expect(item?.hint).toMatch(/ensuite : (vendre|extraire|briser) /)
+  })
+
+  it('M-STACK-01 : un seul couple G8 × G8 de l’objectif est signalé, trois couples non (F10)', () => {
+    const EMERAUDE = sid('Dragodinde Émeraude')
+    const [l, r] = cheapestRecipe(EMERAUDE)!.crossing!
+    const one = [fecund(l, { gender: 'male', level: 40 }), fecund(r, { gender: 'femelle', level: 40 })]
+    const settings = { jobLevel: 200, family: 'dragodinde' as const, goalSpeciesId: EMERAUDE }
+    const a1 = analyzeState(input({ mounts: one, settings }))
+    const hint1 = byCat(adviseNow(input({ mounts: one, settings }), a1), 'accouplement')[0].items?.find((i) => i.id === a1.pairs[0].key)
+    expect(hint1?.hint).toContain('Accumuler avant de tenter')
+    expect(hint1?.tone).toBe('warn')
+    const three = [...[1, 2, 3].map(() => fecund(l, { gender: 'male', level: 40 })), ...[1, 2, 3].map(() => fecund(r, { gender: 'femelle', level: 40 }))]
+    const a3 = analyzeState(input({ mounts: three, settings }))
+    const items3 = byCat(adviseNow(input({ mounts: three, settings }), a3), 'accouplement')[0].items ?? []
+    expect(a3.pairs.length).toBe(3)
+    expect(items3.some((i) => i.hint?.includes('Accumuler avant de tenter'))).toBe(false)
+  })
+
+  it('montée de niveau d’une monture de surplus : coût du lot réel (ECO-10)', () => {
+    const VOLK = sid('Volkorne Indigo')
+    const mountPrices: MountPriceContext = { mountOverrides: { [`${VOLK}|1`]: 1500 }, generationOverrides: {}, useDefaults: true }
+    const lone = [mk(VOLK, { gender: 'male', level: 10, fertility: 'sterile' })]
+    const settings = { goal: 'profit' as const, goalSpeciesId: sid('Muldo Doré et Ébène'), jobLevel: 10, preferredTier: 1 as const }
+    const a1 = analyzeState(input({ mounts: lone, mountPrices, priceCtx: { overrides: {}, useDefaults: true }, settings }))
+    expect(a1.fates.get(lone[0].id)?.action).not.toBe('monter')
+    const ten = Array.from({ length: 10 }, (_, i) => mk(VOLK, { gender: i % 2 ? 'male' : 'femelle', level: 10, fertility: 'sterile' }))
+    const a10 = analyzeState(input({ mounts: ten, mountPrices, priceCtx: { overrides: {}, useDefaults: true }, settings }))
+    const monter = [...a10.fates.values()].filter((f) => f.action === 'monter')
+    if (monter.length) expect(monter[0].reason).toContain('si vous montez')
+  })
+})
+
+describe('captures vers l’objectif : couverture probabiliste, sexes, porteuses, simulation (revue)', () => {
+  const EMERAUDE = sid('Dragodinde Émeraude')
+  const opts = { parentLevel: 40, useOptimakina: true, rules: R36 }
+
+  it('arrondi au plus fort reste : jamais plus de captures restantes que l’effort (F4)', () => {
+    // 405,57 → 406 au total : le plus fort reste (0,38) prend l'unité restante.
+    expect(largestRemainder([148.06, 142.38, 115.13])).toEqual([148, 143, 115])
+    expect(largestRemainder([0.4, 0.4, 0.4]).reduce((a, b) => a + b, 0)).toBe(1)
+    const g = goalStatus(EMERAUDE, [], opts)!
+    expect(g.capturesRemaining).toBeLessThanOrEqual(Math.round(g.effort!.captures))
+    expect(g.captureBasis).toBe('analytique')
+  })
+
+  it('captures calibrées par la simulation Monte-Carlo quand elle est fournie (F4, F17)', () => {
+    const cfg = goalProgramConfig({ ...SETTINGS, goalSpeciesId: EMERAUDE, jobLevel: 200 }, R36, { runs: 8 })!
+    const sim = runProgram(cfg)
+    const g = goalStatus(EMERAUDE, [], { ...opts, sim })!
+    expect(g.captureBasis).toBe('simulation')
+    expect(Math.abs(g.capturesRemaining - sim.metrics.captures.mean) / sim.metrics.captures.mean).toBeLessThan(0.2)
+    // Une simulation d'un autre objectif est ignorée.
+    expect(goalStatus(sid('Dragodinde Turquoise'), [], { ...opts, sim })!.captureBasis).toBe('analytique')
+    // Conseil de capture : « ≈ N » (simulation), et non « jusqu'à » (borne haute).
+    const mounts = [mk(sid('Dragodinde Dorée'), { gender: 'male' })]
+    const list = adviseNow(input({ mounts, goalSim: sim, settings: { jobLevel: 200, family: 'dragodinde', goalSpeciesId: EMERAUDE } }))
+    const cap = byCat(list, 'capture')[0]
+    expect(cap.title).toMatch(/^Capturer ≈ /)
+    expect(cap.confidence).toBe('medium')
+  })
+
+  it('parents du haut possédés : il reste des captures ; deux mâles en laissent plus qu’un couple (F6)', () => {
+    const [l, r] = cheapestRecipe(EMERAUDE)!.crossing!
+    const pair = goalStatus(EMERAUDE, [mk(l, { gender: 'male', level: 40 }), mk(r, { gender: 'femelle', level: 40 })], opts)!
+    const males = goalStatus(EMERAUDE, [mk(l, { gender: 'male', level: 40 }), mk(r, { gender: 'male', level: 40 })], opts)!
+    const none = goalStatus(EMERAUDE, [], opts)!
+    expect(pair.capturesRemaining).toBeGreaterThan(0)
+    expect(pair.capturesRemaining).toBeLessThan(none.capturesRemaining)
+    expect(males.capturesRemaining).toBeGreaterThan(pair.capturesRemaining)
+    expect(males.supply?.notes.some((n) => n.includes('sans partenaire de sexe opposé'))).toBe(true)
+    // Une tentative à 52 % échoue 48 % du temps : il faut alors refaire une G8 depuis zéro (≈ la moitié du programme).
+    expect(pair.remainingShare).toBeGreaterThan(0.2)
+    expect(pair.remainingShare).toBeLessThan(0.75)
+  })
+
+  it('porteuse : une Doré porteuse de Corail compte comme Corail pour Corail et Doré (F7)', () => {
+    const GOAL = sid('Muldo Corail et Doré')
+    const CORAIL = sid('Muldo Corail')
+    const DOREM = sid('Muldo Doré')
+    const porteur = mk(DOREM, { gender: 'male', level: 40, parents: [CORAIL, DOREM] })
+    const plain = mk(DOREM, { gender: 'femelle', level: 40 })
+    const supply = ownedRecipeSupply(cheapestRecipe(GOAL)!, [porteur, plain], { rules: R36 })
+    expect(supply.roles.get(porteur.id)).toBe(CORAIL)
+    expect(supply.roles.get(plain.id)).toBe(DOREM)
+    const g = goalStatus(GOAL, [porteur, plain], opts)!
+    const none = goalStatus(GOAL, [], opts)!
+    expect(g.capturesRemaining).toBeLessThan(none.capturesRemaining / 2)
+  })
+
+  it('calendrier depuis votre étable : part restante appliquée à la simulation (ux F9)', () => {
+    const cfg = goalProgramConfig({ ...SETTINGS, goalSpeciesId: EMERAUDE, jobLevel: 200 }, R36, { runs: 8 })!
+    const sim = runProgram(cfg)
+    const [l, r] = cheapestRecipe(EMERAUDE)!.crossing!
+    const fromZero = remainingProgram(goalStatus(EMERAUDE, [], { ...opts, sim })!)!
+    const fromStable = remainingProgram(goalStatus(EMERAUDE, [mk(l, { gender: 'male', level: 40 }), mk(r, { gender: 'femelle', level: 40 })], { ...opts, sim })!)!
+    expect(fromZero.days?.mean).toBeCloseTo(sim.metrics.days.mean, 6)
+    expect(fromStable.days!.mean).toBeLessThan(fromZero.days!.mean * 0.75)
+    expect(fromStable.days!.mean).toBeGreaterThan(0)
+    expect(fromStable.basis).toBe('simulation')
+  })
+
+  it('temps de jeu → passages par jour ; personnages → captures par combat (ux F4)', () => {
+    expect(sessionsPerDayFor(0.5)).toBe(1)
+    expect(sessionsPerDayFor(3)).toBe(2)
+    expect(sessionsPerDayFor(6)).toBe(3)
+    expect(sessionsPerDayFor(12)).toBe(4)
+    expect(goalProgramConfig({ ...SETTINGS, goalSpeciesId: EMERAUDE, hoursPerDay: 10 }, R36)?.sessionsPerDay).toBe(4)
+    expect(goalProgramConfig({ ...SETTINGS, goalSpeciesId: null }, R36)).toBeNull()
+    expect(capturesPerFight(3, 1)).toBe(3)
+    expect(capturesPerFight(undefined, 2)).toBe(2)
+    const mounts = [mk(DORE_POURPRE)]
+    const cap = byCat(adviseNow(input({ mounts, settings: { goalSpeciesId: ROUX, jobLevel: 10, accounts: 3 } })), 'capture')[0]
+    const fights = cap.items?.find((i) => i.id === 'combats')
+    expect(fights?.hint).toContain('3 personnages')
+    const total = (cap.items ?? []).filter((i) => i.id.startsWith('g1-')).reduce((n, i) => n + Number(/(\d+)/.exec(i.text.split(':')[1])?.[1] ?? 0), 0)
+    expect(fights?.text).toContain(`≈ ${Math.ceil(total / 3)} combat`)
+  })
+})
+
+describe('plans d’enclos démarrés, métier, Takeza (revue)', () => {
+  it('plan terminé : « Appliquer au lot », ni « démarrer le plan » ni recharge pour cet enclos (ux F2)', () => {
+    const lot = Array.from({ length: 10 }, (_, i) => mk(DORE, { serenity: -1_000 + i * 50, location: { kind: 'enclos', paddock: 1 } }))
+    const plan: AdvisorPaddockPlan = {
+      paddockId: 1,
+      tier: 2,
+      mountIds: lot.map((m) => m.id),
+      startedAt: NOW - 10 * 3_600_000,
+      offsetMs: 0,
+      steps: [step(['foudroyeur', 'abreuvoir'], 0, 3_600), step(['dragofesse', 'mangeoire'], 3_600, 3_600)],
+      totalSeconds: 7_200,
+      acknowledgedStepIndex: 2,
+    }
+    const g = { ...zeroGauges(), foudroyeur: 0, abreuvoir: 0 }
+    const list = adviseNow(input({ mounts: lot, paddockPlans: { '1': plan }, paddocks: paddocks([{ gauges: g, active: ['foudroyeur', 'abreuvoir'], updatedAt: NOW - 3_600_000 }]), settings: { jobLevel: 10 } }))
+    const fini = list.find((a) => a.id.startsWith('plan-fini:1:'))
+    expect(fini?.link.label).toBe('Appliquer au lot')
+    expect(fini?.title).toContain('appliquez-le au lot')
+    expect(list.some((a) => a.items?.some((i) => i.id === 'demarrer-1'))).toBe(false)
+    expect(list.some((a) => a.id.startsWith('jauge-vide:1:') || a.id.startsWith('recharge:1:'))).toBe(false)
+  })
+
+  it('plan en cours avec paliers par jauge : une jauge entretenue au palier 1 par le plan n’est pas « sous son palier » (F2)', () => {
+    const lot = Array.from({ length: 10 }, (_, i) => mk(DORE, { serenity: -1_500 + i * 50, location: { kind: 'enclos', paddock: 1 } }))
+    const plan: AdvisorPaddockPlan = {
+      paddockId: 1,
+      tier: 2,
+      tiers: { foudroyeur: 1, abreuvoir: 2 },
+      mountIds: lot.map((m) => m.id),
+      startedAt: NOW - 600_000,
+      offsetMs: 0,
+      // Consommation réaliste (un plan réel la renseigne toujours) : les recharges se dimensionnent dessus.
+      steps: [
+        step(['foudroyeur', 'abreuvoir'], 0, 20_000, { consumed: { foudroyeur: 20_000, abreuvoir: 20_000 } }),
+        step(['dragofesse', 'mangeoire'], 20_000, 3_600, { consumed: { dragofesse: 7_200, mangeoire: 7_200 } }),
+      ],
+      totalSeconds: 23_600,
+      acknowledgedStepIndex: 0,
+    }
+    const g = { ...zeroGauges(), foudroyeur: 30_000, abreuvoir: 30_000 }
+    const list = adviseNow(input({ mounts: lot, paddockPlans: { '1': plan }, paddocks: paddocks([{ gauges: g, active: ['foudroyeur', 'abreuvoir'], updatedAt: NOW }]), settings: { jobLevel: 10 } }))
+    const titles = list.map((a) => a.title)
+    expect(titles.some((t) => /rechargez Foudroyeur \(palier 1 au lieu de 2\)/.test(t))).toBe(false)
+    expect(titles.some((t) => /rechargez Abreuvoir \(palier 1 au lieu de 2\)/.test(t))).toBe(true)
+  })
+
+  it('plan en cours : la recharge se dimensionne sur ce qu’il reste à consommer, pas sur tout le palier (intégration)', () => {
+    const lot = Array.from({ length: 10 }, (_, i) => mk(DORE, { serenity: -1_500 + i * 50, location: { kind: 'enclos', paddock: 1 } }))
+    const plan: AdvisorPaddockPlan = {
+      paddockId: 1,
+      tier: 2,
+      mountIds: lot.map((m) => m.id),
+      startedAt: NOW - 600_000,
+      offsetMs: 0,
+      steps: [step(['foudroyeur', 'abreuvoir'], 0, 20_000, { consumed: { foudroyeur: 10_000, abreuvoir: 10_000 } })],
+      totalSeconds: 20_000,
+      acknowledgedStepIndex: 0,
+    }
+    const g = { ...zeroGauges(), foudroyeur: 60_000, abreuvoir: 30_000 }
+    const list = adviseNow(input({ mounts: lot, paddockPlans: { '1': plan }, paddocks: paddocks([{ gauges: g, active: ['foudroyeur', 'abreuvoir'], updatedAt: NOW }]) }))
+    const ab = list.find((a) => a.id.startsWith('recharge:1:abreuvoir'))
+    // Besoin restant ≈ 9 700 points : socle (30 000 → 40 000) + 9 700, soit ≈ 19 700 points (1 K/pt), pas 40 000 (jusqu'à 70 000).
+    expect(ab?.amount?.value).toBeGreaterThanOrEqual(19_700)
+    expect(ab?.amount?.value).toBeLessThan(25_000)
+  })
+
+  it('plan en cours : passer à peine sous le palier pour quelques points restants ne déclenche pas de recharge (intégration)', () => {
+    // Joueur qui valide le changement 3 min après l'heure : Abreuvoir 360 points sous le palier 2 alors
+    // que le plan ne lui demande plus que ≈ 250 points (≈ 2 min de retard au palier 1).
+    const lot = Array.from({ length: 10 }, (_, i) => mk(DORE, { serenity: -900 + i * 50, location: { kind: 'enclos', paddock: 1 } }))
+    const plan: AdvisorPaddockPlan = {
+      paddockId: 1,
+      tier: 2,
+      mountIds: lot.map((m) => m.id),
+      startedAt: NOW - 3_700_000,
+      offsetMs: 0,
+      steps: [
+        step(['foudroyeur', 'abreuvoir'], 0, 3_600, { consumed: { foudroyeur: 7_200, abreuvoir: 7_200 } }),
+        step(['foudroyeur', 'abreuvoir'], 3_600, 3_600, { consumed: { foudroyeur: 7_200, abreuvoir: 260 } }),
+      ],
+      totalSeconds: 7_200,
+      acknowledgedStepIndex: 1,
+    }
+    const g = { ...zeroGauges(), foudroyeur: 60_000, abreuvoir: 39_640 }
+    const list = adviseNow(input({ mounts: lot, paddockPlans: { '1': plan }, paddocks: paddocks([{ gauges: g, active: ['foudroyeur', 'abreuvoir'], updatedAt: NOW }]) }))
+    expect(list.some((a) => a.id.startsWith('recharge:1:abreuvoir'))).toBe(false)
+    // Avec un vrai besoin (7 200 points restants), la recharge reste conseillée.
+    const big = { ...plan, steps: [plan.steps[0], { ...plan.steps[1], consumed: { foudroyeur: 7_200, abreuvoir: 7_200 } }] }
+    const list2 = adviseNow(input({ mounts: lot, paddockPlans: { '1': big }, paddocks: paddocks([{ gauges: g, active: ['foudroyeur', 'abreuvoir'], updatedAt: NOW }]) }))
+    expect(list2.some((a) => a.id.startsWith('recharge:1:abreuvoir'))).toBe(true)
+  })
+
+  it('plan en cours : une jauge de l’étape en cours sans monture éligible n’est pas « inutile » (traversée de 0) (intégration)', () => {
+    // Caresseur pousse le lot (sérénité négative) vers le positif ; Dragofesse les prendra en arrivant.
+    const lot = Array.from({ length: 10 }, (_, i) => mk(DORE, { serenity: -1_200 + i * 20, endurance: 20_000, maturity: 20_000, location: { kind: 'enclos', paddock: 1 } }))
+    const plan: AdvisorPaddockPlan = {
+      paddockId: 1,
+      tier: 2,
+      tiers: { caresseur: 1, dragofesse: 2 },
+      mountIds: lot.map((m) => m.id),
+      startedAt: NOW - 60_000,
+      offsetMs: 0,
+      steps: [step(['caresseur', 'dragofesse'], 0, 4_000, { consumed: { caresseur: 2_000, dragofesse: 3_000 } })],
+      totalSeconds: 4_000,
+      acknowledgedStepIndex: 0,
+    }
+    const g = { ...zeroGauges(), caresseur: 3_000, dragofesse: 50_000 }
+    const list = adviseNow(input({ mounts: lot, paddockPlans: { '1': plan }, paddocks: paddocks([{ gauges: g, active: ['caresseur', 'dragofesse'], updatedAt: NOW - 60_000 }]) }))
+    expect(list.some((a) => a.id.startsWith('jauge-inutile:1:dragofesse'))).toBe(false)
+    // Sans plan, la même jauge est bien signalée.
+    const free = adviseNow(input({ mounts: lot, paddocks: paddocks([{ gauges: g, active: ['caresseur', 'dragofesse'], updatedAt: NOW - 60_000 }]) }))
+    expect(free.some((a) => a.id.startsWith('jauge-inutile:1:dragofesse'))).toBe(true)
+  })
+
+  it('fin de plan due mais non validée : ni recharge ni « inutile », et un seul lien vers l’enclos (intégration)', () => {
+    const lot = Array.from({ length: 10 }, (_, i) => fecund(DORE, { serenity: -500 + i * 20, location: { kind: 'enclos', paddock: 1 } }))
+    const plan: AdvisorPaddockPlan = {
+      paddockId: 1,
+      tier: 2,
+      mountIds: lot.map((m) => m.id),
+      startedAt: NOW - 7_200_000 - 50 * 60_000,
+      offsetMs: 0,
+      steps: [step(['foudroyeur', 'mangeoire'], 0, 7_200, { consumed: { foudroyeur: 14_400, mangeoire: 14_400 } })],
+      totalSeconds: 7_200,
+      acknowledgedStepIndex: 0,
+    }
+    const g = { ...zeroGauges(), foudroyeur: 45_000, mangeoire: 30_000 }
+    const list = adviseNow(input({ mounts: lot, paddockPlans: { '1': plan }, paddocks: paddocks([{ gauges: g, active: ['foudroyeur', 'mangeoire'], updatedAt: NOW - 7_200_000 - 50 * 60_000 }]) }))
+    expect(list.some((a) => a.id.startsWith('recharge:1:') || a.id.startsWith('jauge-vide:1:'))).toBe(false)
+    expect(list.some((a) => a.id.startsWith('jauge-inutile:1:'))).toBe(false)
+    const alarm = list.find((a) => a.id.startsWith('alarme:1:'))
+    expect(alarm).toBeDefined()
+    const labels = [alarm?.link.label, ...(alarm?.items ?? []).map((i) => i.link?.label).filter(Boolean)]
+    expect(new Set(labels).size).toBe(labels.length)
+  })
+
+  it('changement manqué pendant une poussée de sérénité : plan dépassé, ni « tout de suite » ni « Fait » (ux F6)', () => {
+    const plan: AdvisorPaddockPlan = {
+      paddockId: 1,
+      tier: 2,
+      mountIds: [],
+      startedAt: NOW - 12 * 3_600_000,
+      offsetMs: 0,
+      steps: [
+        step(['caresseur', 'mangeoire'], 0, 1_800, { switchWindow: { earliestSeconds: 1_200, latestSeconds: 1_700 } }),
+        step(['dragofesse', 'mangeoire'], 1_800, 3_600),
+      ],
+      totalSeconds: 5_400,
+      acknowledgedStepIndex: 0,
+    }
+    const list = adviseNow(input({ now: plan.startedAt + (1_700 + 9 * 3_600) * 1000, paddockPlans: { '1': plan }, settings: { jobLevel: 10 } }))
+    const stale = list.find((a) => a.id.startsWith('plan-depasse:1:'))
+    expect(stale).toBeDefined()
+    expect(stale?.action).toBeUndefined()
+    expect(stale?.title).toContain('recalculez')
+    expect(list.some((a) => a.detail.includes('Faites-le tout de suite'))).toBe(false)
+    expect(list.some((a) => a.action?.kind === 'advance-plan')).toBe(false)
+  })
+
+  it('XP du journal depuis la saisie du niveau : déduite, niveau estimé (ux F14)', () => {
+    const base = jobStatus(40, fullCtx, R36, { todayIso: '2026-10-02', withPlan: false })
+    const after = jobStatus(40, fullCtx, R36, { todayIso: '2026-10-02', withPlan: false, xpGained: 24 * 30 })
+    expect(base.xpToNext - after.xpToNext).toBe(24 * 30)
+    expect(after.xpGained).toBe(720)
+    expect(after.progress).toBeGreaterThan(base.progress)
+    // Le journal fait passer le niveau 40 → 80+ : nouvel enclos probablement débloqué, à confirmer.
+    const big = jobStatus(79, fullCtx, R36, { todayIso: '2026-10-02', withPlan: false, xpGained: 1_000_000 })
+    expect(big.estimatedLevel).toBeGreaterThan(79)
+    expect(big.paddockUnlockedSinceEntry).toBe(true)
+    const list = adviseNow(input({ mounts: [mk(DORE)], journalXp: { xp: 1_000_000 }, settings: { jobLevel: 79 } }))
+    const est = list.find((a) => a.id.startsWith('metier:niveau-estime:79:'))
+    expect(est?.priority).toBe(2)
+    expect(est?.link.page).toBe('reglages')
+  })
+
+  it('Takeza : même seuil de génération que la page Accouplement (ux F16)', () => {
+    const t = adviseNow(input({ mounts: [fecund(DORE, { gender: 'male' }), fecund(INDIGO, { gender: 'femelle' })] })).find((a) => a.id === 'almanax:2026-10-12:takeza-prep')
+    expect(t?.detail).toContain(`≥ G${TAKEZA_PRIORITY_GENERATION}`)
+  })
+})
+
+describe('cache de l’analyse (accueil, R12)', () => {
+  beforeEach(() => clearAnalysisCache())
+
+  it('même jour et mêmes données (références) : le même objet, calculé une fois', () => {
+    const mounts = [fecund(DORE, { gender: 'male' }), fecund(INDIGO, { gender: 'femelle' })]
+    const inp = input({ mounts, settings: { jobLevel: 10 } })
+    const a = analyzeStateCached(inp)
+    // Nouveaux objets d'entrée (remontage de la page) mais mêmes données : rien n'est recalculé.
+    const b = analyzeStateCached({ ...inp, now: NOW + 3_600_000, settings: { ...inp.settings }, priceCtx: { ...inp.priceCtx }, mountPrices: { ...inp.mountPrices } })
+    expect(b).toBe(a)
+    expect(analysisCacheStats()).toEqual({ computed: 1, hits: 1 })
+    // Données modifiées, ou autre jour : nouvelle analyse.
+    expect(analyzeStateCached({ ...inp, mounts: [...mounts] })).not.toBe(a)
+    expect(analyzeStateCached({ ...inp, now: NOW + 86_400_000 })).not.toBe(a)
+    expect(analysisCacheStats().computed).toBe(3)
   })
 })
 

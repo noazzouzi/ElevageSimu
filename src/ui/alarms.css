@@ -1,0 +1,34 @@
+/* Alarmes globales des plans d'enclos (src/ui/alarms.tsx). */
+.al-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.al-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 8px 12px;
+  border-left: 4px solid var(--warn);
+  background: var(--warn-soft);
+  border-radius: var(--radius-sm);
+}
+.al-row.danger {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+.al-text {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.al-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.al-notif {
+  gap: 6px;
+  align-items: center;
+}

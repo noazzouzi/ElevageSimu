@@ -20,10 +20,13 @@ import {
 import { GAUGE_EFFECTS, GAUGE_IDS, GAUGE_LABELS } from '../../domain/constants'
 import {
   DEFAULT_MOUNTS_PER_CAST,
+  DEFAULT_PRICE_ISSUE_LABELS,
   MOUNT_BANDS,
+  MOUNT_PRICE_STALE_DAYS,
   NET_KIND_LABELS,
   buildPriceExport,
   defaultGenerationPrice,
+  defaultPriceIssue,
   genetonKamasValue,
   mountSalePrice,
   normalizeName,
@@ -33,6 +36,7 @@ import {
   priceCoverage,
   type BulkPriceEntry,
   type BulkPriceError,
+  type DefaultPriceIssue,
   type MountBand,
   type MountPriceContext,
 } from '../../domain/economy'
@@ -171,8 +175,14 @@ function PriceInputInner({ value, placeholder, label, onCommit }: { value: numbe
   )
 }
 
-function DefaultCell({ d }: { d?: DefaultItemPrice | DefaultMountPrice | null }) {
+const isMountRow = (d: DefaultItemPrice | DefaultMountPrice): d is DefaultMountPrice => 'state' in d && 'generation' in d
+
+/** Lignes de montures non utilisées pour les décisions tant que le joueur ne les confirme pas. */
+const CONFIRMABLE: DefaultPriceIssue[] = ['ancien', 'peu-fiable', 'a-verifier']
+
+function DefaultCell({ d, onConfirm }: { d?: DefaultItemPrice | DefaultMountPrice | null; onConfirm?: (price: number) => void }) {
   if (!d || d.price === null) return <span className="muted">—</span>
+  const issue = isMountRow(d) ? defaultPriceIssue(d) : null
   const tip = [
     d.source && `Source : ${d.source}`,
     d.notes,
@@ -184,7 +194,11 @@ function DefaultCell({ d }: { d?: DefaultItemPrice | DefaultMountPrice | null })
   return (
     <span className="default-cell" title={tip}>
       <span>{formatKamas(d.price)}</span>
-      {d.priceType === 'floor-estimate' ? (
+      {issue ? (
+        <Badge tone="warn" title={`${DEFAULT_PRICE_ISSUE_LABELS[issue]} : affiché pour information, non compté dans les calculs${CONFIRMABLE.includes(issue) ? ' tant que vous ne le confirmez pas' : ''}.`}>
+          {issue === 'plancher' ? 'plancher' : DEFAULT_PRICE_ISSUE_LABELS[issue]} · non compté
+        </Badge>
+      ) : d.priceType === 'floor-estimate' ? (
         <Badge tone="warn" title="Plancher calculé (extraction, brisage, revente de base), pas un cours">
           plancher
         </Badge>
@@ -196,6 +210,11 @@ function DefaultCell({ d }: { d?: DefaultItemPrice | DefaultMountPrice | null })
         <ConfidenceBadge level={d.confidence} />
       )}
       {d.date && <small className="muted">{d.date}</small>}
+      {issue && CONFIRMABLE.includes(issue) && onConfirm && (
+        <button className="btn ghost small" title="Utiliser ce relevé comme votre prix (vous le confirmez pour votre serveur)" onClick={() => onConfirm(d.price as number)}>
+          Confirmer
+        </button>
+      )}
     </span>
   )
 }
@@ -213,15 +232,28 @@ function EffectiveCell({ r }: { r: ResolvedPrice }) {
       <span className="effective-cell">
         {formatKamas(r.price)}
         <Badge tone="info">défaut</Badge>
+        {r.conflict && (
+          <Badge tone="warn" title={r.conflict.message}>
+            à vérifier
+          </Badge>
+        )}
+        {r.conflict && <small className="conflict">{r.conflict.message}</small>}
+        {r.craftLocked !== undefined && <small className="muted">craft niv. {r.craftLocked} requis : prix HDV retenu</small>}
       </span>
     )
   if (r.origin === 'craft')
     return r.complete ? (
       <span className="effective-cell">
         {formatKamas(r.price)}
-        <Badge tone="ok" title="Somme des prix des ingrédients">
-          craft
-        </Badge>
+        {r.craftLocked !== undefined ? (
+          <Badge tone="warn" title={`Vous ne pouvez pas le fabriquer (niveau ${r.craftLocked} d'Éleveur requis) : coût des ingrédients = estimation du prix HDV. Saisissez son prix HDV.`}>
+            craft · niv. {r.craftLocked} requis
+          </Badge>
+        ) : (
+          <Badge tone="ok" title="Somme des prix des ingrédients">
+            craft
+          </Badge>
+        )}
       </span>
     ) : (
       <span className="effective-cell" title={`Ingrédients sans prix : ${r.missing.map(itemName).join(', ')}`}>
@@ -256,7 +288,8 @@ function ItemPriceTable<T extends ItemRef>({ rows, before = [], after = [], ctx,
   const setItem = usePrices((s) => s.setItem)
   if (!rows.length) return <Empty>{empty ?? 'Aucun objet ne correspond.'}</Empty>
   const ncols = 4 + before.length + after.length
-  let lastGroup: string | null = null
+  // En-tête de groupe : calculé avant le rendu (pas de variable modifiée pendant le rendu).
+  const groups = rows.map((row) => groupBy?.(row) ?? null)
   return (
     <div className="table-wrap">
       <table className="table">
@@ -279,10 +312,9 @@ function ItemPriceTable<T extends ItemRef>({ rows, before = [], after = [], ctx,
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => {
-            const group = groupBy?.(row) ?? null
-            const header = group !== null && group !== lastGroup
-            lastGroup = group
+          {rows.map((row, i) => {
+            const group = groups[i]
+            const header = group !== null && group !== (i > 0 ? groups[i - 1] : null)
             const own = items[String(row.id)]
             const d = defaultItemPrice(row.id)
             return (
@@ -373,7 +405,7 @@ function KeyResourcesTab({ q, ctx }: { q: string; ctx: PriceContext }) {
             </p>
             <div className="row">
               <label className="field">
-                Votre valeur (kamas par généton)
+                Votre valeur (kamas par généton, brute : prix du parchemin ÷ génétons)
                 <PriceInput value={genetonOverride ?? undefined} label="Valeur d’un généton" placeholder={String(PRICES_DEFAULT.genetons.kamasPerGeneton)} onCommit={(v) => setGenetonValue(v)} />
               </label>
               <span className="effective-cell">
@@ -381,7 +413,7 @@ function KeyResourcesTab({ q, ctx }: { q: string; ctx: PriceContext }) {
               </span>
             </div>
             <small className="muted">
-              Liés au compte selon le guide DPLN (échangeables selon DofusDB, à vérifier). {rules.id === '3.7' ? 'En 3.7, les génétons par parent doublent : le prix des parchemins pourrait baisser.' : ''}
+              Comptée nette de la taxe d’HDV (le parchemin est revendu). Liés au compte selon le guide DPLN (échangeables selon DofusDB, à vérifier). {rules.id === '3.7' ? 'En 3.7, les génétons par parent doublent : le prix des parchemins pourrait baisser.' : ''}
             </small>
           </Card>
         )}
@@ -709,9 +741,13 @@ function MountsTab({ q, mctx }: { q: string; mctx: MountPriceContext }) {
           </label>
         </div>
         <Callout tone="warn">
-          Presque aucun prix de monture n’a été relevé (Muldo Doré niv. 100 ≈ 50 000, Muldo Aigue-marine niv. 200 ≈ 15 M). Les autres défauts sont des <strong>planchers calculés</strong> (extraction, brisage,
-          revente de base) : saisissez les prix de l’HDV des créatures de votre serveur. Le prix le plus proche du niveau de la monture (1, 100 ou 200) est utilisé.
+          Presque aucun prix de monture n’a été relevé. Seuls vos prix et les relevés fiables (observés, confiance au moins moyenne, de moins de {MOUNT_PRICE_STALE_DAYS} jours avant le dernier relevé) entrent dans les calculs :
+          les <strong>planchers calculés</strong> (extraction, brisage, revente de base), les relevés anciens ou peu fiables sont affichés pour information, « non comptés » tant que vous ne les confirmez pas. Saisissez les prix de
+          l’HDV des créatures de votre serveur.
         </Callout>
+        <p className="muted">
+          Entre deux niveaux renseignés (1, 100, 200), le prix est interpolé ; au-dessus du dernier, son prix s’applique (estimation prudente) ; en dessous du premier, aucun prix n’est appliqué : renseignez au moins le niveau 1.
+        </p>
       </Card>
       {!q && (
         <Card title="Par génération" actions={<small className="muted">S’applique à toutes les couleurs de la génération sans prix propre.</small>}>
@@ -739,7 +775,7 @@ function MountsTab({ q, mctx }: { q: string; mctx: MountPriceContext }) {
                           <div className="mount-cell">
                             <PriceInput value={generations[key]} label={`${FAMILIES[family].label} G${g} ${BAND_LABELS[b]}`} placeholder={d?.price ? formatNumber(d.price) : undefined} onCommit={(v) => setGeneration(family, g, b, v)} />
                             <small>
-                              Défaut : <DefaultCell d={d} />
+                              Défaut : <DefaultCell d={d} onConfirm={generations[key] === undefined ? (price) => setGeneration(family, g, b, price) : undefined} />
                             </small>
                           </div>
                         </td>
@@ -792,18 +828,36 @@ function MountsTab({ q, mctx }: { q: string; mctx: MountPriceContext }) {
                     </td>
                     {MOUNT_BANDS.map((b) => {
                       const eff = mountSalePrice(s.id, Number(b), mctx)
+                      const ref = eff.price === null ? eff.references.find((r) => r.level === Number(b)) ?? eff.references[0] : undefined
                       return (
                         <td key={b}>
                           <div className="mount-cell">
                             <PriceInput value={mounts[`${s.id}|${b}`]} label={`${s.name} ${BAND_LABELS[b]}`} placeholder={eff.price !== null ? formatNumber(eff.price) : undefined} onCommit={(v) => setMount(s.id, b, v)} />
                             <small className="muted">
                               {eff.price === null ? (
-                                <Badge tone="danger">aucun prix</Badge>
+                                <>
+                                  <Badge tone="danger">à saisir</Badge>
+                                  {ref && (
+                                    <span title={ref.reason}>
+                                      {' '}
+                                      réf. ≈ {formatKamas(ref.price)} ({ref.kind === 'niveau-superieur' ? `niv. ${ref.level} seulement` : DEFAULT_PRICE_ISSUE_LABELS[ref.kind]}, non comptée)
+                                    </span>
+                                  )}
+                                  {ref && CONFIRMABLE.includes(ref.kind as DefaultPriceIssue) && (
+                                    <button
+                                      className="btn ghost small"
+                                      title="Utiliser ce relevé comme votre prix (vous le confirmez pour votre serveur)"
+                                      onClick={() => (ref.origin === 'defaut-espece' ? setMount(s.id, b, ref.price) : setGeneration(family, s.generation, b, ref.price))}
+                                    >
+                                      Confirmer
+                                    </button>
+                                  )}
+                                </>
                               ) : eff.origin === 'joueur-espece' ? (
                                 'votre prix'
                               ) : (
                                 <>
-                                  {formatKamas(eff.price)} · {eff.origin === 'joueur-generation' ? 'votre prix (génération)' : eff.origin === 'defaut-espece' ? 'relevé (couleur)' : eff.isFloor ? 'plancher' : 'défaut'}
+                                  {formatKamas(eff.price)} · {eff.origin === 'joueur-generation' ? 'votre prix (génération)' : eff.origin === 'defaut-espece' ? 'relevé (couleur)' : 'relevé (génération)'}
                                 </>
                               )}
                             </small>
@@ -1015,8 +1069,10 @@ function PricesView({ initialQuery, initialTab }: { initialQuery: string; initia
     if (!nq) return 'ressources'
     return ITEM_TABS.find((t) => countMatches(t, nq) > 0) ?? 'ressources'
   })
-  const ctx = usePriceContext()
+  const baseCtx = usePriceContext()
   const settings = useSettings()
+  // Niveau d'Éleveur : une recette hors de portée est payée au prix HDV (comme la page Rentabilité).
+  const ctx = useMemo<PriceContext>(() => ({ ...baseCtx, jobLevel: settings.jobLevel }), [baseCtx, settings.jobLevel])
   const updatedAt = usePrices((s) => s.updatedAt)
   const pMounts = usePrices((s) => s.mounts)
   const pGenerations = usePrices((s) => s.generations)

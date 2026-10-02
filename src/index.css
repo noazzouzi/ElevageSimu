@@ -619,3 +619,21 @@ table.table {
     grid-template-columns: 1fr;
   }
 }
+
+/* Téléphones : les tuiles d'indicateurs (Stat) passent sur deux colonnes au lieu d'une pleine largeur
+   chacune — les actions de la page arrivent deux fois plus haut. Sélecteurs préfixés par .app main pour
+   l'emporter sur les grilles propres aux pages (.mt-page .kpis…). */
+@media (max-width: 520px) {
+  .app main .grid-4,
+  .app main .kpis,
+  .app main .hp-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .app main .grid-4 .stat .value,
+  .app main .kpis .stat .value,
+  .app main .hp-kpis .stat .value {
+    font-size: 1.15rem;
+    overflow-wrap: anywhere;
+  }
+}

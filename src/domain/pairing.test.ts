@@ -3,16 +3,21 @@ import {
   adviseOptimakina,
   analyzePair,
   bestDisjointPairs,
+  economyCoupleCost,
   goalContext,
   goalRelevance,
   matingCalibration,
   rankPairs,
   recordMating,
   sterileClonePairs,
+  TAKEZA_PRIORITY_GENERATION,
   targetBreakdown,
   type PairingOptions,
 } from './pairing'
+import { FUELS, NETS, getSpecies } from '../data'
+import { captureCost, fertilityCost, levelingCost, makinaCost, mountValuation, type MountPriceContext } from './economy'
 import { breed, type BreedingParent } from './genetics'
+import type { PriceContext } from './pricing'
 import { RULESETS } from './rules'
 import type { Gender, Mount } from './types'
 
@@ -250,14 +255,18 @@ describe('conseil d’Optimakina', () => {
     expect(unknown.makina).toBeNull()
   })
 
-  it('progression : Optimakina dès la cible G6 (M-OPTI-01), sinon seulement si l’objectif en dépend', () => {
+  it('progression sans prix : Optimakina dès la cible G6 (M-OPTI-01), jamais en G2–G3 même sur l’objectif', () => {
     const opts: PairingOptions = { ...base, makinaPolicy: 'auto' }
     const g6 = analyzePair(parent(ORCHIDEE, 40, [46, 51]), parent(POURPRE, 40, [38, 51]), opts)
     expect(g6.result.targetGeneration).toBe(6)
     expect(g6.makina).toBe('optimakina')
     expect(g6.makinaAdvice.basis).toBe('heuristique')
     expect(analyzePair(parent(AMANDE), parent(DOREE), opts).makina).toBeNull()
-    expect(analyzePair(parent(AMANDE), parent(DOREE), { ...opts, goalSpeciesId: EBENE }).makina).toBe('optimakina')
+    // Ancien comportement (bogue F1) : une étape G2 de l'objectif recevait une Optimakina sans prix.
+    const g2Goal = analyzePair(parent(AMANDE), parent(DOREE), { ...opts, goalSpeciesId: EBENE })
+    expect(g2Goal.goalRelevant).toBe(true)
+    expect(g2Goal.makina).toBeNull()
+    expect(g2Goal.makinaAdvice.reason).toMatch(/^Pas d'Optimakina/)
   })
 
   it('inutile quand la cible est déjà certaine', () => {
@@ -453,5 +462,244 @@ describe('matingCalibration', () => {
     expect(matingCalibration(many(19, 20)).verdict).toBe('au-dessus')
     expect(matingCalibration(many(1, 20)).verdict).toBe('en-dessous')
     expect(matingCalibration([]).verdict).toBe('insuffisant')
+  })
+})
+
+// ---------- Corrections de la revue (groupe C1) ----------
+
+// Muldos : G8 de la recette de Corail (G9) et une G8 hors objectif ; Doré (G1), Corail et Doré (G10).
+const M_PRUNE_POURPRE = 146
+const M_PRUNE_ROUX = 151
+const M_ROUX_EMERAUDE = 161
+const M_CORAIL = 298
+const M_DORE = 94
+const D_INDIGO = 17 // Dragodinde G3
+
+describe('règle de prix de l’Optimakina toujours appliquée quand le prix est connu (F1, F8)', () => {
+  const dear = () => ({ price: 2_000_000, complete: true })
+  const mountValue = (id: number) => (id === AMANDE_DOREE ? 60_000 : 10_000)
+
+  it('progression, étape G2 de l’objectif, Optimakina à 2 000 000 K : refusée par la règle de prix', () => {
+    const opts: PairingOptions = { ...base, makinaPolicy: 'auto', goalSpeciesId: EMERAUDE, makinaCost: dear, mountValue, genetonValue: 375 }
+    const an = analyzePair(parent(AMANDE), parent(DOREE), opts)
+    expect(an.goalRelevant).toBe(true)
+    expect(an.makina).toBeNull()
+    expect(an.makinaAdvice.basis).toBe('regle-prix')
+    expect(an.makinaAdvice.reason).toMatch(/^Optimakina non rentable/)
+    // Même chose avec C_eff fourni (C_eff = 100 000 → seuil ≈ 23 810 K).
+    const withCeff = analyzePair(parent(AMANDE), parent(DOREE), { ...opts, coupleCost: () => 100_000 })
+    expect(withCeff.makina).toBeNull()
+    expect(withCeff.makinaAdvice.basis).toBe('regle-prix')
+    expect(withCeff.makinaAdvice.successBasis).toBe('c-eff')
+  })
+
+  it('heuristique sans prix : G2–G3 de l’objectif → non ; G4–G5 de l’objectif → oui (à défaut de prix) ; G6 → oui', () => {
+    const opts: PairingOptions = { ...base, makinaPolicy: 'auto', goalSpeciesId: EMERAUDE }
+    // G3 (Indigo) : Amande et Dorée × Amande et Rousse.
+    const g3 = analyzePair(parent(AMANDE_DOREE, 40, [AMANDE, DOREE]), parent(38, 40, [AMANDE, ROUSSE]), opts)
+    expect(g3.result.targetSpecies).toContain(D_INDIGO)
+    expect(g3.goalRelevant).toBe(true)
+    expect(g3.makina).toBeNull()
+    // G5 (Orchidée) : Dorée et Rousse × Ébène et Indigo, étape de l'Émeraude.
+    const g5 = analyzePair(parent(46, 40, [DOREE, ROUSSE]), parent(51, 40, [EBENE, D_INDIGO]), { ...opts, goalSpeciesId: ORCHIDEE })
+    expect(g5.result.targetGeneration).toBe(5)
+    expect(g5.makina).toBe('optimakina')
+    expect(g5.makinaAdvice.reason).toContain('à défaut de prix')
+    // Même étape G5, prix complet au-dessus du seuil : la règle de prix l'emporte.
+    const g5Dear = analyzePair(parent(46, 40, [DOREE, ROUSSE]), parent(51, 40, [EBENE, D_INDIGO]), { ...opts, goalSpeciesId: ORCHIDEE, makinaCost: dear, coupleCost: () => 50_000 })
+    expect(g5Dear.makina).toBeNull()
+    expect(g5Dear.makinaAdvice.basis).toBe('regle-prix')
+    // G6 sans prix : heuristique « systématique dès la G6 ».
+    const g6 = analyzePair(parent(ORCHIDEE, 40, [46, 51]), parent(POURPRE, 40, [38, 51]), { ...base, makinaPolicy: 'auto' })
+    expect(g6.makina).toBe('optimakina')
+  })
+
+  it('F8 : sans C_eff, la raison donne le vrai critère (écart de valeur des bébés), pas « C_eff »', () => {
+    const mv = (id: number) => (id === AMANDE_DOREE ? 200_000 : 0)
+    const r = analyzePair(parent(AMANDE), parent(DOREE), { ...base, objective: 'profit', makinaPolicy: 'auto', mountValue: mv, makinaCost: () => ({ price: 15_000, complete: true }) })
+    expect(r.makinaAdvice.successBasis).toBe('valeur-bebes')
+    expect(r.makinaAdvice.reason).not.toContain('C_eff')
+    expect(r.makinaAdvice.reason).toContain('valeur d’un bébé cible')
+    const g = analyzePair(parent(ORCHIDEE, 40, [46, 51]), parent(POURPRE, 40, [38, 51]), {
+      ...base,
+      objective: 'genetons',
+      makinaPolicy: 'auto',
+      genetonValue: 375,
+      makinaCost: () => ({ price: 1_000, complete: true }),
+    })
+    expect(g.makinaAdvice.successBasis).toBe('genetons')
+    expect(g.makinaAdvice.reason).not.toContain('C_eff')
+  })
+
+  it('C_eff incomplet (borne haute) : refus certain au-dessus du seuil, sinon heuristique', () => {
+    const opts: PairingOptions = { ...base, objective: 'profit', makinaPolicy: 'auto', coupleCost: () => ({ value: 100_000, complete: false }) }
+    const over = analyzePair(parent(AMANDE), parent(DOREE), { ...opts, makinaCost: () => ({ price: 30_000, complete: true }) })
+    expect(over.makinaAdvice.thresholdIsUpperBound).toBe(true)
+    expect(over.makina).toBeNull()
+    expect(over.makinaAdvice.basis).toBe('regle-prix')
+    expect(over.makinaAdvice.reason).toContain('seuil maximal')
+    const under = analyzePair(parent(AMANDE), parent(DOREE), { ...opts, makinaCost: () => ({ price: 5_000, complete: true }) })
+    expect(under.makinaAdvice.basis).toBe('heuristique')
+    expect(under.makina).toBeNull() // cible G2 sans objectif
+  })
+})
+
+describe('economyCoupleCost : C_eff = remplacement − valeur résiduelle des stériles', () => {
+  const priced: PriceContext = { overrides: Object.fromEntries([...FUELS.map((f) => [String(f.id), f.durability]), ...NETS.map((n) => [String(n.id), 3_000])]), useDefaults: true }
+  const mctx: MountPriceContext = { mountOverrides: {}, generationOverrides: {}, useDefaults: true }
+  const cfg = { ctx: priced, mountPrices: mctx, saleTax: 0.02, rules: R36, jobLevel: 200, tier: 2 as const }
+
+  it('G1 capturée : capture + XP jusqu’au niveau + fécondation − stérile ; G2 sans prix : production estimée', () => {
+    const model = economyCoupleCost(cfg)
+    const ctx = { ...priced, jobLevel: 200 }
+    const cap = captureCost('dragodinde', 'universel', ctx, { jobLevel: 200 }).perMount as number
+    const lvl = levelingCost(1, 40, { tier: 2, batchSize: 10, ctx, rules: R36, jobLevel: 200 }).costPerMount as number
+    const fert = fertilityCost({ tier: 2, batchSize: 10, ctx, rules: R36, jobLevel: 200, model: 'typique' }).perMount as number
+    const pa = model.parent(parent(AMANDE))
+    expect(pa.acquisitionMethod).toBe('capture')
+    expect(pa.replacement).toBeCloseTo(cap + lvl + fert, 6)
+    const sterile = mountValuation(AMANDE, 40, { ctx, mountPrices: mctx, saleTax: 0.02, state: 'sterile' })
+    // Vente d'une G1 stérile non chiffrée (plancher) : valeur résiduelle = borne basse, C_eff = borne haute.
+    expect(pa.residualComplete).toBe(sterile.complete)
+    const bd = model.breakdown(parent(AMANDE), parent(DOREE))
+    expect(bd.value).toBeCloseTo((pa.net as number) + (model.parent(parent(DOREE)).net as number), 6)
+    expect(bd.complete).toBe(false)
+    expect(model.cost(parent(AMANDE), parent(DOREE))).toEqual({ value: bd.value, complete: false })
+    const g2 = model.parent(parent(AMANDE_DOREE))
+    expect(['valeur', 'production']).toContain(g2.acquisitionMethod)
+    expect(g2.replacement).toBeGreaterThan(pa.replacement as number)
+  })
+
+  it('prix inconnus (aucun prix par défaut) : C_eff null, jamais compté 0', () => {
+    const model = economyCoupleCost({ ...cfg, ctx: { overrides: {}, useDefaults: false }, mountPrices: { ...mctx, useDefaults: false } })
+    expect(model.cost(parent(AMANDE), parent(DOREE))).toBeNull()
+    expect(model.parent(parent(AMANDE)).missing.length).toBeGreaterThan(0)
+  })
+
+  it('branché sur analyzePair : le conseil cite C_eff et son montant', () => {
+    const model = economyCoupleCost(cfg)
+    const ctx = { ...priced, jobLevel: 200 }
+    const an = analyzePair(parent(ORCHIDEE, 40, [46, 51]), parent(POURPRE, 40, [38, 51]), {
+      ...base,
+      makinaPolicy: 'auto',
+      coupleCost: model.cost,
+      makinaCost: (k, f, g) => makinaCost(k, f, g, ctx, R36),
+    })
+    expect(an.makinaAdvice.successBasis).toBe('c-eff')
+    expect(an.makinaAdvice.coupleCost).not.toBeNull()
+  })
+})
+
+describe('plan d’accouplement et objectif (F2) : ne pas consommer une monture de la recette hors objectif', () => {
+  const corail: PairingOptions = { ...base, goalSpeciesId: M_CORAIL }
+  const scenario = () => {
+    const topA = mount(M_PRUNE_POURPRE, 'male', { fertility: 'feconde', name: 'TOP-A' })
+    const topB = mount(M_PRUNE_ROUX, 'femelle', { endurance: 0, maturity: 0, love: 0, name: 'TOP-B' })
+    const off = mount(M_ROUX_EMERAUDE, 'femelle', { fertility: 'feconde', name: 'OFF' })
+    return { topA, topB, off }
+  }
+
+  it('TOP-A × OFF (hors objectif) n’entre pas dans le plan ; il faut attendre TOP-B', () => {
+    const { topA, topB, off } = scenario()
+    const ranked = rankPairs([topA, topB, off], corail)
+    const bad = ranked.find((p) => p.a.id === topA.id && p.b.id === off.id)
+    expect(bad).toBeDefined()
+    expect(bad?.consumesGoalParents).toContain(M_PRUNE_POURPRE)
+    expect(bad?.score).toBeLessThanOrEqual(0)
+    expect(bad?.waitFor).toEqual([{ mountId: topA.id, partnerId: topB.id, targetSpecies: expect.arrayContaining([M_CORAIL]) }])
+    expect(bad?.warnings.some((w) => w.includes('Attendez plutôt que TOP-B soit féconde'))).toBe(true)
+    expect(bestDisjointPairs(ranked).some((p) => p.a.id === topA.id && p.b.id === off.id)).toBe(false)
+    // Une fois TOP-B féconde, TOP-A × TOP-B (52 % de G9 Corail avec Optimakina) est le plan.
+    const ready = { ...topB, fertility: 'feconde' as const, endurance: 20_000, maturity: 20_000, love: 20_000 }
+    const plan = bestDisjointPairs(rankPairs([topA, ready, off], corail))
+    expect(plan.map((p) => `${p.a.id}|${p.b.id}`)).toEqual([`${topA.id}|${topB.id}`])
+  })
+
+  it('objectif kamas : le couple hors objectif attend aussi si le couple de l’objectif rapporte au moins autant', () => {
+    const { topA, topB, off } = scenario()
+    const profit: PairingOptions = { ...corail, objective: 'profit', mountValue: () => 10_000, genetonValue: 375 }
+    const ranked = rankPairs([topA, topB, off], profit)
+    const bad = ranked.find((p) => p.a.id === topA.id && p.b.id === off.id)
+    expect(bad?.waitFor).toHaveLength(1)
+    expect(bad?.score).toBe(0)
+    expect(bestDisjointPairs(ranked)).toHaveLength(0)
+  })
+
+  it('G1 capturable de la recette : consommable hors objectif, sauf si sa partenaire de l’objectif est en préparation', () => {
+    // Objectif Dragodinde Amande et Dorée (G2) : Amande ♂ féconde, Rousse ♀ féconde (hors recette), Dorée ♀ fertile.
+    const opts: PairingOptions = { ...base, goalSpeciesId: AMANDE_DOREE }
+    const amande = mount(AMANDE, 'male', { fertility: 'feconde' })
+    const rousse = mount(ROUSSE, 'femelle', { fertility: 'feconde' })
+    const alone = rankPairs([amande, rousse], opts)
+    expect(alone[0].consumesGoalParents).toEqual([])
+    expect(alone[0].score).toBeGreaterThan(0)
+    const doree = mount(DOREE, 'femelle', { endurance: 0, maturity: 0, love: 0 })
+    const waiting = rankPairs([amande, rousse, doree], opts)[0]
+    expect(waiting.waitFor).toEqual([{ mountId: amande.id, partnerId: doree.id, targetSpecies: [AMANDE_DOREE] }])
+    expect(waiting.score).toBe(0)
+    expect(bestDisjointPairs(rankPairs([amande, rousse, doree], opts))).toHaveLength(0)
+  })
+
+  it('M-STACK-01 : un seul couple G8 × G8 de l’objectif est signalé ; trois de chaque ne le sont pas', () => {
+    const a = mount(M_PRUNE_POURPRE, 'male', { fertility: 'feconde' })
+    const b = mount(M_PRUNE_ROUX, 'femelle', { fertility: 'feconde' })
+    const [one] = rankPairs([a, b], corail)
+    expect(one.stackAttempts).toBe(1)
+    expect(one.warnings.some((w) => w.startsWith('Accumuler avant de tenter'))).toBe(true)
+    const males = [a, mount(M_PRUNE_POURPRE, 'male'), mount(M_PRUNE_POURPRE, 'male', { love: 0 })]
+    const females = [b, mount(M_PRUNE_ROUX, 'femelle'), mount(M_PRUNE_ROUX, 'femelle')]
+    const many = rankPairs([...males, ...females], corail).find((p) => p.a.id === a.id && p.b.id === b.id)
+    expect(many?.stackAttempts).toBe(3)
+    expect(many?.warnings.some((w) => w.startsWith('Accumuler avant de tenter'))).toBe(false)
+    // Couple sans objectif, ou cible basse : pas de vérification.
+    expect(rankPairs([mount(AMANDE, 'male'), mount(DOREE, 'femelle')], base)[0].stackAttempts).toBeNull()
+  })
+
+  it('porteuse consommée hors objectif : comptée ; une G1 capturable ne l’est pas (une capture la remplace)', () => {
+    // Doré porteuse de Corail (G9) × Pourpre (G1) → Corail et Pourpre : hors objectif Corail et Doré.
+    const an = analyzePair(parent(M_DORE, 40, [M_CORAIL, M_DORE]), parent(93), { ...base, goalSpeciesId: 315 })
+    expect(an.goalRelevant).toBe(false)
+    expect(an.consumesGoalParents).toEqual([M_CORAIL])
+    expect(an.opportunityCost).toBeCloseTo(2 * 9, 10)
+    expect(an.score).toBeLessThan(0)
+    // La bonne partenaire (Doré) vise l'objectif : rien de consommé.
+    const good = analyzePair(parent(M_DORE, 40, [M_CORAIL, M_DORE]), parent(M_DORE), { ...base, goalSpeciesId: 315 })
+    expect(good.goalChance).toBeGreaterThan(0.4)
+    expect(good.consumesGoalParents).toEqual([])
+  })
+})
+
+describe('clonage : sexe et généalogie (F9)', () => {
+  const st = (id: number, g: Gender, parents: number[] = []) => mount(id, g, { fertility: 'sterile', parents })
+
+  it('2 ♂ + 2 ♀ stériles de même couleur : ♂+♂ et ♀+♀, résultat certain', () => {
+    const m1 = st(AMANDE, 'male')
+    const f1 = st(AMANDE, 'femelle')
+    const m2 = st(AMANDE, 'male')
+    const f2 = st(AMANDE, 'femelle')
+    const pairs = sterileClonePairs([m1, f1, m2, f2])
+    expect(pairs).toHaveLength(2)
+    for (const p of pairs) {
+      expect(p.a.gender).toBe(p.b.gender)
+      expect(p.certain).toBe(true)
+    }
+  })
+
+  it('une porteuse n’est pas appariée à un arbre ordinaire s’il existe une autre possibilité', () => {
+    const porteur = st(M_DORE, 'male', [M_CORAIL, M_DORE])
+    const plainM = st(M_DORE, 'male')
+    const plainF = st(M_DORE, 'femelle')
+    const pairs = sterileClonePairs([porteur, plainM, plainF])
+    expect(pairs).toHaveLength(1)
+    expect([pairs[0].a.id, pairs[0].b.id].sort()).toEqual([plainM.id, plainF.id].sort())
+    expect(pairs[0].certain).toBe(false)
+    expect(pairs[0].sameGender).toBe(false)
+  })
+})
+
+describe('Takeza (F16)', () => {
+  it('seuil commun : cible ≥ G6, comme l’Optimakina systématique', () => {
+    expect(TAKEZA_PRIORITY_GENERATION).toBe(6)
+    expect(getSpecies(M_CORAIL)?.generation).toBeGreaterThanOrEqual(TAKEZA_PRIORITY_GENERATION)
   })
 })

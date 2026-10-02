@@ -7,8 +7,24 @@
 // recherche (STRATEGY.matingRules, research/strategy.md §5).
 import { getSpecies, STRATEGY } from '../data'
 import { formatKamas } from '../lib/format'
-import { ancestorsOf, cheapestRecipe, requiredSpecies } from './breedingPath'
-import { matingEconomics, type MatingEconomics } from './economy'
+import { ancestorsOf, cheapestRecipe, expectedEffort, requiredSpecies } from './breedingPath'
+import { PADDOCK_SLOTS } from './constants'
+import {
+  OPTIMAKINA_GOAL_STEP_GENERATION,
+  OPTIMAKINA_HEURISTIC_GENERATION,
+  optimakinaHeuristicUse,
+  captureCost,
+  fertilityCost,
+  levelingCost,
+  matingEconomics,
+  mountValuation,
+  type FateKind,
+  type MatingEconomics,
+  type MountPriceContext,
+  type MountState,
+  type MountValuation,
+  type NetKind,
+} from './economy'
 import {
   breed,
   parentGenetons,
@@ -20,8 +36,10 @@ import {
   type BreedingResult,
 } from './genetics'
 import { babyMount, cloningBlockers, effectiveFertility, matingBlockers, mountName, toBreedingParent } from './mounts'
+import { cloneTreeKind, pairForCloning } from './mountFate'
+import type { PriceContext } from './pricing'
 import type { Ruleset } from './rules'
-import type { Ability, FamilyId, Gender, MakinaKind, Mount, Species } from './types'
+import type { Ability, FamilyId, FuelTier, Gender, MakinaKind, Mount, Species } from './types'
 
 // ---------- Constantes et libellés ----------
 
@@ -46,8 +64,30 @@ export const MAKINA_LABELS: Record<MakinaKind, string> = {
   kromakina: 'Kromakina',
 }
 
-/** Génération cible à partir de laquelle la recherche recommande l'Optimakina systématique (M-OPTI-01). */
-export const OPTIMAKINA_SYSTEMATIC_GENERATION = 6
+/**
+ * Génération cible à partir de laquelle la recherche recommande l'Optimakina systématique (M-OPTI-01).
+ * Source unique : `economy.OPTIMAKINA_HEURISTIC_GENERATION` (même règle en Rentabilité).
+ */
+export const OPTIMAKINA_SYSTEMATIC_GENERATION = OPTIMAKINA_HEURISTIC_GENERATION
+
+/**
+ * Étapes de l'objectif G4–G5 : Optimakina « à défaut de prix » seulement (phase P2 de la recherche :
+ * « Optimakina sur G4–G5 seulement si son prix < seuil ») ; jamais en G2–G3 sans prix.
+ */
+export { OPTIMAKINA_GOAL_STEP_GENERATION }
+
+/**
+ * Takeza (+20 % de génération cible, M-TAKEZA-01 « accouplements à fort enjeu ») : seuil commun à
+ * l'Accouplement et à l'Accueil. La recherche ne donne pas de génération : on reprend celle de
+ * l'Optimakina systématique (là où une tentative ratée coûte cher).
+ */
+export const TAKEZA_PRIORITY_GENERATION = OPTIMAKINA_SYSTEMATIC_GENERATION
+
+/** Tentatives minimales avant de viser une génération haute (M-STACK-01). */
+export const STACK_MIN_ATTEMPTS = 3
+
+/** Génération cible à partir de laquelle M-STACK-01 est vérifiée sur les couples de l'objectif. */
+export const STACK_MIN_GENERATION = 5
 
 /** Niveaux cumulés visés pour un couple (2 × ~40, M-LEVEL-01). */
 export const RECOMMENDED_LEVEL_SUM = 80
@@ -83,6 +123,7 @@ function clampLevel(l: number): number {
 // Formateur unique (rankPairs peut produire des milliers de textes ; même rendu que formatPercent(p, 1)).
 const pctFormat = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1, minimumFractionDigits: 0 })
 const pct = (p: number) => (Number.isFinite(p) ? `${pctFormat.format(p * 100)} %` : '—')
+const formatNumberFr = (n: number) => pctFormat.format(n)
 
 /** « l'Optimakina », « l'Animakina », « la Kromakina ». */
 export function theMakina(kind: MakinaKind): string {
@@ -213,8 +254,12 @@ export interface PairingOptions {
   makinaCost?: (kind: MakinaKind, family: FamilyId, generation: number) => MakinaPrice | null
   /** Valeur d'un généton en kamas (economy.genetonKamasValue). Sans elle, les génétons valent 0 kamas. */
   genetonValue?: number
-  /** C_eff : coût net du couple (obtention + fécondation − valeur résiduelle), pour la règle de prix. */
-  coupleCost?: (a: BreedingParent, b: BreedingParent) => number | null
+  /**
+   * C_eff : coût net d'une tentative pour ce couple (remplacement des deux parents − valeur résiduelle
+   * des stériles), pour la règle de prix de l'Optimakina. `complete: false` = borne haute (une sortie
+   * des stériles n'est pas chiffrée). Voir `economyCoupleCost`.
+   */
+  coupleCost?: (a: BreedingParent, b: BreedingParent) => CoupleCostValue
   /** Poids des croisements à enfant monocolore (non validé ; défaut 1). */
   kappa?: number
   /** 'exact' (validé) ou 'max' (hypothèse alternative) — voir genetics.ts. */
@@ -227,6 +272,27 @@ export interface PairingOptions {
 
 export type MakinaBasis = 'regle-prix' | 'heuristique' | 'reglage' | 'jamais' | 'inutile'
 
+/**
+ * Valeur d'une réussite retenue pour la règle de prix : C_eff / p (règle M-OPTI-01), écart de valeur
+ * entre un bébé de la génération cible et une autre issue (bébés + génétons), ou écart de génétons.
+ */
+export type SuccessBasis = 'c-eff' | 'valeur-bebes' | 'genetons'
+
+export const SUCCESS_BASIS_LABELS: Record<SuccessBasis, string> = {
+  'c-eff': 'C_eff × Δ / p',
+  'valeur-bebes': 'Δ × (valeur d’un bébé cible − valeur d’une autre issue)',
+  genetons: 'Δ × écart de génétons × valeur du généton',
+}
+
+/** C_eff d'un couple : montant (borne haute si `complete` est faux), ou null si inconnu. */
+export type CoupleCostValue = number | { value: number; complete: boolean } | null
+
+function normalizeCoupleCost(c: CoupleCostValue | undefined): { value: number; complete: boolean } | null {
+  if (c === null || c === undefined) return null
+  if (typeof c === 'number') return Number.isFinite(c) ? { value: c, complete: true } : null
+  return Number.isFinite(c.value) ? c : null
+}
+
 export interface MakinaAdvice {
   use: boolean
   kind: 'optimakina'
@@ -236,10 +302,19 @@ export interface MakinaAdvice {
   priceComplete: boolean
   /** Hausse effective de la chance de cible (min(1, B + Δ) − B). */
   gain: number
+  /** p : chance de génération cible sans makina. */
+  baseChance: number
   /** Valeur (kamas) d'une naissance cible au lieu d'une autre issue : C_eff / p, ou écart de valeur attendue. */
   successValue: number | null
+  /** Critère de `successValue` (null si aucune valeur n'est calculable). */
+  successBasis: SuccessBasis | null
+  /** C_eff du couple (si fourni), et s'il est complet (sinon : borne haute). */
+  coupleCost: number | null
+  coupleCostComplete: boolean
   /** Prix maximal rentable = gain × valeur d'une réussite (= C_eff × Δ / p). */
   threshold: number | null
+  /** Le seuil est une borne haute (C_eff incomplet) : seul un refus est certain. */
+  thresholdIsUpperBound: boolean
   basis: MakinaBasis
   reason: string
 }
@@ -269,6 +344,16 @@ export interface PairAnalysis {
   goalChance: number
   /** La génération cible contient l'objectif ou une étape de son chemin. */
   goalRelevant: boolean
+  /**
+   * Espèces utiles à l'objectif (recette, autre chemin, ou portées dans l'arbre) qu'un croisement hors
+   * objectif consommerait (vide sinon).
+   */
+  consumesGoalParents: number[]
+  /**
+   * Coût d'opportunité (mêmes unités que `progress`) retiré du score en progression : Σ pertinence ×
+   * génération des parents consommés hors objectif.
+   */
+  opportunityCost: number
   reasons: string[]
   warnings: string[]
 }
@@ -281,6 +366,16 @@ export interface PairSuggestion extends PairAnalysis {
   b: Mount
   /** Les deux montures sont fécondes (sinon : prévision avec includeFertile). */
   ready: boolean
+  /**
+   * Couple hors objectif qui consomme une monture utile à l'objectif alors que sa partenaire du plan
+   * est en préparation (fertile) : attendre plutôt que `partnerId` soit féconde.
+   */
+  waitFor: { mountId: string; partnerId: string; targetSpecies: number[] }[]
+  /**
+   * Couples de cette paire d'espèces possibles avec les montures fertiles ou fécondes (M-STACK-01),
+   * calculé pour les couples de l'objectif à partir de la cible G5 ; null sinon.
+   */
+  stackAttempts: number | null
 }
 
 // ---------- Optimakina ----------
@@ -335,16 +430,20 @@ function genetonSuccessValue(base: BreedingResult, opts: PairingOptions): number
 }
 
 /**
- * Conseil d'Optimakina (research/README.md §2.9, strategy.md §5.3) :
- * - règle de prix : rentable si prix < C_eff × Δ / p (= gain × valeur d'une réussite) ;
- * - sinon (prix ou valeurs inconnus, ou objectif « progression » sans C_eff) : Optimakina quand la cible
- *   est G6 ou plus, ou une étape de l'objectif (recommandation « systématique dès la G6 »).
+ * Conseil d'Optimakina (research/README.md §2.9, strategy.md §5.3, règle M-OPTI-01) :
+ * - règle de prix, **toujours appliquée quand le prix et la valeur d'une réussite sont connus** :
+ *   rentable si prix < C_eff × Δ / p (= gain × valeur d'une réussite). Sans C_eff : écart de génétons
+ *   (objectif génétons) ou écart de valeur des bébés (sinon) ; le critère est noté dans `successBasis`.
+ *   C_eff incomplet (borne haute) : seul le refus est certain ;
+ * - règle indécidable (prix ou valeur inconnus, coût incomplet) : heuristique de la recherche —
+ *   Optimakina dès la cible G6 (« systématique dès la G6 ») ; sur une étape G4–G5 de l'objectif
+ *   (phase P2) ; jamais sur une cible G2–G3 sans prix.
  */
 export function adviseOptimakina(
   base: BreedingResult,
   withOpti: BreedingResult | null,
   opts: PairingOptions,
-  ctx: { goalRelevant: boolean; coupleCost?: number | null },
+  ctx: { goalRelevant: boolean; coupleCost?: CoupleCostValue },
 ): MakinaAdvice {
   const generation = base.makinaGenerationRequired
   const gain = withOpti ? Math.max(0, withOpti.targetChance - base.targetChance) : 0
@@ -352,13 +451,35 @@ export function adviseOptimakina(
   const price = priceInfo?.price ?? null
   const priceComplete = !!priceInfo && priceInfo.price !== null && priceInfo.complete
   const p = base.targetChance
-  const hasCouple = ctx.coupleCost !== null && ctx.coupleCost !== undefined
+  const cc = normalizeCoupleCost(ctx.coupleCost)
   let successValue: number | null = null
-  if (hasCouple && p > 0) successValue = (ctx.coupleCost as number) / p
-  else if (opts.objective === 'genetons') successValue = genetonSuccessValue(base, opts)
-  else successValue = outcomeSuccessValue(base, opts)
+  let successBasis: SuccessBasis | null = null
+  if (cc && p > 0) {
+    successValue = Math.max(0, cc.value) / p
+    successBasis = 'c-eff'
+  } else if (opts.objective === 'genetons') {
+    successValue = genetonSuccessValue(base, opts)
+    successBasis = successValue === null ? null : 'genetons'
+  } else {
+    successValue = outcomeSuccessValue(base, opts)
+    successBasis = successValue === null ? null : 'valeur-bebes'
+  }
   const threshold = successValue !== null && gain > 0 ? successValue * gain : null
-  const common = { kind: 'optimakina' as const, generation, price, priceComplete, gain, successValue, threshold }
+  const thresholdIsUpperBound = successBasis === 'c-eff' && !!cc && !cc.complete
+  const common = {
+    kind: 'optimakina' as const,
+    generation,
+    price,
+    priceComplete,
+    gain,
+    baseChance: p,
+    successValue,
+    successBasis,
+    coupleCost: cc ? Math.max(0, cc.value) : null,
+    coupleCostComplete: !!cc && cc.complete,
+    threshold,
+    thresholdIsUpperBound,
+  }
 
   if (gain <= 1e-9)
     return {
@@ -367,49 +488,277 @@ export function adviseOptimakina(
       basis: 'inutile',
       reason:
         base.targetChance >= 1 && base.outcomes.some((o) => !o.isTarget)
-          ? 'Inutile : la génération cible est déjà à 100 %.'
-          : 'Inutile : aucune autre issue possible, la génération cible est certaine.',
+          ? 'Optimakina inutile : la génération cible est déjà à 100 %.'
+          : 'Optimakina inutile : aucune autre issue possible, la génération cible est certaine.',
     }
   if (opts.makinaPolicy === 'jamais') return { ...common, use: false, basis: 'jamais', reason: 'Optimakina désactivée (politique « jamais »).' }
   if (opts.makinaPolicy === 'optimakina')
     return { ...common, use: true, basis: 'reglage', reason: `Optimakina à chaque accouplement (politique choisie) : +${pct(gain)} de génération cible.` }
 
-  const valuable = base.targetGeneration >= OPTIMAKINA_SYSTEMATIC_GENERATION || ctx.goalRelevant
-  const heuristic = (why: string): MakinaAdvice =>
-    valuable
-      ? {
-          ...common,
-          use: true,
-          basis: 'heuristique',
-          reason: `${why}Cible G${base.targetGeneration}${ctx.goalRelevant ? ', utile à votre objectif' : ''} : la recherche recommande l'Optimakina dès la cible G${OPTIMAKINA_SYSTEMATIC_GENERATION} et sur les étapes clés (−40 à −65 % d'accouplements et de captures sur une chaîne G9). +${pct(gain)} de cible.`,
-        }
-      : {
-          ...common,
-          use: false,
-          basis: 'heuristique',
-          reason: `${why}Cible G${base.targetGeneration} sans enjeu particulier : pas d'Optimakina, sauf si elle est bon marché.`,
-        }
+  const t = base.targetGeneration
+  const formula = successBasis ? SUCCESS_BASIS_LABELS[successBasis] : ''
+  const ceffNote = successBasis === 'c-eff' && cc ? ` ; C_eff ${thresholdIsUpperBound ? '≤ ' : ''}${formatKamas(Math.max(0, cc.value))}` : ''
+  const heuristic = (why: string): MakinaAdvice => {
+    if (t >= OPTIMAKINA_SYSTEMATIC_GENERATION)
+      return {
+        ...common,
+        use: true,
+        basis: 'heuristique',
+        reason: `Optimakina conseillée : ${why}cible G${t}${ctx.goalRelevant ? ', étape de votre objectif' : ''} — la recherche la recommande dès la cible G${OPTIMAKINA_SYSTEMATIC_GENERATION} (−40 à −65 % d'accouplements et de captures sur une chaîne G9). +${pct(gain)} de cible.`,
+      }
+    if (optimakinaHeuristicUse(t, ctx.goalRelevant))
+      return {
+        ...common,
+        use: true,
+        basis: 'heuristique',
+        reason: `Optimakina conseillée à défaut de prix : ${why}cible G${t}, étape de votre objectif — la recherche la réserve aux étapes G4–G5 dont le prix reste sous le seuil ; saisissez son prix pour trancher. +${pct(gain)} de cible.`,
+      }
+    return {
+      ...common,
+      use: false,
+      basis: 'heuristique',
+      reason: `Pas d'Optimakina : ${why}cible G${t}${ctx.goalRelevant ? ', étape de votre objectif mais de génération basse' : ' sans enjeu particulier'} — sans prix sous le seuil, la recherche la réserve aux cibles G${OPTIMAKINA_SYSTEMATIC_GENERATION} et plus${ctx.goalRelevant ? ' (G4–G5 pour les étapes de l’objectif)' : ''}.`,
+    }
+  }
 
-  // En progression, la valeur de revente d'une étape sous-estime ce qu'elle coûte à refaire.
-  if (opts.objective === 'progression' && !hasCouple && valuable) return heuristic('')
   if (threshold !== null && price !== null) {
-    if (priceComplete)
+    if (priceComplete && !thresholdIsUpperBound)
       return price < threshold
-        ? { ...common, use: true, basis: 'regle-prix', reason: `Rentable : prix ${formatKamas(price)} < seuil ${formatKamas(threshold)} (C_eff × Δ / p ; +${pct(gain)} de cible).` }
-        : { ...common, use: false, basis: 'regle-prix', reason: `Non rentable : prix ${formatKamas(price)} ≥ seuil ${formatKamas(threshold)} (C_eff × Δ / p).` }
+        ? { ...common, use: true, basis: 'regle-prix', reason: `Optimakina rentable : prix ${formatKamas(price)} < seuil ${formatKamas(threshold)} (${formula}${ceffNote} ; +${pct(gain)} de cible).` }
+        : { ...common, use: false, basis: 'regle-prix', reason: `Optimakina non rentable ici : prix ${formatKamas(price)} ≥ seuil ${formatKamas(threshold)} (${formula}${ceffNote}).` }
     if (price >= threshold)
       return {
         ...common,
         use: false,
         basis: 'regle-prix',
-        reason: `Non rentable : la partie connue du coût (≥ ${formatKamas(price)}) dépasse déjà le seuil ${formatKamas(threshold)}.`,
+        reason: priceComplete
+          ? `Optimakina non rentable ici : prix ${formatKamas(price)} ≥ seuil maximal ${formatKamas(threshold)} (${formula}${ceffNote} ; une sortie des stériles n'est pas chiffrée, le vrai seuil est plus bas).`
+          : `Optimakina non rentable ici : la partie connue de son coût (≥ ${formatKamas(price)}) dépasse déjà le seuil ${formatKamas(threshold)} (${formula}${ceffNote}).`,
       }
-    return heuristic('Coût de l’Optimakina incomplet : règle de prix indécidable. ')
+    return heuristic(
+      priceComplete
+        ? `seuil seulement borné (≤ ${formatKamas(threshold)}, une sortie des stériles n'est pas chiffrée), `
+        : 'coût de l’Optimakina incomplet (règle de prix indécidable), ',
+    )
   }
-  return heuristic(price === null ? 'Prix de l’Optimakina inconnu. ' : threshold === null ? 'Valeur des bébés inconnue. ' : '')
+  return heuristic(
+    price === null
+      ? 'prix de l’Optimakina inconnu, '
+      : threshold === null
+        ? 'valeur d’une réussite inconnue (coût du couple ou prix des bébés à saisir), '
+        : '',
+  )
+}
+
+// ---------- C_eff : coût net d'une tentative (règle de prix de l'Optimakina) ----------
+
+export interface CoupleCostConfig {
+  /** Prix des objets (`usePriceContext()`). */
+  ctx: PriceContext
+  mountPrices: MountPriceContext
+  /** Taxe d'HDV (0,02 = 2 %). */
+  saleTax: number
+  rules: Ruleset
+  jobLevel: number
+  /** Palier de carburant de fécondité et d'XP (en pratique `settings.preferredTier`). */
+  tier: FuelTier
+  /** Filet de capture des G1 (défaut : universel). */
+  netKind?: NetKind
+}
+
+/** Obtention d'une monture fertile niv. 1 : capture (G1), valeur actuelle (prix de décision) ou production estimée. */
+export type AcquisitionMethod = 'capture' | 'valeur' | 'production'
+
+export const ACQUISITION_METHOD_LABELS: Record<AcquisitionMethod, string> = {
+  capture: 'capture',
+  valeur: 'valeur actuelle',
+  production: 'production estimée (recette, clonage)',
+}
+
+export interface ParentCost {
+  speciesId: number
+  level: number
+  /** Monture fertile niv. 1 : capture (G1), sinon min(valeur actuelle, production estimée) ; null si inconnue. */
+  acquisition: number | null
+  acquisitionMethod: AcquisitionMethod | null
+  /** XP du niveau 1 au niveau du parent (Mangeoire, lot de 10). */
+  leveling: number | null
+  /** Fécondation (lot typique de 10). */
+  fertility: number | null
+  /** Coût de remplacement = obtention + XP + fécondation (null si un poste manque). */
+  replacement: number | null
+  /** Valeur résiduelle de la stérile : max(vente, extraction, brisage, ½ × (clone − refécondation)) ; borne basse si incomplète. */
+  residual: number | null
+  residualComplete: boolean
+  residualKind: FateKind | 'clone' | null
+  /** Remplacement − valeur résiduelle (borne haute si la valeur résiduelle est incomplète). */
+  net: number | null
+  /** Postes non chiffrés (français). */
+  missing: string[]
+}
+
+export interface CoupleCostBreakdown {
+  /** C_eff (borne haute si `complete` est faux), ou null si un coût de remplacement manque. */
+  value: number | null
+  complete: boolean
+  parents: [ParentCost, ParentCost]
+  missing: string[]
+}
+
+export interface CoupleCostModel {
+  /** À passer en `PairingOptions.coupleCost`. */
+  cost: (a: BreedingParent, b: BreedingParent) => CoupleCostValue
+  breakdown: (a: BreedingParent, b: BreedingParent) => CoupleCostBreakdown
+  parent: (p: BreedingParent) => ParentCost
+}
+
+/**
+ * C_eff de la règle de prix de l'Optimakina (M-OPTI-01) à partir des prix de l'économie : pour chaque
+ * parent, coût de remplacement (G1 capturable : capture ; sinon min(valeur actuelle, production
+ * estimée par `expectedEffort` sans makina, avec clonage) ; + XP du niveau 1 au niveau du parent +
+ * fécondation, lot typique de 10) moins la valeur résiduelle de la stérile (max des sorties nettes et
+ * de ½ clone − refécondation, comme `sterileValue`). Un coût de remplacement inconnu → null ; une
+ * sortie de stérile non chiffrée → C_eff borne haute (`complete: false`). Mémorisé.
+ */
+export function economyCoupleCost(cfg: CoupleCostConfig): CoupleCostModel {
+  const ctx: PriceContext = { ...cfg.ctx, jobLevel: cfg.jobLevel }
+  const netKind: NetKind = cfg.netKind ?? 'universel'
+  const fert = fertilityCost({ tier: cfg.tier, batchSize: PADDOCK_SLOTS, ctx, rules: cfg.rules, jobLevel: cfg.jobLevel, model: 'typique' })
+  const fertPer = fert.complete ? fert.perMount : null
+  const valCache = new Map<string, MountValuation>()
+  const val = (id: number, level: number, state: MountState) => {
+    const k = `${id}|${level}|${state}`
+    let v = valCache.get(k)
+    if (!v) {
+      v = mountValuation(id, level, { ctx, mountPrices: cfg.mountPrices, saleTax: cfg.saleTax, state })
+      valCache.set(k, v)
+    }
+    return v
+  }
+  const lvlCache = new Map<string, number | null>()
+  const lvl = (level: number, sage: boolean) => {
+    const k = `${level}|${sage ? 1 : 0}`
+    if (!lvlCache.has(k)) {
+      const c = levelingCost(1, level, { tier: cfg.tier, batchSize: PADDOCK_SLOTS, sage, ctx, rules: cfg.rules, jobLevel: cfg.jobLevel })
+      lvlCache.set(k, c.complete ? c.costPerMount : null)
+    }
+    return lvlCache.get(k) ?? null
+  }
+  const capCache = new Map<FamilyId, number | null>()
+  const cap = (family: FamilyId) => {
+    if (!capCache.has(family)) {
+      const c = captureCost(family, netKind, ctx, { jobLevel: cfg.jobLevel })
+      capCache.set(family, c.complete ? c.perMount : null)
+    }
+    return capCache.get(family) ?? null
+  }
+  const prodCache = new Map<string, number | null>()
+  /** Production d'une monture fertile niv. 1 (parents de la recette au niveau `level`). */
+  const production = (id: number, level: number): number | null => {
+    const k = `${id}|${level}`
+    if (prodCache.has(k)) return prodCache.get(k) ?? null
+    let out: number | null = null
+    const s = sp(id)
+    const c = s ? cap(s.family) : null
+    const l = lvl(level, false)
+    if (s && c !== null && l !== null && fertPer !== null) {
+      try {
+        const e = expectedEffort(id, { parentLevel: level, makina: 'none', rules: cfg.rules, cloning: true })
+        const intermediates = e.nodes.filter((n) => n.crossing !== null && n.speciesId !== id).reduce((sum, n) => sum + n.needed, 0)
+        out = e.captures * c + (e.captures + intermediates) * l + e.fecundations * fertPer
+      } catch {
+        out = null
+      }
+    }
+    prodCache.set(k, out)
+    return out
+  }
+  const parentCache = new Map<string, ParentCost>()
+  const parent = (p: BreedingParent): ParentCost => {
+    const level = clampLevel(p.level)
+    const sage = p.ability === 'sage'
+    const k = `${p.speciesId}|${level}|${sage ? 1 : 0}`
+    const hit = parentCache.get(k)
+    if (hit) return hit
+    const s = sp(p.speciesId)
+    const missing: string[] = []
+    let acquisition: number | null = null
+    let acquisitionMethod: AcquisitionMethod | null = null
+    if (s && s.generation === 1 && s.capturable) {
+      acquisition = cap(s.family)
+      acquisitionMethod = acquisition === null ? null : 'capture'
+      if (acquisition === null) missing.push('prix du filet de capture')
+    } else if (s) {
+      const v = val(s.id, 1, 'fertile')
+      const market = v.complete && v.best !== null ? v.best : null
+      const prod = production(s.id, level)
+      if (market !== null && (prod === null || market <= prod)) {
+        acquisition = market
+        acquisitionMethod = 'valeur'
+      } else if (prod !== null) {
+        acquisition = prod
+        acquisitionMethod = 'production'
+      } else missing.push(`prix de ${s.name} (ou des carburants et filets pour la produire)`)
+    }
+    const leveling = lvl(level, sage)
+    if (leveling === null) missing.push('prix de la Mangeoire')
+    if (fertPer === null) missing.push('prix des carburants de fécondité')
+    const replacement = acquisition !== null && leveling !== null && fertPer !== null ? acquisition + leveling + fertPer : null
+    // Valeur résiduelle de la stérile (comme economy.sterileValue, clone valorisé à son coût d'obtention).
+    const direct = s ? val(s.id, level, 'sterile') : null
+    const clone = acquisition !== null && fert.perMountHigh !== null ? 0.5 * Math.max(0, acquisition - (fert.complete ? (fert.perMount as number) : fert.perMountHigh)) : null
+    let residual: number | null = null
+    let residualKind: ParentCost['residualKind'] = null
+    if (direct && direct.best !== null) {
+      residual = direct.best
+      residualKind = direct.bestKind
+    }
+    if (clone !== null && (residual === null || clone > residual + 1e-9)) {
+      residual = clone
+      residualKind = 'clone'
+    }
+    const residualComplete = !!direct && direct.complete
+    if (direct && !direct.complete) missing.push(`prix de vente d'une ${s?.name ?? 'monture'} stérile (valeur résiduelle : borne basse)`)
+    const net = replacement !== null ? replacement - (residual ?? 0) : null
+    const out: ParentCost = { speciesId: p.speciesId, level, acquisition, acquisitionMethod, leveling, fertility: fertPer, replacement, residual, residualComplete, residualKind, net, missing }
+    parentCache.set(k, out)
+    return out
+  }
+  const breakdown = (a: BreedingParent, b: BreedingParent): CoupleCostBreakdown => {
+    const pa = parent(a)
+    const pb = parent(b)
+    const value = pa.net !== null && pb.net !== null ? pa.net + pb.net : null
+    return { value, complete: value !== null && pa.residualComplete && pb.residualComplete, parents: [pa, pb], missing: [...new Set([...pa.missing, ...pb.missing])] }
+  }
+  return {
+    cost: (a, b) => {
+      const bd = breakdown(a, b)
+      return bd.value === null ? null : { value: bd.value, complete: bd.complete }
+    },
+    breakdown,
+    parent,
+  }
 }
 
 // ---------- Analyse d'un couple ----------
+
+/**
+ * Espèce utile à l'objectif que ce parent apporte : la sienne (recette ou autre chemin, objectif exclu)
+ * ou celle qu'il porte dans son arbre (porteur : parent de génération supérieure utile au plan). Une G1
+ * capturable sans arbre précieux n'en est pas une : une capture la remplace.
+ */
+function goalAsset(p: BreedingParent, goal: GoalContext, opts: { includeCapturable?: boolean } = {}): number | null {
+  const self = sp(p.speciesId)
+  if (!self || self.family !== goal.family) return null
+  const carried = p.parents
+    .slice(0, 2)
+    .filter((id) => id !== goal.goalId && genOf(id) > self.generation && (goal.recipe.has(id) || goal.ancestors.has(id)))
+    .sort((x, y) => genOf(y) - genOf(x))[0]
+  if (carried !== undefined) return carried
+  if (self.generation === 1 && self.capturable && !opts.includeCapturable) return null
+  if (p.speciesId !== goal.goalId && (goal.recipe.has(p.speciesId) || goal.ancestors.has(p.speciesId))) return p.speciesId
+  return null
+}
 
 /** Points de progression : bébés nouveaux (absents des deux arbres) × génération × pertinence. */
 function progressPoints(a: BreedingParent, b: BreedingParent, result: BreedingResult, goal: GoalContext | null): number {
@@ -510,6 +859,17 @@ export function analyzePair(a: BreedingParent, b: BreedingParent, opts: PairingO
   const goalChance = goal ? (result.outcomes.find((o) => o.speciesId === goal.goalId)?.probability ?? 0) : 0
   const progress = progressPoints(a, b, result, goal)
 
+  // Parent utile à l'objectif consommé par un croisement hors objectif (il manquera à sa recette).
+  const consumesGoalParents: number[] = []
+  let opportunityCost = 0
+  if (goal && !goalRelevant && goalChance === 0)
+    for (const x of [a, b]) {
+      const asset = goalAsset(x, goal)
+      if (asset === null) continue
+      consumesGoalParents.push(asset)
+      opportunityCost += goalRelevance(asset, goal) * genOf(asset)
+    }
+
   let economics: MatingEconomics | null = null
   if (opts.mountValue)
     economics = matingEconomics(result, {
@@ -521,7 +881,7 @@ export function analyzePair(a: BreedingParent, b: BreedingParent, opts: PairingO
   const valueComplete = economics ? economics.complete : false
 
   let score: number
-  if (opts.objective === 'progression') score = progress
+  if (opts.objective === 'progression') score = progress - opportunityCost
   else if (opts.objective === 'genetons') score = result.expectedGenetons
   else if (economics) score = economics.expectedNet
   else score = result.expectedGenetons * (opts.genetonValue ?? 0) - (makinaPrice?.price ?? 0)
@@ -530,6 +890,10 @@ export function analyzePair(a: BreedingParent, b: BreedingParent, opts: PairingO
   const { reasons, warnings } = pairNotes(a, b, an, opts, goal)
   if (makina && !makinaKnown)
     warnings.push(`Coût de ${theMakina(makina)} G${result.makinaGenerationRequired} incomplet : saisissez son prix (ou celui de ses ingrédients) dans la page Prix.`)
+  if (goal && consumesGoalParents.length)
+    warnings.push(
+      `Consomme ${consumesGoalParents.map(nameOf).join(' et ')}, utile${consumesGoalParents.length > 1 ? 's' : ''} à votre objectif ${nameOf(goal.goalId)}, sur un croisement hors objectif : gardez-${consumesGoalParents.length > 1 ? 'les' : 'la'} pour ${consumesGoalParents.length > 1 ? 'leurs croisements' : 'son croisement'} du plan${opts.objective === 'progression' ? ` (score réduit de ${formatNumberFr(opportunityCost)} pts)` : ''}.`,
+    )
 
   return {
     result,
@@ -545,6 +909,8 @@ export function analyzePair(a: BreedingParent, b: BreedingParent, opts: PairingO
     valueComplete,
     goalChance,
     goalRelevant,
+    consumesGoalParents,
+    opportunityCost,
     reasons,
     warnings,
   }
@@ -588,22 +954,39 @@ export function rankPairs(mounts: Mount[], opts: PairingOptions): PairSuggestion
   const males = eligible.filter((m) => m.gender === 'male')
   const females = eligible.filter((m) => m.gender === 'femelle')
   const cache = new Map<string, PairAnalysis | null>()
+  const analyze = (m: Mount, f: Mount): PairAnalysis | null => {
+    const ck = `${parentKey(m)}|${parentKey(f)}`
+    let an = cache.get(ck)
+    if (an === undefined) {
+      try {
+        an = analyzePair(toBreedingParent(m), toBreedingParent(f), opts, goal)
+      } catch {
+        an = null
+      }
+      cache.set(ck, an)
+    }
+    return an
+  }
+  // Montures encore utilisables comme parents (fertiles ou fécondes), par espèce et par sexe (M-STACK-01).
+  const breeders = new Map<string, number>()
+  const pending: Mount[] = []
+  for (const m of mounts) {
+    const f = effectiveFertility(m)
+    if (f !== 'feconde' && f !== 'fertile') continue
+    breeders.set(`${m.speciesId}|${m.gender}`, (breeders.get(`${m.speciesId}|${m.gender}`) ?? 0) + 1)
+    if (f === 'fertile') pending.push(m)
+  }
+  const count = (speciesId: number, g: Gender) => breeders.get(`${speciesId}|${g}`) ?? 0
+  const attemptsFor = (x: number, y: number) =>
+    x === y ? Math.min(count(x, 'male'), count(x, 'femelle')) : Math.min(count(x, 'male'), count(y, 'femelle')) + Math.min(count(x, 'femelle'), count(y, 'male'))
+
   const out: PairSuggestion[] = []
   for (const m of males)
     for (const f of females) {
       const ready = effectiveFertility(m) === 'feconde' && effectiveFertility(f) === 'feconde'
       const blockers = ready ? matingBlockers(m, f) : hardBlockers(m, f)
       if (blockers.length) continue
-      const ck = `${parentKey(m)}|${parentKey(f)}`
-      let an = cache.get(ck)
-      if (an === undefined) {
-        try {
-          an = analyzePair(toBreedingParent(m), toBreedingParent(f), opts, goal)
-        } catch {
-          an = null
-        }
-        cache.set(ck, an)
-      }
+      const an = analyze(m, f)
       if (!an) continue
       const warnings = [...an.warnings]
       for (const x of [m, f]) {
@@ -611,7 +994,42 @@ export function rankPairs(mounts: Mount[], opts: PairingOptions): PairSuggestion
           warnings.push(`${ruleTitle('M-STABLE-01')} : déplacer ${mountName(x)} (${locationLabel(x)}) dans l'étable avant d'accoupler.`)
         if (effectiveFertility(x) !== 'feconde') warnings.push(`${mountName(x)} n'est pas encore féconde : couple à préparer.`)
       }
-      out.push({ ...an, key: `${m.id}|${f.id}`, a: m, b: f, ready, reasons: [...an.reasons], warnings })
+
+      // Partenaire de l'objectif encore en préparation : attendre plutôt que consommer la monture utile
+      // (une G1 capturable aussi : sa fécondation, elle, ne se recapture pas).
+      const waitFor: PairSuggestion['waitFor'] = []
+      let score = an.score
+      if (goal && !an.goalRelevant && an.goalChance === 0)
+        for (const x of [m, f]) {
+          if (goalAsset(toBreedingParent(x), goal, { includeCapturable: true }) === null) continue
+          const other = x === m ? f : m
+          const candidates = pending
+            .filter((p) => p.id !== x.id && p.id !== other.id && p.gender !== x.gender && hardBlockers(x, p).length === 0)
+            .map((p) => ({ p, an: x.gender === 'male' ? analyze(x, p) : analyze(p, x) }))
+            .filter((c): c is { p: Mount; an: PairAnalysis } => !!c.an && (c.an.goalRelevant || c.an.goalChance > 0))
+            .sort((u, v) => v.an.goalChance - u.an.goalChance || v.an.progress - u.an.progress || totalGauges(v.p) - totalGauges(u.p))
+          const best = candidates[0]
+          if (!best) continue
+          waitFor.push({ mountId: x.id, partnerId: best.p.id, targetSpecies: best.an.result.targetSpecies })
+          // Progression : toujours attendre ; génétons ou kamas : si le couple de l'objectif rapporte au moins autant.
+          if (opts.objective === 'progression' || best.an.score >= score) score = Math.min(score, 0)
+          warnings.push(
+            `Attendez plutôt que ${mountName(best.p)} soit féconde : ${mountName(x)} × ${mountName(best.p)} vise ${best.an.result.targetSpecies.map(nameOf).join(', ')} (G${best.an.result.targetGeneration}), une étape de votre objectif.`,
+          )
+        }
+
+      // Accumuler avant de tenter (M-STACK-01) : couples de l'objectif à partir de la cible G5.
+      let stackAttempts: number | null = null
+      if (goal && (an.goalRelevant || an.goalChance > 0) && an.result.targetGeneration >= STACK_MIN_GENERATION) {
+        stackAttempts = attemptsFor(m.speciesId, f.speciesId)
+        if (stackAttempts < STACK_MIN_ATTEMPTS) {
+          const p = an.goalChance > 0 ? an.goalChance : an.result.targetChance
+          warnings.push(
+            `${ruleTitle('M-STACK-01')} : produisez d'abord des parents pour au moins ${STACK_MIN_ATTEMPTS} tentatives (${stackAttempts} couple${stackAttempts > 1 ? 's' : ''} ${nameOf(m.speciesId)} × ${nameOf(f.speciesId)} possible${stackAttempts > 1 ? 's' : ''} avec vos montures fertiles ou fécondes) : une tentative à ${pct(p)} échoue ${pct(1 - p)} du temps.`,
+          )
+        }
+      }
+      out.push({ ...an, score, key: `${m.id}|${f.id}`, a: m, b: f, ready, reasons: [...an.reasons], warnings, waitFor, stackAttempts })
     }
   return out.sort(
     (x, y) =>
@@ -620,6 +1038,10 @@ export function rankPairs(mounts: Mount[], opts: PairingOptions): PairSuggestion
       y.result.targetGeneration - x.result.targetGeneration ||
       x.key.localeCompare(y.key),
   )
+}
+
+function totalGauges(m: Mount): number {
+  return m.endurance + m.maturity + m.love
 }
 
 // ---------- Plan d'appariement ----------
@@ -811,14 +1233,27 @@ export interface ClonePair {
   b: Mount
   family: FamilyId
   generation: number
-  /** Même couleur : résultat certain (sinon 50/50). */
+  /** Même couleur : couleur du clone certaine (sinon 50/50). */
   sameSpecies: boolean
+  /** Même sexe : sexe du clone certain (le clone garde le sexe de la monture conservée). */
+  sameGender: boolean
+  /** Même catégorie d'arbre (porteuse, arbre propre, ordinaire) : généalogie équivalente quel que soit le tirage. */
+  sameTree: boolean
+  /** Couleur, sexe et arbre identiques : résultat entièrement connu d'avance. */
+  certain: boolean
+}
+
+/** Texte court d'une paire de clonage (« même couleur, même sexe : résultat certain », « couleur certaine ; sexe et généalogie : 50/50 »…). */
+export function clonePairSummary(p: Pick<ClonePair, 'sameSpecies' | 'sameGender' | 'sameTree' | 'certain'>): string {
+  if (p.certain) return 'même couleur, même sexe, même arbre : résultat certain'
+  if (p.sameSpecies) return 'couleur certaine ; sexe et généalogie : ceux de la monture gardée (50/50)'
+  return 'couleurs différentes : couleur, sexe et généalogie de la monture gardée (50/50)'
 }
 
 /**
  * Paires de montures stériles clonables (même famille et même génération, M-CLONE-01) : d'abord
- * même couleur, puis couleurs différentes. Avec `involving`, seules les paires contenant au moins une
- * de ces montures sont renvoyées.
+ * même couleur (même sexe et même arbre en priorité, `pairForCloning`), puis couleurs différentes.
+ * Avec `involving`, seules les paires contenant au moins une de ces montures sont renvoyées.
  */
 export function sterileClonePairs(mounts: Mount[], opts: { involving?: string[] } = {}): ClonePair[] {
   const groups = new Map<string, Mount[]>()
@@ -829,6 +1264,7 @@ export function sterileClonePairs(mounts: Mount[], opts: { involving?: string[] 
     groups.set(k, [...(groups.get(k) ?? []), m])
   }
   const focus = opts.involving ? new Set(opts.involving) : null
+  const focusFirst = (list: Mount[]) => (focus ? [...list].sort((x, y) => Number(focus.has(y.id)) - Number(focus.has(x.id))) : list)
   const out: ClonePair[] = []
   for (const list of groups.values()) {
     const bySpecies = new Map<number, Mount[]>()
@@ -836,22 +1272,25 @@ export function sterileClonePairs(mounts: Mount[], opts: { involving?: string[] 
     const leftovers: Mount[] = []
     for (const same of bySpecies.values()) {
       // Les montures « en vue » d'abord, pour qu'elles trouvent une partenaire.
-      const ordered = focus ? [...same].sort((x, y) => Number(focus.has(y.id)) - Number(focus.has(x.id))) : same
-      for (let i = 0; i + 1 < ordered.length; i += 2) out.push(clonePair(ordered[i], ordered[i + 1], true))
-      if (ordered.length % 2 === 1) leftovers.push(ordered[ordered.length - 1])
+      const r = pairForCloning(focusFirst(same), (m) => m)
+      for (const [a, b] of r.pairs) out.push(clonePair(a, b))
+      leftovers.push(...r.leftovers)
     }
     leftovers.sort((x, y) => (focus ? Number(focus.has(y.id)) - Number(focus.has(x.id)) : 0) || x.speciesId - y.speciesId)
-    for (let i = 0; i + 1 < leftovers.length; i += 2) out.push(clonePair(leftovers[i], leftovers[i + 1], false))
+    for (const [a, b] of pairForCloning(leftovers, (m) => m).pairs) out.push(clonePair(a, b))
   }
   return out
     .filter((p) => cloningBlockers(p.a, p.b).length === 0)
     .filter((p) => !focus || focus.has(p.a.id) || focus.has(p.b.id))
-    .sort((x, y) => y.generation - x.generation || Number(y.sameSpecies) - Number(x.sameSpecies))
+    .sort((x, y) => y.generation - x.generation || Number(y.sameSpecies) - Number(x.sameSpecies) || Number(y.certain) - Number(x.certain))
 }
 
-function clonePair(a: Mount, b: Mount, sameSpecies: boolean): ClonePair {
+function clonePair(a: Mount, b: Mount): ClonePair {
   const s = sp(a.speciesId) as Species
-  return { a, b, family: s.family, generation: s.generation, sameSpecies }
+  const sameSpecies = a.speciesId === b.speciesId
+  const sameGender = a.gender === b.gender
+  const sameTree = cloneTreeKind(a) === cloneTreeKind(b)
+  return { a, b, family: s.family, generation: s.generation, sameSpecies, sameGender, sameTree, certain: sameSpecies && sameGender && sameTree }
 }
 
 // ---------- Calibration du modèle sur le journal ----------

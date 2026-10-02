@@ -9,6 +9,13 @@
 // Seules `downloadBackup`, `readBackupFile`, `reloadApp` et les messages « flash » touchent au navigateur.
 // Après un import ou une remise à zéro, l'application est rechargée (`reloadApp`) : c'est le seul moyen
 // sûr de relire tous les stores ET les préférences de page déjà chargées en mémoire.
+//
+// À l'import, chaque store connu est vérifié par src/store/schema.ts : version plus récente que
+// l'application → refus (rien n'est écrit) ; version plus ancienne → migration ; état normalisé (entrées
+// invalides écartées, valeurs bornées) avec un avertissement par correction.
+import { pendingWrites } from '../store/persistence'
+import { plural } from './format'
+import { PERSISTED_STORES, normalizeStoreValue } from '../store/schema'
 
 export const BACKUP_APP = 'ElevageSimu'
 /** Version du format de sauvegarde (à incrémenter si la structure du fichier change). */
@@ -60,14 +67,10 @@ export type ImportResult =
   | { ok: false; error: string }
 
 /** Stores zustand persistés de l'application : leur valeur doit avoir la forme `{ state: {…}, version }`. */
-export const KNOWN_STORES: Record<string, string> = {
-  'elevagesimu:settings': 'Réglages',
-  'elevagesimu:inventory': 'Montures (étable, enclos, inventaire)',
-  'elevagesimu:paddocks': 'Jauges des enclos',
-  'elevagesimu:paddockPlans': 'Plans d’enclos en cours',
-  'elevagesimu:prices': 'Prix saisis',
-  'elevagesimu:journal': 'Journal d’élevage',
-}
+export const KNOWN_STORES: Record<string, string> = Object.fromEntries(Object.entries(PERSISTED_STORES).map(([k, v]) => [k, v.label]))
+
+/** Version actuelle du schéma de chaque store persisté (une sauvegarde plus récente est refusée). */
+export const STORE_VERSIONS: Record<string, number> = Object.fromEntries(Object.entries(PERSISTED_STORES).map(([k, v]) => [k, v.version]))
 
 /** Préférences d'affichage connues (une par page). */
 const PAGE_PREFS: Record<string, string> = {
@@ -114,21 +117,25 @@ export function appKeys(storage?: StorageLike | null): string[] {
   return out.sort()
 }
 
-/** Instantané de toutes les données de l'application. */
-export function exportAll(storage?: StorageLike | null, now: Date = new Date()): BackupFile {
+/**
+ * Instantané de toutes les données de l'application. `pending` : valeurs (texte JSON) plus récentes que
+ * celles du stockage, à exporter à leur place — les modifications qu'un quota plein a empêché
+ * d'enregistrer (`pendingWrites()`), pour qu'une sauvegarde faite à ce moment-là ne les perde pas.
+ */
+export function exportAll(storage?: StorageLike | null, now: Date = new Date(), pending: Record<string, string> = {}): BackupFile {
   const s = resolveStorage(storage)
   const stores: Record<string, unknown> = {}
   const raw: Record<string, string> = {}
-  if (s)
-    for (const key of appKeys(s)) {
-      const value = s.getItem(key)
-      if (value === null) continue
-      try {
-        stores[key] = JSON.parse(value) as unknown
-      } catch {
-        raw[key] = value
-      }
+  const keys = new Set([...appKeys(s), ...Object.keys(pending).filter(isAppKey)])
+  for (const key of [...keys].sort()) {
+    const value = Object.hasOwn(pending, key) ? pending[key] : (s?.getItem(key) ?? null)
+    if (value === null) continue
+    try {
+      stores[key] = JSON.parse(value) as unknown
+    } catch {
+      raw[key] = value
     }
+  }
   const backup: BackupFile = { app: BACKUP_APP, version: BACKUP_VERSION, exportedAt: now.toISOString(), stores }
   if (Object.keys(raw).length) backup.raw = raw
   return backup
@@ -177,10 +184,12 @@ export function validateBackup(data: unknown): BackupValidation {
       continue
     }
     if (key in KNOWN_STORES) {
-      if (!isPlainObject(value) || !isPlainObject(value.state))
-        return { ok: false, error: `Données « ${KNOWN_STORES[key]} » invalides dans la sauvegarde (structure inattendue) : import annulé.` }
-      if (value.version !== undefined && typeof value.version !== 'number')
-        return { ok: false, error: `Données « ${KNOWN_STORES[key]} » invalides dans la sauvegarde (version non numérique) : import annulé.` }
+      // Forme, version (une version plus récente est refusée), migration et normalisation.
+      const checked = normalizeStoreValue(key, value)
+      if (!checked.ok) return { ok: false, error: `${checked.error} Import annulé, rien n’a été modifié.` }
+      for (const issue of checked.issues) warnings.push(`${KNOWN_STORES[key]} : ${issue}.`)
+      stores[key] = checked.value
+      continue
     }
     stores[key] = value
   }
@@ -194,7 +203,7 @@ export function validateBackup(data: unknown): BackupValidation {
       if (key in KNOWN_STORES) return { ok: false, error: `Données « ${KNOWN_STORES[key]} » illisibles dans la sauvegarde : import annulé.` }
       raw[key] = value
     }
-  if (foreign > 0) warnings.push(`${foreign} donnée${foreign > 1 ? 's' : ''} étrangère${foreign > 1 ? 's' : ''} à l’application ignorée${foreign > 1 ? 's' : ''}.`)
+  if (foreign > 0) warnings.unshift(`${foreign} donnée${foreign > 1 ? 's' : ''} étrangère${foreign > 1 ? 's' : ''} à l’application ignorée${foreign > 1 ? 's' : ''}.`)
 
   let exportedAt = typeof data.exportedAt === 'string' ? data.exportedAt : ''
   if (!exportedAt || Number.isNaN(Date.parse(exportedAt))) {
@@ -304,8 +313,6 @@ export interface BackupSummaryLine {
   detail: string | null
 }
 
-const plural = (n: number, one: string, many: string) => `${n} ${n > 1 ? many : one}`
-
 function stateOf(v: unknown): Record<string, unknown> | null {
   return isPlainObject(v) && isPlainObject(v.state) ? v.state : null
 }
@@ -342,6 +349,9 @@ export function summarizeBackup(backup: BackupFile): BackupSummaryLine[] {
         case 'elevagesimu:paddocks':
           detail = plural(countOf(st.paddocks), 'enclos', 'enclos')
           break
+        case 'elevagesimu:planProgress':
+          detail = [plural(countOf(st.checked), 'case cochée', 'cases cochées'), plural(countOf(st.done), 'conseil fait', 'conseils faits')].join(', ')
+          break
         case 'elevagesimu:settings': {
           const parts: string[] = []
           if (typeof st.ruleset === 'string') parts.push(`règles ${st.ruleset}`)
@@ -358,8 +368,11 @@ export function summarizeBackup(backup: BackupFile): BackupSummaryLine[] {
 
 // ---------- Navigateur ----------
 
-/** Télécharge une sauvegarde (défaut : instantané actuel). Renvoie le nom du fichier. */
-export function downloadBackup(backup: BackupFile = exportAll(), date: Date = new Date()): string {
+/**
+ * Télécharge une sauvegarde (défaut : instantané actuel, modifications non enregistrées comprises —
+ * voir `exportAll`). Renvoie le nom du fichier.
+ */
+export function downloadBackup(backup: BackupFile = exportAll(undefined, new Date(), pendingWrites()), date: Date = new Date()): string {
   const name = backupFileName(date)
   const blob = new Blob([serializeBackup(backup)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)

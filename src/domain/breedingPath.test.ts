@@ -252,6 +252,31 @@ describe('effort attendu', () => {
     }
   })
 
+  it('montures possédées : elles couvrent la demande ATTENDUE de leur espèce, pas tout leur sous-arbre', () => {
+    // Émeraude (G9) = Ivoire et Turquoise × Ivoire et Pourpre : la tentative du haut rate 48 % du temps.
+    const t = id('Dragodinde Émeraude')
+    const tree = cheapestRecipe(t)!
+    const [l, r] = tree.crossing!
+    const opts = { parentLevel: 40, makina: 'optimakina' as const, optimakinaFromGeneration: 6, cloning: true, rules: R36 }
+    const none = expectedEffort(t, opts)
+    const both = expectedEffort(t, { ...opts, owned: new Map([[l, 1], [r, 1]]) })
+    const one = expectedEffort(t, { ...opts, owned: new Map([[l, 1]]) })
+    const top = both.nodes.find((n) => n.speciesId === l)!
+    // Demande d'un parent du haut = ½ × 1/P + ½ ≈ 1,46 : un exemplaire possédé en laisse ≈ 0,46 à produire.
+    expect(top.demand).toBeCloseTo(0.5 / none.nodes[0].chance + 0.5, 6)
+    expect(top.owned).toBe(1)
+    expect(top.needed).toBeCloseTo(top.demand - 1, 6)
+    expect(both.captures).toBeGreaterThan(0)
+    expect(both.captures).toBeLessThan(one.captures)
+    expect(one.captures).toBeLessThan(none.captures)
+    // Sans montures : identique à l'ancien calcul (aucun exemplaire « possédé »).
+    expect(none.nodes.every((n) => n.owned === 0)).toBe(true)
+    expect(expectedEffort(t, { ...opts, owned: new Map() }).captures).toBeCloseTo(none.captures, 9)
+    // La cible possédée : plus rien à faire.
+    expect(expectedEffort(t, { ...opts, owned: new Map([[t, 1]]) }).captures).toBe(0)
+    expect(both.assumptions.some((a) => a.includes('Vos montures couvrent'))).toBe(true)
+  })
+
   it('refuse une recette qui ne correspond pas à l’espèce', () => {
     const tree = cheapestRecipe(id('Volkorne Roux'))!
     expect(() => expectedEffort(id('Volkorne Amande'), { parentLevel: 40, makina: 'none', cloning: true, recipe: tree })).toThrow()

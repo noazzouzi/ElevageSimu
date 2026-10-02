@@ -276,3 +276,25 @@
   color: var(--ok);
   font-weight: 700;
 }
+
+/* Effort attendu : simulation (retenue) et modèle analytique (référence) côte à côte. */
+.pl-effort td,
+.pl-effort th {
+  white-space: nowrap;
+}
+.pl-effort tbody th[scope='row'] {
+  position: static;
+  font-size: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text);
+  font-weight: 500;
+  background: transparent;
+  white-space: normal;
+}
+.pl-supply-notes {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}

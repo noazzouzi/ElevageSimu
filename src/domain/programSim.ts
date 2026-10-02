@@ -23,7 +23,7 @@
 import { getSpecies, SPECIES } from '../data'
 import { cheapestRecipe, requiredSpecies } from './breedingPath'
 import { JOB_XP_PER_CAPTURE, PADDOCK_SLOTS, PADDOCK_UNLOCK_LEVELS, TICK_SECONDS } from './constants'
-import { captureCost, DEFAULT_SERENITY_POINTS, fertilitySeconds, makinaCost, type NetKind } from './economy'
+import { captureCost, DEFAULT_SERENITY_POINTS, fertilitySeconds, maintainedTier, makinaCost, type NetKind } from './economy'
 import { bestFuel } from './fuel'
 import { breed, targetChance } from './genetics'
 import type { PriceContext } from './pricing'
@@ -1085,7 +1085,7 @@ export interface ProgramCost {
 
 /**
  * Coût moyen en kamas d'un programme simulé : points de chaque jauge × coût au point du palier
- * (`bestFuel`), Optimakinas par génération (`makinaCost`), filets (`captureCost`). Un prix manquant
+ * entretenu (`bestFuel` ; jauges de sérénité au palier 1, `maintainedTier`), Optimakinas par génération (`makinaCost`), filets (`captureCost`). Un prix manquant
  * n'est jamais compté comme 0 : la ligne est incomplète et le total devient une borne basse.
  */
 export function estimateProgramCost(summary: ProgramSummary, opts: ProgramCostOptions): ProgramCost {
@@ -1094,7 +1094,8 @@ export function estimateProgramCost(summary: ProgramSummary, opts: ProgramCostOp
   for (const g of FUEL_GAUGES) {
     const points = summary.fuelPoints[g].mean
     if (points <= 0) continue
-    const pc = bestFuel(g, opts.tier, opts.ctx, fopts)
+    // Même palier que la page Enclos et Rentabilité : Baffeur et Caresseur entretenus au palier 1.
+    const pc = bestFuel(g, maintainedTier(g, Number.POSITIVE_INFINITY, opts.tier, opts.rules), opts.ctx, fopts)
     const usable = pc.value !== null
     lines.push({
       key: `fuel:${g}`,

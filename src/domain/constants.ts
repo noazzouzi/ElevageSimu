@@ -5,24 +5,8 @@ import type { Ability, FuelSize, FuelTier, GaugeId } from './types'
 /** Durée d'un « tick » d'enclos, en secondes : les jauges actives agissent toutes les 10 s. */
 export const TICK_SECONDS = 10
 
-/** Capacité maximale d'une jauge d'enclos. */
-export const GAUGE_MAX = 100_000
-
-/** Bornes hautes (incluses) de chaque tier de jauge. Tier 1 : 0–40 000, tier 2 : 40 001–70 000… */
-export const GAUGE_TIER_MAX: Record<FuelTier, number> = {
-  1: 40_000,
-  2: 70_000,
-  3: 90_000,
-  4: 100_000,
-}
-
-/** Points consommés par la jauge (et gagnés par chaque monture) par tick, selon le tier courant. */
-export const GAUGE_RATE_PER_TICK: Record<FuelTier, number> = {
-  1: 10,
-  2: 20,
-  3: 30,
-  4: 40,
-}
+// Plafonds de jauge, paliers et débits : jamais ici (ils changent avec la version du jeu) — lire le
+// ruleset actif (`rules.gaugeTierMax`, `rules.gaugeRatePerTick`, `gaugeMax(rules)`), R14.
 
 /** Nombre maximal de jauges actives simultanément dans un enclos. */
 export const MAX_ACTIVE_GAUGES = 2

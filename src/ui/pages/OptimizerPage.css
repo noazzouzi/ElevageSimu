@@ -239,3 +239,21 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Écarts par rapport aux Réglages */
+.opt-overrides {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+  font-size: 0.88rem;
+}
+.opt-overrides ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+.opt-overrides li + li {
+  margin-top: 4px;
+}

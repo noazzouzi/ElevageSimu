@@ -1,8 +1,12 @@
 // Prix saisis par le joueur (surchargent les valeurs par défaut issues de la recherche).
+// Lecture normalisée (prix invalides retirés, jamais remplacés par 0) : src/store/schema.ts ;
+// persistance sûre et synchronisation entre onglets : src/store/persistence.ts.
 import { useMemo } from 'react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { PriceContext } from '../domain/pricing'
+import { persistOptions, syncAcrossTabs } from './persistence'
+import { STORE_KEYS, sanitizePrices, type PricesData } from './schema'
 import { useSettings } from './settings'
 
 export type LevelBand = '1' | '100' | '200'
@@ -25,9 +29,10 @@ interface PriceStore {
   replaceAll: (p: Pick<PriceStore, 'items' | 'mounts' | 'generations' | 'genetonValue'>) => void
 }
 
+/** Un prix absent, négatif ou non numérique est retiré (« pas de prix »), jamais enregistré comme 0. */
 const setOrDelete = (rec: Record<string, number>, k: string, v: number | null) => {
   const next = { ...rec }
-  if (v === null || Number.isNaN(v)) delete next[k]
+  if (v === null || !Number.isFinite(v) || v < 0) delete next[k]
   else next[k] = v
   return next
 }
@@ -48,16 +53,24 @@ export const usePrices = create<PriceStore>()(
           generations: setOrDelete(s.generations, `${family}|${generation}|${band}`, price),
           updatedAt: Date.now(),
         })),
-      setGenetonValue: (genetonValue) => set({ genetonValue, updatedAt: Date.now() }),
+      setGenetonValue: (genetonValue) =>
+        set({ genetonValue: genetonValue !== null && Number.isFinite(genetonValue) && genetonValue >= 0 ? genetonValue : null, updatedAt: Date.now() }),
       replaceAll: (p) => set({ ...p, updatedAt: Date.now() }),
     }),
-    { name: 'elevagesimu:prices', version: 1 },
+    persistOptions<PriceStore, PricesData>({ name: STORE_KEYS.prices, sanitize: sanitizePrices }),
   ),
 )
+syncAcrossTabs(usePrices)
 
-/** Contexte de prix courant (prix saisis + réglage « utiliser les prix par défaut »). */
+/**
+ * Contexte de prix courant (prix saisis + réglage « utiliser les prix par défaut » + niveau d'Éleveur).
+ * Le niveau d'Éleveur (`jobLevel`) fait que le coût des ingrédients d'une recette hors de portée n'est
+ * pas pris pour un prix (pricing.resolvePrice : prix HDV d'abord, sinon coût de craft signalé
+ * `craftLocked`) — sur toutes les pages, pas seulement Rentabilité et Prix.
+ */
 export function usePriceContext(): PriceContext {
   const overrides = usePrices((s) => s.items)
   const useDefaults = useSettings((s) => s.useDefaultPrices)
-  return useMemo(() => ({ overrides, useDefaults }), [overrides, useDefaults])
+  const jobLevel = useSettings((s) => s.jobLevel)
+  return useMemo(() => ({ overrides, useDefaults, jobLevel }), [overrides, useDefaults, jobLevel])
 }

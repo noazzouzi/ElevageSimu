@@ -131,3 +131,10 @@
   gap: 6px;
   font-size: 0.88rem;
 }
+
+.prices-page .effective-cell small.conflict {
+  display: block;
+  color: var(--warn);
+  font-size: 0.76rem;
+  max-width: 260px;
+}

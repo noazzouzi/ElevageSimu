@@ -2,7 +2,7 @@
 
 Chemins d'élevage : quelles captures et quels croisements mènent à une espèce, et combien d'efforts
 (accouplements, captures, fécondations, clonages, génétons) il faut **en moyenne**. Module pur (aucun
-React, aucun store), testé dans `src/domain/breedingPath.test.ts` (22 tests). Il s'appuie sur
+React, aucun store), testé dans `src/domain/breedingPath.test.ts` (23 tests). Il s'appuie sur
 `breed()` de `genetics.ts` (modèle de naissance validé en jeu) et sur `src/data` (croisements du client).
 
 Page associée : `src/ui/pages/GeneticsPage.tsx` (`#/genetique`, paramètres `?id=<espèce>` ou
@@ -53,13 +53,28 @@ identiques aux tableaux de `research/tree-volkorne.md` §3, `tree-muldo.md` §6 
 
 `EffortOptions` : `parentLevel` (tous les parents, captures comprises), `makina: 'none' | 'optimakina'`,
 `optimakinaFromGeneration?` (défaut 2 = partout ; 6 = « dès la G6 »), `rules?` (défaut 3.6 ; passer
-`useRules()`), `cloning`, `takeza?`, `recycleByproducts?` (défaut `false`, voir plus bas), `recipe?`.
+`useRules()`), `cloning`, `takeza?`, `recycleByproducts?` (défaut `false`, voir plus bas), `recipe?`,
+**`owned?: ReadonlyMap<espèce, exemplaires>`** (montures possédées et utilisables, effectifs déjà ajustés
+aux sexes et aux porteuses — `ownedRecipeSupply` de `advisor.ts`).
 
 `EffortEstimate` : `captures`, `capturesByColor: Map`, `matings`, `fecundations` (= 2 × accouplements),
 `clonings` (= accouplements si clonage), `optimakinas`, `genetons`, `jobXp { matings, captures, total }`
 (30 XP par capture), `ideal { captures, matings }`, `nodes: NodeEffort[]` (par espèce, de la cible vers
-les captures : `demand`, `recycled`, `needed`, `chance`, `targetChance`, `sharedWith`, `matings`,
+les captures : `demand`, **`owned`**, `recycled`, `needed`, `chance`, `targetChance`, `sharedWith`, `matings`,
 `optimakina`, `genetonsPerMating`, `jobXpPerMating`), `assumptions: string[]` (texte FR à afficher).
+
+### Montures possédées (`owned`)
+
+Une monture possédée couvre d'abord la **demande attendue** de son espèce (`demand`, issue des
+accouplements qui l'utilisent), pas tout son sous-arbre avec certitude : un parent du haut d'une G9 à
+52 % a une demande de ½ × 1/0,52 + ½ ≈ 1,46 ; un exemplaire possédé en laisse ≈ 0,46 à produire. Quand
+il reste une fraction q < 1 à produire, c'est « avec la probabilité q, **un** exemplaire » : l'effort
+ajouté est q × l'effort d'un exemplaire depuis sa propre recette (vos autres montures de ce sous-arbre
+comprises), et non q exemplaires à chaque étage (le reliquat de clonage de chaque étage serait compté
+comme certain). Exemples (niveau 40, Optimakina dès la G6) : Dragodinde Émeraude 406 captures depuis zéro,
+≈ 192 avec un couple ♂/♀ Ivoire et Turquoise × Ivoire et Pourpre (un échec à 48 % oblige à refaire une
+G8) ; Muldo Corail et Doré 233 → ≈ 92 avec une Doré porteuse de Corail et une Doré. Sans `owned`, les
+résultats sont inchangés.
 
 ### Méthode (calcul déterministe en espérance)
 
@@ -76,7 +91,8 @@ les captures : `demand`, `recycled`, `needed`, `chance`, `targetChance`, `shared
 5. Captures = besoin restant des G1. Fécondations = 2 × accouplements. Génétons = Σ accouplements ×
    `expectedGenetons` du modèle (naissance « record » uniquement).
 
-Non modélisé : sexes (♂/♀), places d'enclos et délais, Reproducteur, porteurs, achats/ventes.
+Non modélisé : sexes (♂/♀), places d'enclos et délais, Reproducteur, porteurs, achats/ventes (sexes et
+porteuses des montures possédées : ajustés en amont par `ownedRecipeSupply`).
 
 `recycleByproducts: true` réutilise les bébés hors cible d'une espèce utile plus bas dans la recette.
 **Borne optimiste seulement** : combiné au clonage, chaque accouplement raté rend ≈ 2 parents utiles et
@@ -119,8 +135,10 @@ Génétons (niv. 40, sans makina) : Émeraude 3 211 vs 2 991, Corail 1 764 vs 2 
 - **Captures, longues chaînes à faible chance (niv. 1–40 sans makina, G9–G10)** : le modèle donne ×1,9 à
   ×4,2 (niv. 40) et jusqu'à ×11 (niv. 1) les captures de la simulation, car il ne réutilise pas les bébés
   hors cible (environ 58 % des naissances à 42 %, souvent de la couleur d'un parent). C'est un
-  **majorant prudent** des captures ; le minorant est l'option `recycleByproducts`. La vérité d'un
-  joueur se situe entre les deux, selon qu'il privilégie le temps (capturer) ou les kamas (recycler).
+  **majorant prudent** des captures ; le minorant est l'option `recycleByproducts` (beaucoup trop
+  optimiste pour planifier). Les pages l'affichent comme tel : le Plan et l'accueil retiennent la
+  simulation Monte-Carlo (`programSim`, captures par couleur) et ne montrent le modèle analytique qu'en
+  « référence (borne haute) » (voir pilotage.md, `withGoalSimulation`).
 - **Avec Optimakina partout (niv. 40)** : captures et accouplements à ×0,5–×1,8 de la simulation ; c'est
   la configuration où le modèle colle le mieux.
 - **Niveau 100 + Optimakina, petites cibles** : le modèle donne ×0,4–×0,6 de la simulation, qui capture

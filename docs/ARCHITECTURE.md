@@ -16,7 +16,7 @@ npm run dev        # serveur de développement
 npm run build      # tsc -b + build Vite (doit passer)
 npm test           # vitest run
 npx vitest run src/domain/xxx.test.ts   # un fichier de test
-npm run lint       # oxlint src
+npm run lint       # oxlint --react-plugin src (règles React et hooks comprises)
 node scripts/build-data.mjs             # régénère src/data/*.json depuis research/
 ```
 
@@ -37,7 +37,9 @@ src/
                    (chargée à la demande via React.lazy, sauf l'accueil ; App.tsx l'affiche sous
                    <Suspense> et un filet d'erreur par page) ; pages.smoke.test.tsx (jsdom) vérifie
                    que chaque page s'affiche avec son titre, à vide comme avec une étable remplie
-  index.css        système de design (variables, .card, .grid-2/3/4, .table, .badge, .btn, .steps…)
+                   ; tests de page ciblés (jsdom) : MountsPage, PaddocksPage, ProfitPage, JobPage
+  index.css        système de design (variables, .card, .grid-2/3/4, .table, .badge, .btn, .steps…) ;
+                   sous 520 px, tuiles d'indicateurs (.grid-4, .kpis, .hp-kpis) sur deux colonnes
 ```
 
 ## Briques existantes (à réutiliser, ne pas dupliquer)
@@ -50,15 +52,18 @@ src/
 | `src/domain/constants.ts` | Constantes communes | sérénité, 20 000, enclos (niveaux de déblocage), libellés de jauges et capacités, Animakina… |
 | `src/domain/genetics.ts` | **Modèle de naissance** (validé sur 5 captures en jeu) | `breed(a, b, {makina, takeza, rules})` → distribution, génération cible, B, génétons, XP, makina requise ; `targetChance(lvA, lvB, opts)` ; `naturalDistribution` |
 | `src/domain/paddock.ts` | Simulation d'enclos (tick 10 s) | `simulatePaddock`, `gaugeTier`, `gaugeRate`, `gaugeDrainSeconds`, `serenityBand`, `canBenefit`, `isFecund`, `validateActiveGauges` |
-| `src/domain/fertility.ts` | Plan de fécondité d'un lot | `planFertility(mounts, {tier, withXp, almanaxDoubled, rules})` → étapes (jauges, durées, fenêtres de changement), consommation ; `decideGauges` |
+| `src/domain/fertility.ts` | Plan de fécondité d'un lot | `planFertility(mounts, {tier, serenityTier?, tierByGauge?, withXp, startMs?, applyAlmanax?, almanaxDoubled?, rules})` → étapes (jauges, durées, fenêtres simulées), consommation, `tiers`, `converges`, `notes` ; `decideGauges`, `almanaxScheduleFrom` (jour de jeu) |
+| `src/domain/projection.ts` | Projection « maintenant » d'un enclos | `projectPaddock`, `projectGaugeLevels`, `projectMountsFromPlan`, `planActiveHistory` (même calcul pour l'Enclos et l'Accueil) — docs/api/projection.md |
+| `src/domain/paddockPlanStatus.ts` | État d'un plan démarré | `planStatus` (en cours / dû / en retard / dépassé / terminé), `planYield`, `projectedMountPatches`, `remainingPlanConsumption`, `pointsValue` |
 | `src/domain/xp.ts` | XP | `mountXpForLevel`, `mountLevelFromXp`, `mountXpBetween`, `jobXpForLevel`, `jobLevelFromXp`, `jobXpBetween`, `craftXp(L, J, ratio)` |
-| `src/domain/pricing.ts` | Prix | `marketPrice`, `craftCost`, `resolvePrice(id, ctx)` (joueur > défaut > coût des ingrédients ; `complete=false` si un ingrédient manque), `netSale` |
-| `src/domain/almanax.ts` | Almanax | `almanaxOn(isoDate)`, `upcomingAlmanax(now, days)`, `isoDay(ms)` |
+| `src/domain/pricing.ts` | Prix | `marketPrice`, `craftCost`, `resolvePrice(id, ctx)` (joueur > défaut > coût des ingrédients ; avec `ctx.jobLevel`, recette hors de portée → prix HDV d'abord, sinon craft signalé `craftLocked` ; `conflict` si un prix par défaut contredit vos ingrédients ; `complete=false` si un ingrédient manque), `netSale` |
+| `src/domain/almanax.ts` | Almanax (jour de jeu, heure de Paris) | `serverDay(ms)`, `almanaxAt(ms)`, `almanaxOn(isoDate)`, `upcomingAlmanax(now, days)`, `serverDayStart`, `nextServerDayStart` ; `isoDay(ms)` = jour local (affichage seulement) ; hook `useServerDay()` (src/ui) |
 | `src/domain/mounts.ts` | Montures | `effectiveFertility`, `matingBlockers`, `cloningBlockers`, `toBreedingParent`, `capturedMount`, `babyMount`, `mountName`, libellés |
-| `src/store/settings.ts` | Réglages | `useSettings` (ruleset, jobLevel, family, goalSpeciesId, preferredTier, xpFiller, parentTargetLevel, useOptimakina, saleTax, useDefaultPrices…), `useRules()` |
-| `src/store/inventory.ts` | Montures possédées | `useInventory` (`mounts`, `add`, `addMany`, `update`, `remove`, `replaceAll`), `newId` |
+| `src/store/settings.ts` | Réglages | `useSettings` (ruleset, jobLevel, jobLevelUpdatedAt, family, goalSpeciesId, preferredTier, xpFiller, parentTargetLevel, useOptimakina, saleTax, useDefaultPrices, accounts, hoursPerDay, checkIntervalMinutes, almanaxGaugeDoubling…), `useRules()` |
+| `src/store/schema.ts`, `persistence.ts`, `sync.ts` | Persistance sûre | `PERSISTED_STORES` (versions), sanitizers, `persistOptions` (migration, normalisation, écriture sans exception, alertes), `syncAcrossTabs` — docs/api/infra.md |
+| `src/store/inventory.ts` | Montures possédées | `useInventory` (`mounts`, `add`, `addMany`, `update`, `updateMany`, `patchMany`, `remove`, `removeMany`, `replaceAll`), `newId` |
 | `src/store/paddocks.ts` | Enclos | `usePaddocks` (niveaux de jauges saisis, jauges actives) |
-| `src/store/prices.ts` | Prix saisis | `usePrices` (items, mounts `${speciesId}|${band}`, generations `${family}|${gen}|${band}`, genetonValue), `usePriceContext()` |
+| `src/store/prices.ts` | Prix saisis | `usePrices` (items, mounts `${speciesId}|${band}`, generations `${family}|${gen}|${band}`, genetonValue), `usePriceContext()` (niveau d'Éleveur inclus) |
 | `src/store/journal.ts` | Journal | `useJournal().log({kind: 'capture'|'accouplement'|'clonage'|'extraction'|'vente'|'achat'|'craft'|'note', …})` |
 
 ## Règles de code
@@ -82,7 +87,7 @@ src/
 |---|---|
 | Économie | `src/domain/fuel.ts`, `src/domain/economy.ts` (+ tests), `src/ui/pages/ProfitPage.tsx`, `src/ui/pages/PricesPage.tsx` |
 | Montures | `src/domain/mountFate.ts` (+ tests), `src/ui/pages/MountsPage.tsx`, `src/ui/MountEditor.tsx` |
-| Enclos | `src/domain/paddockAssign.ts` (+ tests), `src/store/paddockPlans.ts`, `src/ui/pages/PaddocksPage.tsx` |
+| Enclos | `src/domain/paddockAssign.ts`, `src/domain/projection.ts`, `src/domain/paddockPlanStatus.ts` (+ tests), `src/store/paddockPlans.ts`, `src/store/paddocks.ts`, `src/ui/pages/PaddocksPage.tsx`, `src/ui/alarms.tsx` (alarmes globales, montées dans `App.tsx`) |
 | Guide & réglages | `src/ui/pages/GuidePage.tsx`, `src/ui/pages/SettingsPage.tsx`, `src/lib/backup.ts` |
 | Génétique | `src/domain/breedingPath.ts` (+ tests), `src/ui/pages/GeneticsPage.tsx` |
 | Accouplement | `src/domain/pairing.ts` (+ tests), `src/ui/pages/BreedingPage.tsx` |

@@ -329,6 +329,8 @@ describe('Web Worker (protocole)', () => {
   })
 })
 
+const SERENITY: string[] = ['baffeur', 'caresseur']
+
 describe('coût en kamas', () => {
   const summary = runProgram(preset('n40-opti', POURPRE, { runs: 6, tier: 2 }))
 
@@ -343,7 +345,8 @@ describe('coût en kamas', () => {
 
   it('prix complets : carburant × coût au point + makinas + filets', () => {
     const overrides: Record<string, number> = {}
-    for (const f of FUELS.filter((x) => x.tier === 2)) overrides[f.id] = f.durability * 2 // 2 K par point
+    // Jauges de statistiques au palier 2, sérénité (Baffeur, Caresseur) au palier 1 comme la page Enclos : 2 K par point.
+    for (const f of FUELS.filter((x) => x.tier === 2 || (x.tier === 1 && SERENITY.includes(x.gauge)))) overrides[f.id] = f.durability * 2
     for (const m of MAKINAS.filter((x) => x.kind === 'optimakina' && x.family === 'dragodinde')) overrides[m.id] = 10_000
     overrides[32521] = 500 // Filet de capture universel
     const ctx: PriceContext = { overrides, useDefaults: false }
@@ -357,6 +360,9 @@ describe('coût en kamas', () => {
     expect(c.total).toBeCloseTo(2 * m.totalFuelPoints.mean + 10_000 * m.optimakinas.mean + 500 * m.captures.mean, 3)
     expect(c.nonMakinaCost).toBeCloseTo(c.total - c.makinaCost, 6)
     expect(c.genetonsValue).toBeCloseTo(375 * m.genetons.mean, 6)
+    // Sérénité chiffrée au palier 1 (intégration : même convention que la page Enclos et Rentabilité).
+    const baffeur = c.lines.find((l) => l.gauge === 'baffeur')
+    expect(FUELS.find((f) => f.id === baffeur?.itemId)?.tier).toBe(1)
     // 3.7 : durabilité ×2 → coût au point divisé par 2.
     const c37 = estimateProgramCost(summary, { ctx, rules: RULESETS['3.7'], tier: 2, jobLevel: 1 })
     expect(c37.byCategory.carburant.cost).toBeCloseTo(m.totalFuelPoints.mean, 3)
@@ -386,7 +392,7 @@ describe('comparaison et recommandation', () => {
 
   it('avec des prix complets : moins chère et prix d\'équilibre de l\'Optimakina', () => {
     const overrides: Record<string, number> = {}
-    for (const f of FUELS.filter((x) => x.tier === 3)) overrides[f.id] = f.durability * 3
+    for (const f of FUELS.filter((x) => x.tier === 3 || (x.tier === 1 && SERENITY.includes(x.gauge)))) overrides[f.id] = f.durability * 3
     for (const m of MAKINAS.filter((x) => x.kind === 'optimakina' && x.family === 'dragodinde')) overrides[m.id] = 1_000
     overrides[32521] = 300
     const ctx: PriceContext = { overrides, useDefaults: false }

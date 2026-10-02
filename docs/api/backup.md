@@ -3,8 +3,9 @@
 Export, import et remise à zéro de **toutes** les données de l'application : chaque clé du localStorage
 qui commence par `elevagesimu:` (stores zustand persistés + préférences d'affichage des pages). Les
 fonctions de calcul sont pures et prennent un stockage en paramètre (`StorageLike`, défaut : localStorage
-du navigateur) ; testées dans `src/lib/backup.test.ts` (25 tests, faux stockage avec quota). Page
+du navigateur) ; testées dans `src/lib/backup.test.ts` (34 tests, faux stockage avec quota). Page
 associée : `src/ui/pages/SettingsPage.tsx` (`#/reglages`, section « Sauvegarde des données »).
+Versions, migrations et normalisation des stores : `src/store/schema.ts` (voir `docs/api/infra.md`).
 
 ```ts
 downloadBackup()                                   // télécharge elevagesimu-sauvegarde-AAAA-MM-JJ-HHhMM.json
@@ -15,6 +16,14 @@ resetAll()                                         // efface les clés elevagesi
 
 **Format du fichier** : `{ app: 'ElevageSimu', version: 1, exportedAt: ISO, stores: { 'elevagesimu:xxx': valeur JSON décodée }, raw?: { clé: texte } }`
 (`raw` = valeurs qui n'étaient pas du JSON, recopiées telles quelles).
+
+**Vérification des stores connus** (`KNOWN_STORES`, dont `elevagesimu:planProgress`) à l'import, via
+`normalizeStoreValue` : structure `{state, version}` obligatoire ; **version plus récente** que
+`STORE_VERSIONS[clé]` → import refusé (« créées par une version plus récente de l'application : mettez-la
+à jour »), rien n'est écrit ; version plus ancienne → migrée ; état **normalisé** (montures inutilisables
+écartées, champs invalides remplacés, réglages hors liste ou hors bornes corrigés, prix invalides retirés)
+avec un avertissement par correction (« Montures : 2 montures inutilisables ignorées… ») ; la valeur écrite
+est celle normalisée, à la version actuelle. L'aperçu (`summarizeBackup`) décrit donc ce qui sera chargé.
 
 **Rechargement** : après un import ou une remise à zéro, l'application est rechargée
 (`window.location.reload()`), seul moyen sûr de relire tous les stores **et** les préférences de page déjà
@@ -33,7 +42,8 @@ automatiquement ; ajouter un libellé dans `PAGE_PREFS` (sinon « Préférences 
 | `ImportMode = 'replace' \| 'merge'` | Remplacer tout l'état local, ou n'écrire que les clés présentes dans le fichier. |
 | `ImportOptions` | `{mode?, storage?, reload?}` (défauts : `'replace'`, localStorage, `true`). |
 | `ImportResult` | `{ok: true, mode, written, removed, warnings}` ou `{ok: false, error}`. |
-| `KNOWN_STORES: Record<clé, libellé>` | Stores zustand dont la valeur doit être `{state: {…}, version}` (validé à l'import). |
+| `KNOWN_STORES: Record<clé, libellé>` | Stores zustand dont la valeur doit être `{state: {…}, version}` (validé à l'import), dérivé de `PERSISTED_STORES` (schema.ts). |
+| `STORE_VERSIONS: Record<clé, number>` | Version actuelle du schéma de chaque store (une sauvegarde plus récente est refusée). |
 | `StorageUsage` | `{totalBytes, entries: {key, label, bytes}[]}`. |
 | `BackupSummaryLine` | `{key, label, detail}` (« 42 montures », « règles 3.6, Éleveur niv. 87 »…). |
 | `TYPICAL_STORAGE_QUOTA_BYTES` | ≈ 5 Mo (quota habituel du localStorage). |
@@ -45,10 +55,10 @@ automatiquement ; ajouter un libellé dans `PAGE_PREFS` (sinon « Préférences 
 | `isAppKey(key): boolean` | La clé est-elle `elevagesimu:<quelque chose>` ? |
 | `appKeys(storage?): string[]` | Clés de l'application présentes, triées. |
 | `storeLabel(key): string` | Libellé lisible d'une clé. |
-| `exportAll(storage?, now?): BackupFile` | Instantané de toutes les clés de l'application (valeurs décodées). |
+| `exportAll(storage?, now?, pending?): BackupFile` | Instantané de toutes les clés de l'application (valeurs décodées). `pending` (clé → texte JSON) remplace la valeur stockée : modifications qu'un quota plein a empêché d'enregistrer (`pendingWrites()`). |
 | `serializeBackup(backup): string` | JSON indenté. |
 | `backupFileName(date?): string` | Nom de fichier daté (heure locale). |
-| `validateBackup(data): BackupValidation` | Vérifie `app`, `version` (entier ≥ 1, ≤ `BACKUP_VERSION`), `stores`, forme des stores connus ; ignore (avec avertissement) les clés étrangères ; signale sauvegarde vide et date illisible. |
+| `validateBackup(data): BackupValidation` | Vérifie `app`, `version` (entier ≥ 1, ≤ `BACKUP_VERSION`), `stores`, forme et **version** des stores connus (refus si plus récente), migre et normalise leur état (avertissements) ; ignore (avec avertissement) les clés étrangères ; signale sauvegarde vide et date illisible. |
 | `parseBackup(text): BackupValidation` | `JSON.parse` + `validateBackup`. |
 | `importAll(input, opts?): ImportResult` | Valide (texte, objet ou `BackupFile`), écrit, efface en mode `replace` les clés absentes du fichier ; si une écriture échoue (quota), restaure l'état précédent. Les clés d'autres sites ne sont jamais touchées. |
 | `resetAll({storage?, keep?, reload?}): string[]` | Efface les clés de l'application (sauf `keep`) ; renvoie les clés effacées. |
@@ -60,7 +70,7 @@ automatiquement ; ajouter un libellé dans `PAGE_PREFS` (sinon « Préférences 
 | Export | Rôle |
 |---|---|
 | `getBrowserStorage(): StorageLike \| null` | localStorage, ou null s'il est indisponible. |
-| `downloadBackup(backup?, date?): string` | Télécharge la sauvegarde (défaut : `exportAll()`), renvoie le nom du fichier. |
+| `downloadBackup(backup?, date?): string` | Télécharge la sauvegarde (défaut : instantané actuel **avec** les modifications non enregistrées, `pendingWrites()`), renvoie le nom du fichier. |
 | `readBackupFile(file: Blob): Promise<BackupValidation>` | Lit et valide un fichier choisi. |
 | `reloadApp(flash?)` | Recharge l'application (sans effet hors navigateur) en laissant un message. |
 | `setFlash(message)`, `takeFlash(): string \| null` | Message à afficher après le prochain chargement (sessionStorage, clé `elevagesimu-flash`, hors sauvegarde). |

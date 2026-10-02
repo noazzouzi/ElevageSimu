@@ -4,7 +4,7 @@
 // STRATEGY.mountFateGrid ; valeurs : src/domain/economy.ts).
 import { Fragment, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { FAMILIES, FAMILY_IDS, SPECIES, STRATEGY, getSpecies } from '../../data'
-import { ABILITY_LABELS, JOB_XP_PER_CAPTURE, PADDOCK_SLOTS, PADDOCK_UNLOCK_LEVELS, SERENITY_MAX, SERENITY_MIN } from '../../domain/constants'
+import { ABILITY_LABELS, JOB_XP_PER_CAPTURE, MOUNT_STAT_MAX, PADDOCK_SLOTS, PADDOCK_UNLOCK_LEVELS, SERENITY_MAX, SERENITY_MIN } from '../../domain/constants'
 import { BRISAGE_RISK_NOTE, genetonKamasValue, levelingCost, mountValuation, normalizeName, parseKamas, type MountPriceContext } from '../../domain/economy'
 import {
   FATE_ACTION_LABELS,
@@ -13,6 +13,7 @@ import {
   SERENITY_SMILEYS,
   captureBlockers,
   capturedMounts,
+  captureSlots,
   clonePatch,
   extractionQuantity,
   extractionResource,
@@ -36,19 +37,22 @@ import {
   type ValuationFn,
 } from '../../domain/mountFate'
 import { cloningBlockers, effectiveFertility, FERTILITY_LABELS, GENDER_ICONS, GENDER_LABELS, mountName } from '../../domain/mounts'
+import { almanaxOn } from '../../domain/almanax'
+import { bestDisjointPairs, objectiveFromGoal, rankPairs } from '../../domain/pairing'
 import { serenityBand, type SerenityBand } from '../../domain/paddock'
 import { marketPrice } from '../../domain/pricing'
 import type { Ruleset } from '../../domain/rules'
-import type { FamilyId, Fertility, Mount } from '../../domain/types'
+import type { FamilyId, Fertility, FuelTier, Mount } from '../../domain/types'
 import { formatKamas, formatNumber } from '../../lib/format'
 import { useInventory, type NewMount } from '../../store/inventory'
 import { useJournal } from '../../store/journal'
 import { usePriceContext, usePrices } from '../../store/prices'
 import { useRules, useSettings } from '../../store/settings'
 import { Badge, Callout, Card, Empty, NumberField, PageHeader, Progress, Stat } from '../components'
-import { GaugeBars, Modal, MountEditor, SerenitySmiley, StatusBadge } from '../MountEditor'
+import { GaugeBars, Modal, MountEditor, SerenitySmiley, SmileyPicker, StatusBadge } from '../MountEditor'
 import { href, useRoute } from '../router'
 import { ConfidenceBadge, GenBadge, SpeciesName } from '../species'
+import { useServerDay } from '../useServerDay'
 import './MountsPage.css'
 
 // ---------- Constantes d'affichage ----------
@@ -137,14 +141,46 @@ type EditorState = { mode: 'new'; initial?: Partial<NewMount> } | { mode: 'edit'
 
 // ---------- Page ----------
 
+/** « Définir le niveau… » de la barre d'actions groupées : niveau lu en jeu, appliqué en une écriture. */
+function BulkLevel({ onApply }: { onApply: (level: number) => void }) {
+  const [open, setOpen] = useState(false)
+  const [level, setLevelValue] = useState(40)
+  if (!open)
+    return (
+      <button className="btn small" onClick={() => setOpen(true)} aria-expanded={false}>
+        Définir le niveau…
+      </button>
+    )
+  return (
+    <span className="row mt-bulk-level" role="group" aria-label="Définir le niveau">
+      <NumberField label="Niveau" value={level} min={1} max={200} onChange={(v) => setLevelValue(v)} width={70} />
+      <button
+        className="btn small primary"
+        onClick={() => {
+          onApply(level)
+          setOpen(false)
+        }}
+      >
+        Appliquer
+      </button>
+      <button className="btn small ghost" onClick={() => setOpen(false)}>
+        Annuler
+      </button>
+    </span>
+  )
+}
+
 export default function MountsPage() {
   const mounts = useInventory((s) => s.mounts)
   const add = useInventory((s) => s.add)
   const addMany = useInventory((s) => s.addMany)
   const update = useInventory((s) => s.update)
-  const remove = useInventory((s) => s.remove)
+  const updateMany = useInventory((s) => s.updateMany)
+  const removeMany = useInventory((s) => s.removeMany)
   const log = useJournal((s) => s.log)
   const goalSpeciesId = useSettings((s) => s.goalSpeciesId)
+  const settingsGoal = useSettings((s) => s.goal)
+  const useOptimakina = useSettings((s) => s.useOptimakina)
   const jobLevel = useSettings((s) => s.jobLevel)
   const saleTax = useSettings((s) => s.saleTax)
   const preferredTier = useSettings((s) => s.preferredTier)
@@ -162,16 +198,50 @@ export default function MountsPage() {
     (speciesId, level, o) => mountValuation(speciesId, level, { ctx, mountPrices: mctx, saleTax, state: o.state, senile: o.senile }),
     [ctx, mctx, saleTax],
   )
+  // Montée de niveau des montures de surplus : coût du lot réel (montures montées ensemble), au palier
+  // de Mangeoire le moins cher entre le palier 1 (Extraits, C-BREAK-01) et votre palier préféré.
   const levelCost = useCallback<LevelCostFn>(
-    (from, to, m) => {
-      const c = levelingCost(from, to, { tier: preferredTier, batchSize: 10, sage: m.ability === 'sage', ctx, rules, jobLevel })
-      return { cost: c.costPerMount, complete: c.complete, seconds: c.secondsPerBatch }
+    (from, to, m, batchSize) => {
+      const tiers: FuelTier[] = preferredTier === 1 ? [1] : [1, preferredTier]
+      let best: { cost: number | null; complete: boolean; seconds?: number; tier?: number; batchSize?: number } | null = null
+      for (const tier of tiers) {
+        const c = levelingCost(from, to, { tier, batchSize, sage: m.ability === 'sage', ctx, rules, jobLevel })
+        const option = { cost: c.costPerMount, complete: c.complete, seconds: c.secondsPerBatch, tier, batchSize }
+        if (!best || (option.complete && option.cost !== null && (!best.complete || best.cost === null || option.cost < best.cost))) best = option
+      }
+      return best ?? { cost: null, complete: false }
     },
     [preferredTier, ctx, rules, jobLevel],
   )
+  // Plan d'accouplement (mêmes réglages que l'Accueil) : une monture prévue au plan n'est jamais conseillée en sortie immédiate.
+  const today = useServerDay()
+  const plannedPartners = useMemo(() => {
+    const out = new Map<string, string>()
+    if (mounts.filter((m) => effectiveFertility(m) === 'feconde').length < 2) return out
+    try {
+      const plan = bestDisjointPairs(
+        rankPairs(mounts, {
+          rules,
+          objective: objectiveFromGoal(settingsGoal),
+          goalSpeciesId,
+          makinaPolicy: useOptimakina ? 'auto' : 'jamais',
+          takeza: !!almanaxOn(today)?.takeza,
+          mountValue: (id, level) => valuation(id, level, { state: 'fertile', senile: false }).best,
+          genetonValue,
+        }),
+      )
+      for (const p of plan) {
+        out.set(p.a.id, p.b.id)
+        out.set(p.b.id, p.a.id)
+      }
+    } catch {
+      // Plan indisponible : les sorts restent calculés sans lui.
+    }
+    return out
+  }, [mounts, rules, settingsGoal, goalSpeciesId, useOptimakina, today, valuation, genetonValue])
   const fates = useMemo(
-    () => recommendFates({ inventory: mounts, goalSpeciesId, rules, valuation, levelCost, genetonValue }),
-    [mounts, goalSpeciesId, rules, valuation, levelCost, genetonValue],
+    () => recommendFates({ inventory: mounts, goalSpeciesId, rules, valuation, levelCost, genetonValue, plannedPartners, goal: settingsGoal }),
+    [mounts, goalSpeciesId, rules, valuation, levelCost, genetonValue, plannedPartners, settingsGoal],
   )
   const summary = useMemo(() => inventorySummary(mounts), [mounts])
   const byId = useMemo(() => new Map(mounts.map((m) => [m.id, m])), [mounts])
@@ -185,6 +255,7 @@ export default function MountsPage() {
   const [captureOpen, setCaptureOpen] = useState(false)
   const [dialog, setDialog] = useState<Dialog>(null)
   const [flash, setFlash] = useState<{ tone: 'ok' | 'warn'; text: string } | null>(null)
+  const [quickSerenity, setQuickSerenity] = useState(false)
 
   useEffect(() => saveUi(filters, sort), [filters, sort])
   useEffect(() => {
@@ -194,9 +265,12 @@ export default function MountsPage() {
   }, [flash])
 
   // Paramètres d'URL : #/montures?famille=muldo&statut=feconde&lieu=enclos-1&sort=cloner&q=…&ajout=1&captures=1&id=…
+  // Appliqués pendant le rendu, à chaque nouvelle URL (pas d'état recopié dans un effet).
   const route = useRoute()
   const routeKey = route.params.toString()
-  useEffect(() => {
+  const [seenRouteKey, setSeenRouteKey] = useState<string | null>(null)
+  if (seenRouteKey !== routeKey) {
+    setSeenRouteKey(routeKey)
     const p = new URLSearchParams(routeKey)
     const next: Partial<Filters> = {}
     const fam = p.get('famille')
@@ -215,8 +289,8 @@ export default function MountsPage() {
     if (p.get('ajout') === '1') setEditor({ mode: 'new' })
     if (p.get('captures') === '1') setCaptureOpen(true)
     const id = p.get('id')
-    if (id && useInventory.getState().mounts.some((m) => m.id === id)) setEditor({ mode: 'edit', id })
-  }, [routeKey])
+    if (id && mounts.some((m) => m.id === id)) setEditor({ mode: 'edit', id })
+  }
 
   const rows = useMemo(() => {
     const q = normalizeName(filters.q)
@@ -271,18 +345,37 @@ export default function MountsPage() {
   const filtered = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS)
 
   // ----- Actions -----
+  // Actions groupées : une seule écriture dans le stockage (R10), jamais une par monture.
   const markSterile = (ids: string[]) => {
-    let n = 0
-    for (const id of ids) {
+    const targets = ids.filter((id) => {
       const m = byId.get(id)
-      if (!m || m.fertility === 'senile' || m.fertility === 'sterile') continue
-      update(id, { fertility: 'sterile' })
-      n++
-    }
+      return !!m && m.fertility !== 'senile' && m.fertility !== 'sterile'
+    })
+    if (targets.length) updateMany(targets, { fertility: 'sterile' })
+    const n = targets.length
     setFlash({ tone: n ? 'ok' : 'warn', text: n ? `${plural(n, 'monture marquée', 'montures marquées')} stérile${n > 1 ? 's' : ''}.` : 'Aucune monture à marquer (déjà stériles ou séniles).' })
   }
+  /** Lot rendu fécond en jeu (fin d'un plan d'enclos suivi hors de l'appli) : endurance, maturité et amour au maximum. */
+  const markFecund = (ids: string[]) => {
+    const targets = ids.filter((id) => {
+      const m = byId.get(id)
+      return !!m && effectiveFertility(m) === 'fertile'
+    })
+    if (targets.length) updateMany(targets, { endurance: MOUNT_STAT_MAX, maturity: MOUNT_STAT_MAX, love: MOUNT_STAT_MAX })
+    const n = targets.length
+    setFlash({
+      tone: n ? 'ok' : 'warn',
+      text: n ? `${plural(n, 'monture marquée', 'montures marquées')} féconde${n > 1 ? 's' : ''} (endurance, maturité et amour au maximum).` : 'Aucune monture fertile à marquer (déjà fécondes, stériles ou séniles).',
+    })
+  }
+  const setLevel = (ids: string[], level: number) => {
+    const L = Math.max(1, Math.min(200, Math.round(level)))
+    const targets = ids.filter((id) => byId.has(id))
+    if (targets.length) updateMany(targets, { level: L, xp: undefined })
+    setFlash({ tone: 'ok', text: `${plural(targets.length, 'monture passée', 'montures passées')} au niveau ${L}.` })
+  }
   const removeIds = (ids: string[]) => {
-    for (const id of ids) remove(id)
+    removeMany(ids)
     setSelection((s) => {
       const n = new Set(s)
       for (const id of ids) n.delete(id)
@@ -346,11 +439,21 @@ export default function MountsPage() {
           <Card
             title={<h2>Montures ({rows.length === mounts.length ? formatNumber(mounts.length) : `${formatNumber(rows.length)} / ${formatNumber(mounts.length)}`})</h2>}
             actions={
-              filtered ? (
-                <button className="btn small" onClick={() => setFilters(DEFAULT_FILTERS)}>
-                  Effacer les filtres
+              <span className="row" style={{ gap: 6 }}>
+                <button
+                  className={`btn small${quickSerenity ? ' primary' : ''}`}
+                  aria-pressed={quickSerenity}
+                  onClick={() => setQuickSerenity((v) => !v)}
+                  title="Corriger la sérénité de chaque monture d'après son smiley en jeu, directement dans le tableau"
+                >
+                  Sérénité rapide
                 </button>
-              ) : undefined
+                {filtered && (
+                  <button className="btn small" onClick={() => setFilters(DEFAULT_FILTERS)}>
+                    Effacer les filtres
+                  </button>
+                )}
+              </span>
             }
           >
             <FiltersBar filters={filters} onChange={setFilters} sort={sort} onSort={setSort} />
@@ -361,9 +464,13 @@ export default function MountsPage() {
                 <button className="btn small" onClick={() => setDialog({ kind: 'move', ids: selected })}>
                   Déplacer…
                 </button>
+                <button className="btn small" onClick={() => markFecund(selected)} title="Le lot est devenu fécond en jeu : endurance, maturité et amour au maximum">
+                  Marquer féconde
+                </button>
                 <button className="btn small" onClick={() => markSterile(selected)}>
                   Marquer stérile
                 </button>
+                <BulkLevel onApply={(L) => setLevel(selected, L)} />
                 <button
                   className="btn small"
                   disabled={selected.length !== 2}
@@ -450,6 +557,8 @@ export default function MountsPage() {
                         onDelete={() => setDialog({ kind: 'delete', ids: [m.id] })}
                         onClonePair={(pid) => setDialog({ kind: 'clone', ids: [m.id, pid] })}
                         onSelectPair={(pid) => setSelection(new Set([m.id, pid]))}
+                        quickSerenity={quickSerenity}
+                        onSerenity={(v) => update(m.id, { serenity: v })}
                       />
                     ))}
                   </tbody>
@@ -489,8 +598,8 @@ export default function MountsPage() {
           stableSlots={rules.stableSlots}
           defaultFamily={preferredFamily}
           onClose={() => setCaptureOpen(false)}
-          onSave={(lines, location, serenity) => {
-            const created = capturedMounts(lines, { serenity, location })
+          onSave={(lines, location, serenity, serenities) => {
+            const created = capturedMounts(lines, { serenity, serenities, location })
             addMany(created)
             for (const l of lines) {
               const count = Math.max(0, Math.floor(l.males)) + Math.max(0, Math.floor(l.females))
@@ -621,7 +730,9 @@ function SummaryCard({
   const lockedOccupied = [...summary.paddock.entries()].filter(([n]) => n > unlocked).reduce((s, [, v]) => s + v, 0)
   const capacity = unlocked * PADDOCK_SLOTS
   const floorTotal = [...fates.values()].reduce((s, f) => s + (f.floor ?? 0), 0)
-  const floorIncomplete = [...fates.values()].some((f) => f.floor === null || !f.complete)
+  // Plancher incomplet : une sortie possible (souvent la vente) n'a pas de prix — minimum, jamais « ≈ ».
+  const floorUnpriced = [...fates.values()].filter((f) => f.floor === null || !f.floorComplete).length
+  const floorIncomplete = floorUnpriced > 0
   const gens = [...summary.byGeneration.entries()].sort((a, b) => a[0] - b[0])
   const cloneN = fateCounts.get('cloner')?.n ?? 0
   return (
@@ -640,7 +751,7 @@ function SummaryCard({
           }
         />
         <Stat label="Fertiles à féconder" value={formatNumber(summary.byStatus.fertile)} hint="endurance, maturité et amour à 20 000" />
-        <Stat label="Stériles" value={formatNumber(summary.byStatus.sterile)} hint={cloneN > 0 ? `${plural(cloneN, 'à cloner')} (paires conseillées)` : 'aucune paire de clonage'} />
+        <Stat label="Stériles" value={formatNumber(summary.byStatus.sterile)} hint={cloneN > 0 ? `${formatNumber(cloneN)} à cloner (paires conseillées)` : 'aucune paire de clonage'} />
         <Stat
           label="Places d'enclos"
           value={`${formatNumber(occupied)} / ${formatNumber(capacity)}`}
@@ -649,10 +760,17 @@ function SummaryCard({
         />
         <Stat
           label="Valeur de sortie"
-          value={`${floorIncomplete ? '≥ ' : ''}${formatKamas(floorTotal, true)}`}
+          value={floorIncomplete && floorTotal <= 0 ? 'à chiffrer' : `${floorIncomplete ? '≥ ' : ''}${formatKamas(floorTotal, true)}`}
           hint={
             <>
               plancher : meilleure entre vente, extraction et brisage <ConfidenceBadge level="low" />
+              {floorIncomplete && (
+                <>
+                  {' '}
+                  · {plural(floorUnpriced, 'monture sans prix de vente', 'montures sans prix de vente')} (minimum) —{' '}
+                  <a href={href('prix', { onglet: 'montures' })}>saisir les prix</a>
+                </>
+              )}
             </>
           }
         />
@@ -738,7 +856,7 @@ function SummaryCard({
               {exit && c.value > 0 && (
                 <span className="muted">
                   {' '}
-                  ≈ {c.incomplete ? '≥ ' : ''}
+                  {c.incomplete ? '≥ ' : '≈ '}
                   {formatKamas(c.value, true)}
                 </span>
               )}
@@ -879,6 +997,8 @@ function MountRow({
   onDelete,
   onClonePair,
   onSelectPair,
+  quickSerenity = false,
+  onSerenity,
 }: {
   m: Mount
   fate: MountFate | undefined
@@ -893,6 +1013,8 @@ function MountRow({
   onDelete: () => void
   onClonePair: (partnerId: string) => void
   onSelectPair: (partnerId: string) => void
+  quickSerenity?: boolean
+  onSerenity?: (serenity: number) => void
 }) {
   const sp = getSpecies(m.speciesId)
   const eff = effectiveFertility(m)
@@ -929,7 +1051,14 @@ function MountRow({
           <StatusBadge status={eff} />
         </td>
         <td className="mt-c-chip">
-          <SerenitySmiley serenity={m.serenity} withValue />
+          {quickSerenity && onSerenity ? (
+            <span className="stack" style={{ gap: 2 }}>
+              <SmileyPicker value={m.serenity} onChange={(v) => v !== null && onSerenity(v)} label={`Smiley de ${mountName(m)}`} />
+              <small className="muted">{formatNumber(m.serenity)}</small>
+            </span>
+          ) : (
+            <SerenitySmiley serenity={m.serenity} withValue />
+          )}
         </td>
         <td className="mt-hide-sm">
           <GaugeBars mount={m} />
@@ -1000,7 +1129,19 @@ function FateCell({ fate, m, expanded, onExpand }: { fate: MountFate; m: Mount; 
         )}
       </>
     )
-  else if (fate.floor !== null) valueLine = <span className="muted">sortie ≈ {formatKamas(fate.floor, true)} (plancher)</span>
+  else if (fate.floor !== null && fate.floorComplete) valueLine = <span className="muted">sortie ≈ {formatKamas(fate.floor, true)} (plancher)</span>
+  else if (fate.floor !== null && fate.floor > 0)
+    valueLine = (
+      <span className="muted">
+        sortie ≥ {formatKamas(fate.floor, true)} (plancher, prix de vente manquant) <a href={href('prix', { onglet: 'montures', q: sp?.name ?? '' })}>Saisir</a>
+      </span>
+    )
+  else if (fate.floor !== null)
+    valueLine = (
+      <span className="muted">
+        sortie : <a href={href('prix', { onglet: 'montures', q: sp?.name ?? '' })}>prix de vente à saisir</a>
+      </span>
+    )
   else valueLine = <span className="muted">{fate.valueNote}</span>
   return (
     <div className="mt-fate">
@@ -1121,12 +1262,18 @@ function CaptureDialog({
   stableSlots: number
   defaultFamily: FamilyId
   onClose: () => void
-  onSave: (lines: CaptureLine[], location: NonNullable<ReturnType<typeof parseLocationKey>>, serenity: number) => void
+  onSave: (lines: CaptureLine[], location: NonNullable<ReturnType<typeof parseLocationKey>>, serenity: number, serenities: (number | null)[]) => void
 }) {
   const first = CAPTURABLE.find((s) => s.family === defaultFamily) ?? CAPTURABLE[0]
   const [lines, setLines] = useState<CaptureLine[]>([{ speciesId: first?.id ?? null, males: 1, females: 1 }])
   const [dest, setDest] = useState<LocationKey>('etable')
   const [serenity, setSerenity] = useState(0)
+  // Sérénité de chaque monture (smiley vu en jeu) ; absente = valeur par défaut ci-dessus.
+  const [perMount, setPerMount] = useState<Record<string, number | null>>({})
+  const slots = captureSlots(lines)
+  const serenities = slots.map((sl) => perMount[sl.key] ?? null)
+  const setOne = (key: string, v: number | null) => setPerMount((pm) => ({ ...pm, [key]: v }))
+  const setAll = (v: number | null) => setPerMount(Object.fromEntries(slots.map((sl) => [sl.key, v])))
   const occupancy = useMemo(() => paddockOccupancy(mounts), [mounts])
   const unlocked = unlockedPaddocks(jobLevel)
   const total = lines.reduce((s, l) => s + Math.max(0, Math.floor(l.males)) + Math.max(0, Math.floor(l.females)), 0)
@@ -1156,7 +1303,7 @@ function CaptureDialog({
           <button className="btn" onClick={onClose}>
             Annuler
           </button>
-          <button className="btn primary" disabled={errors.length > 0 || !loc} onClick={() => loc && onSave(lines, loc, serenity)}>
+          <button className="btn primary" disabled={errors.length > 0 || !loc} onClick={() => loc && onSave(lines, loc, serenity, serenities)}>
             Ajouter {plural(total, 'monture')}
           </button>
         </>
@@ -1214,12 +1361,50 @@ function CaptureDialog({
             })}
           </select>
         </label>
-        <NumberField label="Sérénité de départ (si connue)" value={serenity} min={SERENITY_MIN} max={SERENITY_MAX} step={100} onChange={(v) => setSerenity(Math.round(v))} />
+        <NumberField label="Sérénité par défaut (montures sans smiley)" value={serenity} min={SERENITY_MIN} max={SERENITY_MAX} step={100} onChange={(v) => setSerenity(Math.round(v))} />
       </div>
-      <Callout>
-        <strong>Sérénité inconnue → 0.</strong> La sérénité d'une capture est aléatoire (distribution inconnue). Laissez 0 si vous ne la connaissez pas, puis corrigez chaque monture d'après son
-        smiley en jeu : c'est elle qui décide des lots de fécondation.
-      </Callout>
+      {slots.length > 0 && (
+        <fieldset className="mt-fieldset mt-capture-serenity">
+          <legend>Sérénité de chaque monture (smiley vu en jeu)</legend>
+          <p className="muted mt-help">
+            La sérénité d'une capture est aléatoire et décide de ses lots de fécondation. Indiquez le smiley de chaque monture (valeur approchée : milieu de la zone, ou valeur
+            exacte si vous la connaissez) ; « ? » = valeur par défaut ({formatNumber(serenity)}).
+          </p>
+          <div className="mt-capture-serenity-all">
+            <span className="muted">Appliquer à toutes :</span>
+            <SmileyPicker
+              value={serenities.every((v) => v === serenities[0]) ? serenities[0] : null}
+              mixed={!serenities.every((v) => v === serenities[0])}
+              onChange={setAll}
+              label="Smiley pour toutes les montures"
+              allowUnknown
+            />
+          </div>
+          <ol className="mt-capture-serenity-list">
+            {slots.map((sl) => {
+              const v = perMount[sl.key] ?? null
+              const name = `${getSpecies(sl.speciesId)?.name ?? '?'} ${sl.gender === 'male' ? '♂' : '♀'} n° ${sl.index + 1}`
+              return (
+                <li key={sl.key}>
+                  <span className="mt-capture-serenity-name">{name}</span>
+                  <SmileyPicker value={v} onChange={(x) => setOne(sl.key, x)} label={`Smiley de ${name}`} allowUnknown />
+                  <input
+                    type="number"
+                    min={SERENITY_MIN}
+                    max={SERENITY_MAX}
+                    step={1}
+                    value={v ?? ''}
+                    placeholder="exacte"
+                    aria-label={`Sérénité exacte de ${name}`}
+                    style={{ width: 92 }}
+                    onChange={(e) => setOne(sl.key, e.target.value === '' || !Number.isFinite(Number(e.target.value)) ? null : Math.max(SERENITY_MIN, Math.min(SERENITY_MAX, Math.round(Number(e.target.value)))))}
+                  />
+                </li>
+              )
+            })}
+          </ol>
+        </fieldset>
+      )}
       {families.map((f) => {
         const z = FAMILIES[f].captureZone
         return z ? (

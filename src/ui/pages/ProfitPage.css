@@ -8,6 +8,7 @@
   --series-5: #e87ba4;
   --series-6: #008300;
   --series-7: #4a3aa7;
+  --series-8: #8a6a4f;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) .profit-page {
@@ -18,6 +19,7 @@
     --series-5: #d55181;
     --series-6: #008300;
     --series-7: #9085e9;
+    --series-8: #b08d6e;
   }
 }
 :root[data-theme='dark'] .profit-page {
@@ -28,6 +30,7 @@
   --series-5: #d55181;
   --series-6: #008300;
   --series-7: #9085e9;
+  --series-8: #b08d6e;
 }
 
 .profit-page .params {
@@ -189,4 +192,27 @@
   gap: 12px;
   align-items: flex-end;
   margin-bottom: 10px;
+}
+
+/* Écarts par rapport aux Réglages */
+.profit-page .overrides {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+  font-size: 0.88rem;
+}
+.profit-page .overrides ul {
+  margin: 4px 0 6px;
+  padding-left: 18px;
+}
+.profit-page .overrides li + li {
+  margin-top: 4px;
+}
+.profit-page .params + small,
+.profit-page .params ~ small.muted {
+  display: block;
+  margin-top: 8px;
 }
