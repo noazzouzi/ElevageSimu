@@ -1,0 +1,332 @@
+/* Page « Que faire maintenant ? » (préfixe hp-). */
+
+.hp-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+.hp-page .page-header {
+  margin-bottom: 0;
+}
+.hp-date::first-letter {
+  text-transform: uppercase;
+}
+
+/* ---------- Almanax ---------- */
+.hp-almanax {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+}
+.hp-almanax.active {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+}
+.hp-almanax-today {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.hp-almanax-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.hp-almanax-next {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Indicateurs ---------- */
+.hp-kpis {
+  gap: 12px;
+}
+.hp-kpi {
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  min-width: 0;
+}
+.hp-kpi .stat {
+  height: 100%;
+  border: 1px solid transparent;
+}
+.hp-kpi:hover .stat,
+.hp-kpi:focus-visible .stat {
+  border-color: var(--accent);
+}
+.hp-kpi:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.hp-kpi.due .stat {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+.hp-kpi small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.hp-job {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+.hp-goal {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* ---------- Premiers pas ---------- */
+.hp-onboarding {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, var(--accent-soft), var(--bg-elev) 140px);
+}
+.hp-onboarding .steps {
+  margin: 12px 0 14px;
+}
+.hp-onboarding-step {
+  flex-wrap: nowrap;
+}
+.hp-onboarding .steps small {
+  display: block;
+  margin-top: 4px;
+}
+
+/* ---------- Groupes ---------- */
+.hp-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+.hp-group-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+}
+.hp-group-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.hp-group-hint {
+  font-size: 0.85rem;
+}
+.hp-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+/* ---------- Carte d'un conseil ---------- */
+.hp-advice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px 12px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+  box-shadow: var(--shadow);
+  min-width: 0;
+  overflow: hidden;
+}
+.hp-advice::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: var(--border);
+}
+.hp-advice.p1::before {
+  background: var(--danger);
+}
+.hp-advice.p2::before {
+  background: var(--warn);
+}
+.hp-advice.p3::before {
+  background: var(--accent);
+}
+.hp-advice.p4::before,
+.hp-advice.p5::before {
+  background: var(--info);
+}
+.hp-advice.p1.late {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 2px var(--danger-soft), var(--shadow);
+}
+.hp-advice h3 {
+  margin: 0;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+.hp-advice-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.82rem;
+}
+.hp-cat {
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.74rem;
+}
+.hp-due {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.hp-due.late {
+  color: var(--danger);
+}
+.hp-why {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+.hp-window {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.hp-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+.hp-items li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 8px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+}
+.hp-items li.done > .hp-check span {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+.hp-items li.warn {
+  background: var(--warn-soft);
+}
+.hp-items li.danger {
+  background: var(--danger-soft);
+}
+.hp-items li.info {
+  background: var(--info-soft);
+}
+.hp-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  cursor: pointer;
+}
+.hp-check input {
+  margin-top: 3px;
+  flex: none;
+}
+.hp-check span,
+.hp-check strong {
+  overflow-wrap: anywhere;
+}
+.hp-item-link {
+  font-size: 0.82rem;
+  white-space: nowrap;
+  align-self: start;
+}
+.hp-item-hint {
+  grid-column: 1 / -1;
+  padding-left: 24px;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.hp-amount {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+.hp-amount a.badge {
+  text-decoration: none;
+}
+
+.hp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+.hp-actions .btn {
+  text-decoration: none;
+}
+
+/* ---------- Fait récemment ---------- */
+.hp-done summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.hp-done ul {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hp-done li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 0.9rem;
+}
+.hp-done-title {
+  flex: 1;
+  min-width: 0;
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.hp-footnote {
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .hp-items li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hp-item-link {
+    padding-left: 24px;
+  }
+  .hp-onboarding-step {
+    flex-wrap: wrap;
+  }
+}

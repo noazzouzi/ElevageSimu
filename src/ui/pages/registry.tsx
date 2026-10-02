@@ -1,17 +1,20 @@
 // Registre des pages de l'application (navigation latérale).
-import type { ComponentType } from 'react'
+// La page d'accueil est chargée tout de suite ; les autres sont découpées en fichiers chargés à la
+// première visite (React.lazy + <Suspense> dans App.tsx) pour alléger le démarrage.
+import { lazy, type ComponentType } from 'react'
 import HomePage from './HomePage'
-import PlanPage from './PlanPage'
-import PaddocksPage from './PaddocksPage'
-import MountsPage from './MountsPage'
-import BreedingPage from './BreedingPage'
-import GeneticsPage from './GeneticsPage'
-import OptimizerPage from './OptimizerPage'
-import ProfitPage from './ProfitPage'
-import JobPage from './JobPage'
-import PricesPage from './PricesPage'
-import GuidePage from './GuidePage'
-import SettingsPage from './SettingsPage'
+
+const PlanPage = lazy(() => import('./PlanPage'))
+const PaddocksPage = lazy(() => import('./PaddocksPage'))
+const MountsPage = lazy(() => import('./MountsPage'))
+const BreedingPage = lazy(() => import('./BreedingPage'))
+const GeneticsPage = lazy(() => import('./GeneticsPage'))
+const OptimizerPage = lazy(() => import('./OptimizerPage'))
+const ProfitPage = lazy(() => import('./ProfitPage'))
+const JobPage = lazy(() => import('./JobPage'))
+const PricesPage = lazy(() => import('./PricesPage'))
+const GuidePage = lazy(() => import('./GuidePage'))
+const SettingsPage = lazy(() => import('./SettingsPage'))
 
 export interface PageDef {
   id: string
@@ -19,6 +22,7 @@ export interface PageDef {
   icon: string
   section: 'Piloter' | 'Simuler' | 'Économie' | 'Aide'
   description: string
+  /** Composant de la page (éventuellement chargé à la demande : à rendre sous <Suspense>). */
   component: ComponentType
 }
 

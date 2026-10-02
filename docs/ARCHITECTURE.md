@@ -34,6 +34,9 @@ src/
     species.tsx    GenBadge, SpeciesName, ConfidenceBadge, SpeciesPicker
     router.ts      routage par hash : href(page, params), navigate(), useRoute()
     pages/         une page = un fichier XxxPage.tsx (export default), enregistrée dans registry.tsx
+                   (chargée à la demande via React.lazy, sauf l'accueil ; App.tsx l'affiche sous
+                   <Suspense> et un filet d'erreur par page) ; pages.smoke.test.tsx (jsdom) vérifie
+                   que chaque page s'affiche avec son titre, à vide comme avec une étable remplie
   index.css        système de design (variables, .card, .grid-2/3/4, .table, .badge, .btn, .steps…)
 ```
 

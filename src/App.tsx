@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Component, Suspense, useState, type ErrorInfo, type ReactNode } from 'react'
 import { PAGES } from './ui/pages/registry'
 import { href, useRoute } from './ui/router'
 
@@ -44,9 +44,54 @@ export default function App() {
           </strong>
         </div>
         <main className="main">
-          <Page />
+          <PageBoundary key={page.id} title={page.title}>
+            <Suspense fallback={<p className="muted">Chargement de la page…</p>}>
+              <Page />
+            </Suspense>
+          </PageBoundary>
         </main>
       </div>
     </div>
   )
+}
+
+/**
+ * Filet de sécurité par page : une erreur d'affichage (ou un fichier de page introuvable après une
+ * mise à jour du site) n'efface pas toute l'application ; la navigation reste utilisable.
+ */
+class PageBoundary extends Component<{ title: string; children: ReactNode }, { error: Error | null }> {
+  state: { error: Error | null } = { error: null }
+
+  static getDerivedStateFromError(error: Error) {
+    return { error }
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error(`Erreur dans la page « ${this.props.title} »`, error, info.componentStack)
+  }
+
+  render() {
+    const { error } = this.state
+    if (!error) return this.props.children
+    return (
+      <section className="card" role="alert">
+        <h1>{this.props.title}</h1>
+        <div className="callout danger">
+          <strong>Cette page a rencontré une erreur et n'a pas pu s'afficher.</strong> Vos données ne sont pas touchées (elles restent enregistrées dans ce
+          navigateur). Rechargez la page ; si le problème persiste, exportez une sauvegarde depuis les Réglages.
+          <div className="muted" style={{ marginTop: 6 }}>
+            Détail : {error.message}
+          </div>
+        </div>
+        <div className="row" style={{ marginTop: 12 }}>
+          <button className="btn primary" onClick={() => window.location.reload()}>
+            Recharger
+          </button>
+          <a className="btn" href={href('reglages')}>
+            Réglages et sauvegarde
+          </a>
+        </div>
+      </section>
+    )
+  }
 }

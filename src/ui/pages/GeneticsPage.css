@@ -1,0 +1,299 @@
+/* Page Génétique : explorateur d'arbres (à gauche) + fiche de la monture (à droite). */
+.gen-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 16px;
+  align-items: start;
+}
+.gen-browser {
+  position: sticky;
+  top: 12px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+}
+.gen-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  scroll-margin-top: 64px;
+}
+.gen-detail > .card + .card {
+  margin-top: 0;
+}
+.gen-layout a.btn,
+.gen-layout a.badge {
+  text-decoration: none;
+}
+@media (max-width: 1100px) {
+  .gen-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Sur petit écran, la fiche de la monture choisie passe avant l'arbre. */
+  .gen-layout.has-selection .gen-detail {
+    order: -1;
+  }
+  .gen-browser {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* ---------- Filtres et légende ---------- */
+.gen-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-bottom: 10px;
+}
+.gen-filters label.field input[type='search'] {
+  width: 100%;
+}
+.gen-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.gen-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.gen-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.gen-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+}
+.gen-swatch.sel {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.gen-swatch.rec {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.gen-swatch.anc {
+  border: 1px dashed var(--accent);
+}
+.gen-swatch.kid {
+  background: var(--gold-soft);
+  border-color: var(--gold);
+}
+
+/* ---------- Rangées par génération ---------- */
+.gen-row {
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+.gen-row:first-of-type {
+  border-top: none;
+}
+.gen-row-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.gen-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.gen-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 2px 9px;
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  cursor: pointer;
+  max-width: 100%;
+}
+.gen-chip:hover {
+  border-color: var(--accent);
+}
+.gen-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.gen-chip.is-mono {
+  font-weight: 600;
+  border-width: 2px;
+  padding: 1px 8px;
+}
+.gen-chip.is-recipe {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+.gen-chip.is-ancestor {
+  border-style: dashed;
+  border-color: var(--accent);
+}
+.gen-chip.is-child {
+  background: var(--gold-soft);
+  border-color: var(--gold);
+}
+.gen-chip.is-selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.gen-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gen-chip-tag {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+.gen-chip-count {
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0 5px;
+  background: var(--info-soft);
+  color: var(--info);
+}
+.gen-chip.is-selected .gen-chip-count {
+  background: rgb(255 255 255 / 25%);
+  color: #fff;
+}
+
+/* ---------- Fiche ---------- */
+.gen-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.gen-title h2 {
+  margin: 0;
+}
+.gen-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.gen-facts .stat .value {
+  font-size: 1.05rem;
+}
+.gen-dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 0.9rem;
+}
+.gen-dl dt {
+  color: var(--text-muted);
+}
+.gen-dl dd {
+  margin: 0;
+}
+.gen-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+  color: var(--text);
+}
+.gen-link:hover .gen-link-name {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.gen-level {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.gen-level input[type='range'] {
+  flex: 1;
+  min-width: 140px;
+  accent-color: var(--accent);
+}
+.gen-level output {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 70px;
+}
+.gen-btn-active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+.gen-scroll {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+/* ---------- Arbre de recette ---------- */
+.gen-tree,
+.gen-tree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.gen-tree ul {
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px dashed var(--border);
+}
+.gen-tree li {
+  margin: 3px 0;
+}
+.gen-tree summary {
+  cursor: pointer;
+  list-style-position: outside;
+}
+.gen-tree summary::marker {
+  color: var(--text-muted);
+}
+.gen-tree-node {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 0.88rem;
+}
+.gen-tree-leaf {
+  padding-left: 14px;
+}
+.gen-tree-x {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+.gen-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.gen-colors .badge {
+  font-size: 0.8rem;
+}

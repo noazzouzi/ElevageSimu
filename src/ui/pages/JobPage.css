@@ -1,0 +1,230 @@
+/* Page Métier Éleveur. */
+.job-page > :not(.page-header) + * {
+  margin-top: 16px;
+}
+.job-page .params {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px 16px;
+  align-items: end;
+}
+.job-page .params .wide {
+  grid-column: 1 / -1;
+}
+.job-page .params select,
+.job-page .params input:not([type='checkbox']) {
+  width: 100%;
+}
+.job-page label.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+}
+.job-page .checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+.job-page .quick-levels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.job-page .quick-levels .btn[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+.job-page .kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+.job-page .kpis .stat small {
+  display: block;
+  line-height: 1.3;
+}
+.job-page .xp-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.job-page .xp-bar .row {
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+/* Prochaine étape */
+.job-page .next-step {
+  border-left: 4px solid var(--accent);
+}
+.job-page .next-step .headline {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.job-page .next-step .headline strong {
+  color: var(--accent-strong);
+}
+.job-page .ing-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 6px 16px;
+}
+.job-page .ing-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+  font-size: 0.9rem;
+}
+.job-page .ing-list li .qty {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Tableaux */
+.job-page .table td small {
+  display: block;
+  line-height: 1.3;
+}
+.job-page .table tfoot td {
+  font-weight: 700;
+  border-top: 2px solid var(--border);
+  border-bottom: none;
+}
+.job-page .sortable th button {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.job-page .sortable th button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.job-page .sortable th[aria-sort='ascending'] button,
+.job-page .sortable th[aria-sort='descending'] button {
+  color: var(--accent-strong);
+}
+.job-page tr.chosen td {
+  background: color-mix(in srgb, var(--accent-soft) 60%, transparent);
+}
+.job-page .neg {
+  color: var(--danger);
+}
+
+/* Jalons */
+.job-page .timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+.job-page .timeline::before {
+  content: '';
+  position: absolute;
+  left: 23px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--border);
+}
+.job-page .timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 12px;
+  padding: 6px 0;
+}
+.job-page .timeline .lvl {
+  position: relative;
+  z-index: 1;
+  width: 48px;
+  height: 30px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: var(--bg-elev);
+  border: 2px solid var(--border);
+  color: var(--text-muted);
+}
+.job-page .timeline li.acquis .lvl {
+  background: var(--ok-soft);
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.job-page .timeline li.plan .lvl {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+.job-page .timeline li.au-dela {
+  opacity: 0.75;
+}
+.job-page .timeline .what {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.job-page .timeline .what .title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.job-page .timeline .what small {
+  line-height: 1.35;
+}
+
+/* Almanax */
+.job-page .almanax-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+.job-page .almanax-list li {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  background: var(--bg-elev);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.job-page .almanax-list li.highlight {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+}
+.job-page .almanax-list .date {
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .job-page .timeline li {
+    grid-template-columns: 44px 1fr;
+  }
+  .job-page .timeline .lvl {
+    width: 44px;
+  }
+  .job-page .timeline::before {
+    left: 21px;
+  }
+}

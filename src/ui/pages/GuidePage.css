@@ -1,0 +1,533 @@
+/* Tranche « Guide & réglages » : styles des pages Guide (guide-*) et Réglages (gs-*, settings-page). */
+
+/* ---------- Réglages ---------- */
+.settings-page > :not(.page-header) + * {
+  margin-top: 16px;
+}
+.settings-page .gs-summary .stat .value {
+  font-size: 1.15rem;
+}
+.settings-page .gs-summary .stat small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gs-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.gs-anchor {
+  scroll-margin-top: 16px;
+}
+.gs-fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.gs-fieldset legend {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  padding: 0;
+}
+.gs-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.gs-option {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev);
+  cursor: pointer;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+.gs-option:hover {
+  background: var(--bg-sunken);
+}
+.gs-option[data-selected='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.gs-option:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.gs-option-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gs-option-title {
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.gs-option-body {
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gs-option[data-selected='true'] .gs-option-body {
+  color: var(--text);
+}
+.gs-option-hint {
+  font-size: 0.8rem;
+  color: var(--warn);
+}
+.gs-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.gs-kv {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.84rem;
+}
+.gs-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px 20px;
+  align-items: start;
+}
+.gs-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.gs-field.wide {
+  grid-column: 1 / -1;
+}
+.gs-field input:not([type='checkbox']):not([type='radio']),
+.gs-field select {
+  max-width: 100%;
+}
+.gs-help {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 2px 0 0;
+  line-height: 1.45;
+}
+.gs-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+.gs-check input {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.gs-quick {
+  gap: 4px;
+}
+.gs-quick .btn[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+.gs-unlocks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+.gs-unlocks > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg-sunken);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 0.88rem;
+}
+.gs-unlocks strong {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.gs-goal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--gold-soft);
+}
+.gs-goal small {
+  flex-basis: 100%;
+}
+.gs-file {
+  position: relative;
+  overflow: hidden;
+}
+.gs-file input[type='file'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 0;
+}
+.gs-file:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.gs-import-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  background: var(--bg-sunken);
+}
+.gs-import-preview ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.9rem;
+}
+.gs-import-preview .callout {
+  margin: 0;
+}
+
+/* ---------- Guide ---------- */
+.guide-page > .callout {
+  margin-top: 0;
+}
+.guide-layout {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  margin-top: 16px;
+}
+.guide-toc {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 8px;
+  box-shadow: var(--shadow);
+}
+.guide-toc summary {
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 8px 6px;
+}
+.guide-toc ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: toc;
+}
+.guide-toc li a {
+  display: block;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.88rem;
+  line-height: 1.3;
+}
+.guide-toc li a::before {
+  counter-increment: toc;
+  content: counter(toc) '. ';
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.guide-toc li a:hover {
+  background: var(--bg-sunken);
+}
+.guide-toc li a.active {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+.guide-content {
+  min-width: 0;
+}
+.guide-section {
+  scroll-margin-top: 16px;
+}
+.guide-section h3 {
+  margin-top: 1.2em;
+}
+.guide-section h4 {
+  margin: 0 0 0.4em;
+}
+.guide-section ul,
+.guide-section ol {
+  padding-left: 20px;
+  margin: 0 0 0.75em;
+}
+.guide-section li {
+  margin-bottom: 4px;
+}
+.guide-top {
+  display: flex;
+  margin: 8px 0 0 auto;
+}
+.guide-rules-badge {
+  text-decoration: none;
+}
+.guide-table {
+  margin: 4px 0 12px;
+}
+.guide-table caption {
+  text-align: left;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  padding-bottom: 4px;
+}
+.guide-table td {
+  vertical-align: top;
+}
+.guide-active-row td {
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+.guide-target-row td {
+  background: color-mix(in srgb, var(--gold-soft) 70%, transparent);
+}
+.guide-done-row td:not(:last-child) {
+  color: var(--text-muted);
+}
+.guide-flow {
+  list-style: none;
+  padding: 0 !important;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+.guide-flow li {
+  background: var(--bg-sunken);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  margin: 0 !important;
+  font-size: 0.9rem;
+}
+.guide-mood {
+  display: inline-block;
+  min-width: 2.2em;
+  text-align: center;
+  font-family: var(--mono);
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0 6px;
+  margin-right: 4px;
+  color: var(--bg-elev);
+}
+.guide-mood.red {
+  background: var(--danger);
+}
+.guide-mood.blue {
+  background: var(--info);
+}
+.guide-mood.purple {
+  background: var(--g-baffeur);
+}
+.guide-mood.green {
+  background: var(--ok);
+}
+.guide-procs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.guide-proc {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  background: var(--bg-elev);
+}
+.guide-mini-steps {
+  margin: 0 !important;
+  font-size: 0.9rem;
+}
+.guide-mini-steps li {
+  margin-bottom: 6px;
+  line-height: 1.6;
+}
+.guide-example {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  background: var(--bg-sunken);
+}
+.guide-example .table th {
+  background: var(--bg-elev);
+}
+.guide-example-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: flex-end;
+  margin-bottom: 8px;
+}
+.guide-example-controls select {
+  max-width: 100%;
+}
+.guide-example-controls > label.field:first-child {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.guide-formula {
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  background: var(--bg-elev);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  overflow-wrap: anywhere;
+}
+.guide-formula-big {
+  font-size: 0.95rem;
+  border-style: solid;
+  border-left: 4px solid var(--gold);
+}
+.guide-inline-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  padding-left: 0 !important;
+  list-style: none;
+}
+.guide-inline-list li {
+  background: var(--bg-sunken);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.9rem;
+}
+.guide-zone {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 0.9rem;
+}
+.guide-zone p {
+  margin-bottom: 0.5em;
+}
+.guide-almanax {
+  list-style: none;
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.guide-almanax li {
+  display: grid;
+  grid-template-columns: minmax(150px, 230px) 1fr;
+  gap: 4px 12px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  margin: 0 !important;
+}
+.guide-almanax li.takeza {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+}
+.guide-almanax-date {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.guide-almanax-date small {
+  font-weight: 400;
+  text-transform: none;
+}
+.guide-mistakes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 8px;
+}
+.guide-mistake {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--danger);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 0.88rem;
+}
+.guide-mistake-cons {
+  color: var(--danger);
+}
+.guide-mistake-fix {
+  color: var(--ok);
+}
+.guide-legend {
+  list-style: none;
+  padding-left: 0 !important;
+}
+.guide-legend li {
+  margin-bottom: 6px;
+}
+.guide-sources li {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1100px) {
+  .guide-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .guide-toc {
+    position: static;
+    max-height: none;
+  }
+  .guide-toc ol {
+    columns: 2 200px;
+    column-gap: 12px;
+  }
+}
+
+@media (max-width: 860px) {
+  /* La barre mobile collante masque le haut des sections. */
+  .guide-section,
+  .gs-anchor {
+    scroll-margin-top: 64px;
+  }
+  .guide-almanax li {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .guide-toc,
+  .guide-top,
+  .gs-jump {
+    display: none;
+  }
+  .guide-layout {
+    grid-template-columns: 1fr;
+  }
+}

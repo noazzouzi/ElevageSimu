@@ -135,7 +135,8 @@ small,
 /* ---------- Mise en page ---------- */
 .app {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  /* minmax(0, 1fr) : un tableau ou une ligne trop large défile dans son conteneur au lieu d'élargir la page. */
+  grid-template-columns: 240px minmax(0, 1fr);
   min-height: 100vh;
 }
 .sidebar {
@@ -214,7 +215,7 @@ small,
 
 @media (max-width: 860px) {
   .app {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .sidebar {
     position: fixed;
@@ -259,6 +260,7 @@ small,
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 10px;
 }

@@ -1,0 +1,278 @@
+/* Page « Plan d'élevage » (préfixe pl-). */
+
+.pl-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+.pl-page .page-header,
+.pl-page .tabs {
+  margin-bottom: 0;
+}
+.pl-page .card + .card {
+  margin-top: 0;
+}
+.pl-top {
+  align-items: stretch;
+}
+.pl-note {
+  font-size: 0.85rem;
+  margin: 10px 0 0;
+}
+.pl-why {
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+/* ---------- Objectif ---------- */
+.pl-modes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.pl-mode {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: var(--bg-elev);
+}
+.pl-mode.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.pl-mode input {
+  margin-top: 4px;
+}
+.pl-mode span {
+  display: flex;
+  flex-direction: column;
+}
+.pl-goal-row {
+  margin-top: 12px;
+  align-items: flex-end;
+}
+.pl-goal-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 6px;
+}
+
+/* ---------- Phase ---------- */
+.pl-stepper {
+  list-style: none;
+  display: flex;
+  gap: 4px;
+  margin: 0 0 12px;
+  padding: 0;
+}
+.pl-stepper li {
+  flex: 1;
+  text-align: center;
+  padding: 4px 0;
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.pl-stepper li.past {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.pl-stepper li.current {
+  background: var(--accent);
+  color: var(--bg-elev);
+}
+.pl-phase-title {
+  margin: 0;
+}
+.pl-phase-meta {
+  margin: 2px 0 10px;
+  font-size: 0.88rem;
+}
+.pl-exit {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+.pl-goal-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.9rem;
+}
+.pl-phase-grid h3 {
+  font-size: 0.95rem;
+}
+.pl-phases {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pl-phases details {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+}
+.pl-phases details.current {
+  border-color: var(--accent);
+}
+.pl-phases summary {
+  cursor: pointer;
+}
+.pl-phase-body {
+  font-size: 0.9rem;
+  margin-top: 6px;
+}
+.pl-phase-body p {
+  margin: 0 0 4px;
+}
+
+/* ---------- Checklists ---------- */
+.pl-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pl-checklist li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+  font-size: 0.9rem;
+}
+.pl-checklist label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.pl-checklist input {
+  margin-top: 3px;
+  flex: none;
+}
+.pl-checklist li.done span {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+.pl-checklist .badge {
+  flex: none;
+}
+
+/* ---------- Chemin ---------- */
+.pl-stats {
+  gap: 10px;
+}
+.pl-assumptions {
+  margin-top: 12px;
+  font-size: 0.88rem;
+}
+.pl-assumptions summary {
+  cursor: pointer;
+  color: var(--accent-strong);
+}
+.pl-where {
+  margin: 12px 0 0;
+  font-size: 0.9rem;
+}
+.pl-where a.badge,
+.pl-page td a.badge {
+  text-decoration: none;
+  margin-left: 4px;
+}
+.pl-sim-progress {
+  display: grid;
+  gap: 6px;
+  max-width: 420px;
+}
+.pl-row-done td {
+  color: var(--text-muted);
+}
+.pl-pos {
+  color: var(--ok);
+}
+.pl-neg {
+  color: var(--danger);
+}
+
+/* ---------- Stratégie ---------- */
+.pl-highlights .card {
+  margin: 0;
+}
+.pl-highlights .card-title h3 {
+  font-size: 1rem;
+}
+.pl-settings {
+  margin: 0;
+  padding-left: 18px;
+}
+.pl-formulas {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.pl-formulas dt {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.pl-formulas dd {
+  margin: 2px 0 0;
+  overflow-x: auto;
+}
+.pl-formulas code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Routines ---------- */
+.pl-when {
+  font-size: 0.95rem;
+}
+.pl-routine {
+  align-items: start;
+}
+.pl-takeza td {
+  background: var(--gold-soft);
+}
+
+/* ---------- Erreurs ---------- */
+.pl-mistakes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 10px;
+}
+.pl-mistake {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--danger);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev);
+  font-size: 0.9rem;
+}
+.pl-consequence {
+  color: var(--danger);
+}
+.pl-fix {
+  color: var(--text-muted);
+}
+.pl-fix-icon {
+  color: var(--ok);
+  font-weight: 700;
+}
